@@ -17,7 +17,7 @@ $currentUser = auth()->user();
             <p class="text-sm m-0">{{ $message->text }}</p>
         </div>
         <span class="text-sm text-gray-600 mt-1">
-            {{ $message->user?->name ?? 'Unknown User' }} {{ $message->user?->last_name ?? 'Unknown User' }}
+            {{ $message->user->supplier->name ?? 'Supplier' }}
         </span>
         <span class="text-xs text-gray-400 mt-1">{{ $message->created_at }}</span>
     </div>
@@ -39,7 +39,7 @@ $currentUser = auth()->user();
             <p class="text-sm">{{ $message->text }}</p>
         </div>
         <span class="text-sm text-gray-600 mt-1">
-            {{ $message->user->supplier->name ?? 'Supplier' }}
+            {{ $message->user?->name ?? 'Unknown User' }} {{ $message->user?->last_name ?? 'Unknown User' }}
         </span>
 
 
