@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class PriceTier extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'product_id',
+        'min_qty',
+        'max_qty',
+        'price',
+    ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+}

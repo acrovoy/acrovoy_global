@@ -1,6 +1,17 @@
 <?php
 
 namespace App\Providers;
+use App\Models\Product;
+use App\Models\ShippingTemplate;
+use App\Models\Order;
+use App\Models\Rfq;
+use App\Models\RfqOffer;
+
+use App\Policies\ProductPolicy;
+use App\Policies\ShippingTemplatePolicy;
+use App\Policies\OrderPolicy;
+use App\Policies\RfqPolicy;
+use App\Policies\RfqOfferPolicy;
 
 // use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -14,6 +25,11 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
+        ShippingTemplate::class => ShippingTemplatePolicy::class,
+        Product::class => ProductPolicy::class,
+        Order::class => OrderPolicy::class,
+        Rfq::class => RfqPolicy::class,
+        RfqOffer::class => RfqOfferPolicy::class,
     ];
 
     /**

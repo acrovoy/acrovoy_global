@@ -19,8 +19,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'last_name',
         'email',
         'password',
+        'currency',
+        'role',
+        'purchase_country',
+        'premium_plan_id',
     ];
 
     /**
@@ -41,4 +46,49 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function premiumPlan()
+    {
+        return $this->belongsTo(PremiumSellerPlan::class, 'premium_plan_id');
+    }
+
+    public function getFullNameAttribute()
+    {
+        return trim($this->name . ' ' . $this->last_name);
+    }
+
+    public function supplier()
+    {
+        return $this->hasOne(Supplier::class);
+    }
+
+    public function addresses()
+{
+    return $this->hasMany(UserAddress::class);
+}
+
+public function defaultAddress()
+{
+    return $this->hasOne(UserAddress::class)->where('is_default', true);
+}
+
+
+// Отзывы, оставленные пользователем
+public function reviews()
+{
+    return $this->hasMany(Review::class);
+}
+
+// Споры, открытые пользователем
+public function orderDisputes()
+{
+    return $this->hasMany(OrderDispute::class);
+}
+
+// Заказы пользователя (если ещё нет)
+public function orders()
+{
+    return $this->hasMany(Order::class);
+}
+
 }
