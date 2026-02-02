@@ -8,38 +8,34 @@
 @extends('dashboard.admin.layout')
 
 @section('dashboard-content')
-<div class="flex justify-between items-center mb-6">
+<div class="mb-2">
+<a href="{{ route('admin.sellers.index') }}" class="text-gray-500 mb-2">← Back to list</a>
 
+
+
+    <h1 class="text-2xl font-bold mt-4">
+        Edit Seller
+    </h1>
+<p class="text-sm text-gray-500">
+            Manage exchange rates relative to the base currency (USD)
+        </p>
+
+
+    
+</div>
 {{-- Показываем сообщение об успешном обновлении --}}
 @if(session('success'))
     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-6" role="alert">
         {{ session('success') }}
     </div>
 @endif
-
-
-    <h1 class="text-2xl font-bold">
-        Edit Seller
-    </h1>
-
-
-   
-
-
-
-    <a href="{{ route('admin.sellers.index') }}"
-       class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm">
-        ← Back
-    </a>
-</div>
-
 <div class="bg-white rounded-xl shadow p-6">
 
 
 <form action="{{ route('admin.sellers.update', $seller->id) }}"
       method="POST"
       enctype="multipart/form-data"
-      class="space-y-4">
+      class="">
     @csrf
     @method('PUT')
 

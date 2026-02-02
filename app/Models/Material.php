@@ -9,7 +9,7 @@ class Material extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['slug'];
 
     public function products()
 {
@@ -32,6 +32,10 @@ public function translate($locale = null)
     return $this->translations()->where('locale', $locale)->first();
 }
 
+/**
+ * UX helper — returns translated name for current locale.
+ * NOT for business logic.
+ */
 public function getNameAttribute()
 {
     $locale = app()->getLocale();

@@ -20,7 +20,7 @@
                 <!-- Purchase Country Selector -->
 <div class="relative hidden sm:block ml-4">
     <span class="text-xs text-gray-500 whitespace-nowrap">
-        Select purchase country:
+        {{ __('layouts/navigation.select_purchase_country') }}
     </span>
 
     @php
@@ -94,7 +94,7 @@
                 <!-- Currency Selector (Desktop) with Priority -->
 <div class="relative ml-4 hidden sm:block">
     <span class="text-xs text-gray-500 whitespace-nowrap">
-        Select currency:
+        {{ __('layouts/navigation.select_currency') }}
     </span>
 
     @php
@@ -185,7 +185,7 @@
                 <!-- Language / Locale Dropdown -->
                 <div class="relative ml-4 mr-3 hidden sm:block">
                     <span class="text-xs text-gray-500 whitespace-nowrap">
-                        Select language:
+                        {{ __('layouts/navigation.select_language') }}
                     </span>
 
                     @php
@@ -449,22 +449,22 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
         ? route('manufacturer.home')
         : route('buyer.home')
 }}">
-    Dashboard
+    {{ __('layouts/navigation.dashboard') }}
 </x-dropdown-link>
 
                                     @if(Auth::user()->role === 'admin')
                                         <x-dropdown-link href="{{ route('admin.home') }}">
-                                            Admin Dashboard
+                                            {{ __('layouts/navigation.admin_dashboard') }}
                                         </x-dropdown-link>
                                     @endif
 
-                                    <x-dropdown-link href="{{ route('profile.edit') }}">Profile</x-dropdown-link>
+                                    <x-dropdown-link href="{{ route('profile.edit') }}">{{ __('layouts/navigation.profile') }}</x-dropdown-link>
 
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <x-dropdown-link href="{{ route('logout') }}"
                                                          onclick="event.preventDefault(); this.closest('form').submit();">
-                                            Log Out
+                                            {{ __('layouts/navigation.log_out') }}
                                         </x-dropdown-link>
                                     </form>
                                 </div>
@@ -476,12 +476,12 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
                         @if (Route::has('login'))
                             <div class="flex items-center space-x-4">
                                 <a href="{{ route('login') }}" class="font-semibold text-gray-600 hover:text-gray-900">
-                                    Log in
+                                    {{ __('layouts/navigation.log_in') }}
                                 </a>
 
                                 @if (Route::has('register'))
                                     <a href="{{ route('register') }}" class="font-semibold text-gray-600 hover:text-gray-900">
-                                        Register
+                                        {{ __('layouts/navigation.register') }}
                                     </a>
                                 @endif
                             </div>
@@ -513,7 +513,7 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
     <div x-show="open" x-transition class="sm:hidden">
         <!-- Country Selector -->
         <div class="pt-4 border-t border-gray-200 px-4">
-            <span class="text-xs text-gray-500 block mb-1">Select purchase country:</span>
+            <span class="text-xs text-gray-500 block mb-1">{{ __('layouts/navigation.select_purchase_country') }}</span>
 
             @php
             $countries = \App\Models\Country::where('is_active', 1)
@@ -562,7 +562,7 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
         <!-- Currency Selector (Mobile) -->
 <div class="pt-4 border-t border-gray-200 px-4">
     <span class="text-xs text-gray-500 block mb-1">
-        Select currency:
+        {{ __('layouts/navigation.select_currency') }}
     </span>
 
     <x-dropdown align="left" width="36">
@@ -612,14 +612,16 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
         <!-- Language Selector -->
         <div class="pt-4 border-t border-gray-200 px-4">
             @php
-                $languages = \App\Models\Language::where('is_active', true)->get();
-                $currentLang = app()->getLocale();
-            @endphp
-            <span class="text-xs text-gray-500 block mb-1">Select language:</span>
+                $languages = Language::where('is_active', true)
+                        ->orderBy('sort_order')
+                        ->get(); // <- Получаем коллекцию объектов
+                    $currentLang = app()->getLocale();
+                    @endphp
+            <span class="text-xs text-gray-500 block mb-1">{{ __('layouts/navigation.select_language') }}</span>
             <x-dropdown>
     <x-slot name="trigger">
-        <button class="flex items-center">
-            {{ $languages->firstWhere('code', $currentLang)?->name }}
+        <button class="flex items-center" dir="{{ $currentLanguage->direction ?? 'ltr' }}">
+            {{ $currentLanguage->native_name ?? $currentLanguage->name }}
         </button>
     </x-slot>
 
@@ -627,8 +629,9 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
         @foreach($languages as $language)
             @if($language->code !== $currentLang)
                 <x-dropdown-link
-                    href="{{ route('locale.switch', $language->code) }}">
-                    {{ $language->name }}
+                    href="{{ route('locale.switch', $language->code) }}"
+                    dir="{{ $language->direction ?? 'ltr' }}">
+                    {{ $language->native_name ?? $language->name }}
                 </x-dropdown-link>
             @endif
         @endforeach
@@ -693,13 +696,13 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
             </div>
             <div class="mt-3 space-y-1">
                 @if(Auth::user()->role === 'admin')    
-                <a href="{{ route('admin.home') }}" class="block px-4 py-2 text-gray-700">Admin Dashboard</a>
+                <a href="{{ route('admin.home') }}" class="block px-4 py-2 text-gray-700">{{ __('layouts/navigation.admin_dashboard') }}</a>
                 @endif
-                <a href="{{ route('manufacturer.home') }}" class="block px-4 py-2 text-gray-700">Dashboard</a>
-                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-gray-700">Profile</a>
+                <a href="{{ route('manufacturer.home') }}" class="block px-4 py-2 text-gray-700">{{ __('layouts/navigation.dashboard') }}</a>
+                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-gray-700">{{ __('layouts/navigation.profile') }}</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();" class="block px-4 py-2 text-gray-700">Log Out</a>
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();" class="block px-4 py-2 text-gray-700">{{ __('layouts/navigation.log_out') }}</a>
                 </form>
             </div>
         </div>
@@ -707,8 +710,8 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
 
         @guest
         <div class="px-4 py-4 border-t border-gray-200 space-y-2">
-            <a href="{{ route('login') }}" class="block text-gray-700 font-medium">Log in</a>
-            <a href="{{ route('register') }}" class="block text-blue-600 font-medium">Register</a>
+            <a href="{{ route('login') }}" class="block text-gray-700 font-medium">{{ __('layouts/navigation.log_in') }}</a>
+            <a href="{{ route('register') }}" class="block text-blue-600 font-medium">{{ __('layouts/navigation.register') }}</a>
         </div>
         @endguest
 

@@ -1,12 +1,12 @@
 @extends('dashboard.admin.layout')
 
 @section('dashboard-content')
-<div class="space-y-6">
-
+<div class="space-y-2">
+<a href="{{ route('admin.sellers.index') }}" class="text-gray-500 hover:underline">← Back to list</a>
     {{-- Заголовок --}}
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Supplier Details</h1>
-        <a href="{{ route('admin.sellers.index') }}" class="text-gray-500 hover:underline">← Back to list</a>
+        
     </div>
    
 

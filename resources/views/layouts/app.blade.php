@@ -25,18 +25,18 @@
     <!-- Скроллирующийся контейнер для мобилок -->
     <div class="marquee-wrapper flex items-center w-full">
         @auth
-            <span class="marquee-item mr-6">Welcome to Acrovoy B2B platform</span>
+            <span class="marquee-item mr-6">{{ __('layouts/app.welcome_to_acrovoy') }}</span>
         @else
-            <span class="marquee-item mr-6">Sign up today and be a part of the fastest growing B2B platform</span>
+            <span class="marquee-item mr-6">{{ __('layouts/app.sign_up_today') }}</span>
             <a href="{{ route('register') }}" class="marquee-item mr-6 px-2 py-0.5 border border-white rounded text-white text-xs hover:bg-white hover:text-[#3B2F2F]">
-                Join Now
+                {{ __('layouts/app.join_now') }}
             </a>
         @endauth
         <a href="{{ route('register.manufacturer') }}" class="marquee-item underline">
-            <span class="ml-0 mr-8">|</span>For Sellers</a>
+            <span class="ml-0 mr-8">|</span>{{ __('layouts/app.for_seller') }}</a>
 
         <a href="{{ route('help.index') }}" class="marquee-item">
-            <span class="ml-8 mr-8">|</span>Help Center
+            <span class="ml-8 mr-8">|</span>{{ __('layouts/app.help_center') }}
         </a>
 
 

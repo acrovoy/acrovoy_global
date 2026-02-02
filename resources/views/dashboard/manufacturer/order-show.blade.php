@@ -1,14 +1,24 @@
 @extends('dashboard.layout')
 
 @section('dashboard-content')
+
+<a href="{{ route('manufacturer.orders') }}"
+           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-4">
+            ← Back to orders
+        </a>
+
 <div class="flex flex-col gap-6">
 
     {{-- Header --}}
     <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">
-            Order #{{ $order['id'] }} 
-        </h2>
-
+        <div>
+            <h2 class="text-2xl font-bold">
+                    Order #{{ $order['id'] }} 
+                </h2>
+                <p class="text-sm text-gray-500">
+                    Manage exchange rates relative to the base currency (USD)
+                </p>
+        </div>
         <span class="px-3 py-1 rounded text-sm
             @if($order['status'] === 'pending') bg-yellow-100 text-yellow-800
             @elseif($order['status'] === 'paid') bg-blue-100 text-blue-800
@@ -24,7 +34,7 @@
 
 
      {{-- Spory / Disputes для продавца --}}
-<div class="border rounded-lg p-4 bg-gray-50 mt-6" x-data="{ openModalId: null }">
+<div class="border rounded-lg p-4 bg-gray-50" x-data="{ openModalId: null }">
     <h3 class="font-semibold mb-3 text-lg">Disputes</h3>
 
     @if(count($order['disputes']) > 0)
@@ -418,10 +428,7 @@
     {{-- Footer --}}
     <div class="flex justify-between text-sm text-gray-500">
         <span>Order date: {{ $order['date'] }}</span>
-        <a href="{{ route('manufacturer.orders') }}"
-           class="text-blue-600 hover:underline">
-            ← Back to orders
-        </a>
+        
     </div>
 
 </div>

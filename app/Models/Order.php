@@ -12,6 +12,7 @@ class Order extends Model
     protected $fillable = [
     'user_id',
     'status',
+    'type',
     'total',
     'delivery_price',
     'delivery_method',
@@ -26,7 +27,8 @@ class Order extends Model
     'phone',
     'tracking_number',
     'invoice_file',
-    'rfq_offer_id'
+    'rfq_offer_id',
+    'project_id',
 ];
 
     public function items()

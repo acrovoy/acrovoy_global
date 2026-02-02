@@ -2,7 +2,10 @@
 
 @section('dashboard-content')
 
-
+<a href="{{ route('admin.products.index') }}"
+           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-4">
+            ← Back to list
+</a>
 
 
 {{-- Статус и действия --}}
@@ -49,12 +52,15 @@
     </div>
 
     {{-- Правая часть: кнопка Back --}}
-    <div class="ml-auto">
-        <a href="{{ route('admin.products.index') }}"
-           class="px-3 py-1 border border-gray-400 text-gray-800 text-sm font-medium hover:bg-gray-100 transition">
-            ← Back to list
-        </a>
-    </div>
+   @php
+    use App\Models\Language;
+
+    $language = optional(Language::where('code', $product1->supplier->user->language)->first());
+@endphp
+
+<div class="ml-auto text-sm">
+    Language of supplier: {{ $language->name ?? 'N/A' }}
+</div>
 
 </div>
 
@@ -70,7 +76,9 @@
             <a href="#" class="hover:text-black">
                 {{ $product1->category->name ?? 'Category' }}
             </a> /
-            <span class="text-gray-900">{{ $product1->name }}</span>
+            <a href="{{ route('product.show', $product1->slug) }}">
+            <span class="text-blue-500">{{ $product1->name }}</span>
+            </a>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">

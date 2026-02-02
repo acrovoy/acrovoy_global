@@ -151,6 +151,14 @@
             </li>
 
             <li>
+                <a href="{{ route('buyer.projects.index') }}"
+                class="block px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
+                    My Projects
+                </a>
+            </li>
+
+
+            <li>
                 <a href="{{ route('buyer.cart.index') }}"
                    class="block px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
                     Cart

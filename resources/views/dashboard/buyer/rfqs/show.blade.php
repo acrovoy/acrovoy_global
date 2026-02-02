@@ -144,6 +144,7 @@
                             <form action="{{ route('buyer.rfqs.accept', ['rfq' => $rfq->id]) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="offer_id" value="{{ $offer->id }}">
+                                <input type="hidden" name="type" value="rfq">
                                 <button type="submit"
     class="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 text-center leading-tight">
     Accept Offer

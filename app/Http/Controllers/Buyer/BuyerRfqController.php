@@ -6,10 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRFQRequest;
 
 use App\Models\Rfq;
 use App\Models\RfqOffer;
 use App\Models\Category;
+use App\Models\Order;
 
 
 class BuyerRfqController extends Controller
@@ -36,7 +38,9 @@ class BuyerRfqController extends Controller
      */
     public function create()
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::where('type', 'rfq')
+                          ->orderBy('name')
+                          ->get();
 
         return view('dashboard.buyer.rfqs.create', compact('categories'));
     }
@@ -44,16 +48,9 @@ class BuyerRfqController extends Controller
     /**
      * Сохранение RFQ
      */
-    public function store(Request $request)
+    public function store(StoreRFQRequest $request)
     {
-        $data = $request->validate([
-    'title'       => 'required|string|max:255',
-    'description' => 'required|string',
-    'category_id' => 'nullable|exists:categories,id',
-    'quantity'    => 'nullable|integer|min:1',
-    'deadline'    => 'nullable|date|after:now',
-    'attachment'  => 'nullable|file|mimes:pdf,jpg,jpeg,png,dwg,dxf|max:10240', // max 10MB
-]);
+        $data = $request->validated();
 
         $data['buyer_id'] = auth()->id();
 
@@ -101,7 +98,7 @@ public function edit(Rfq $rfq)
 /**
  * Обновление RFQ
  */
-public function update(Request $request, Rfq $rfq)
+public function update(StoreRFQRequest $request, Rfq $rfq)
 {
     $this->authorize('update', $rfq);
 
@@ -110,14 +107,7 @@ public function update(Request $request, Rfq $rfq)
             ->with('error', 'You cannot update this RFQ because it already has offers.');
     }
 
-    $data = $request->validate([
-        'title'       => 'required|string|max:255',
-        'description' => 'required|string',
-        'category_id' => 'nullable|exists:categories,id',
-        'quantity'    => 'nullable|integer|min:1',
-        'deadline'    => 'nullable|date|after:now',
-        'attachment'  => 'nullable|file|mimes:pdf,jpg,jpeg,png,dwg,dxf|max:10240', // max 10MB
-    ]);
+    $data = $request->validated();
 
     $rfq->update($data);
 
@@ -198,9 +188,10 @@ public function update(Request $request, Rfq $rfq)
       // 🔹 Создаём заказ
     $buyer = $rfq->buyer;
 
-    $order = \App\Models\Order::create([
+    $order = Order::create([
         'user_id' => $buyer->id,
         'rfq_offer_id' => $offer->id,
+        'type' => 'rfq',
         'status' => 'pending',
         'total' => $offer->price,
         'delivery_price' => $offer->shipping_template->price ?? 0,

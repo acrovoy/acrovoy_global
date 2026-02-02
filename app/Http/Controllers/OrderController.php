@@ -111,6 +111,7 @@ class OrderController extends Controller
         $order = Order::create([
             'user_id' => auth()->id(),
             'status' => 'pending',
+            'type' => 'product',
             'total' => $total,
             'delivery_price' => $shippingPrice,
             'delivery_method' => $shippingTemplate?->title,

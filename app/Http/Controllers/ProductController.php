@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Country;
 use App\Models\Language;
 use App\Models\MessageThread;
+use App\Models\Project;
 
 
 
@@ -102,10 +103,23 @@ class ProductController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+         
+
+// Получаем проекты пользователя в статусе draft
+$projects = collect(); // пустая коллекция
+
+if ($user) {
+    // замените 'user_id' на реальную колонку, например 'buyer_id'
+    $projects = Project::where('buyer_id', $user->id) // <-- исправить на правильное поле
+                       ->where('status', 'draft')
+                       ->orderBy('created_at', 'desc')
+                       ->get();
+}
+
 
        
 
-        return view('product.show', compact('product1'));
+        return view('product.show', compact('product1', 'projects'));
     }
 
 

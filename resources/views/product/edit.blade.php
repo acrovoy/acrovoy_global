@@ -2,6 +2,19 @@
 
 @section('dashboard-content')
 
+
+<div>
+            <h2 class="text-2xl font-semibold text-gray-900">Edit Product</h2>
+            <p class="text-sm text-gray-500 mb-4">
+                Manage all your products, edit details, prices, and inventory.
+            </p>
+        </div>
+
+
+
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+<div class="p-6">
+
 {{-- SUCCESS --}}
 @if(session('success'))
 <div class="mb-6 rounded-lg bg-green-100 border border-green-300 text-green-800 px-4 py-3">
@@ -26,10 +39,11 @@
 </div>
 @endif
 
+
 <form method="POST"
     action="{{ route('products.update', $product->id) }}"
     enctype="multipart/form-data"
-    class="space-y-10" id="productForm">
+    class="" id="productForm">
     @csrf
     @method('PUT')
 
@@ -47,7 +61,7 @@
         <div class="border rounded p-4 mb-4">
             <h4 class="font-semibold mb-3">Product Name</h4>
 
-            <div class="flex flex-col md:flex-row gap-2">
+            <div class="flex-col md:flex-row gap-2">
                 @foreach($languages as $language)
                 <div class="flex-1">
                     <label class="block text-sm text-gray-600 mb-1">
@@ -55,7 +69,7 @@
                     </label>
                     <input type="text"
                         name="name[{{ $language->code }}]"
-                        class="input w-full"
+                        class="input mb-2 w-full"
                         placeholder="Product Name ({{ $language->code }})"
                         value="{{ old(
                                'name.' . $language->code,
@@ -70,7 +84,7 @@
         <div class="border rounded p-4 mb-4">
             <h4 class="font-semibold mb-3">Short Description</h4>
 
-            <div class="flex flex-col md:flex-row gap-2">
+            <div class="flex-col md:flex-row gap-2">
                 @foreach($languages as $language)
                 <div class="flex-1">
                     <label class="block text-sm text-gray-600 mb-1">
@@ -78,7 +92,7 @@
                     </label>
                     <input type="text"
                         name="undername[{{ $language->code }}]"
-                        class="input w-full"
+                        class="input mb-2 w-full"
                         placeholder="Undername ({{ $language->code }})"
                         value="{{ old(
                                'undername.' . $language->code,
@@ -93,14 +107,14 @@
         <div class="border rounded p-4 mb-4">
             <h4 class="font-semibold mb-3">Full Product Description</h4>
 
-            <div class="flex flex-col md:flex-row gap-2">
+            <div class="flex-col md:flex-row gap-2">
                 @foreach($languages as $language)
                 <div class="flex-1">
                     <label class="block text-sm text-gray-600 mb-1">
                         {{ strtoupper($language->code) }}
                     </label>
                     <textarea name="description[{{ $language->code }}]"
-                        class="input w-full"
+                        class="input mb-2 w-full"
                         rows="4"
                         placeholder="Full Description ({{ $language->code }})">{{ old(
                                   'description.' . $language->code,
@@ -312,11 +326,14 @@
                 {{-- Parameter --}}
                 <div class="mb-4">
                     <label class="block mb-1 font-medium">Parameter</label>
-                    <div class="flex flex-col md:flex-row gap-2">
+                    <div class="flex-col md:flex-row gap-2">
                         @foreach($languages as $language)
+                        <label class="block text-sm text-gray-600 mb-1">
+                        {{ strtoupper($language->code) }}
+                    </label>
                         <input type="text"
                             name="specs[{{ $i }}][{{ $language->code }}][key]"
-                            class="input flex-1"
+                            class="input mb-2 flex-1"
                             placeholder="Parameter ({{ $language->code }})"
                             value="{{ $specsTranslations[$language->code][$i]['key'] ?? '' }}">
                         @endforeach
@@ -326,11 +343,14 @@
                 {{-- Value --}}
                 <div>
                     <label class="block mb-1 font-medium">Value</label>
-                    <div class="flex flex-col md:flex-row gap-2">
+                    <div class="flex-col md:flex-row gap-2">
                         @foreach($languages as $language)
+                        <label class="block text-sm text-gray-600 mb-1">
+                        {{ strtoupper($language->code) }}
+                    </label>
                         <input type="text"
                             name="specs[{{ $i }}][{{ $language->code }}][value]"
-                            class="input flex-1"
+                            class="input mb-2 flex-1"
                             placeholder="Value ({{ $language->code }})"
                             value="{{ $specsTranslations[$language->code][$i]['value'] ?? '' }}">
                         @endforeach
@@ -447,6 +467,8 @@
         <button type="submit" id="submitBtn" class="bg-green-600 text-white px-6 py-2 rounded hidden">Сохранить</button>
     </div>
 </form>
+</div>
+</div>
 
 <style>
     .input {

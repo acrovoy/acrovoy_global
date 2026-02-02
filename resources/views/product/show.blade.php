@@ -7,7 +7,7 @@
 
         {{-- Breadcrumb --}}
         <div class="text-sm text-gray-600 mb-6 flex flex-wrap gap-1">
-            <a href="{{ route('catalog.index') }}" class="hover:text-black">All Categories</a> /
+            <a href="{{ route('catalog.index') }}" class="hover:text-black">{{ __('product/product_show.root') }}</a> /
             <a href="{{ route('catalog.index', $product1->category->slug) }}" class="hover:text-black">
                 {{ $product1->category->name ?? 'Category' }}
             </a> /
@@ -40,45 +40,25 @@
 
 
             {{-- Info --}}
-            <div class="rounded-xl shadow p-6">
-                <div class="flex items-center mb-1">
-                    <h1 class="text-3xl font-extrabold text-gray-900">
-                        {{ $product1->name }}
-                    </h1>
-                    <span class="bg-yellow-900 text-white px-2 py-0 rounded text-sm ml-2 mr-6">
-                        {{ $product1->id }}
-                    </span>
+            <div class="rounded-xl shadow p-6" x-data="{ showProjectBox: false }">
+                <div class="flex items-start mb-1">
 
-                    @can('update', $product1)
-                    <a href="{{ route('products.edit', $product1->id) }}"
-                        class="inline-flex items-center gap-2
-                      px-4 py-2
-                      text-sm font-medium
-                      text-blue-700
-                      border border-blue-600
-                      rounded-lg
-                      hover:bg-blue-600 hover:text-white
-                      transition
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+        {{-- Title --}}
+        <div>
+        <div class="flex items-center flex-wrap gap-3">
+            <h1 class="text-3xl font-extrabold text-gray-900">
+                {{ $product1->name }}
+            </h1>
 
-                        {{-- Icon --}}
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M11 5h2m2 2l4 4M7 7l10 10m-6 6H5v-6l10-10" />
-                        </svg>
+            <span class="bg-yellow-900 text-white px-2 py-0 rounded text-sm">
+                {{ $product1->id }}
+            </span>
 
-                        Edit
-                    </a>
-                    @endcan
-                </div>
 
-                <p class="text-gray-700 mb-2 leading-relaxed">{{ $product1->undername }}</p>
+
+        </div>
+
+<p class="text-gray-700 mb-2 leading-relaxed">{{ $product1->undername }}</p>
 
                 {{-- ⭐ Рейтинг и продано --}}
                 @php
@@ -109,53 +89,117 @@
                     </div>
 
                     {{-- Количество отзывов --}}
-                    <span>({{ $reviewsCount }} отзыв{{ $reviewsCount != 1 ? 'ов' : '' }})</span>
+                    <span>({{ $reviewsCount }} {{ __('product/product_show.reviews') }})</span>
 
                     @if($soldCount > 0)
                     <span class="mx-2">•</span>
-                    <span>Продано: {{ $soldCount }}</span>
+                    <span>{{ __('product/product_show.sold') }}: {{ $soldCount }}</span>
                     @endif
                 </div>
 
 
-                {{-- Price / Quantity Table --}}
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <h3 class="font-semibold text-lg leading-none">
-                        Price per Quantity
-                    </h3>
 
-                    <span class="text-xs text-gray-500 leading-none">
-                        Shipping cost not included
-                    </span>
-                    <table class="w-full text-left text-gray-700">
-                        <thead>
-                            <tr class="border-b">
-                                <th class="py-2">Quantity</th>
-                                <th class="py-2">Unit Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($product1->priceTiers as $tier)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2">
-                                    {{ $tier->min_qty }} - {{ $tier->max_qty ?? '∞' }} pcs
-                                </td>
-                                <td class="py-2 font-semibold text-blue-900 {{ $loop->first ? 'text-xl' : 'text-base' }}">
-                                    {{ price($tier['price']) }}
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
 
+
+
+
+</div>
+
+        
+
+
+
+
+
+       {{-- Actions --}}
+<div class="ml-auto flex items-center gap-2">
+
+    {{-- ➕ Add to project --}}
+    <div class="inline-flex flex-col items-end w-[180px]">
+    <!-- Button -->
+    <button
+        @click="showProjectBox = !showProjectBox"
+        title="Add to project"
+        class="inline-flex items-center gap-2
+               px-4 py-2
+               rounded-lg
+               bg-gray-500 text-white
+               text-sm font-semibold
+               shadow-sm
+               hover:bg-gray-700 hover:shadow
+               transition-colors duration-200">
+        <!-- Icon -->
+        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 transition">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+        </span>
+
+        <!-- Text -->
+        <span class="whitespace-nowrap">
+            Add to project
+        </span>
+    </button>
+
+    <!-- Text below button, same width -->
+    <p class="mt-1 text-xs text-gray-500 text-right inline-block">
+        Organize your products into projects — create a project in your dashboard first.
+    </p>
+</div>
+
+
+
+
+
+    {{-- Edit --}}
+    @can('update', $product1)
+        <a href="{{ route('products.edit', $product1->id) }}"
+           class="inline-flex items-center gap-2
+                  px-4 py-2
+                  text-sm font-medium
+                  text-blue-700
+                  border border-blue-600
+                  rounded-lg
+                  hover:bg-blue-600 hover:text-white
+                  transition">
+            Edit
+        </a>
+    @endcan
+
+</div>
+    </div>
+
+
+
+
+                
+
+
+
+
+@include('product.partials.notification')
+
+  
+@include('product.partials.add-to-project', ['product1' => $product1, 'projects' => $projects])
+
+@include('product.partials.price-table', ['product1' => $product1])
+
+
+                
+
+
+                
                 {{-- Color / Material Options --}}
                 @php
                 $colors = $product1->colors; // Получаем коллекцию цветов
                 @endphp
                 @if($colors->isNotEmpty())
                 <div class="mb-6">
-                    <h3 class="font-semibold text-lg mb-3">Available Colors</h3>
+                    <h3 class="font-semibold text-lg mb-3">{{ __('product/product_show.available_colors') }}</h3>
 
                     <div class="flex flex-wrap gap-3">
                         @foreach($product1->colors as $material)
@@ -196,9 +240,9 @@
                 {{-- Specifications --}}
                 @if($product1->specifications->count())
                 <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <h3 class="font-semibold text-lg mb-2 leading-none">Specifications</h3>
+                    <h3 class="font-semibold text-lg mb-2 leading-none">{{ __('product/product_show.specification') }}</h3>
                     <p class="text-sm text-gray-500 leading-tight">
-                        The shipping templates selected for this product.
+                        {{ __('product/product_show.shipping_templates_selected_text') }}
                     </p>
 
                     <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
@@ -212,29 +256,9 @@
                 </div>
                 @endif
 
+@include('product.partials.materials-table', ['product1' => $product1])
 
-
-                {{-- Materials --}}
-                @if($product1->materials->isNotEmpty())
-                <div class="mb-8 flex items-start gap-3">
-
-                    <span class="text-sm text-gray-500 pt-1 whitespace-nowrap">
-                        Materials used:
-                    </span>
-
-                    <div class="flex flex-wrap gap-2">
-                        @foreach($product1->materials as $material)
-                        <span class="inline-flex items-center
-                         px-3 py-1.5 rounded-md
-                         bg-gray-300/70
-                         text-gray-800 text-sm leading-none">
-                            {{ $material->name }}
-                        </span>
-                        @endforeach
-                    </div>
-
-                </div>
-                @endif
+                
 
 
 
@@ -242,19 +266,19 @@
                 <div class="bg-[#F7F3EA] border border-gray-200 rounded-lg p-6 mb-6">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">
                         <div>
-                            <p class="text-gray-500">MOQ</p>
+                            <p class="text-gray-500">{{ __('product/product_show.MOQ') }}</p>
                             <p class="font-semibold text-gray-900">
-                                {{ $product1->moq ?? 'N/A' }} pcs
+                                {{ $product1->moq ?? 'N/A' }} {{ __('product/product_show.pcs') }}
                             </p>
                         </div>
                         <div>
-                            <p class="text-gray-500">Lead time</p>
+                            <p class="text-gray-500">{{ __('product/product_show.lead_time') }}</p>
                             <p class="font-semibold text-gray-900">
-                                {{ $product1->lead_time ?? 'N/A' }} days
+                                {{ $product1->lead_time ?? 'N/A' }} {{ __('product/product_show.days') }}
                             </p>
                         </div>
                         <div>
-                            <p class="text-gray-500">Customization</p>
+                            <p class="text-gray-500">{{ __('product/product_show.customization') }}</p>
                             <p class="font-semibold text-gray-900">
                                 {{ $product1->customization ? 'Available' : 'Not available' }}
                             </p>
@@ -262,52 +286,12 @@
                     </div>
                 </div>
 
+@include('product.partials.shippingtemplates-table', ['product1' => $product1])
+                
 
-                {{-- Shipping Information --}}
-                @if($product1->shippingTemplates->isNotEmpty())
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <h3 class="font-semibold text-lg mb-2 leading-none">Shipping Information</h3>
+                
 
-                    <p class="text-sm text-gray-500 leading-tight">
-                        The shipping templates selected for this product. Templates are managed in the <span class="font-medium">Shipping Center</span>.
-                    </p>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
-                        @foreach($product1->shippingTemplates as $template)
-                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                            <h4 class="font-semibold text-gray-900">{{ $template->title }}</h4>
-                            @if(!empty($template->description))
-                            <p class="text-gray-700 text-sm mt-1">{{ $template->description }}</p>
-                            @endif
-                            <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
-                                @if($template->price)
-                                <div class="inline-flex items-center gap-2
-            bg-blue-50 border border-blue-100
-            px-3 py-1.5 rounded-lg">
-                                    <span class="text-sm text-blue-900 font-medium">
-                                        Price:
-                                    </span>
-                                    <span class="text-base font-semibold text-blue-900">
-                                        ${{ number_format($template->price, 2) }}
-                                    </span>
-                                </div>
-                                @endif
-                                @if($template->delivery_time)
-                                <div>
-                                    <div class="font-medium">Delivery Time:</div>
-                                    <div>{{ $template->delivery_time }} days</div>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
-
-                {{-- Description --}}
-
-                <p class="text-gray-700 mb-6 leading-relaxed">Place of Origin: <strong>{{ $product1->country?->name ?? 'Country not specified' }}</strong>
+                <p class="text-gray-700 mb-6 leading-relaxed">{{ __('product/product_show.place_of_origin') }} <strong>{{ $product1->country?->name ?? 'Country not specified' }}</strong>
                 </p>
 
 
@@ -316,7 +300,7 @@
                     <button
                         class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
                                text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
-                        Checkout
+                        {{ __('product/product_show.checkout') }}
                     </button>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -324,7 +308,7 @@
                             class="w-full border border-gray-300 py-3 rounded-xl
                                    text-gray-800 font-medium shadow-sm
                                    hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105">
-                            Contact Supplier
+                            {{ __('product/product_show.contact_supllire') }}
                         </button>
 
 
@@ -336,10 +320,10 @@
                             <button
                                 type="submit"
                                 class="w-full border border-gray-300 py-3 rounded-xl
-               text-gray-800 font-medium shadow-sm
-               hover:border-black hover:text-black hover:shadow-md
-               transition-all transform hover:scale-105">
-                                Add to Cart
+                                        text-gray-800 font-medium shadow-sm
+                                        hover:border-black hover:text-black hover:shadow-md
+                                        transition-all transform hover:scale-105">
+                                                            {{ __('product/product_show.add_to_cart') }}
                             </button>
                         </form>
 
@@ -347,11 +331,25 @@
 
 
                     </div>
+
+
+               
+
+
+
+
+                    
+
+
+
+
                 </div>
+
+                
 
                 {{-- Supplier Info --}}
                 <div class="text-gray-700">
-                    Supplier:
+                    {{ __('product/product_show.supplier') }}
                     <a href="{{ url('/supplier/' . $product1->supplier->slug) }}" class="font-medium text-blue-600 hover:underline">
                         {{ $product1->supplier->name }}
                     </a>
@@ -370,7 +368,7 @@
 
     {{-- Header --}}
     <div class="flex items-center justify-between p-4 border-b">
-        <h3 class="font-semibold text-lg">Chat with {{ $product1->supplier->name }}</h3>
+        <h3 class="font-semibold text-lg">{{ __('product/product_show.chat_with') }} {{ $product1->supplier->name }}</h3>
         <button id="closeChat" class="text-gray-500 hover:text-black">&times;</button>
     </div>
 
@@ -411,11 +409,11 @@
     <div class="p-4 border-t">
 
         <form id="chatForm" class="flex gap-3">
-            <input type="text" name="text" placeholder="Type your message..."
+            <input type="text" name="text" placeholder="{{ __('product/product_show.type_your_message') }}"
                 class="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900">
             <button type="submit"
                 class="bg-[#23423F] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#1D2D33]">
-                Send
+                {{ __('product/product_show.send') }}
             </button>
         </form>
 

@@ -32,6 +32,8 @@ use App\Http\Controllers\HelpController;
 use App\Http\Controllers\Supplier\SupplierRfqController;
 
 use App\Http\Controllers\Buyer\BuyerRfqController;
+use App\Http\Controllers\Buyer\BuyerProjectController;
+use App\Http\Controllers\Buyer\ProjectItemController;
 
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminUserController;
@@ -304,6 +306,21 @@ Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {
     Route::post('/rfqs/{rfq}/offers/accept', [BuyerRfqController::class, 'acceptOffer'])->name('buyer.rfqs.accept');
     Route::get('rfqs/{rfq}/edit', [BuyerRfqController::class, 'edit'])->name('buyer.rfqs.edit');
     Route::patch('rfqs/{rfq}', [BuyerRfqController::class, 'update'])->name('buyer.rfqs.update');
+    //Projects
+    Route::resource('projects', BuyerProjectController::class)->names([
+        'index' => 'buyer.projects.index',
+        'create' => 'buyer.projects.create',
+        'store' => 'buyer.projects.store',
+        'show' => 'buyer.projects.show',
+        'edit' => 'buyer.projects.edit',
+        'update' => 'buyer.projects.update',
+        'destroy' => 'buyer.projects.destroy',
+    ]);
+
+    Route::post('project-items', [ProjectItemController::class, 'store'])
+     ->name('buyer.project-items.store');
+
+
 });
 
 

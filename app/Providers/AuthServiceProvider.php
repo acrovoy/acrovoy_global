@@ -6,12 +6,14 @@ use App\Models\ShippingTemplate;
 use App\Models\Order;
 use App\Models\Rfq;
 use App\Models\RfqOffer;
+use App\Models\Project;
 
 use App\Policies\ProductPolicy;
 use App\Policies\ShippingTemplatePolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\RfqPolicy;
 use App\Policies\RfqOfferPolicy;
+use App\Policies\ProjectPolicy;
 
 // use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -30,6 +32,7 @@ class AuthServiceProvider extends ServiceProvider
         Order::class => OrderPolicy::class,
         Rfq::class => RfqPolicy::class,
         RfqOffer::class => RfqOfferPolicy::class,
+        Project::class => ProjectPolicy::class,
     ];
 
     /**

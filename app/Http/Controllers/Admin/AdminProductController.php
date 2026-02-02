@@ -60,8 +60,7 @@ public function show(Product $product)
             'user',
         ]);
 
-        // ⬇️ ВАЖНО: передаём как product1,
-        // чтобы переиспользовать существующий шаблон
+      
         return view('dashboard.admin.products.show', [
             'product1' => $product
         ]);

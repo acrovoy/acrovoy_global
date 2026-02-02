@@ -3,6 +3,9 @@
 @section('content')
 <div class="max-w-4xl mx-auto py-8">
 
+
+
+
     {{-- Заголовок --}}
     <div class="mb-6">
         <h1 class="text-2xl font-semibold text-gray-800">
@@ -12,6 +15,18 @@
             Create a request to receive price offers from manufacturers
         </p>
     </div>
+
+
+@if ($errors->any())
+    <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
+        <ul class="list-disc list-inside">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 
     {{-- Карточка --}}
     <div class="bg-white shadow rounded-lg p-6">

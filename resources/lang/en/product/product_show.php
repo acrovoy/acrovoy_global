@@ -1,0 +1,35 @@
+
+<?php
+
+return [
+    'root' => 'All Categories',
+    'reviews' => 'Reviews',
+    'price_per_quantity' => 'Price per Quantity',
+    'sold' => 'sold',
+    'shipping_cost_not_included' => 'Shipping cost not included',
+    'quantity' => 'Quantity',
+    'unit_price' => 'Unit Price',
+    'available_colors' => 'Available Colors',
+    'specification' => 'Specifications',
+    'shipping_templates_selected_text' => 'The shipping templates selected for this product.',
+    'materials_used' => 'Materials used:',
+    'MOQ' => 'MOQ',
+    'pcs' => 'pcs',
+    'days' => 'days',
+    'customization' => 'Customization',
+    'lead_time' => 'Lead time',
+    'shipping_information' => 'Shipping Information',
+    'shipping_templates_text2' => 'The shipping templates selected for this product. Templates are managed in the ',
+    'shipping_center' => 'Shipping Center',
+    'price' => 'Price:',
+    'delivery_time' => 'Delivery Time:',
+    'place_of_origin' => 'Place of Origin:',
+    'checkout' => 'Checkout',
+    'contact_supllire' => 'Contact Supplier',
+    'add_to_cart' => 'Add to Cart',
+    'supplier' => 'Supplier:',
+    'chat_with' => 'Chat with:',
+    'send' => 'Send',
+    'type_your_message' => 'Type your message...',    
+    
+];

@@ -1,6 +1,12 @@
 @extends('dashboard.admin.layout')
 
 @section('dashboard-content')
+
+<a href="{{ route('admin.orders.index') }}"
+           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-4">
+            ← Back to orders
+        </a>
+
 <div class="flex flex-col gap-6">
 
     {{-- Header --}}
@@ -252,8 +258,12 @@
     </div>
 
     {{-- Back --}}
+    
     <div class="flex justify-start">
-        <a href="{{ route('admin.orders.index') }}" class="text-blue-600 hover:underline">← Back to orders</a>
+        <a href="{{ route('admin.orders.index') }}"
+           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-4">
+            ← Back to orders
+        </a>
     </div>
 
 </div>

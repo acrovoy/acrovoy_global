@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+use App\Models\Category;
+
 class StoreProductRequest extends FormRequest
 {
     /**
@@ -38,7 +40,18 @@ class StoreProductRequest extends FormRequest
             }
         },
 
-        'category' => ['required', 'exists:categories,id'],
+        'category' => ['required', 'exists:categories,id',
+                            function ($attribute, $value, $fail) {
+                                $category = Category::find($value);
+
+                                if (!$category) {
+                                    return;
+                                }
+
+                                if ($category->type !== 'product') {
+                                    $fail('This category is used for custom project requests (RFQ). Please choose a product category instead.');
+                                }
+                            }],
             'moq' => ['nullable', 'integer', 'min:1'],
             'lead_time' => ['nullable', 'integer', 'min:1'],
 
