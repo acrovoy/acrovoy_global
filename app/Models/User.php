@@ -52,6 +52,31 @@ class User extends Authenticatable
         return $this->belongsTo(PremiumSellerPlan::class, 'premium_plan_id');
     }
 
+
+    // Связь с премиум-планом покупателя
+    public function buyerPremiumPlan()
+    {
+        return $this->belongsTo(PremiumSellerPlan::class, 'buyer_premium_plan_id');
+    }
+
+    // Проверка активного премиум-плана поставщика
+    public function isSupplierPremium()
+    {
+        return $this->premium_plan_id
+            && $this->supplier_premium_start
+            && $this->supplier_premium_end
+            && now()->between($this->supplier_premium_start, $this->supplier_premium_end);
+    }
+
+    // Проверка активного премиум-плана покупателя
+    public function isBuyerPremium()
+    {
+        return $this->buyer_premium_plan_id
+            && $this->buyer_premium_start
+            && $this->buyer_premium_end
+            && now()->between($this->buyer_premium_start, $this->buyer_premium_end);
+    }
+
     public function getFullNameAttribute()
     {
         return trim($this->name . ' ' . $this->last_name);

@@ -25,6 +25,30 @@
                required>
     </div>
 
+    {{-- Plan target type --}}
+<div>
+    <label for="target_type" class="block font-medium mb-1">
+        Plan Type
+    </label>
+
+    <select name="target_type" id="target_type"
+            class="w-full border rounded p-2" required>
+        <option value="supplier"
+            {{ $plan->target_type === 'supplier' ? 'selected' : '' }}>
+            Supplier (Seller) Plan
+        </option>
+
+        <option value="buyer"
+            {{ $plan->target_type === 'buyer' ? 'selected' : '' }}>
+            Buyer Plan
+        </option>
+    </select>
+
+    <p class="text-xs text-gray-500 mt-1">
+        Choose who this plan is intended for.
+    </p>
+</div>
+
     {{-- Popular checkbox --}}
     <div class="flex items-center gap-2">
         <input type="checkbox" name="popular" id="popular" class="h-4 w-4"

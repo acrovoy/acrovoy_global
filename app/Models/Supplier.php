@@ -15,6 +15,7 @@ class Supplier extends Model
     'email',
     'slug',       
     'is_verified',
+    'is_trusted',
     'is_premium',
     'status',
     'phone',

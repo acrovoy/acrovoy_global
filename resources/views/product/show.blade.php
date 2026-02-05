@@ -263,40 +263,100 @@
 
 
                 {{-- Commercial Terms --}}
-                <div class="bg-[#F7F3EA] border border-gray-200 rounded-lg p-6 mb-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">
-                        <div>
-                            <p class="text-gray-500">{{ __('product/product_show.MOQ') }}</p>
-                            <p class="font-semibold text-gray-900">
-                                {{ $product1->moq ?? 'N/A' }} {{ __('product/product_show.pcs') }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500">{{ __('product/product_show.lead_time') }}</p>
-                            <p class="font-semibold text-gray-900">
-                                {{ $product1->lead_time ?? 'N/A' }} {{ __('product/product_show.days') }}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500">{{ __('product/product_show.customization') }}</p>
-                            <p class="font-semibold text-gray-900">
-                                {{ $product1->customization ? 'Available' : 'Not available' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                {{-- Commercial Terms --}}
+<div class="bg-[#F7F3EA] border border-gray-200 rounded-lg p-6 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">
+        <div>
+            <p class="text-gray-500">{{ __('product/product_show.MOQ') }}</p>
+            <p class="font-semibold text-gray-900">
+                {{ $product1->moq ?? 'N/A' }} {{ __('product/product_show.pcs') }}
+            </p>
+        </div>
+        <div>
+            <p class="text-gray-500">{{ __('product/product_show.lead_time') }}</p>
+            <p class="font-semibold text-gray-900">
+                {{ $product1->lead_time ?? 'N/A' }} {{ __('product/product_show.days') }}
+            </p>
+        </div>
+        <div>
+            <p class="text-gray-500">{{ __('product/product_show.customization') }}</p>
+            <p class="font-semibold text-gray-900">
+                {{ $product1->customization ? 'Available' : 'Not available' }}
+            </p>
+        </div>
+    </div>
+</div>
+
+{{-- Заказать кастомизацию --}}
+@if($product1->customization)
+
+{{-- Customization order panel --}}
+<div class="mt-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+
+    <h4 class="text-base font-semibold text-gray-900 mb-1">
+        Request product customization
+    </h4>
+
+    <p class="text-sm text-gray-500 mb-4">
+        Create a dedicated project for customized production of this product.
+    </p>
+
+    {{-- Instruction --}}
+    <div class="mb-4 rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">
+        <p class="font-medium mb-1">How it works:</p>
+        <ul class="list-disc list-inside space-y-1 text-gray-600">
+            <li>A new project will be created automatically</li>
+            <li>All product data will be copied into the project</li>
+            <li>You can edit specifications and send RFQ back to supplier</li>
+        </ul>
+    </div>
+
+    @auth
+        <form action="{{ route('buyer.custom-orders.store') }}" method="POST">
+            @csrf
+            <input type="hidden" name="product_id" value="{{ $product1->id }}">
+
+            <button
+                type="submit"
+                class="w-full bg-indigo-300 hover:bg-indigo-400 text-white py-3 rounded-lg
+                       text-sm font-semibold tracking-wide transition shadow-md">
+                Order the customization of this product
+            </button>
+        </form>
+    @endauth
+
+    @guest
+        <div class="text-center py-4">
+            <p class="text-sm text-gray-500 mb-2">
+                Only registered users can request product customization.
+            </p>
+            <button
+                disabled
+                class="w-full bg-gray-400 text-white py-3 rounded-lg
+                       text-sm font-semibold cursor-not-allowed">
+                Order the customization of this product
+            </button>
+        </div>
+    @endguest
+
+</div>
+
+@endif
+
+
+
+
 
 @include('product.partials.shippingtemplates-table', ['product1' => $product1])
                 
 
                 
 
-                <p class="text-gray-700 mb-6 leading-relaxed">{{ __('product/product_show.place_of_origin') }} <strong>{{ $product1->country?->name ?? 'Country not specified' }}</strong>
-                </p>
+                
 
 
                 {{-- CTA Panel --}}
-                <div class="mt-8 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
+                <div class="mt-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
                     <button
                         class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
                                text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
@@ -345,7 +405,8 @@
 
                 </div>
 
-                
+                <p class="text-gray-700 mb-2 leading-relaxed">{{ __('product/product_show.place_of_origin') }} <strong>{{ $product1->country?->name ?? 'Country not specified' }}</strong>
+                </p>
 
                 {{-- Supplier Info --}}
                 <div class="text-gray-700">
@@ -353,7 +414,7 @@
                     <a href="{{ url('/supplier/' . $product1->supplier->slug) }}" class="font-medium text-blue-600 hover:underline">
                         {{ $product1->supplier->name }}
                     </a>
-                    ({{ $product1->supplier->country ? $product1->supplier->country->name : 'N/A' }})
+                    
                 </div>
 
             </div>

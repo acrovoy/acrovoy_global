@@ -1,226 +1,258 @@
 @extends('dashboard.layout')
 
 @section('dashboard-content')
-<h2 class="text-2xl font-bold mb-4">Заказ #{{ $order->id }}</h2>
+
+<a href="{{ route('buyer.orders.index') }}"
+           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-4">
+            ← Back to orders
+        </a>
+
+         <div class="flex items-center justify-between">
+        <div>
+<h2 class="text-2xl font-semibold">
+    Order #{{ $order->id }}
+</h2>
+<p class="text-sm text-gray-500 mb-6">
+                    Manage exchange rates relative to the base currency (USD)
+                </p>
+
+                </div>
+        <span class="px-3 py-1 rounded text-sm
+            @if($order['status'] === 'pending') bg-yellow-100 text-yellow-800
+            @elseif($order['status'] === 'confirmed') bg-green-100 text-blue-800
+            @elseif($order['status'] === 'paid') bg-blue-100 text-blue-800
+            @elseif($order['status'] === 'shipped') bg-green-100 text-green-800
+            @else bg-gray-100 text-gray-800
+            @endif
+        ">
+            {{ ucfirst($order['status']) }}
+        </span>
+    </div>
 
  {{-- Flash messages --}}
-@if(session('success'))
-    <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4">
-        {{ session('success') }}
-    </div>
-@endif
+@foreach (['success' => 'green', 'error' => 'red', 'info' => 'yellow'] as $type => $color)
+    @if(session($type))
+        <div class="mb-4 px-4 py-3 rounded-lg bg-{{ $color }}-100 text-{{ $color }}-800 text-sm">
+            {{ session($type) }}
+        </div>
+    @endif
+@endforeach
 
-@if(session('error'))
-    <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4">
-        {{ session('error') }}
-    </div>
-@endif
+{{-- ORDER CARD --}}
+<div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="font-medium">
+            Товары в заказе
+        </h3>
 
-@if(session('info'))
-    <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded mb-4">
-        {{ session('info') }}
+        
     </div>
-@endif
-
-<div class="bg-white p-4 rounded-lg shadow mb-6">
-    <h3 class="font-semibold mb-2">Статус заказа: 
-        <span class="font-bold {{ $order->status === 'completed' ? 'text-green-600' : 'text-yellow-600' }}">
-            {{ ucfirst($order->status) }}
-        </span>
-    </h3>
 
     {{-- Товары --}}
-    <div class="space-y-2">
+    <div class="divide-y divide-gray-200">
         @foreach($order->items as $item)
-        <div class="flex justify-between items-center border-b pb-2">
-            <div class="flex items-center gap-2">
-                <img src="{{ 
-                $item->product && $item->product->mainImage 
-                    ? asset('storage/' . $item->product->mainImage->image_path) 
-                    : asset('images/no-photo.png') 
-            }}"
-                 alt="{{ $item->product_name }}"
-                 class="w-12 h-12 object-contain rounded">
-                <div>
-                    <p class="font-semibold">{{ $item->product_name }}</p>
-                    <p class="text-gray-500 text-sm">Количество: {{ $item->quantity }}</p>
-                    <p class="text-gray-500 text-sm">Цена за единицу: {{ number_format($item->price, 2) }}₴</p>
+            <div class="py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img
+                        src="{{ $item->product && $item->product->mainImage
+                            ? asset('storage/' . $item->product->mainImage->image_path)
+                            : asset('images/no-photo.png') }}"
+                        class="w-12 h-12 rounded object-contain bg-gray-50 border"
+                    >
+                    <div>
+                        <p class="font-medium text-gray-900">
+                            {{ $item->product_name }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            {{ $item->quantity }} × {{ number_format($item->price, 2) }} ₴
+                        </p>
+                    </div>
+                </div>
+
+                <div class="font-semibold text-gray-900">
+                    {{ number_format($item->price * $item->quantity, 2) }} ₴
                 </div>
             </div>
-            <div class="font-semibold">{{ number_format($item->price * $item->quantity, 2) }}₴</div>
-        </div>
         @endforeach
     </div>
 
  {{-- Доставка --}}
-    <div class="flex justify-between items-center border-t pt-2 mt-2 text-gray-700 font-medium">
-        <span>Доставка ({{ $order->delivery_method ?? '-' }})</span>
-        <span>{{ number_format($order->delivery_price ?? 0, 2) }}₴</span>
+    <div class="flex justify-between text-sm text-gray-700 pt-3 mt-3 border-t">
+        <span>
+            Доставка ({{ $order->delivery_method ?? '-' }})
+        </span>
+        <span>
+            {{ number_format($order->delivery_price ?? 0, 2) }} ₴
+        </span>
     </div>
 
     {{-- Итого --}}
-    <div class="text-right mt-2 font-bold">Итого: {{ number_format($order->total, 2) }}₴</div>
+    <div class="text-right mt-3 text-lg font-semibold">
+        Итого: {{ number_format($order->total, 2) }} ₴
+    </div>
 </div>
 
 {{-- Отображение споров --}}
 
 @if($order->disputes->count())
-    <div class="mt-6 border rounded-lg p-4 bg-red-50">
-        <h4 class="font-semibold mb-3 text-red-700">
+<div class="mt-6 border border-gray-200 rounded-lg bg-white">
+
+    <div class="px-4 py-3 border-b border-gray-200">
+        <h4 class="font-semibold text-gray-800">
             Споры по заказу
         </h4>
+    </div>
 
-        @foreach($order->disputes as $dispute)
-            <div class="border rounded bg-white p-4 mb-3">
+    <div class="divide-y divide-gray-200">
+    @foreach($order->disputes as $dispute)
+        <div class="p-4">
 
-                {{-- Статус --}}
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-medium">
-                        Статус:
-                        <span class="
-                            @if($dispute->status === 'pending') text-yellow-600
-                            @elseif($dispute->status === 'supplier_offer') text-blue-600
-                            @elseif($dispute->status === 'buyer_reject') text-red-600
-                            @elseif($dispute->status === 'resolved') text-green-600
-                            @else text-gray-600
-                            @endif
-                        ">
-                            {{ __('dispute.status.' . $dispute->status) ?? ucfirst(str_replace('_', ' ', $dispute->status)) }}
-                        </span>
-                    </span>
-
-                    <span class="text-xs text-gray-500">
-                        {{ $dispute->created_at->format('d.m.Y H:i') }}
+            {{-- Статус --}}
+            <div class="flex justify-between items-center mb-3">
+                <div class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    Статус:
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold
+                        @if($dispute->status === 'pending') bg-yellow-100 text-yellow-700
+                        @elseif($dispute->status === 'supplier_offer') bg-blue-100 text-blue-700
+                        @elseif($dispute->status === 'buyer_reject') bg-red-100 text-red-700
+                        @elseif($dispute->status === 'rejected') bg-red-200 text-red-800
+                        @elseif($dispute->status === 'resolved') bg-green-100 text-green-700
+                        @else bg-gray-100 text-gray-600
+                        @endif
+                    ">
+                        {{ __('dispute.status.' . $dispute->status) ?? ucfirst(str_replace('_', ' ', $dispute->status)) }}
                     </span>
                 </div>
 
-                {{-- Причина --}}
-                <p class="text-sm mb-1">
-                    <strong>Причина:</strong> {{ $dispute->reason }}
-                </p>
+                <span class="text-xs text-gray-500">
+                    {{ $dispute->created_at->format('d.m.Y H:i') }}
+                </span>
+            </div>
 
-                {{-- Запрошенное действие --}}
-                <p class="text-sm mb-1">
-                    <strong>Запрос:</strong>
-                    {{ __('dispute.action.' . $dispute->action) ?? ucfirst($dispute->action) }}
-                </p>
+            {{-- Причина --}}
+            <p class="text-sm text-gray-700 mb-1">
+                <strong>Причина:</strong> {{ $dispute->reason }}
+            </p>
 
-                {{-- Ответ продавца --}}
-                @if($dispute->supplier_comment)
-                    <div class="mt-2 p-3 bg-gray-100 rounded text-sm">
-                        <strong>Ответ продавца:</strong><br>
-                        {{ $dispute->supplier_comment }}
-                    </div>
-                @endif
+            {{-- Запрос --}}
+            <p class="text-sm text-gray-700 mb-2">
+                <strong>Запрос:</strong>
+                {{ __('dispute.action.' . $dispute->action) ?? ucfirst($dispute->action) }}
+            </p>
 
-                {{-- Комментарий покупателя --}}
-                @if($dispute->buyer_comment)
-                    <div class="mt-2 p-3 bg-red-100 rounded text-sm">
-                        <strong>Комментарий покупателя:</strong><br>
-                        {{ $dispute->buyer_comment }}
-                    </div>
-                @endif
-
-                {{-- Ответ администратора --}}
-@if($dispute->admin_comment)
-    <div class="mt-2 p-3 bg-yellow-100 border-l-4 border-yellow-500 rounded text-sm">
-        <strong>Решение администратора:</strong><br>
-        {{ $dispute->admin_comment }}
-    </div>
-@endif
-
-                {{-- Файл --}}
-                @if($dispute->attachment)
-                    <div class="mt-2">
-                        <a href="{{ asset('storage/' . $dispute->attachment) }}"
-                           target="_blank"
-                           class="text-blue-600 hover:underline text-sm">
-                            Посмотреть вложение
-                        </a>
-                    </div>
-                @endif
-
-                {{-- КНОПКИ ДЛЯ ПОКУПАТЕЛЯ --}}
-                <div class="mt-3 flex gap-2 flex-wrap">
-
-                    {{-- Спор ещё не решён — можно отменить --}}
-                    @if($dispute->status === 'pending')
-                        <form method="POST" action="{{ route('buyer.disputes.cancel', $dispute->id) }}">
-                            @csrf
-                            @method('PUT')
-                            <button class="px-3 py-1.5 text-sm bg-gray-500 text-white rounded hover:bg-gray-600">
-                                Отменить спор
-                            </button>
-                        </form>
-
-                        <a href="{{ route('buyer.support.chat', $dispute->id) }}"
-                           class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
-                            Связаться с поддержкой
-                        </a>
-                    @endif
-
-                    {{-- Продавец предложил решение --}}
-                    @if($dispute->status === 'supplier_offer')
-                        <div class="mt-3 flex gap-2">
-                            <form method="POST" action="{{ route('buyer.disputes.accept', $dispute->id) }}">
-                                @csrf
-                                @method('PUT')
-                                <button class="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-                                    Принять решение
-                                </button>
-                            </form>
-
-                            <form method="POST" action="{{ route('buyer.disputes.reject', $dispute->id) }}" class="flex gap-2 flex-col">
-                                @csrf
-                                @method('PUT')
-
-                                <textarea name="buyer_comment" rows="2" placeholder="Комментарий (необязательно)"
-                                          class="border rounded px-2 py-1 text-sm w-full"></textarea>
-
-                                <button type="submit"
-                                        class="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700">
-                                    Отклонить решение
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-
-                    {{-- Покупатель может подать апелляцию или закрыть спор если продавец отклонил --}}
-@if($dispute->status === 'rejected')
-    <div class="mt-3 flex gap-2 flex-wrap">
-
-        {{-- Апелляция к администратору --}}
-        <form method="POST" action="{{ route('buyer.disputes.appeal', $dispute->id) }}" class="flex flex-col gap-2 w-full md:w-auto">
-            @csrf
-            @method('PUT')
-
-            <textarea name="buyer_comment" rows="2" placeholder="Комментарий к апелляции (необязательно)"
-                      class="border rounded px-2 py-1 text-sm w-full"></textarea>
-
-            <button type="submit"
-                    class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
-                Подать апелляцию
-            </button>
-        </form>
-
-        {{-- Закрыть спор --}}
-        <form method="POST" action="{{ route('buyer.disputes.close', $dispute->id) }}">
-            @csrf
-            @method('PUT')
-            <button class="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700">
-                Закрыть спор
-            </button>
-        </form>
-
-    </div>
-@endif
-
+            {{-- Ответ продавца --}}
+            @if($dispute->supplier_comment)
+                <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded text-sm">
+                    <strong>Ответ продавца:</strong><br>
+                    {{ $dispute->supplier_comment }}
                 </div>
+            @endif
+
+            {{-- Комментарий покупателя --}}
+            @if($dispute->buyer_comment)
+                <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded text-sm">
+                    <strong>Комментарий покупателя:</strong><br>
+                    {{ $dispute->buyer_comment }}
+                </div>
+            @endif
+
+            {{-- Решение администратора --}}
+            @if($dispute->admin_comment)
+                <div class="mt-2 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded text-sm">
+                    <strong>Решение администратора:</strong><br>
+                    {{ $dispute->admin_comment }}
+                </div>
+            @endif
+
+            {{-- Вложение --}}
+            @if($dispute->attachment)
+                <div class="mt-2">
+                    <a href="{{ asset('storage/' . $dispute->attachment) }}"
+                       target="_blank"
+                       class="text-blue-600 hover:underline text-sm">
+                        Посмотреть вложение
+                    </a>
+                </div>
+            @endif
+
+            {{-- КНОПКИ --}}
+            <div class="mt-4 flex flex-wrap gap-3">
+
+                {{-- pending --}}
+                @if($dispute->status === 'pending')
+                    <form method="POST" action="{{ route('buyer.disputes.cancel', $dispute->id) }}">
+                        @csrf
+                        @method('PUT')
+                        <button class="text-sm text-gray-600 hover:text-gray-800 underline">
+                            Отменить спор
+                        </button>
+                    </form>
+
+                    <a href="{{ route('buyer.support.chat', $dispute->id) }}"
+                       class="text-sm text-blue-600 hover:text-blue-800 underline">
+                        Связаться с поддержкой
+                    </a>
+                @endif
+
+                {{-- supplier_offer --}}
+                @if($dispute->status === 'supplier_offer')
+                    <form method="POST" action="{{ route('buyer.disputes.accept', $dispute->id) }}">
+                        @csrf
+                        @method('PUT')
+                        <button class="text-sm text-green-600 hover:text-green-800 underline">
+                            Принять решение
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route('buyer.disputes.reject', $dispute->id) }}" class="flex flex-col gap-2 w-full md:w-auto">
+                        @csrf
+                        @method('PUT')
+
+                        <textarea name="buyer_comment" rows="2"
+                                  placeholder="Комментарий (необязательно)"
+                                  class="border border-gray-300 rounded px-2 py-1 text-sm"></textarea>
+
+                        <button type="submit"
+                                class="text-sm text-red-600 hover:text-red-800 underline self-start">
+                            Отклонить решение
+                        </button>
+                    </form>
+                @endif
+
+                {{-- rejected --}}
+                @if($dispute->status === 'rejected')
+                    <form method="POST" action="{{ route('buyer.disputes.appeal', $dispute->id) }}" class="flex flex-col gap-2 w-full md:w-auto">
+                        @csrf
+                        @method('PUT')
+
+                        <textarea name="buyer_comment" rows="2"
+                                  placeholder="Комментарий к апелляции (необязательно)"
+                                  class="border border-gray-300 rounded px-2 py-1 text-sm"></textarea>
+
+                        <button type="submit"
+                                class="text-sm text-blue-600 hover:text-blue-800 underline self-start">
+                            Подать апелляцию
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route('buyer.disputes.close', $dispute->id) }}">
+                        @csrf
+                        @method('PUT')
+                        <button class="text-sm text-green-600 hover:text-green-800 underline">
+                            Закрыть спор
+                        </button>
+                    </form>
+                @endif
 
             </div>
-        @endforeach
+
+        </div>
+    @endforeach
     </div>
+
+</div>
 @endif
+
 
 
 
@@ -232,8 +264,7 @@
     // Проверяем, есть ли открытые споры (не resolved)
     $hasOpenDispute = $order->disputes->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])->count() > 0;
 
-    
-     // 🔹 Проверка отзывов на товары (только обычные товары)
+    // 🔹 Проверка отзывов на товары (только обычные товары)
     $hasReviewed = $order->items->filter(fn($item) => $item->product !== null)
         ->filter(fn($item) => $item->product->reviews()
             ->where('user_id', auth()->id())
@@ -245,12 +276,10 @@
     // Проверяем, есть ли уже отзыв пользователя о продавце этого заказа
     $supplierId = null;
 
-    // Пытаемся получить supplier_id из обычного товара
     $productWithSupplier = $order->items->firstWhere(fn($item) => $item->product?->supplier_id !== null);
     if ($productWithSupplier) {
         $supplierId = $productWithSupplier->product->supplier_id;
     } 
-    // Если нет, пробуем получить из RFQ
     elseif ($order->items->first()?->order?->rfqOffer?->supplier_id) {
         $supplierId = $order->items->first()->order->rfqOffer->supplier_id;
     }
@@ -263,43 +292,47 @@
         : false;
 @endphp
 
-                @if($order->status === 'completed')
-                    <div class="mt-4 flex flex-wrap gap-3">
+@if($order->status === 'completed')
+<div class="mt-4 flex flex-wrap gap-4">
 
-                        @if($order->items->whereNotNull('product')->count() > 0)
-                            <button 
-                                onclick="openModal('reviewModal')" 
-                                class="px-4 py-2 rounded text-white
-                                    {{ $hasOpenDispute || $hasReviewed 
-                                        ? 'bg-gray-300 cursor-not-allowed hover:bg-gray-300' 
-                                        : 'bg-green-500 hover:bg-green-600' }}"
-                                @if($hasOpenDispute || $hasReviewed) disabled @endif>
-                                Оставить отзыв
-                            </button>
-                        @endif
+    {{-- Отзыв о товаре --}}
+    @if($order->items->whereNotNull('product')->count() > 0)
+        <button
+            onclick="openModal('reviewModal')"
+            class="text-sm font-medium underline
+                {{ $hasOpenDispute || $hasReviewed
+                    ? 'text-gray-400 cursor-not-allowed no-underline'
+                    : 'text-green-600 hover:text-green-800' }}"
+            @if($hasOpenDispute || $hasReviewed) disabled @endif>
+            Оставить отзыв
+        </button>
+    @endif
 
-                        
-                        <button
-                            onclick="openSupplierReviewModal()"
-                            class="px-4 py-2 rounded text-white
-                                {{ $hasOpenDispute || $hasReviewedSupplier 
-                                    ? 'bg-gray-300 cursor-not-allowed hover:bg-gray-300' 
-                                    : 'bg-blue-500 hover:bg-blue-600' }}"
-                            @if($hasOpenDispute || $hasReviewedSupplier) disabled @endif>
-                            Оценить продавца
-                        </button>
+    {{-- Отзыв о продавце --}}
+    <button
+        onclick="openSupplierReviewModal()"
+        class="text-sm font-medium underline
+            {{ $hasOpenDispute || $hasReviewedSupplier
+                ? 'text-gray-400 cursor-not-allowed no-underline'
+                : 'text-blue-600 hover:text-blue-800' }}"
+        @if($hasOpenDispute || $hasReviewedSupplier) disabled @endif>
+        Оценить продавца
+    </button>
 
+    {{-- Спор --}}
+    <button
+        onclick="openModal('disputeModal')"
+        class="text-sm font-medium underline
+            {{ $hasOpenDispute
+                ? 'text-gray-400 cursor-not-allowed no-underline'
+                : 'text-red-600 hover:text-red-800' }}"
+        @if($hasOpenDispute) disabled @endif>
+        Жалоба / Возврат / Спор
+    </button>
 
-                        <button 
-                            onclick="openModal('disputeModal')" 
-                            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600
-                                {{ $hasOpenDispute ? 'opacity-50 cursor-not-allowed hover:bg-red-500' : '' }}"
-                            @if($hasOpenDispute) disabled @endif>
-                            Жалоба / Возврат / Спор
-                        </button>
+</div>
+@endif
 
-                    </div>
-                @endif
 
 
 
@@ -347,32 +380,84 @@
 </div>
 
 {{-- Контакты и адрес --}}
-<div class="bg-white p-4 rounded-lg shadow mb-6">
-    <h3 class="font-semibold mb-2">Контактная информация</h3>
+<div class="bg-white border border-gray-200 rounded-xl p-4 mb-6">
+    <h3 class="font-semibold text-gray-900 mb-3">
+        Контактная информация
+    </h3>
+
     @php
         $address = $order->user->addresses()->where('is_default', true)->first();
     @endphp
+
     @if($address)
-        <p><strong>Имя:</strong> {{ $order->first_name }} {{ $address->last_name ?? '' }}</p>
-        <p><strong>Страна:</strong> {{ $order->country }}</p>
-        <p><strong>Город:</strong> {{ $order->city }}</p>
-        <p><strong>Регион:</strong> {{ $order->region }}</p>
-        <p><strong>Улица:</strong> {{ $order->street }}</p>
-        <p><strong>Почтовый индекс:</strong> {{ $order->postal_code }}</p>
-        <p><strong>Телефон:</strong> {{ $order->phone }}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <div>
+                <span class="text-gray-500">Имя</span>
+                <div class="text-gray-900 font-medium">
+                    {{ $order->first_name }} {{ $address->last_name ?? '' }}
+                </div>
+            </div>
+
+            <div>
+                <span class="text-gray-500">Телефон</span>
+                <div class="text-gray-900 font-medium">
+                    {{ $order->phone }}
+                </div>
+            </div>
+
+            <div>
+                <span class="text-gray-500">Страна</span>
+                <div class="text-gray-900">
+                    {{ $order->country }}
+                </div>
+            </div>
+
+            <div>
+                <span class="text-gray-500">Город</span>
+                <div class="text-gray-900">
+                    {{ $order->city }}
+                </div>
+            </div>
+
+            <div>
+                <span class="text-gray-500">Регион</span>
+                <div class="text-gray-900">
+                    {{ $order->region }}
+                </div>
+            </div>
+
+            <div>
+                <span class="text-gray-500">Почтовый индекс</span>
+                <div class="text-gray-900">
+                    {{ $order->postal_code }}
+                </div>
+            </div>
+
+            <div class="sm:col-span-2">
+                <span class="text-gray-500">Улица</span>
+                <div class="text-gray-900">
+                    {{ $order->street }}
+                </div>
+            </div>
+        </div>
     @else
-        <p>Адрес не указан.</p>
+        <div class="text-sm text-gray-500">
+            Адрес не указан.
+        </div>
     @endif
 </div>
 
 {{-- Actions --}}
-<div class="flex flex-wrap gap-3 mb-6">
+<div class="flex flex-wrap gap-2 mb-6">
 
     @if($canCancel)
         <form action="{{ route('buyer.orders.cancel', $order->id) }}" method="POST">
             @csrf
             <button type="submit"
-                    class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                    class="px-3 py-1.5 text-sm
+                           border border-red-300 text-red-600
+                           rounded-md
+                           hover:bg-red-50 hover:border-red-400">
                 Cancel Order
             </button>
         </form>
@@ -380,7 +465,10 @@
 
     @if($canEditAddress)
         <a href="{{ route('buyer.orders.edit-address', $order->id) }}"
-           class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+           class="px-3 py-1.5 text-sm
+                  border border-yellow-300 text-yellow-700
+                  rounded-md
+                  hover:bg-yellow-50 hover:border-yellow-400">
             Edit Address
         </a>
     @endif
@@ -388,28 +476,39 @@
     {{-- Редактировать заказ --}}
     @if($order->status === 'pending')
         <a href="{{ route('buyer.orders.edit', $order->id) }}"
-           class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+           class="px-3 py-1.5 text-sm
+                  border border-green-300 text-green-700
+                  rounded-md
+                  hover:bg-green-50 hover:border-green-400">
             Edit Order
         </a>
     @else
-        <button class="px-4 py-2 bg-gray-300 text-white rounded cursor-not-allowed" disabled>
+        <button class="px-3 py-1.5 text-sm
+                       border border-gray-300 text-gray-400
+                       rounded-md cursor-not-allowed"
+                disabled>
             Edit Order
         </button>
     @endif
 
     @if(!empty($order->invoice_file))
-        <div>
-            <a href="{{ route('buyer.orders.invoice', $order->id) }}"
-               target="_blank"
-               class="inline-block px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                Download Invoice
-            </a>
-        </div>
+        <a href="{{ route('buyer.orders.invoice', $order->id) }}"
+           target="_blank"
+           class="px-3 py-1.5 text-sm
+                  border border-blue-300 text-blue-700
+                  rounded-md
+                  hover:bg-blue-50 hover:border-blue-400">
+            Download Invoice
+        </a>
     @else
-        <button class="inline-block px-3 py-1.5 bg-gray-300 text-white rounded text-sm cursor-not-allowed" disabled>
+        <button class="px-3 py-1.5 text-sm
+                       border border-gray-300 text-gray-400
+                       rounded-md cursor-not-allowed"
+                disabled>
             Invoice not uploaded by the seller yet
         </button>
     @endif
+
 </div>
 
 {{-- Tracking Number --}}

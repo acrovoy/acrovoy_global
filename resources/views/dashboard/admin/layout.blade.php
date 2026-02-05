@@ -20,7 +20,7 @@
             {{-- ADMIN MENU --}}
             <ul class="space-y-1">
                 <li>
-                    <a href="{{ route('admin.products.index') }}" class="menu-link">
+                    <a href="{{ route('admin.products.index') }}" class="menu-link {{ request()->routeIs('admin.products.*') ? 'font-bold' : '' }}">
                         Products
                     </a>
                 </li>
@@ -30,7 +30,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('admin.sellers.index') }}" class="menu-link">Suppliers</a>
+                    <a href="{{ route('admin.sellers.index') }}" class="menu-link {{ request()->routeIs('admin.sellers.*') ? 'font-bold' : '' }}">Suppliers</a>
                 </li>
                 <!-- <li>
                     <a href="" class="menu-link">
@@ -39,22 +39,22 @@
                 </li> -->
 
                  <li>
-                    <a href="{{ route('admin.messages') }}" class="menu-link">
+                    <a href="{{ route('admin.messages') }}" class="menu-link {{ request()->routeIs('admin.messages*') ? 'font-bold' : '' }}">
                         Message Center Test
                     </a>
                 </li>
 
 
                 <li>
-                    <a href="{{ route('admin.orders.index') }}" class="menu-link">Orders & Disputes</a>
+                    <a href="{{ route('admin.orders.index') }}" class="menu-link {{ request()->routeIs('admin.orders.*') ? 'font-bold' : '' }}">Orders & Disputes</a>
                 </li>
                 <li>
-                    <a href="{{ route('admin.currencies.index') }}" class="menu-link">
+                    <a href="{{ route('admin.currencies.index') }}" class="menu-link {{ request()->routeIs('admin.currencies.*') ? 'font-bold' : '' }}">
                         Currencies
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('admin.banners.index') }}" class="menu-link">Banners & Notes</a>
+                    <a href="{{ route('admin.banners.index') }}" class="menu-link {{ request()->routeIs('admin.banners.*') ? 'font-bold' : '' }}">Banners & Notes</a>
                 </li>
                 <li>
                     <a href="{{ route('admin.premium-plans.index') }}" class="menu-link {{ request()->routeIs('admin.premium-plans.*') ? 'font-bold' : '' }}">
@@ -73,7 +73,7 @@
                     </a>
                 </li>
 
-                <li><a href="{{ route('admin.settings.index') }}" class="menu-link">Settings</a></li>
+                <li><a href="{{ route('admin.settings.index') }}" class="menu-link {{ request()->routeIs('admin.settings.*') ? 'font-bold' : '' }}">Settings</a></li>
             </ul>
 
         </aside>

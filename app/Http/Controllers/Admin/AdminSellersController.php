@@ -185,7 +185,20 @@ public function deleteCertificate($certificateId)
     ]);
 }
 
+public function updateVerifyTrust(Request $request, Supplier $seller)
+{
+    $request->validate([
+        'is_verified' => 'required|boolean',
+        'is_trusted'  => 'required|boolean',
+    ]);
 
+    $seller->update([
+        'is_verified' => $request->is_verified,
+        'is_trusted'  => $request->is_trusted,
+    ]);
+
+    return response()->json(['success' => true]);
+}
 
 
 }

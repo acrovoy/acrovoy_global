@@ -12,33 +12,42 @@ use App\Models\Feature;
 class PremiumPlanController extends Controller
 {
     public function index()
-    {
-        // Загружаем все планы с их фичами и связанными фичами
-        $plans = PremiumSellerPlan::with('planFeatures.feature')->get();
+{
+    $plans = PremiumSellerPlan::with('planFeatures.feature')->get();
 
-        // Подготовим удобный массив для отображения
-        $plans = $plans->map(function($plan) {
-            $features = [];
+    $mappedPlans = $plans->map(function ($plan) {
+        $features = [];
 
-            foreach($plan->planFeatures as $pf) {
-                if($pf->feature) {
-                    $features[] = ($pf->feature->slug === 'products-limit')
-                        ? (is_null($pf->value) || $pf->value === '' ? 'Unlimited products' : 'Up to '.$pf->value.' products')
-                        : ucwords(str_replace(['-','_','support:-','analytics:-','visibility:-','priority-placement:-'], [' ',' ','',' ','',''], $pf->feature->slug));
-                }
+        foreach ($plan->planFeatures as $pf) {
+            if ($pf->feature) {
+                $features[] = ($pf->feature->slug === 'products-limit')
+                    ? (is_null($pf->value) || $pf->value === ''
+                        ? 'Unlimited products'
+                        : 'Up to ' . $pf->value . ' products')
+                    : ucwords(str_replace(
+                        ['-','_','support:-','analytics:-','visibility:-','priority-placement:-'],
+                        [' ',' ','',' ','',''],
+                        $pf->feature->slug
+                    ));
             }
+        }
 
-            return [
-                'id' => $plan->id,
-                'name' => $plan->name,
-                'price' => $plan->price,
-                'popular' => $plan->popular,
-                'features' => $features,
-            ];
-        });
+        return [
+            'id'       => $plan->id,
+            'name'     => $plan->name,
+            'price'    => $plan->price,
+            'popular'  => $plan->popular,
+            'type'     => $plan->target_type, // supplier | buyer
+            'features' => $features,
+        ];
+    });
 
-        return view('dashboard.admin.premium-plans.index', compact('plans'));
-    }
+    return view('dashboard.admin.premium-plans.index', [
+        'sellerPlans' => $mappedPlans->where('type', 'supplier')->values(),
+        'buyerPlans'  => $mappedPlans->where('type', 'buyer')->values(),
+    ]);
+}
+
 
     public function create()
     {
@@ -51,6 +60,7 @@ class PremiumPlanController extends Controller
     $request->validate([
         'name' => 'required|string|max:255',
         'price' => 'required|string|max:255',
+        'target_type' => 'required|in:buyer,supplier',
         'popular' => 'nullable|boolean',
         'features' => 'nullable|array',
     ]);
@@ -59,6 +69,7 @@ class PremiumPlanController extends Controller
     $plan = PremiumSellerPlan::create([
         'name' => $request->name,
         'price' => $request->price,
+        'target_type' => $request->target_type,
         'popular' => $request->has('popular'),
     ]);
 
@@ -103,6 +114,7 @@ class PremiumPlanController extends Controller
 
     $plan->name = $request->name;
     $plan->price = $request->price;
+    $plan->target_type = $request->target_type;
     $plan->popular = $request->has('popular');
     $plan->save();
 

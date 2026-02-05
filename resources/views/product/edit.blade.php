@@ -12,7 +12,7 @@
 
 
 
-<div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+<div class="bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
 <div class="p-6">
 
 {{-- SUCCESS --}}
@@ -58,72 +58,197 @@
         <h3 class="text-2xl font-bold mb-6">Basic Information</h3>
 
         {{-- Product Name --}}
-        <div class="border rounded p-4 mb-4">
-            <h4 class="font-semibold mb-3">Product Name</h4>
+<div x-data="{ open: false }" class="border rounded p-4 mb-4 bg-white shadow-sm">
+    <h4 class="font-semibold mb-3">Product Name</h4>
 
-            <div class="flex-col md:flex-row gap-2">
-                @foreach($languages as $language)
+    <div class="flex-col md:flex-row gap-2">
+        @foreach($languages as $index => $language)
+            @if($index == 0)
+                {{-- Первый язык всегда виден --}}
                 <div class="flex-1">
                     <label class="block text-sm text-gray-600 mb-1">
                         {{ strtoupper($language->code) }}
                     </label>
                     <input type="text"
-                        name="name[{{ $language->code }}]"
-                        class="input mb-2 w-full"
-                        placeholder="Product Name ({{ $language->code }})"
-                        value="{{ old(
+                           name="name[{{ $language->code }}]"
+                           class="input mb-2 w-full"
+                           placeholder="Product Name ({{ $language->code }})"
+                           value="{{ old(
                                'name.' . $language->code,
                                $translations[$language->code]['name'] ?? ''
                            ) }}">
                 </div>
-                @endforeach
-            </div>
-        </div>
+            @else
+                {{-- Остальные языки скрыты по умолчанию --}}
+                <div x-show="open"
+                     x-collapse
+                     class="flex-1 mb-2">
+                    <label class="block text-sm text-gray-600 mb-1">
+                        {{ strtoupper($language->code) }}
+                    </label>
+                    <input type="text"
+                           name="name[{{ $language->code }}]"
+                           class="input w-full"
+                           placeholder="Product Name ({{ $language->code }})"
+                           value="{{ old(
+                               'name.' . $language->code,
+                               $translations[$language->code]['name'] ?? ''
+                           ) }}">
+                </div>
+            @endif
+        @endforeach
+    </div>
+
+    {{-- Кнопка для остальных языков --}}
+    @if(count($languages) > 1)
+        <button type="button"
+                @click="open = !open"
+                class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
+            Other Languages
+            <svg :class="{ 'rotate-180': open }"
+                 class="w-4 h-4 transition-transform"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+    @endif
+</div>
+
+
 
         {{-- Short Description --}}
-        <div class="border rounded p-4 mb-4">
-            <h4 class="font-semibold mb-3">Short Description</h4>
+<div x-data="{ open: false }" class="border rounded p-4 mb-4 bg-white shadow-sm">
+    <h4 class="font-semibold mb-3">Short Description</h4>
 
-            <div class="flex-col md:flex-row gap-2">
-                @foreach($languages as $language)
+    <div class="flex-col md:flex-row gap-2">
+        @foreach($languages as $index => $language)
+            @if($index == 0)
+                {{-- Первый язык всегда виден --}}
                 <div class="flex-1">
                     <label class="block text-sm text-gray-600 mb-1">
                         {{ strtoupper($language->code) }}
                     </label>
                     <input type="text"
-                        name="undername[{{ $language->code }}]"
-                        class="input mb-2 w-full"
-                        placeholder="Undername ({{ $language->code }})"
-                        value="{{ old(
+                           name="undername[{{ $language->code }}]"
+                           class="input mb-2 w-full"
+                           placeholder="Undername ({{ $language->code }})"
+                           value="{{ old(
                                'undername.' . $language->code,
                                $translations[$language->code]['undername'] ?? ''
                            ) }}">
                 </div>
-                @endforeach
-            </div>
-        </div>
+            @else
+                {{-- Остальные языки скрыты по умолчанию --}}
+                <div x-show="open"
+                     x-collapse
+                     class="flex-1 mb-2">
+                    <label class="block text-sm text-gray-600 mb-1">
+                        {{ strtoupper($language->code) }}
+                    </label>
+                    <input type="text"
+                           name="undername[{{ $language->code }}]"
+                           class="input w-full"
+                           placeholder="Undername ({{ $language->code }})"
+                           value="{{ old(
+                               'undername.' . $language->code,
+                               $translations[$language->code]['undername'] ?? ''
+                           ) }}">
+                </div>
+            @endif
+        @endforeach
+    </div>
+
+    {{-- Кнопка для остальных языков --}}
+    @if(count($languages) > 1)
+        <button type="button"
+                @click="open = !open"
+                class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
+            Other Languages
+            <svg :class="{ 'rotate-180': open }"
+                 class="w-4 h-4 transition-transform"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+    @endif
+</div>
+
+
+
+
+
 
         {{-- Full Description --}}
-        <div class="border rounded p-4 mb-4">
-            <h4 class="font-semibold mb-3">Full Product Description</h4>
+<div x-data="{ open: false }" class="border rounded p-4 mb-4 bg-white shadow-sm">
+    <h4 class="font-semibold mb-3">Full Product Description</h4>
 
-            <div class="flex-col md:flex-row gap-2">
-                @foreach($languages as $language)
+    <div class="flex-col md:flex-row gap-2">
+        @foreach($languages as $index => $language)
+            @if($index == 0)
+                {{-- Первый язык всегда виден --}}
                 <div class="flex-1">
                     <label class="block text-sm text-gray-600 mb-1">
                         {{ strtoupper($language->code) }}
                     </label>
                     <textarea name="description[{{ $language->code }}]"
-                        class="input mb-2 w-full"
-                        rows="4"
-                        placeholder="Full Description ({{ $language->code }})">{{ old(
+                              class="input mb-2 w-full"
+                              rows="4"
+                              placeholder="Full Description ({{ $language->code }})">{{ old(
                                   'description.' . $language->code,
                                   $translations[$language->code]['description'] ?? ''
                               ) }}</textarea>
                 </div>
-                @endforeach
-            </div>
-        </div>
+            @else
+                {{-- Остальные языки скрыты по умолчанию --}}
+                <div x-show="open"
+                     x-collapse
+                     class="flex-1 mb-2">
+                    <label class="block text-sm text-gray-600 mb-1">
+                        {{ strtoupper($language->code) }}
+                    </label>
+                    <textarea name="description[{{ $language->code }}]"
+                              class="input w-full"
+                              rows="4"
+                              placeholder="Full Description ({{ $language->code }})">{{ old(
+                                  'description.' . $language->code,
+                                  $translations[$language->code]['description'] ?? ''
+                              ) }}</textarea>
+                </div>
+            @endif
+        @endforeach
+    </div>
+
+    {{-- Кнопка для остальных языков --}}
+    @if(count($languages) > 1)
+        <button type="button"
+                @click="open = !open"
+                class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
+            Other Languages
+            <svg :class="{ 'rotate-180': open }"
+                 class="w-4 h-4 transition-transform"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+    @endif
+</div>
+
+
 
         {{-- Category --}}
         <div class="mb-4">
@@ -160,7 +285,7 @@
             class="border-2 border-dashed border-gray-300 rounded-xl p-8
                    flex flex-col items-center justify-center
                    cursor-pointer hover:border-blue-600 hover:bg-blue-50
-                   transition text-center">
+                   transition text-center bg-white">
             <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M7 16V4m0 0L3 8m4-4l4 4m6 4v8m0 0l4-4m-4 4l-4-4" />
@@ -279,7 +404,7 @@
 <div id="materials-options" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
     @foreach($materialsPrepared as $material)
         <button type="button"
-            class="material-option px-1 py-1 border rounded"
+            class="material-option px-1 py-1 border rounded bg-white shadow-sm"
             data-id="{{ $material['id'] }}"
             data-name="{{ $material['translations'][app()->getLocale()]['name'] ?? '' }}">
             {{ $material['translations'][app()->getLocale()]['name'] ?? '' }}
@@ -296,108 +421,185 @@
     </div>
      
 
-    {{-- ================= STEP 4: Specifications ================= --}}
-    <div class="form-step hidden" data-step="4">
-        <h3 class="text-xl font-semibold mb-4">Specifications</h3>
+   {{-- ================= STEP 4: Specifications ================= --}}
+<div class="form-step hidden" data-step="4">
+    <h3 class="text-xl font-semibold mb-4">Specifications</h3>
 
-        <div id="specs-step-4" class="space-y-4">
+    <div id="specs-step-4" class="space-y-4">
 
-            @php
+        @php
             // количество спецификаций берём из первого языка
             $specCount = collect($specsTranslations)->first()
-            ? count(collect($specsTranslations)->first())
-            : 0;
-            @endphp
+                ? count(collect($specsTranslations)->first())
+                : 0;
+        @endphp
 
-            @for($i = 0; $i < $specCount; $i++)
-                <div class="border rounded p-4" id="spec-{{ $i }}">
+        @for($i = 0; $i < $specCount; $i++)
+            <div x-data="{ open: false }" class="border rounded p-4 bg-white" id="spec-{{ $i }}">
                 <div class="flex justify-between items-center mb-3">
                     <h4 class="font-semibold">Specification</h4>
 
                     @if($i > 0)
-                    <button type="button"
-                        onclick="removeSpec({{ $i }})"
-                        class="text-red-600 hover:text-red-800 font-semibold">
-                        ✕
-                    </button>
+                        <button type="button"
+                                onclick="removeSpec({{ $i }})"
+                                class="text-red-600 hover:text-red-800 font-semibold">
+                            ✕
+                        </button>
                     @endif
                 </div>
 
                 {{-- Parameter --}}
                 <div class="mb-4">
                     <label class="block mb-1 font-medium">Parameter</label>
-                    <div class="flex-col md:flex-row gap-2">
-                        @foreach($languages as $language)
-                        <label class="block text-sm text-gray-600 mb-1">
-                        {{ strtoupper($language->code) }}
-                    </label>
-                        <input type="text"
-                            name="specs[{{ $i }}][{{ $language->code }}][key]"
-                            class="input mb-2 flex-1"
-                            placeholder="Parameter ({{ $language->code }})"
-                            value="{{ $specsTranslations[$language->code][$i]['key'] ?? '' }}">
-                        @endforeach
-                    </div>
+
+                    @foreach($languages as $index => $language)
+                        @if($index === 0)
+                            <label class="block text-sm text-gray-600 mb-1">
+                                {{ strtoupper($language->code) }}
+                            </label>
+                            <input type="text"
+                                   name="specs[{{ $i }}][{{ $language->code }}][key]"
+                                   class="input mb-2 w-full"
+                                   placeholder="Parameter ({{ $language->code }})"
+                                   value="{{ $specsTranslations[$language->code][$i]['key'] ?? '' }}">
+                        @else
+                            <div x-show="open" x-collapse>
+                                <label class="block text-sm text-gray-600 mb-1">
+                                    {{ strtoupper($language->code) }}
+                                </label>
+                                <input type="text"
+                                       name="specs[{{ $i }}][{{ $language->code }}][key]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Parameter ({{ $language->code }})"
+                                       value="{{ $specsTranslations[$language->code][$i]['key'] ?? '' }}">
+                            </div>
+                        @endif
+                    @endforeach
                 </div>
 
                 {{-- Value --}}
                 <div>
                     <label class="block mb-1 font-medium">Value</label>
-                    <div class="flex-col md:flex-row gap-2">
-                        @foreach($languages as $language)
-                        <label class="block text-sm text-gray-600 mb-1">
-                        {{ strtoupper($language->code) }}
-                    </label>
-                        <input type="text"
-                            name="specs[{{ $i }}][{{ $language->code }}][value]"
-                            class="input mb-2 flex-1"
-                            placeholder="Value ({{ $language->code }})"
-                            value="{{ $specsTranslations[$language->code][$i]['value'] ?? '' }}">
-                        @endforeach
-                    </div>
+
+                    @foreach($languages as $index => $language)
+                        @if($index === 0)
+                            <label class="block text-sm text-gray-600 mb-1">
+                                {{ strtoupper($language->code) }}
+                            </label>
+                            <input type="text"
+                                   name="specs[{{ $i }}][{{ $language->code }}][value]"
+                                   class="input mb-2 w-full"
+                                   placeholder="Value ({{ $language->code }})"
+                                   value="{{ $specsTranslations[$language->code][$i]['value'] ?? '' }}">
+                        @else
+                            <div x-show="open" x-collapse>
+                                <label class="block text-sm text-gray-600 mb-1">
+                                    {{ strtoupper($language->code) }}
+                                </label>
+                                <input type="text"
+                                       name="specs[{{ $i }}][{{ $language->code }}][value]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Value ({{ $language->code }})"
+                                       value="{{ $specsTranslations[$language->code][$i]['value'] ?? '' }}">
+                            </div>
+                        @endif
+                    @endforeach
                 </div>
-        </div>
+
+                {{-- Кнопка языков --}}
+                @if(count($languages) > 1)
+                    <button type="button"
+                            @click="open = !open"
+                            class="mt-3 text-sm text-blue-600 hover:underline flex items-center gap-1">
+                        Other Languages
+                        <svg :class="{ 'rotate-180': open }"
+                             class="w-4 h-4 transition-transform"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                @endif
+            </div>
         @endfor
 
         {{-- Если спецификаций ещё нет --}}
         @if($specCount === 0)
-        <div class="border rounded p-4" id="spec-0">
-            <h4 class="font-semibold mb-3">Specification</h4>
+            <div x-data="{ open: false }" class="border rounded p-4 bg-white" id="spec-0">
+                <h4 class="font-semibold mb-3">Specification</h4>
 
-            <div class="mb-4">
-                <label class="block mb-1 font-medium">Parameter</label>
-                <div class="flex flex-col md:flex-row gap-2">
-                    @foreach($languages as $language)
-                    <input type="text"
-                        name="specs[0][{{ $language->code }}][key]"
-                        class="input flex-1"
-                        placeholder="Parameter ({{ $language->code }})">
+                <div class="mb-4">
+                    <label class="block mb-1 font-medium">Parameter</label>
+
+                    @foreach($languages as $index => $language)
+                        @if($index === 0)
+                            <input type="text"
+                                   name="specs[0][{{ $language->code }}][key]"
+                                   class="input mb-2 w-full"
+                                   placeholder="Parameter ({{ $language->code }})">
+                        @else
+                            <div x-show="open" x-collapse>
+                                <input type="text"
+                                       name="specs[0][{{ $language->code }}][key]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Parameter ({{ $language->code }})">
+                            </div>
+                        @endif
                     @endforeach
                 </div>
-            </div>
 
-            <div>
-                <label class="block mb-1 font-medium">Value</label>
-                <div class="flex flex-col md:flex-row gap-2">
-                    @foreach($languages as $language)
-                    <input type="text"
-                        name="specs[0][{{ $language->code }}][value]"
-                        class="input flex-1"
-                        placeholder="Value ({{ $language->code }})">
+                <div>
+                    <label class="block mb-1 font-medium">Value</label>
+
+                    @foreach($languages as $index => $language)
+                        @if($index === 0)
+                            <input type="text"
+                                   name="specs[0][{{ $language->code }}][value]"
+                                   class="input mb-2 w-full"
+                                   placeholder="Value ({{ $language->code }})">
+                        @else
+                            <div x-show="open" x-collapse>
+                                <input type="text"
+                                       name="specs[0][{{ $language->code }}][value]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Value ({{ $language->code }})">
+                            </div>
+                        @endif
                     @endforeach
                 </div>
+
+                @if(count($languages) > 1)
+                    <button type="button"
+                            @click="open = !open"
+                            class="mt-3 text-sm text-blue-600 hover:underline flex items-center gap-1">
+                        Other Languages
+                        <svg :class="{ 'rotate-180': open }"
+                             class="w-4 h-4 transition-transform"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                @endif
             </div>
-        </div>
         @endif
-
     </div>
 
     <button type="button"
-        onclick="addSpec('specs-step-4')"
-        class="mt-3 text-blue-700 font-medium">
+            onclick="addSpec('specs-step-4')"
+            class="mt-3 text-blue-700 font-medium">
         + Add specification
     </button>
-    </div>
+</div>
+
 
 
     {{-- ================= STEP 5: Commercial Terms ================= --}}
@@ -407,9 +609,13 @@
             <input type="text" name="moq" placeholder="MOQ (e.g. 10 pcs)" class="input" value="{{ $product->moq }}">
             <input type="text" name="lead_time" placeholder="Lead time (e.g. 25–35 days)" class="input" value="{{ $product->lead_time }}">
             <select name="customization" class="input">
-                <option value="available" {{ $product->customization == 'available' ? 'selected' : '' }}>Customization Available</option>
-                <option value="not_available" {{ $product->customization == 'not_available' ? 'selected' : '' }}>No Customization</option>
-            </select>
+    <option value="1" {{ old('customization', $product->customization) == 1 ? 'selected' : '' }}>
+        Customization Available
+    </option>
+    <option value="0" {{ old('customization', $product->customization) == 0 ? 'selected' : '' }}>
+        No Customization
+    </option>
+</select>
         </div>
 
         {{-- Country of origin --}}
@@ -435,7 +641,7 @@
                 <label
                     class="border rounded-xl p-4 cursor-pointer transition
                        hover:border-blue-600 hover:bg-blue-50
-                       flex gap-3 items-start">
+                       flex gap-3 items-start bg-white shadow-sm">
                     <input
                         type="checkbox"
                         name="shipping_templates[]"
@@ -500,7 +706,7 @@
         if (!container) return;
 
         let html = `
-        <div class="border rounded p-4" id="spec-${specIndex}">
+        <div x-data="{ open: false }" class="border rounded p-4 bg-white" id="spec-${specIndex}">
             <div class="flex justify-between items-center mb-3">
                 <h4 class="font-semibold">Specification</h4>
                 <button type="button"
@@ -512,43 +718,95 @@
 
             <div class="mb-4">
                 <label class="block mb-1 font-medium">Parameter</label>
-                <div class="flex flex-col md:flex-row gap-2">
-    `;
-
-        @foreach($languages as $language)
-        html += `
-            <input type="text"
-                   name="specs[${specIndex}][{{ $language->code }}][key]"
-                   class="input flex-1"
-                   placeholder="Parameter ({{ $language->code }})">
         `;
+
+        @foreach($languages as $index => $language)
+            @if($index === 0)
+                html += `
+                    <label class="block text-sm text-gray-600 mb-1">
+                        {{ strtoupper($language->code) }}
+                    </label>
+                    <input type="text"
+                           name="specs[${specIndex}][{{ $language->code }}][key]"
+                           class="input mb-2 w-full"
+                           placeholder="Parameter ({{ $language->code }})">
+                `;
+            @else
+                html += `
+                    <div x-show="open" x-collapse>
+                        <label class="block text-sm text-gray-600 mb-1">
+                            {{ strtoupper($language->code) }}
+                        </label>
+                        <input type="text"
+                               name="specs[${specIndex}][{{ $language->code }}][key]"
+                               class="input mb-2 w-full"
+                               placeholder="Parameter ({{ $language->code }})">
+                    </div>
+                `;
+            @endif
         @endforeach
 
         html += `
-                </div>
             </div>
 
             <div>
                 <label class="block mb-1 font-medium">Value</label>
-                <div class="flex flex-col md:flex-row gap-2">
-    `;
-
-        @foreach($languages as $language)
-        html += `
-            <input type="text"
-                   name="specs[${specIndex}][{{ $language->code }}][value]"
-                   class="input flex-1"
-                   placeholder="Value ({{ $language->code }})">
         `;
+
+        @foreach($languages as $index => $language)
+            @if($index === 0)
+                html += `
+                    <label class="block text-sm text-gray-600 mb-1">
+                        {{ strtoupper($language->code) }}
+                    </label>
+                    <input type="text"
+                           name="specs[${specIndex}][{{ $language->code }}][value]"
+                           class="input mb-2 w-full"
+                           placeholder="Value ({{ $language->code }})">
+                `;
+            @else
+                html += `
+                    <div x-show="open" x-collapse>
+                        <label class="block text-sm text-gray-600 mb-1">
+                            {{ strtoupper($language->code) }}
+                        </label>
+                        <input type="text"
+                               name="specs[${specIndex}][{{ $language->code }}][value]"
+                               class="input mb-2 w-full"
+                               placeholder="Value ({{ $language->code }})">
+                    </div>
+                `;
+            @endif
         @endforeach
 
         html += `
-                </div>
             </div>
+
+            <button type="button"
+                    @click="open = !open"
+                    class="mt-3 text-sm text-blue-600 hover:underline flex items-center gap-1">
+                Other Languages
+                <svg :class="{ 'rotate-180': open }"
+                     class="w-4 h-4 transition-transform"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
         </div>
-    `;
+        `;
 
         container.insertAdjacentHTML('beforeend', html);
+
+        // 🔴 КРИТИЧНО: инициализация Alpine для динамически добавленного блока
+        if (window.Alpine) {
+            Alpine.initTree(container.lastElementChild);
+        }
+
         specIndex++;
     }
 

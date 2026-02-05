@@ -184,6 +184,13 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ route('buyer.premium-plans') }}"
+                   class="block px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
+                    Premium Buyer Plans
+                </a>
+            </li>
+
         </ul>
     @endif
 

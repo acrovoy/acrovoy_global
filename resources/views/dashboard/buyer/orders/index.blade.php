@@ -89,7 +89,7 @@
                                     'production' => 'bg-orange-100 text-orange-800',
                                     'shipped'    => 'bg-green-100 text-green-800',
                                     'delivered'  => 'bg-indigo-100 text-indigo-800',
-                                    'completed'  => 'bg-green-200 text-green-900',
+                                    'completed'  => 'bg-gray-200 text-green-900',
                                     'cancelled'  => 'bg-red-100 text-red-800',
                                 ];
                             @endphp

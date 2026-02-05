@@ -16,7 +16,7 @@
     </div>
 
     {{-- Form card --}}
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+    <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
         <div class="p-6">
             @include('dashboard.manufacturer.partials.add-product-form')
         </div>

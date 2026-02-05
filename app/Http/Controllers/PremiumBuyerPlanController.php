@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PremiumSellerPlan;
 
-class PremiumSellerPlanController extends Controller
+class PremiumBuyerPlanController extends Controller
 {
     public function index()
     {
@@ -13,7 +13,7 @@ class PremiumSellerPlanController extends Controller
 
     // 🔹 Определяем тип планов по роли пользователя
     // По умолчанию — supplier (старая логика)
-    $targetType = 'supplier';
+    $targetType = 'buyer';
 
      // 🔹 Получаем планы нужного типа
     $plans = PremiumSellerPlan::where('target_type', $targetType)
@@ -29,7 +29,7 @@ class PremiumSellerPlanController extends Controller
             : $user->premium_plan_id;
     }
 
-    return view('dashboard.manufacturer.premium-seller-plans', compact(
+    return view('dashboard.buyer.premium-buyer-plans', compact(
         'plans',
         'currentPlanId'
     ));
@@ -38,11 +38,11 @@ class PremiumSellerPlanController extends Controller
     public function compare()
     {
         // Загружаем все планы с их фичами
-        $plans = PremiumSellerPlan::where('target_type', 'supplier')
+        $plans = PremiumSellerPlan::where('target_type', 'buyer')
         ->with('planFeatures.feature')->get();
 
         return view(
-            'dashboard.manufacturer.premium-seller-plans-compare',
+            'dashboard.buyer.premium-buyer-plans-compare',
             compact('plans')
         );
     }
@@ -50,7 +50,7 @@ class PremiumSellerPlanController extends Controller
     public function subscribe(Request $request)
     {
         $request->validate([
-            'plan_id' => 'required|exists:premium_seller_plans,id',
+            'plan_id' => 'required|exists:premium_buyer_plans,id',
         ]);
 
         $user = $request->user();
@@ -65,7 +65,7 @@ class PremiumSellerPlanController extends Controller
         $user->save();
 
         return redirect()
-            ->route('manufacturer.premium-plans.index')
+            ->route('buyer.premium-plans.index')
             ->with('success', 'Plan updated successfully!');
     }
 }

@@ -47,11 +47,11 @@
 <table class="w-full border rounded text-sm overflow-hidden">
     <thead class="bg-gray-100">
         <tr>
-            <th class="px-4 py-2 text-left">ID</th>
-            <th class="px-4 py-2 text-left">Title</th>
-            <th class="px-4 py-2 text-left">Created by</th>
-            <th class="px-4 py-2 text-left">Status</th>
-            <th class="px-4 py-2 text-left">Created</th>
+            <th class="px-4 py-2 text-left text-gray-700">ID</th>
+            <th class="px-4 py-2 text-left text-gray-700">Title</th>
+            <th class="px-4 py-2 text-left text-gray-700">Created by</th>
+            <th class="px-4 py-2 text-left text-gray-700">Status</th>
+            <th class="px-4 py-2 text-left text-gray-700">Created</th>
         </tr>
     </thead>
 

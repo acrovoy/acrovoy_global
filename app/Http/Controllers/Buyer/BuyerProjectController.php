@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Buyer;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
+
+
 
 use App\Models\Project;
 use App\Models\ProjectItem;
@@ -162,4 +165,92 @@ class BuyerProjectController extends Controller
     return redirect()->route('buyer.projects.index')
                      ->with('success', 'Project deleted successfully.');
 }
+
+
+public function storeCustomization(Request $request)
+{
+    $user = auth()->user();
+
+    if (!$user) {
+        abort(403);
+    }
+
+    $request->validate([
+        'product_id' => 'required|exists:products,id',
+    ]);
+
+    // 1️⃣ Получаем продукт
+    $product = Product::findOrFail($request->product_id);
+
+    // 2️⃣ Создаём проект
+    $project = Project::create([
+        'buyer_id' => $user->id,
+        'title'    => 'Customization: ' . $product->name,
+        'status'   => 'draft',
+    ]);
+
+    // 3️⃣ КОПИРУЕМ ПРОДУКТ В PROJECT ITEM
+    // ЛОГИКА ПОЛНОСТЬЮ СКОПИРОВАНА ИЗ ProjectItemController
+
+    $product = Product::with([
+        'specifications.translations',
+        'materials',
+        'colors',
+        'translations',
+        'images',
+    ])->findOrFail($product->id);
+
+    DB::transaction(function () use ($project, $product, $user) {
+
+        $item = ProjectItem::create([
+            'project_id'   => $project->id,
+            'product_id'   => $product->id,
+            'product_name' => $product->name,
+            'quantity'     => 1,
+        ]);
+
+        // 🔹 Specifications
+        foreach ($product->specifications as $spec) {
+            $tr = $spec->translations->firstWhere('locale', $user->language)
+                ?? $spec->translations->first();
+
+            $item->specifications()->create([
+                'parameter' => $tr?->key ?? 'N/A',
+                'value'     => $tr?->value ?? 'N/A',
+            ]);
+        }
+
+        // 🔹 Materials
+        foreach ($product->materials as $material) {
+            $item->materials()->attach($material->id);
+        }
+
+        // 🔹 Images
+        foreach ($product->images as $image) {
+            $item->media()->create([
+                'image_path' => $image->image_path,
+                'is_main'    => $image->is_main,
+            ]);
+        }
+
+        // 🔹 Description
+        $productTranslation = $product->translations
+            ->firstWhere('locale', $user->language)
+            ?? $product->translations->first();
+
+        if ($productTranslation) {
+            $item->descriptions()->create([
+                'type'        => 'general',
+                'description' => $productTranslation->description ?? 'N/A',
+            ]);
+        }
+    });
+
+    // 4️⃣ Редирект сразу в проект
+    return redirect()
+        ->route('buyer.projects.show', $project)
+        ->with('success', 'Customization project created successfully.');
+}
+
+
 }

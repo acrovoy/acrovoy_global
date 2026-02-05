@@ -9,7 +9,7 @@ class PremiumSellerPlan extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'price', 'popular'];
+    protected $fillable = ['name', 'price', 'popular','target_type',];
 
     // Связь с PlanFeature
     public function planFeatures()

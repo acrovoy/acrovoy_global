@@ -18,6 +18,7 @@ use App\Http\Controllers\DashboardRoleController;
 use App\Http\Controllers\BuyerOrderController;
 use App\Http\Controllers\ManufacturerController;
 use App\Http\Controllers\PremiumSellerPlanController;
+use App\Http\Controllers\PremiumBuyerPlanController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\ShippingTemplateController;
@@ -226,6 +227,14 @@ Route::prefix('dashboard/buyer')
     ->group(function () {
 
 
+        Route::get('/premium-buyer-plans', [PremiumBuyerPlanController::class, 'index'])
+        ->name('premium-plans');
+
+        Route::get('/premium-buyer-plans/compare', [PremiumBuyerPlanController::class, 'compare'])
+        ->name('premium-plans.compare');
+
+        Route::post('/premium-buyer-plans/subscribe', [PremiumBuyerPlanController::class, 'subscribe'])
+        ->name('premium-plans.subscribe');
 
 
         Route::get('/cart', [BuyerCartController::class, 'index'])
@@ -317,9 +326,9 @@ Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {
         'destroy' => 'buyer.projects.destroy',
     ]);
 
-    Route::post('project-items', [ProjectItemController::class, 'store'])
-     ->name('buyer.project-items.store');
+    Route::post('project-items', [ProjectItemController::class, 'store'])->name('buyer.project-items.store');
 
+    Route::post('custom-orders', [BuyerProjectController::class, 'storeCustomization'])->name('buyer.custom-orders.store');
 
 });
 
@@ -456,6 +465,9 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         ]);
     })->name('home');
 
+    // Virify & Trusted
+    Route::post('sellers/{seller}/verify-trust', [AdminSellersController::class, 'updateVerifyTrust']);
+    
     // Products moderation
     Route::resource('products', AdminProductController::class);
     Route::get('/products/{product}', [AdminProductController::class, 'show'])->name('products.show');
