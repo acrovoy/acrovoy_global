@@ -25,7 +25,8 @@
             {{-- Info --}}
             <div class="flex-1 flex flex-col gap-2">
 
-                <div class="flex items-start lg:items-center justify-between mb-2">
+                <div class="flex items-start lg:items-center justify-between">
+                    <div>
                     <div class="flex flex-col lg:flex-row items-start lg:items-center gap-3">
                         <h1 class="text-3xl font-extrabold text-gray-900 leading-tight">
                             {{ $supplier->name }}
@@ -33,7 +34,20 @@
                         <span class="text-gray-600 font-medium whitespace-nowrap">
                             | &nbsp;&nbsp; {{ $supplier->country ? $supplier->country->name : 'N/A' }}
                         </span>
+
+                         
+
+
                     </div>
+
+                    <p class="text-gray-700">{{ $supplier->short_description ?? '' }}</p>
+                    <p class="text-gray-700">{{ $supplier->description ?? '' }}</p>
+
+
+                    </div>
+
+                   
+
 
                     {{-- Reputation --}}
                     <div class="ml-auto w-full lg:w-auto">
@@ -54,7 +68,7 @@
                             $rating = round($rating, 1);
                         @endphp
 
-                        <div class="bg-gray-50 rounded-xl p-4 flex flex-col md:flex-row items-center gap-4 shadow-inner">
+                        <div class="bg-gray-50 h-[20]  rounded-xl p-4 flex flex-col md:flex-row items-center gap-4 shadow-inner">
                             <div class="flex items-center gap-2">
                                 <span class="text-xl">{{ $icon }}</span>
                                 <span class="px-3 py-1 rounded-full font-semibold {{ $color }} text-white text-sm tracking-wide">{{ $level }} Supplier</span>
@@ -76,8 +90,7 @@
                     </div>
                 </div>
 
-                <p class="text-gray-700 mb-2">{{ $supplier->short_description ?? '' }}</p>
-                <p class="text-gray-700 mb-2">{{ $supplier->description ?? '' }}</p>
+                
 
             </div>
         </div>

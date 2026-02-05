@@ -60,6 +60,12 @@ class ShippingTemplateController extends Controller
 
         // 2️⃣ Создаем мультиязычные переводы
         foreach ($data['title'] as $locale => $title) {
+
+        // ❗ если title пустой — пропускаем язык
+    if (empty($title)) {
+        continue;
+    }
+
             \App\Models\ShippingTemplateTranslation::create([
                 'shipping_template_id' => $template->id,
                 'locale' => $locale,
@@ -114,6 +120,12 @@ class ShippingTemplateController extends Controller
 
         // 2️⃣ Обновляем мультиязычные переводы
         foreach ($data['title'] as $locale => $title) {
+
+
+         // ❗ если title пустой — пропускаем язык
+    if (empty($title)) {
+        continue;
+    }
 
             // Если перевод уже существует, обновляем
             $translation = $shippingTemplate->translations()->where('locale', $locale)->first();

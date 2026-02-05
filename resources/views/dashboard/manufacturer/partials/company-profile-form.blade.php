@@ -1,6 +1,6 @@
 {{-- Показываем сообщение об успешном обновлении --}}
 @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-6" role="alert">
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md " role="alert">
         {{ session('success') }}
     </div>
 @endif
@@ -11,11 +11,7 @@
     <div class="flex-1">
        
 
-        <p class="bg-yellow-50 border border-yellow-200 text-yellow-900
-          px-4 py-3 rounded-lg mb-2 text-sm">
-    Listing card in catalog. Profile shows verified manufacturer information,
-    including country of registration and short business description.
-</p>
+       
 
        
     </div>
@@ -35,123 +31,10 @@
     <div>
         <label class="block font-medium mb-1">Company Name</label>
         <input type="text" name="name" value="{{ old('name', $company->name ?? '') }}"
-               class="w-full border rounded-md p-2" required>
+               class="w-full border border-gray-300 rounded-md p-2" required>
     </div>
 
-    {{-- Registration Country --}}
-<div>
-    <label class="block font-medium mb-1">Registration Country</label>
-
-    <select name="country_id"
-            class="w-full border rounded-md p-2">
-        <option value="">Select country</option>
-
-        @foreach($countries as $country)
-            <option value="{{ $country->id }}"
-                @selected(
-                    old('country_id', $company->country_id ?? null) == $country->id
-                )
-            >
-                {{ $country->name }}
-            </option>
-        @endforeach
-    </select>
-</div>
-
-
-    {{-- Email --}}
-    <div>
-        <label class="block font-medium mb-1">Email</label>
-        <input type="email" name="email" value="{{ old('email', $company->email ?? '') }}"
-               class="w-full border rounded-md p-2" required>
-    </div>
-
-    {{-- Phone --}}
-    <div>
-        <label class="block font-medium mb-1">Phone</label>
-        <input type="text" name="phone" value="{{ old('phone', $company->phone ?? '') }}"
-               class="w-full border rounded-md p-2">
-    </div>
-
-    {{-- Address --}}
-    <div>
-        <label class="block font-medium mb-1">Address</label>
-        <textarea name="address" class="w-full border rounded-md p-2">{{ old('address', $company->address ?? '') }}</textarea>
-    </div>
-
-
-
-  {{-- Сертификаты --}}
-<div class="mt-6">
-    <label class="block font-medium mb-2">Certificates</label>
-
-    {{-- Dropzone --}}
-    <div id="dropzone2"
-         class="w-full border-2 border-dashed border-gray-300 
-                h-40 flex flex-col items-center justify-center bg-gray-50 
-                rounded-md cursor-pointer">
-        <p class="text-gray-500 text-sm">Drag & drop files here or click to upload</p>
-    </div>
-
-    <input type="file" name="certificates[]" id="certificates-input2"
-           multiple class="hidden"
-           accept=".jpg,.jpeg,.png,.webp,.pdf">
-
-    {{-- Существующие сертификаты --}}
-    @if($company->certificates->count())
-        <div class="certificate-list mt-4 flex flex-wrap gap-2">
-    @foreach($company->certificates as $certificate)
-        <div class="certificate-item border p-2 rounded flex items-center gap-2 relative" data-id="{{ $certificate->id }}">
-            <a href="{{ asset('storage/' . $certificate->file_path) }}" target="_blank" class="text-blue-600 underline truncate max-w-[150px]">
-                {{ $certificate->name }}
-            </a>
-            <button type="button" class="delete-certificate text-red-600 font-bold" data-url="{{ route('manufacturer.certificates.delete', $certificate->id) }}">
-                &times;
-            </button>
-        </div>
-    @endforeach
-</div>
-    @else
-        <p class="text-sm text-gray-400 mt-2">No certificates uploaded yet</p>
-    @endif
-</div>
-
-
-
-
-    {{-- Short Description --}}
-    <div>
-        <label class="block font-medium mb-1">Short Description</label>
-        <input type="text"
-            name="short_description"
-            value="{{ old('short_description', $company->short_description ?? '') }}"
-            class="w-full border rounded-md p-2"
-            maxlength="255">
-        <p class="text-xs text-gray-500 mt-1">
-            Short text for cards and lists (max 255 chars)
-        </p>
-    </div>
-
-    {{-- Company Description --}}
-    <div>
-        <label class="block font-medium mb-1">Company Description</label>
-        <textarea name="description"
-                rows="5"
-                class="w-full border rounded-md p-2">{{ old('description', $company->description ?? '') }}</textarea>
-    </div>
-
-    
-
-
-
-   
-
-
-<div class="flex flex-col lg:flex-row gap-8 items-start">
-    
-    {{-- Левая часть — описание --}}
-    <div class="flex-1">
-        {{-- Logo Drag & Drop --}}
+    {{-- Logo Drag & Drop --}}
         <div>
             <label class="block font-medium mb-2">Company Logo</label>
             <div id="logo-dropzone" 
@@ -167,6 +50,90 @@
             <input type="file" name="logo" accept="image/*" id="logo-input" class="hidden">
             <p class="text-sm text-gray-500 mt-1">Drag & drop or click to select a logo</p>
         </div>
+
+
+        {{-- Short Description --}}
+    <div>
+        <label class="block font-medium mb-1">Short Listing Description</label>
+        <input type="text"
+            name="short_description"
+            value="{{ old('short_description', $company->short_description ?? '') }}"
+            class="w-full border border-gray-300 rounded-md p-2"
+            maxlength="255">
+        <p class="text-xs text-gray-500 mt-1">
+            Short text for cards and lists (max 35 chars)
+        </p>
+    </div>
+
+    {{-- Company Description --}}
+    <div>
+        <label class="block font-medium mb-1">Company Description</label>
+        <textarea name="description"
+                rows="5"
+                class="w-full border border-gray-300 rounded-md p-2">{{ old('description', $company->description ?? '') }}</textarea>
+    </div>
+
+
+
+    {{-- Registration Country --}}
+<div>
+    <label class="block font-medium mb-1">Registration Country</label>
+
+    <select name="country_id"
+            class="w-full border border-gray-300 rounded-md p-2">
+        <option value="">Select country</option>
+
+        @foreach($countries as $country)
+            <option value="{{ $country->id }}"
+                @selected(
+                    old('country_id', $company->country_id ?? null) == $country->id
+                )
+            >
+                {{ $country->name }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
+
+ {{-- Address --}}
+    <div>
+        <label class="block font-medium mb-1">Address</label>
+        <textarea name="address" class="w-full border border-gray-300 rounded-md p-2">{{ old('address', $company->address ?? '') }}</textarea>
+    </div>
+
+
+
+    {{-- Email --}}
+    <div>
+        <label class="block font-medium mb-1">Email</label>
+        <input type="email" name="email" value="{{ old('email', $company->email ?? '') }}"
+               class="w-full border border-gray-300 rounded-md p-2" required>
+    </div>
+
+    {{-- Phone --}}
+    <div>
+        <label class="block font-medium mb-1">Phone</label>
+        <input type="text" name="phone" value="{{ old('phone', $company->phone ?? '') }}"
+               class="w-full border border-gray-300 rounded-md p-2">
+    </div>
+
+   
+   
+<p class="bg-yellow-50 border border-yellow-200 text-yellow-900
+          px-4 py-3 rounded-lg mb-2 text-sm">
+    Listing card in catalog. Profile shows verified manufacturer information,
+    including country of registration and short business description.
+</p>
+
+<div class="flex flex-col lg:flex-row gap-8 items-start">
+    
+
+ 
+
+    {{-- Левая часть — описание --}}
+    <div class="flex-1">
+        
 
         {{-- Catalog Image --}}
         <div class="mt-4" style="width: 240px;">
@@ -309,105 +276,3 @@ catalogDropzone.addEventListener('drop', e => {
 </script>
 
 
-{{-- JS Drag & Drop --}}
-<script>
-document.addEventListener('click', function (e) {
-    if (!e.target.classList.contains('delete-certificate')) return;
-
-    if (!confirm('Delete this certificate?')) return;
-
-    const button = e.target;
-    const item = button.closest('.certificate-item');
-    const url = button.dataset.url;
-
-    fetch(url, {
-        method: 'DELETE',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json',
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // fade + scale animation
-            item.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-            item.style.opacity = '0';
-            item.style.transform = 'scale(0.95)';
-            setTimeout(() => item.remove(), 400);
-
-            // обновляем репутацию на странице
-            const repBadge = document.querySelector('#reputation-score');
-            if (repBadge) repBadge.textContent = data.reputation;
-        } else {
-            alert(data.message || 'Error deleting certificate');
-        }
-    })
-    .catch(() => alert('Error deleting certificate'));
-});
-</script>
-
-
-<script>
-const dropzone2 = document.getElementById('dropzone2');
-
-dropzone2.addEventListener('click', () => {
-    const input = document.getElementById('certificates-input2');
-    input.click();
-});
-
-const uploadCertificate = (file) => {
-    const formData = new FormData();
-    formData.append('certificate', file);
-
-    fetch("{{ route('manufacturer.certificates.upload') }}", {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // добавляем новый сертификат в список
-            const container = document.querySelector('.certificate-list');
-            const div = document.createElement('div');
-            div.className = 'certificate-item border p-2 rounded flex items-center gap-2 relative';
-            div.dataset.id = data.certificate.id;
-            div.innerHTML = `
-                <a href="${data.certificate.url}" target="_blank" class="text-blue-600 underline truncate max-w-[150px]">
-                    ${data.certificate.name}
-                </a>
-                <button type="button" class="delete-certificate text-red-600 font-bold" data-url="/dashboard/manufacturer/certificates/${data.certificate.id}">
-                    &times;
-                </button>
-            `;
-            container.appendChild(div);
-
-            // тут можно обновить бейджи репутации
-            console.log('New reputation:', data.reputation);
-        }
-    })
-    .catch(err => alert('Error uploading certificate'));
-};
-
-// обрабатываем drag & drop
-dropzone2.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropzone2.classList.add('border-blue-400', 'bg-blue-50');
-});
-dropzone2.addEventListener('dragleave', () => {
-    dropzone2.classList.remove('border-blue-400', 'bg-blue-50');
-});
-dropzone2.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzone2.classList.remove('border-blue-400', 'bg-blue-50');
-    for (const file of e.dataTransfer.files) uploadCertificate(file);
-});
-
-// обрабатываем выбор через input
-document.getElementById('certificates-input2').addEventListener('change', e => {
-    for (const file of e.target.files) uploadCertificate(file);
-});
-</script>
