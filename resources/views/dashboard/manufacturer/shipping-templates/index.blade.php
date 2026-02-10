@@ -31,7 +31,7 @@
     {{-- Table Card --}}
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50 uppercase text-gray-600">
+            <thead class="bg-gray-50 text-gray-600">
                 <tr>
                     <th class="px-5 py-3 text-left font-medium">Title</th>
                     <th class="px-5 py-3 text-left font-medium">Price</th>

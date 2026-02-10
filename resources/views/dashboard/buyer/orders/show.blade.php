@@ -64,13 +64,13 @@
                             {{ $item->product_name }}
                         </p>
                         <p class="text-xs text-gray-500">
-                            {{ $item->quantity }} × {{ number_format($item->price, 2) }} ₴
+                            {{ $item->quantity }} × {{ number_format($item->price, 2) }} $
                         </p>
                     </div>
                 </div>
 
                 <div class="font-semibold text-gray-900">
-                    {{ number_format($item->price * $item->quantity, 2) }} ₴
+                    {{ number_format($item->price * $item->quantity, 2) }} $
                 </div>
             </div>
         @endforeach
@@ -82,13 +82,13 @@
             Доставка ({{ $order->delivery_method ?? '-' }})
         </span>
         <span>
-            {{ number_format($order->delivery_price ?? 0, 2) }} ₴
+            {{ number_format($order->delivery_price ?? 0, 2) }} $
         </span>
     </div>
 
     {{-- Итого --}}
     <div class="text-right mt-3 text-lg font-semibold">
-        Итого: {{ number_format($order->total, 2) }} ₴
+        Итого: {{ number_format($order->total, 2) }} $
     </div>
 </div>
 
@@ -385,16 +385,14 @@
         Контактная информация
     </h3>
 
-    @php
-        $address = $order->user->addresses()->where('is_default', true)->first();
-    @endphp
+    
 
-    @if($address)
+    @if($order->country && $order->city && $order->street)
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
             <div>
                 <span class="text-gray-500">Имя</span>
                 <div class="text-gray-900 font-medium">
-                    {{ $order->first_name }} {{ $address->last_name ?? '' }}
+                    {{ $order->first_name }} {{ $order->last_name ?? '' }}
                 </div>
             </div>
 
@@ -463,15 +461,23 @@
         </form>
     @endif
 
+    {{-- Кнопка открыть модалку --}}
+    <div x-data="{ editAddressModalOpen: false }" class="inline-flex">
+
+    {{-- Кнопка открыть модалку --}}
     @if($canEditAddress)
-        <a href="{{ route('buyer.orders.edit-address', $order->id) }}"
-           class="px-3 py-1.5 text-sm
-                  border border-yellow-300 text-yellow-700
-                  rounded-md
-                  hover:bg-yellow-50 hover:border-yellow-400">
+        <a href="#"
+           @click.prevent="editAddressModalOpen = true"
+           class="px-3 py-1.5 text-sm border border-yellow-300 text-yellow-700 rounded-md hover:bg-yellow-50 hover:border-yellow-400">
             Edit Address
         </a>
     @endif
+
+    {{-- Подключаем модалку --}}
+    @include('dashboard.buyer.orders.modals.edit_address_modal', ['order' => $order])
+
+</div>
+  
 
     {{-- Редактировать заказ --}}
     @if($order->status === 'pending')
@@ -623,6 +629,8 @@
         </form>
     </div>
 </div>
+
+
 
 {{-- Скрипт для открытия/закрытия модалок и работы звездочек --}}
 <script>

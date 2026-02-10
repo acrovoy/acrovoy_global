@@ -48,6 +48,11 @@
                 <li>
                     <a href="{{ route('admin.orders.index') }}" class="menu-link {{ request()->routeIs('admin.orders.*') ? 'font-bold' : '' }}">Orders & Disputes</a>
                 </li>
+
+                <li>
+                    <a href="{{ route('admin.shipping-center.index') }}" class="menu-link {{ request()->routeIs('admin.shipping-center.*') ? 'font-bold' : '' }}">Shipping Center</a>
+                </li>
+
                 <li>
                     <a href="{{ route('admin.currencies.index') }}" class="menu-link {{ request()->routeIs('admin.currencies.*') ? 'font-bold' : '' }}">
                         Currencies

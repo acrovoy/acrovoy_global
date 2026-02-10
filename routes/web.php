@@ -47,13 +47,16 @@ use App\Http\Controllers\Admin\AdminFAQController;
 use App\Http\Controllers\Admin\AdminCurrencyController;
 use App\Http\Controllers\Admin\AdminExchangeRateController;
 use App\Http\Controllers\Admin\SettingsController;
-use App\Http\Controllers\Admin\Settings\ConstantsController;;
+use App\Http\Controllers\Admin\AdminShippingCenterController;
+use App\Http\Controllers\Admin\Settings\ConstantsController;
+
 
 use App\Http\Controllers\Admin\Settings\UnitsController;
 use App\Http\Controllers\Admin\Settings\MaterialsController;
 use App\Http\Controllers\Admin\Settings\LanguagesController;
 use App\Http\Controllers\Admin\Settings\CountriesController;
 use App\Http\Controllers\Admin\Settings\CategoryController;
+use App\Http\Controllers\Admin\Settings\LocationController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 
 
@@ -235,21 +238,13 @@ Route::prefix('dashboard/buyer')
 
         Route::post('/premium-buyer-plans/subscribe', [PremiumBuyerPlanController::class, 'subscribe'])
         ->name('premium-plans.subscribe');
-
-
-        Route::get('/cart', [BuyerCartController::class, 'index'])
-            ->name('cart');
-
-        Route::patch('/cart/{id}', [BuyerCartController::class, 'update'])
-            ->name('cart.update');
-
-        Route::delete('/cart/{id}', [BuyerCartController::class, 'destroy'])
-            ->name('cart.remove');
-
+      
         Route::get('/orders', [BuyerOrderController::class, 'index'])
             ->name('orders');
 
         Route::get('/orders/{id}', [BuyerOrderController::class, 'show'])->name('orders.show');
+
+        Route::put('orders/{order}/update-address', [OrderController::class, 'updateAddress'])->name('orders.update-address');
 
         Route::get('/messages/', [MessageController::class, 'threadMessages'])->name('messages');
     });
@@ -514,6 +509,8 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
 
     Route::resource('faq', AdminFAQController::class);
 
+    //Shipping-center
+    Route::resource('shipping-center', AdminShippingCenterController::class);
 
     Route::resource('currencies', AdminCurrencyController::class)
         ->except(['show']);
@@ -543,7 +540,13 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         Route::get('materials/{material}/edit', [MaterialsController::class, 'edit'])->name('materials.edit');
         Route::put('materials/{material}', [MaterialsController::class, 'update'])->name('materials.update');
         Route::delete('materials/{material}', [MaterialsController::class, 'destroy'])->name('materials.destroy');
-    });
+        
+        //Locations
+        Route::get('locations/regions', [LocationController::class, 'regionsByCountry'])->name('locations.regions');
+        Route::get('locations/locations', [LocationController::class, 'regionsWithChildren'])->name('locations.locations');
+        Route::resource('locations', LocationController::class);
+    
+        });
 
 
     // === Help Center ===

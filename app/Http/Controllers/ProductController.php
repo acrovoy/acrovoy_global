@@ -138,8 +138,10 @@ if ($user) {
             ->with('translations')
             ->get();
 
+            // Шаблон доставки по умолчанию (Acrovoy Delivery)
+    $defaultShippingTemplate = ShippingTemplate::with('translations')->find(1);
 
-        return view('dashboard.manufacturer.add-product', compact('categories', 'materials', 'shippingTemplates', 'countries'));
+        return view('dashboard.manufacturer.add-product', compact('categories', 'materials', 'shippingTemplates', 'defaultShippingTemplate','countries'));
     }
 
     public function store(StoreProductRequest  $request)
@@ -394,6 +396,9 @@ if ($user) {
             ->with('translations')
             ->get();
 
+             // Шаблон доставки по умолчанию (Acrovoy Delivery)
+         $defaultShippingTemplate = ShippingTemplate::with('translations')->find(1);
+
 
         // Загружаем материалы с переводами
         $materials = Material::with('translations')->get();
@@ -425,6 +430,7 @@ if ($user) {
             'languages',
             'countries',
             'shippingTemplates',
+            'defaultShippingTemplate',
             'materialsPrepared',  // все материалы с переводами
             'selectedMaterials',  // выбранные материалы для продукта
             'translations',
@@ -435,6 +441,10 @@ if ($user) {
 
     public function update(UpdateProductRequest $request, Product $product)
     {
+
+
+    
+
         abort_if(
             $product->supplier_id !== auth()->user()->supplier->id,
             403

@@ -9,6 +9,7 @@ use App\Models\OrderDispute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\OrderStatusService;
+use App\Models\UserAddress;
 
 
 
@@ -79,6 +80,55 @@ class OrderController extends Controller
     // Сохраняем данные чекаута
     public function store(Request $request)
 {
+
+    $user = auth()->user();
+
+/**
+ * 1️⃣ Адрес из формы (ВСЕГДА снепшот)
+ */
+$formAddress = [
+    'first_name'  => $request->first_name,
+    'last_name'   => $request->last_name,
+    'country'     => $request->country,
+    'city'        => $request->city,
+    'region'      => $request->region,
+    'street'      => $request->street,
+    'postal_code' => $request->postal_code,
+    'phone'       => $request->phone,
+];
+
+/**
+ * 2️⃣ Выбранный сохранённый адрес (если есть)
+ */
+$selectedAddress = null;
+
+if ($request->filled('saved_address_id')) {
+    $selectedAddress = $user->addresses()
+        ->where('id', $request->saved_address_id)
+        ->firstOrFail();
+}
+
+/**
+ * 3️⃣ Решаем — сохраняем адрес или нет
+ */
+if ($request->boolean('save_as_new')) {
+
+    UserAddress::firstOrCreate(
+        ['user_id' => $user->id] + $formAddress,
+        ['is_default' => false]
+    );
+
+} elseif (!$selectedAddress) {
+
+    // пользователь не выбирал адрес → первый checkout
+    UserAddress::firstOrCreate(
+        ['user_id' => $user->id] + $formAddress,
+        ['is_default' => false]
+    );
+}
+
+
+
     $cartItems = CartItem::where('user_id', auth()->id())
         ->with('product')
         ->get();
@@ -104,6 +154,7 @@ class OrderController extends Controller
         $total,
         $shippingPrice,
         $shippingTemplate,
+        $formAddress,
         &$order
     ) {
 
@@ -115,14 +166,15 @@ class OrderController extends Controller
             'total' => $total,
             'delivery_price' => $shippingPrice,
             'delivery_method' => $shippingTemplate?->title,
-            'first_name' => $request->input('first_name'),
-            'last_name' => $request->input('last_name'),
-            'country' => $request->input('country'),
-            'city' => $request->input('city'),
-            'region' => $request->input('region'),
-            'street' => $request->input('street'),
-            'postal_code' => $request->input('postal_code'),
-            'phone' => $request->input('phone'),
+            'first_name'  => $formAddress['first_name'],
+            'last_name'   => $formAddress['last_name'],
+            'country'     => $formAddress['country'],
+            'city'        => $formAddress['city'],
+            'region'      => $formAddress['region'],
+            'street'      => $formAddress['street'],
+            'postal_code' => $formAddress['postal_code'],
+            'phone'       => $formAddress['phone'],
+
             'notes' => $request->input('notes'),
         ]);
 
@@ -254,7 +306,26 @@ public function edit(int $id)
         // Опционально: последний использованный адрес
         $lastAddress = $savedAddresses->first();
 
-        return view('dashboard.buyer.orders.edit', compact('order', 'savedAddresses', 'lastAddress'));
+        $orderItems = $order->items->load('product.priceTiers')->map(function($item) {
+    $product = $item->product;
+    return [
+        'id' => $item->id,
+        'product_name' => $item->product_name,
+        'quantity' => $item->quantity,
+        'price' => $item->price ?? 0,
+        'priceTiers' => $product
+            ? $product->priceTiers->map(fn($tier) => [
+                'min_qty' => $tier->min_qty,
+                'max_qty' => $tier->max_qty,
+                'price' => $tier->price,
+            ])->values()->toArray()
+            : [],
+    ];
+})->values()->toArray();
+
+
+
+        return view('dashboard.buyer.orders.edit', compact('order', 'savedAddresses', 'lastAddress', 'orderItems'));
     }
 
     /**
@@ -262,6 +333,10 @@ public function edit(int $id)
      */
     public function update(Request $request, int $id)
 {
+
+
+
+
     $order = Order::where('id', $id)
         ->where('user_id', auth()->id())
         ->where('status', 'pending') // только pending
@@ -297,22 +372,54 @@ public function edit(int $id)
     ]);
 
     // Обновляем товары в заказе
-    foreach ($request->items as $itemData) {
-        $orderItem = $order->items()->where('id', $itemData['id'])->first();
-        if ($orderItem) {
-            $orderItem->update([
-                'product_name' => $itemData['product_name'],
-                'quantity' => $itemData['quantity'],
-                'price' => $itemData['price'],
-            ]);
-        }
+    foreach ($request->input('items') as $itemData) {
+        $orderItem = $order->items()->find($itemData['id']);
+        if (!$orderItem) continue;
+
+        $quantity = max(1, intval($itemData['quantity']));
+        $orderItem->quantity = $quantity;
+
+        // Получаем цену из PriceTier
+        $priceTier = $orderItem->product->priceTiers()
+                        ->where('min_qty', '<=', $quantity)
+                        ->where(function($q) use ($quantity) {
+                            $q->where('max_qty', '>=', $quantity)
+                            ->orWhereNull('max_qty');
+                        })
+                        ->orderBy('min_qty', 'asc')
+                        ->first();
+
+        $orderItem->price = $priceTier->price
+                        ?? $orderItem->product->price
+                        ?? 0;
+
+        $orderItem->save();
     }
 
     return redirect()
-        ->route('buyer.orders.edit', $order->id)
+        ->route('buyer.orders.show', $order->id)
         ->with('success', 'Заказ успешно обновлён ');
 }
 
 
+public function updateAddress(Request $request, Order $order)
+{
+    $request->validate([
+        'first_name'  => 'required|string|max:255',
+        'last_name'   => 'nullable|string|max:255',
+        'country'     => 'required|string|max:255',
+        'city'        => 'required|string|max:255',
+        'region'      => 'nullable|string|max:255',
+        'street'      => 'required|string|max:255',
+        'postal_code' => 'nullable|string|max:20',
+        'phone'       => 'required|string|max:20',
+    ]);
+
+    $order->update($request->only([
+        'first_name', 'last_name', 'country', 'city', 'region', 'street', 'postal_code', 'phone'
+    ]));
+
+    return redirect()->back()->with('success', 'Address updated successfully!');
+}
 
 }

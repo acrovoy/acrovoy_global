@@ -2,7 +2,7 @@
       action="{{ $shippingTemplate && $shippingTemplate->id
                   ? route('manufacturer.shipping-templates.update', $shippingTemplate->id)
                   : route('manufacturer.shipping-templates.store') }}"
-      class="space-y-8 bg-gray-50 border rounded-xl shadow-sm p-6"
+      class="space-y-2 bg-gray-50 border rounded-xl shadow-sm p-6"
       id="shippingTemplateForm">
     @csrf
 

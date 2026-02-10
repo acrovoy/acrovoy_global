@@ -51,77 +51,84 @@
         {{-- Доставка строка --}}
         <div class="flex justify-between items-center border-b pt-2 mt-2 pb-4 text-gray-700 font-medium">
             <span>Доставка</span>
-            <span id="shipping-cost">0.00₴</span>
+            <span id="shipping-cost">0.00$</span>
         </div>
 
         {{-- Итого --}}
         <div class="text-right mt-4 font-bold">
-            Итого: <span id="grand-total">{{ number_format($total, 2) }}₴</span>
+            Итого: <span id="grand-total">{{ number_format($total, 2) }}$</span>
         </div>
     </div>
 
     {{-- Выбор доставки --}}
-    <div class="bg-white p-4 rounded-lg shadow mb-6">
-        <h3 class="font-semibold mb-2">Доставка</h3>
+<div class="bg-white p-4 rounded-lg shadow mb-6">
+    <h3 class="font-semibold mb-2">Доставка</h3>
 
-        <div
-            x-data="{ selectedShipping: {{ $shippingOptions->first()->id ?? 0 }} }"
-            class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5"
+    <div
+        x-data="{ selectedShipping: {{ $shippingOptions->first()->id ?? 0 }} }"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5"
+    >
+        @foreach($shippingOptions as $template)
+        <label
+            class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition flex flex-col gap-2"
+            :class="{
+                'bg-blue-50 border-blue-400 shadow-md':
+                selectedShipping == {{ $template->id }}
+            }"
+            @click="
+                selectedShipping = {{ $template->id }};
+                $refs.radio{{ $template->id }}.checked = true;
+                recalcTotal();
+            "
         >
-            @foreach($shippingOptions as $template)
-            <label
-                class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition flex flex-col gap-2"
-                :class="{
-                    'bg-blue-50 border-blue-400 shadow-md':
-                    selectedShipping == {{ $template->id }}
-                }"
-                @click="
-                    selectedShipping = {{ $template->id }};
-                    $refs.radio{{ $template->id }}.checked = true;
-                    recalcTotal();
-                "
+            <input
+                type="radio"
+                name="delivery_template_id"
+                value="{{ $template->id }}"
+                x-ref="radio{{ $template->id }}"
+                class="hidden"
+                data-price="{{ $template->price ?? 0 }}"
+                {{ $loop->first ? 'checked' : '' }}
             >
-                <input
-                    type="radio"
-                    name="delivery_template_id"
-                    value="{{ $template->id }}"
-                    x-ref="radio{{ $template->id }}"
-                    class="hidden"
-                    data-price="{{ $template->price ?? 0 }}"
-                    {{ $loop->first ? 'checked' : '' }}
-                >
 
-                <h4 class="font-semibold text-gray-900">
-                    {{ $template->title }}
-                </h4>
+            <h4 class="font-semibold text-gray-900">
+                {{ $template->title }}
+            </h4>
 
-                @if($template->description)
-                <p class="text-gray-700 text-sm mt-1">
-                    {{ $template->description }}
-                </p>
-                @endif
+            @if($template->description)
+            <p class="text-gray-700 text-sm mt-1">
+                {{ $template->description }}
+            </p>
+            @endif
 
-                <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
-                    @if($template->price)
-                    <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
-                        <span class="text-sm text-blue-900 font-medium">Price:</span>
-                        <span class="text-base font-semibold text-blue-900">
-                            ${{ number_format($template->price, 2) }}
-                        </span>
-                    </div>
-                    @endif
-
-                    @if($template->delivery_time)
-                    <div>
-                        <div class="font-medium">Delivery Time:</div>
-                        <div>{{ $template->delivery_time }} days</div>
-                    </div>
-                    @endif
+            <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
+                @if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
+                <div class="col-span-2 inline-flex items-center gap-2
+                    bg-blue-50 border border-blue-100
+                    px-3 py-1.5 rounded-lg text-blue-500 font-medium text-xs">
+                    Delivery cost and delivery time will be calculated after order placement
                 </div>
-            </label>
-            @endforeach
-        </div>
+                @else
+                {{-- PRICE --}}
+                <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
+                    <span class="text-sm text-blue-900 font-medium">Price:</span>
+                    <span class="text-base font-semibold text-blue-900">
+                        ${{ number_format($template->price, 2) }}
+                    </span>
+                </div>
+
+                {{-- DELIVERY TIME --}}
+                <div>
+                    <div class="font-medium">Delivery Time:</div>
+                    <div>{{ $template->delivery_time }} days</div>
+                </div>
+                @endif
+            </div>
+        </label>
+        @endforeach
     </div>
+</div>
+
 
     {{-- Селект с сохранёнными адресами --}}
     <div class="bg-white p-4 rounded-lg shadow mb-6">
@@ -145,6 +152,15 @@
             @endforeach
         </select>
     </div>
+
+
+    <input type="hidden" name="address_modified" id="address_modified" value="0">
+
+    <label class="flex items-center gap-2 mt-3 text-sm text-gray-600">
+        <input type="checkbox" name="save_as_new" value="1">
+        Сохранить как новый адрес
+    </label>
+
 
     {{-- Контакты и адрес --}}
     <div class="bg-white p-4 rounded-lg shadow mb-6">
@@ -312,6 +328,28 @@ function recalcTotal() {
 }
 
 window.addEventListener('DOMContentLoaded', recalcTotal);
+
+
+// Если пользователь меняет любое поле адреса — помечаем как изменённое
+[
+  'first_name',
+  'last_name',
+  'country',
+  'city',
+  'region',
+  'street',
+  'postal_code',
+  'phone'
+].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener('input', () => {
+        document.getElementById('address_modified').value = '1';
+    });
+});
+
+
 </script>
 
 @endsection

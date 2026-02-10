@@ -57,11 +57,13 @@
         <table class="w-full text-sm border-collapse">
             <thead class="bg-gray-50 border-b">
                 <tr>
-                    <th class="px-4 py-2 text-left font-medium">Order ID</th>
-                    <th class="px-4 py-2 text-left font-medium">Created</th>
-                    <th class="px-4 py-2 text-left font-medium">Total</th>
+                    <th class="px-4 py-2 text-left font-medium">Order</th>
+                    <th class="px-4 py-2 text-left font-medium">Products</th>
                     <th class="px-4 py-2 text-left font-medium">Status</th>
+                    <th class="px-4 py-2 text-left font-medium">Total Amount</th>
+                    
                     <th class="px-4 py-2 text-left font-medium">Dispute</th>
+                    <th class="px-4 py-2 text-left font-medium">Created</th>
                     <th class="px-4 py-2 text-right font-medium">Actions</th>
                 </tr>
             </thead>
@@ -73,12 +75,18 @@
                                 #{{ $order->id }}
                             </a>
                         </td>
+                        
+                        
                         <td class="px-4 py-2 text-gray-800">
-                            {{ $order->created_at->format('d M Y H:i') }}
+                            <ul class="list-none space-y-0 max-h-40 overflow-y-auto text-xs text-gray-500">
+                                @foreach($order->items as $item)
+                                    <li>{{ $item->product->name ?? $item->product_name }} x{{ $item->quantity }}</li>
+                                @endforeach
+                            </ul>
                         </td>
-                        <td class="px-4 py-2 font-semibold text-gray-900">
-                            {{ number_format($order->total, 2) }}₴
-                        </td>
+
+
+
                         <td class="px-4 py-2">
                             @php
                                 $statusClasses = [
@@ -93,10 +101,16 @@
                                     'cancelled'  => 'bg-red-100 text-red-800',
                                 ];
                             @endphp
-                            <span class="inline-block px-3 py-1 rounded-full text-sm font-medium {{ $statusClasses[$order->status] ?? 'bg-gray-100 text-gray-700' }}">
+                            <span class="px-2 py-1 rounded text-xs font-medium inline-block {{ $statusClasses[$order->status] ?? 'bg-gray-200 text-gray-600' }}">
                                 {{ ucfirst($order->status) }}
                             </span>
                         </td>
+
+
+                        <td class="px-4 py-2 font-semibold text-gray-900">
+                            {{ number_format($order->total, 2) }}$
+                        </td>
+                        
                         <td class="px-4 py-2">
                             @if(in_array($order->id, $disputedOrderIds))
                                 <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
@@ -105,6 +119,9 @@
                             @else
                                 -
                             @endif
+                        </td>
+                        <td class="px-4 py-2 text-gray-800">
+                            {{ $order->created_at->format('d M Y') }}
                         </td>
                         <td class="px-4 py-2 text-right space-x-2">
                             <a href="{{ route('buyer.orders.show', $order->id) }}"

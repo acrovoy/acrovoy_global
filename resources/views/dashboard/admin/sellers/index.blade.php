@@ -5,7 +5,7 @@
 <div x-data="certificateModal()" class="relative">
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 class="text-2xl font-bold">Sellers</h1>
+        <h1 class="text-2xl font-bold">Suppliers</h1>
 
         <form method="GET" class="flex flex-wrap gap-2 items-center">
             {{-- Фильтр по статусу --}}
