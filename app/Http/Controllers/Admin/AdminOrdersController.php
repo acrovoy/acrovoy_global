@@ -10,78 +10,71 @@ use App\Models\OrderDispute;
 class AdminOrdersController extends Controller
 {
     public function index(Request $request)
-    {
-        $sort = $request->get('sort', '');
-        $status = $request->get('status', '');
-        $userFilter = $request->get('user', '');
+{
+    $sort = $request->get('sort', '');
+    $status = $request->get('status', '');
+    $userFilter = $request->get('user', '');
 
-        // 🔹 Запрос к заказам
-        $ordersQuery = Order::with([
-            'user',          // Показываем данные пользователя
-            'items.product', // Товары
-            'disputes',      // Споры
-        ]);
-
-        if ($status) {
-            $ordersQuery->where('status', $status);
-        }
-
-        if ($userFilter) {
-            $ordersQuery->whereHas('user', function($q) use ($userFilter) {
-                $q->where('name', 'like', "%{$userFilter}%")
-                  ->orWhere('email', 'like', "%{$userFilter}%");
-            });
-        }
-
-        // Сортировка
-        switch ($sort) {
-            case 'oldest':
-                $ordersQuery->orderBy('created_at', 'asc');
-                break;
-            case 'status':
-                $ordersQuery->orderBy('status', 'asc');
-                break;
-            default:
-                $ordersQuery->orderBy('created_at', 'desc');
-        }
-
-        $orders = $ordersQuery->get();
-
-        // Преобразуем для блейда
-        $orders = $orders->map(fn($order) => [
-            'id'             => $order->id,
-            'customer'       => $order->first_name . ' ' . $order->last_name,
-            'user_name'      => $order->user->name ?? 'User',
-            'user_last_name' => $order->user->last_name ?? 'User',
-            'email'          => $order->user->email ?? null,
-            'status'         => $order->status,
-            'created_at'     => $order->created_at,
-            'tracking_number'=> $order->tracking_number,
-            'invoice_file'   => $order->invoice_file,
-            'items'          => $order->items->map(fn($item) => [
-                'product' => $item->product->name ?? 'Custom item',
-                'qty'     => $item->quantity,
-                'price'   => $item->price,
-                'total'   => $item->quantity * $item->price,
-            ]),
-            'total'          => $order->items->sum(fn($item) => $item->quantity * $item->price),
-            'disputes'       => $order->disputes,
-        ]);
-
-
-        $ordersWithOpenDisputes = $orders->map(function($order) {
-    // Берем только первый открытый спор (или можно объединять, если их несколько)
-    $openStatuses = ['pending', 'supplier_offer', 'rejected', 'admin_review'];
-    $openDispute = $order['disputes']->first(fn($d) => in_array($d->status, $openStatuses));
-
-    return array_merge($order, [
-        'dispute_status' => $openDispute->status ?? null
+    $ordersQuery = Order::with([
+        'user',
+        'items.product',
+        'disputes',
     ]);
-})->filter(fn($order) => $order['dispute_status'] !== null); // только с открытыми спорами
 
-        return view('dashboard.admin.orders.index', compact('orders',
-    'ordersWithOpenDisputes', 'sort', 'status', 'userFilter'));
+    // 🔹 Фильтр по статусу
+    if ($status) {
+        $ordersQuery->where('status', $status);
     }
+
+    // 🔹 Фильтр по пользователю
+    if ($userFilter) {
+        $ordersQuery->whereHas('user', function ($q) use ($userFilter) {
+            $q->where('name', 'like', "%{$userFilter}%")
+              ->orWhere('email', 'like', "%{$userFilter}%");
+        });
+    }
+
+    // 🔹 Сортировка
+    switch ($sort) {
+        case 'oldest':
+            $ordersQuery->orderBy('created_at', 'asc');
+            break;
+        case 'status':
+            $ordersQuery->orderBy('status', 'asc');
+            break;
+        default:
+            $ordersQuery->orderBy('created_at', 'desc');
+    }
+
+    $orders = $ordersQuery->get();
+
+    // 🔹 Заказы с запросом стоимости доставки (Acrovoy + цена 0)
+    $ordersWithTransportRequest = $orders->filter(function ($order) {
+        return $order->delivery_method === 'Acrovoy Delivery'
+            && $order->delivery_price == 0;
+    });
+
+    // 🔹 Заказы с открытыми спорами
+    $openStatuses = ['pending', 'supplier_offer', 'rejected', 'admin_review'];
+
+    $ordersWithOpenDisputes = $orders->filter(function ($order) use ($openStatuses) {
+        return $order->disputes
+            ->whereIn('status', $openStatuses)
+            ->isNotEmpty();
+    });
+
+    return view(
+        'dashboard.admin.orders.index',
+        compact(
+            'orders',
+            'ordersWithOpenDisputes',
+            'ordersWithTransportRequest',
+            'sort',
+            'status',
+            'userFilter'
+        )
+    );
+}
 
 
     public function show(int $id)

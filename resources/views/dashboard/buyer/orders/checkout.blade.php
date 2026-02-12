@@ -1,7 +1,10 @@
 @extends('dashboard.layout')
 
 @section('dashboard-content')
-<h2 class="text-2xl font-bold mb-4">Оформление заказа</h2>
+<h2 class="text-2xl font-bold">Оформление заказа</h2>
+<p class="text-sm text-gray-500 mb-6">
+                    Check your order, choose delivery, and enter invoice or shipping details.
+                </p>
 
 <form method="POST" action="{{ route('buyer.orders.store') }}" id="checkoutForm">
     @csrf
@@ -255,7 +258,7 @@
 
     <div class="text-right">
         <button type="submit"
-                class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold">
+                class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
             Подтвердить заказ
         </button>
     </div>

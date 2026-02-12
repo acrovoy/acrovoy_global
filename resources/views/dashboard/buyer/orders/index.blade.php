@@ -55,84 +55,83 @@
 @else
     <div class="bg-white border rounded-xl shadow-sm overflow-x-auto">
         <table class="w-full text-sm border-collapse">
-            <thead class="bg-gray-50 border-b">
-                <tr>
-                    <th class="px-4 py-2 text-left font-medium">Order</th>
-                    <th class="px-4 py-2 text-left font-medium">Products</th>
-                    <th class="px-4 py-2 text-left font-medium">Status</th>
-                    <th class="px-4 py-2 text-left font-medium">Total Amount</th>
+    <thead class="bg-gray-50 border-b">
+        <tr>
+            <th class="px-4 py-2 text-left font-medium">Order</th>
+            <th class="px-4 py-2 text-left font-medium">Status</th>
+            <th class="px-4 py-2 text-left font-medium">Products</th>
+            
+            <th class="px-4 py-2 text-left font-medium">Total Amount</th>
+            <th class="px-4 py-2 text-left font-medium">Dispute</th>
+            <th class="px-4 py-2 text-left font-medium">Created</th>
+            
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+        @foreach($orders as $order)
+            <tr 
+                class="hover:bg-gray-50 transition cursor-pointer"
+                onclick="window.location='{{ route('buyer.orders.show', $order->id) }}'"
+            >
+                <td class="px-4 py-2 font-mono text-gray-800">
                     
-                    <th class="px-4 py-2 text-left font-medium">Dispute</th>
-                    <th class="px-4 py-2 text-left font-medium">Created</th>
-                    <th class="px-4 py-2 text-right font-medium">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @foreach($orders as $order)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-4 py-2 font-mono text-gray-800">
-                            <a href="{{ route('buyer.orders.show', $order->id) }}" class="text-blue-600 hover:underline">
-                                #{{ $order->id }}
-                            </a>
-                        </td>
-                        
-                        
-                        <td class="px-4 py-2 text-gray-800">
-                            <ul class="list-none space-y-0 max-h-40 overflow-y-auto text-xs text-gray-500">
-                                @foreach($order->items as $item)
-                                    <li>{{ $item->product->name ?? $item->product_name }} x{{ $item->quantity }}</li>
-                                @endforeach
-                            </ul>
-                        </td>
+                        {{ $order->id }}
+                    
+                </td>
+                
+                <td class="px-4 py-2">
+                    @php
+                        $statusClasses = [
+                            'pending'    => 'bg-yellow-100 text-yellow-800',
+                            'confirmed'  => 'bg-blue-100 text-blue-800',
+                            'paid'       => 'bg-blue-100 text-blue-800',
+                            'processing' => 'bg-purple-100 text-purple-800',
+                            'production' => 'bg-orange-100 text-orange-800',
+                            'shipped'    => 'bg-green-100 text-green-800',
+                            'delivered'  => 'bg-indigo-100 text-indigo-800',
+                            'completed'  => 'bg-gray-200 text-green-900',
+                            'cancelled'  => 'bg-red-100 text-red-800',
+                        ];
+                    @endphp
+                    <span class="px-2 py-1 rounded text-xs font-medium inline-block {{ $statusClasses[$order->status] ?? 'bg-gray-200 text-gray-600' }}">
+                        {{ ucfirst($order->status) }}
+                    </span>
+                </td>
 
 
+                <td class="px-4 py-2 text-gray-800">
+                    <ul class="list-none space-y-0 max-h-40 overflow-y-auto text-xs text-gray-500">
+                        @foreach($order->items as $item)
+                            <li>{{ $item->product->name ?? $item->product_name }} ({{ $item->quantity }} pcs)</li>
+                        @endforeach
+                    </ul>
+                </td>
 
-                        <td class="px-4 py-2">
-                            @php
-                                $statusClasses = [
-                                    'pending'    => 'bg-yellow-100 text-yellow-800',
-                                    'confirmed'  => 'bg-blue-100 text-blue-800',
-                                    'paid'       => 'bg-blue-100 text-blue-800',
-                                    'processing' => 'bg-purple-100 text-purple-800',
-                                    'production' => 'bg-orange-100 text-orange-800',
-                                    'shipped'    => 'bg-green-100 text-green-800',
-                                    'delivered'  => 'bg-indigo-100 text-indigo-800',
-                                    'completed'  => 'bg-gray-200 text-green-900',
-                                    'cancelled'  => 'bg-red-100 text-red-800',
-                                ];
-                            @endphp
-                            <span class="px-2 py-1 rounded text-xs font-medium inline-block {{ $statusClasses[$order->status] ?? 'bg-gray-200 text-gray-600' }}">
-                                {{ ucfirst($order->status) }}
-                            </span>
-                        </td>
+                
 
+                <td class="px-4 py-2 font-semibold text-gray-900">
+                    {{ number_format($order->total, 2) }}$
+                </td>
+                
+                <td class="px-4 py-2">
+                    @if(in_array($order->id, $disputedOrderIds))
+                        <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                            ⚠ Dispute
+                        </span>
+                    @else
+                        -
+                    @endif
+                </td>
 
-                        <td class="px-4 py-2 font-semibold text-gray-900">
-                            {{ number_format($order->total, 2) }}$
-                        </td>
-                        
-                        <td class="px-4 py-2">
-                            @if(in_array($order->id, $disputedOrderIds))
-                                <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                                    ⚠ Dispute
-                                </span>
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="px-4 py-2 text-gray-800">
-                            {{ $order->created_at->format('d M Y') }}
-                        </td>
-                        <td class="px-4 py-2 text-right space-x-2">
-                            <a href="{{ route('buyer.orders.show', $order->id) }}"
-                               class="px-3 py-1 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800 transition">
-                                View Details
-                            </a>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+                <td class="px-4 py-2 text-gray-600 text-xs">
+                    {{ $order->created_at->format('d M Y') }}
+                </td>
+
+                
+            </tr>
+        @endforeach
+    </tbody>
+</table>
     </div>
 @endif
 

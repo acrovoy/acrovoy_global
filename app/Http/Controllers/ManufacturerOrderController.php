@@ -50,18 +50,34 @@ class ManufacturerOrderController extends Controller
         }
 
         $orders = $ordersQuery->get()
-            ->map(fn ($item) => [
-                'id'       => $item->order->id,
-                'customer' => $item->order->first_name . ' ' . $item->order->last_name,
-                'product'  => $item->product->name
-                    ?? $item->order->rfqOffer?->rfq?->title
-                    ?? 'Custom RFQ',
-                'qty'      => $item->quantity,
-                'price'    => $item->price,
-                'total'    => $item->quantity * $item->price,
-                'status'   => $item->order->status,
-                'date'     => $item->order->created_at->format('Y-m-d'),
-            ]);
+    ->groupBy(fn ($item) => $item->order->id)
+    ->map(function ($items) {
+
+        $first = $items->first();
+        $order = $first->order;
+
+        return [
+            'id'       => $order->id,
+            'customer' => $order->first_name . ' ' . $order->last_name,
+
+            'items' => $items->map(function ($item) {
+                return [
+                    'product' => $item->product->name
+                        ?? $item->order->rfqOffer?->rfq?->title
+                        ?? 'Custom RFQ',
+                    'qty'     => $item->quantity,
+                    'price'   => $item->price,
+                    'total'   => $item->quantity * $item->price,
+                ];
+            }),
+
+            'total'  => $items->sum(fn ($i) => $i->quantity * $i->price),
+            'delivery_price' => $order->delivery_price,
+            'status' => $order->status,
+            'date'   => $order->created_at->format('d M Y'),
+        ];
+    })
+    ->values();
 
         // ID заказов со спором
         $disputedOrderIds = OrderDispute::whereHas('order.items.product', function ($q) use ($supplierId) {
@@ -113,7 +129,7 @@ class ManufacturerOrderController extends Controller
                 'status'   => $order->status,
                 'customer' => trim($order->first_name . ' ' . $order->last_name),
                 'email'    => $order->user->email ?? null,
-                'date'     => $order->created_at->format('Y-m-d'),
+                'date'     => $order->created_at->format('d M y'),
 
                 // CONTACT & SHIPPING
                 'first_name'  => $order->first_name,
@@ -130,14 +146,21 @@ class ManufacturerOrderController extends Controller
 
                 // ITEMS
                 'items' => $orderItems->map(fn ($item) => [
-                    'product' => $item->product->name
-                        ?? $order->rfqOffer?->rfq?->title
-                        ?? 'RFQ item',
-                    'qty'   => $item->quantity,
-                    'price' => $item->price,
-                    'total' => $item->quantity * $item->price,
-                ]),
+    'product'        => $item->product->name
+                          ?? $order->rfqOffer?->rfq?->title
+                          ?? 'RFQ item',
+    'product_object' => $item->product,
+    'image'          => $item->product && $item->product->mainImage
+                          ? $item->product->mainImage->image_path
+                          : null, // <-- здесь добавляем ключ 'image'
+    'qty'            => $item->quantity,
+    'price'          => $item->price,
+    'total'          => $item->quantity * $item->price,
+]),
 
+                'total' => $orderItems->sum(fn ($item) => $item->quantity * $item->price),
+                'delivery_price' => $order->delivery_price ?? 0,
+                'delivery_method' => $order->delivery_method ?? 0,
                 'tracking_number' => $order->tracking_number,
                 'invoice_file'    => $order->invoice_file,
 

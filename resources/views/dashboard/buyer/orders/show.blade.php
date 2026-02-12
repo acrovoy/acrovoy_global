@@ -13,7 +13,7 @@
     Order #{{ $order->id }}
 </h2>
 <p class="text-sm text-gray-500 mb-6">
-                    Manage exchange rates relative to the base currency (USD)
+                    Review your order information, track status updates, manage disputes, and handle address or invoice details.
                 </p>
 
                 </div>
@@ -38,11 +38,26 @@
     @endif
 @endforeach
 
+
+@php
+
+// Проверка: доставка Acrovoy и цена 0
+        $isAcrovoyPending = ($order['delivery_method'] === 'Acrovoy Delivery' && ($order['delivery_price'] ?? 0) == 0);
+
+@endphp
+
+
+@if($isAcrovoyPending)
+        <div class="p-3 mb-3 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded">
+            Awaiting for the delivery price and delivery time from Acrovoy. After that supplier will be able to confirm the order.
+        </div>
+    @endif
+
 {{-- ORDER CARD --}}
 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
     <div class="flex items-center justify-between mb-4">
         <h3 class="font-medium">
-            Товары в заказе
+            Products in the order:
         </h3>
 
         
@@ -79,33 +94,72 @@
  {{-- Доставка --}}
     <div class="flex justify-between text-sm text-gray-700 pt-3 mt-3 border-t">
         <span>
-            Доставка ({{ $order->delivery_method ?? '-' }})
+            DELIVERY: <span class="text-xs text-gray-400">({{ $order->delivery_method ?? '-' }})</span>
         </span>
-        <span>
+
+        @if($order['delivery_method'] === 'Acrovoy Delivery')
+            <span class="font-semibold">0.00 $</span>
+            @else
             {{ number_format($order->delivery_price ?? 0, 2) }} $
-        </span>
+            @endif
+
+       
     </div>
+
+
+    
 
     {{-- Итого --}}
     <div class="text-right mt-3 text-lg font-semibold">
-        Итого: {{ number_format($order->total, 2) }} $
+        Total: {{ number_format($order->total, 2) }} $
     </div>
 </div>
 
-{{-- Отображение споров --}}
 
-@if($order->disputes->count())
-<div class="mt-6 border border-gray-200 rounded-lg bg-white">
+@if($order['delivery_method'] === 'Acrovoy Delivery' && $order['delivery_price'] > 0)
+    <div class="mt-4 border border-gray-200 rounded-xl bg-white shadow-sm p-5">
+        
+        <h3 class="text-sm font-semibold text-gray-900 mb-4">
+            Acrovoy Delivery Details
+        </h3>
 
-    <div class="px-4 py-3 border-b border-gray-200">
-        <h4 class="font-semibold text-gray-800">
-            Споры по заказу
-        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm text-gray-700">
+            
+            {{-- Delivery Price --}}
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                    Delivery Cost
+                </div>
+                <div class="text-lg font-semibold text-gray-900">
+                    {{ number_format($order['delivery_price'], 2) }} $
+                </div>
+            </div>
+
+            {{-- Delivery Time --}}
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                    Delivery Time
+                </div>
+                <div class="text-lg font-semibold text-gray-900">
+                    {{ $order['delivery_time'] ?? '-' }} days
+                </div>
+            </div>
+
+        </div>
     </div>
+@endif
 
-    <div class="divide-y divide-gray-200">
+
+
+{{-- Отображение споров --}}
+@if($order->disputes->count())
+<div class="mt-6 border border-gray-200 rounded-lg bg-gray-50">
+
+    <h3 class="pt-6 pr-6 pl-6 font-semibold text-lg">Disputes</h3>
+
+    <div class="p-4 divide-y divide-gray-200">
     @foreach($order->disputes as $dispute)
-        <div class="p-4">
+        <div class="p-4 bg-white rounded-lg my-2 shadow-sm">
 
             {{-- Статус --}}
             <div class="flex justify-between items-center mb-3">
@@ -125,7 +179,7 @@
                 </div>
 
                 <span class="text-xs text-gray-500">
-                    {{ $dispute->created_at->format('d.m.Y H:i') }}
+                    {{ $dispute->created_at->format('d.M.y | H:i') }}
                 </span>
             </div>
 
@@ -142,7 +196,7 @@
 
             {{-- Ответ продавца --}}
             @if($dispute->supplier_comment)
-                <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded text-sm">
+                <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
                     <strong>Ответ продавца:</strong><br>
                     {{ $dispute->supplier_comment }}
                 </div>
@@ -252,6 +306,7 @@
 
 </div>
 @endif
+
 
 
 
@@ -511,7 +566,7 @@
                        border border-gray-300 text-gray-400
                        rounded-md cursor-not-allowed"
                 disabled>
-            Invoice not uploaded by the seller yet
+            Invoice not uploaded by the supplier yet
         </button>
     @endif
 

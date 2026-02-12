@@ -7,7 +7,7 @@
             ← Back to orders
         </a>
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-4">
 
     {{-- Header --}}
     <div class="flex items-center justify-between">
@@ -16,8 +16,10 @@
                     Order #{{ $order['id'] }} 
                 </h2>
                 <p class="text-sm text-gray-500">
-                    Manage exchange rates relative to the base currency (USD)
+                    Review order items, track delivery, and handle disputes or status updates.
                 </p>
+
+              
         </div>
         <span class="px-3 py-1 rounded text-sm
             @if($order['status'] === 'pending') bg-yellow-100 text-yellow-800
@@ -29,6 +31,77 @@
             {{ ucfirst($order['status']) }}
         </span>
     </div>
+
+
+    @php
+
+// Проверка: доставка Acrovoy и цена 0
+        $isAcrovoyPending = ($order['delivery_method'] === 'Acrovoy Delivery' && ($order['delivery_price'] ?? 0) == 0);
+
+@endphp
+
+
+@if($isAcrovoyPending)
+        <div class="p-3 mb-3 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded">
+            Awaiting for the delivery price and delivery time from Acrovoy.
+        </div>
+    @endif
+
+
+    {{-- Товары --}}
+<div class="divide-y divide-gray-200 rounded-lg border p-4 bg-white shadow-sm">
+    @foreach($order['items'] as $item)
+        <div class="py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                {{-- Картинка товара --}}
+                <img
+                    src="{{ $item['image'] ? asset('storage/' . $item['image']) : asset('images/no-photo.png') }}"
+                    alt="{{ $item['product'] }}"
+                    class="w-12 h-12 rounded object-contain bg-gray-50 border"
+                />
+
+                {{-- Название и количество --}}
+                <div class="max-w-xs">
+                    <p class="font-medium text-gray-900 truncate" title="{{ $item['product'] }}">
+                        {{ $item['product'] }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        {{ $item['qty'] }} × {{ number_format($item['price'], 2) }} $
+                    </p>
+                </div>
+            </div>
+
+            {{-- Сумма за товар --}}
+            <div class="font-semibold text-gray-900">
+                {{ number_format($item['total'], 2) }} $
+            </div>
+        </div>
+    @endforeach
+
+    {{-- Стоимость доставки --}}
+    @if(!empty($order['delivery_price']) && $order['delivery_price'] > 0)
+        <div class="py-3 flex justify-between items-center border-t mt-2 pt-2 text-gray-700 text-sm">
+            <span>Delivery: <span class="text-xs text-gray-400">{{$order['delivery_method']}}</span></span>
+            @if($order['delivery_method'] === 'Acrovoy Delivery')
+            <span class="font-semibold">0.00 $</span>
+            @else
+            <span class="font-semibold">{{ number_format($order['delivery_price'], 2) }} $</span>
+            @endif
+        </div>
+        @else
+        <div class="py-3 flex justify-between items-center border-t mt-2 pt-2 text-gray-700 text-sm">
+            <span>Delivery by Acrovoy</span></span>
+            <span class="font-semibold">{{$order['delivery_price']}}</span>
+        </div>
+
+    @endif
+
+    {{-- Общая сумма заказа --}}
+    <div class="py-3 flex justify-between items-center border-t mt-2 pt-2 text-gray-800 font-medium text-lg">
+        <span>Total</span>
+        <span>{{ number_format($order['total'] + ($order['delivery_price'] ?? 0), 2) }} $</span>
+    </div>
+</div>
 
 
 
@@ -92,11 +165,18 @@
     </div>
 @endif
 
+{{-- Комментарий продавца --}}
+@if($dispute->supplier_comment)
+    <div class="mt-2 p-3 bg-blue-100 border-l-4 border-blue-500 rounded text-sm">
+        <strong>Comment from supplier:</strong><br>
+        {{ $dispute->supplier_comment }}
+    </div>
+@endif
 
 
 {{-- Апелляция к администратору / Решение администратора --}}
 @if($dispute->status === 'appealed' || $dispute->admin_comment)
-    <div class="mt-2 p-3 bg-purple-100 border-l-4 border-purple-500 rounded text-sm">
+    <div class="mt-2 p-3 bg-orange-100 border-l-4 border-orange-500 rounded text-sm">
         <strong>Admin decision:</strong><br>
         {{ $dispute->admin_comment ?? 'На рассмотрении администратора' }}
     </div>
@@ -211,7 +291,23 @@
     @php
         use App\Services\OrderStatusService;
         $available = OrderStatusService::availableStatuses($order['status']);
+
+        // Проверка: доставка Acrovoy и цена 0
+        $isAcrovoyPending = ($order['delivery_method'] === 'Acrovoy Delivery' && ($order['delivery_price'] ?? 0) == 0);
+
+
+        if ($isAcrovoyPending) {
+            // Убираем "confirmed" из доступных статусов
+            $available = array_filter($available, fn($s) => $s !== 'confirmed');
+        }
     @endphp
+
+
+    @if($isAcrovoyPending)
+        <div class="p-3 mb-3 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded">
+            Status cannot be changed to "Confirmed" yet. Delivery price and delivery time will be presented by Acrovoy soon.
+        </div>
+    @endif
 
     @if(count($available) > 0)
         <form method="POST"
@@ -236,13 +332,13 @@
                       class="border rounded px-3 py-2 text-sm"></textarea>
 
             <button type="submit"
-                    class="self-start px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    class="self-start px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
                 Update status
             </button>
         </form>
     @else
         <p class="text-gray-500 italic">
-            Status cannot be changed after completion.
+            Status cannot be changed at this moment.
         </p>
     @endif
 </div>
@@ -303,7 +399,7 @@
         @csrf
 
         @php
-            $isCompleted = in_array($order['status'], ['completed', 'cancelled']);
+            $isCompleted = in_array($order['status'], ['completed', 'cancelled', 'pending']);
         @endphp
 
         {{-- Tracking Number --}}
@@ -317,7 +413,19 @@
 
         {{-- Invoice --}}
         <label class="text-sm font-medium">Invoice (PDF)</label>
-        <input type="file" name="invoice_file" accept="application/pdf" @if($isCompleted) disabled @endif>
+        
+        <div class="relative w-full">
+            <input type="file" name="invoice_file" accept="application/pdf"
+                class="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                @if(in_array($order['status'], ['pending', 'cancelled'])) disabled @endif
+                onchange="document.getElementById('invoice-label').innerText = this.files[0]?.name || 'Choose a file'">
+
+            <button type="button"
+                    class="w-full px-4 py-2 bg-gray-200 border border-gray-700 rounded hover:bg-gray-300 text-gray-700 text-sm text-left cursor-pointer"
+                    @if(in_array($order['status'], ['pending', 'cancelled'])) disabled @endif>
+                <span id="invoice-label">Choose a file</span>
+            </button>
+        </div>
 
         @if(!empty($order['invoice_file']))
             <a href="{{ asset('storage/' . $order['invoice_file']) }}" target="_blank"
@@ -327,7 +435,7 @@
         @endif
 
         <button type="submit"
-                class="self-start px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="self-start px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 @if($isCompleted) disabled @endif>
             Update
         </button>
@@ -389,37 +497,7 @@
 </div>
 
 
-    {{-- Product --}}
-    <div class="border rounded-lg p-4">
-        <h3 class="font-semibold mb-3">Order Items</h3>
-
-        <table class="w-full text-sm">
-            <thead class="border-b text-gray-600">
-                <tr>
-                    <th class="py-2 text-left">Product</th>
-                    <th class="py-2 text-center">Qty</th>
-                    <th class="py-2 text-right">Price</th>
-                    <th class="py-2 text-right">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-@foreach($order['items'] as $item)
-    <tr>
-        <td class="py-3">{{ $item['product'] }}</td>
-        <td class="py-3 text-center">{{ $item['qty'] }}</td>
-        <td class="py-3 text-right">${{ $item['price'] }}</td>
-        <td class="py-3 text-right font-semibold">${{ $item['total'] }}</td>
-    </tr>
-@endforeach
-</tbody>
-        </table>
-    </div>
-
-
-
-
-
-   
+ 
 
 
 

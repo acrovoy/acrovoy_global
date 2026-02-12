@@ -19,6 +19,20 @@
                 {{ $template->title }}
             </h4>
 
+ {{-- DELIVERY TIME --}}
+@if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
+
+
+@else
+<div class="">
+                        <div class="font-medium text-xs text-gray-400">
+                            {{ __('product/product_show.delivery_time') }} {{ $template->delivery_time }} {{ __('product/product_show.days') }}
+                        </div>
+                        
+                    </div>
+
+@endif
+
             @if(!empty($template->description))
                 <p class="text-gray-700 text-sm mt-1">
                     {{ $template->description }}
@@ -31,8 +45,8 @@
                 @if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
                     <div class="inline-flex items-center gap-2
                         bg-blue-50 border border-blue-100
-                        px-3 py-1.5 rounded-lg text-blue-500 font-medium text-xs">
-                        Delivery cost and delivery time will be calculated after order placement
+                        px-3 py-1.5 rounded-lg text-gray-900 font-medium text-xs">
+                        Delivery costs and delivery time will be calculated after order placement
                     </div>
                 @else
                     {{-- PRICE --}}
@@ -47,15 +61,7 @@
                         </span>
                     </div>
 
-                    {{-- DELIVERY TIME --}}
-                    <div>
-                        <div class="font-medium">
-                            {{ __('product/product_show.delivery_time') }}
-                        </div>
-                        <div>
-                            {{ $template->delivery_time }} {{ __('product/product_show.days') }}
-                        </div>
-                    </div>
+                    
                 @endif
 
             </div>
