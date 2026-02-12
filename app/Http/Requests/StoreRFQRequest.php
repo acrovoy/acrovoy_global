@@ -26,7 +26,7 @@ class StoreRFQRequest extends FormRequest
                     }
 
                     // Проверяем, что это RFQ категория
-                    if ($category->type !== 'rfq') {
+                    if ($category->type !== 'project') {
                         $fail("This category is for custom project requests (RFQ). Please choose an RFQ category.");
                     }
                 }

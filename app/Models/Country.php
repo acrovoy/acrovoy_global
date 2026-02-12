@@ -21,4 +21,16 @@ class Country extends Model
         'is_priority' => 'boolean',
         'is_default' => 'boolean',
     ];
+
+    public function locations()
+    {
+        return $this->hasMany(Location::class);
+    }
+
+    public function regions()
+{
+    return $this->hasMany(Location::class, 'country_id')->whereNull('parent_id');
+}
+
+
 }

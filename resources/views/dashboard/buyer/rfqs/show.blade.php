@@ -103,14 +103,26 @@
                                 @endif
 
                                 <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
-                                    @if($offer->shipping_template->price)
-                                        <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
-                                            <span class="text-sm text-blue-900 font-medium">Price:</span>
-                                            <span class="text-base font-semibold text-blue-900">
-                                                ${{ number_format($offer->shipping_template->price, 2) }}
-                                            </span>
-                                        </div>
-                                    @endif
+
+
+                                @if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
+                                    <div class="col-span-2 inline-flex items-center gap-2
+                                        bg-blue-50 border border-blue-100
+                                        px-3 py-1.5 rounded-lg text-gray-900 font-medium text-xs">
+                                        Delivery costs and delivery time will be calculated after order placement
+                                    </div>
+                                @else
+
+                                                    @if($offer->shipping_template->price)
+                                                        <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
+                                                            <span class="text-sm text-blue-900 font-medium">Price:</span>
+                                                            <span class="text-base font-semibold text-blue-900">
+                                                                ${{ number_format($offer->shipping_template->price, 2) }}
+                                                            </span>
+                                                        </div>
+                                                    @endif
+
+                                 @endif                    
 
                                     @if($offer->shipping_template->delivery_time)
                                         <div>

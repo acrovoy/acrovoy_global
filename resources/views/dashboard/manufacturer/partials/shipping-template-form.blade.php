@@ -1,3 +1,27 @@
+{{-- SUCCESS --}}
+@if(session('success'))
+<div class="mb-6 rounded-lg bg-green-100 border border-green-300 text-green-800 px-4 py-3">
+    {{ session('success') }}
+</div>
+@endif
+
+{{-- ERROR --}}
+@if(session('error'))
+<div class="mb-6 rounded-lg bg-red-100 border border-red-300 text-red-800 px-4 py-3">
+    {{ session('error') }}
+</div>
+@endif
+
+@if ($errors->any())
+<div class="mb-6 rounded-lg bg-red-100 border border-red-300 text-red-800 px-4 py-3">
+    <ul class="list-disc list-inside space-y-1">
+        @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <form method="POST"
       action="{{ $shippingTemplate && $shippingTemplate->id
                   ? route('manufacturer.shipping-templates.update', $shippingTemplate->id)
@@ -14,8 +38,13 @@
 
     @php
         $languages = \App\Models\Language::where('is_active', true)->get();
-        $countries = \App\Models\Country::where('is_active', 1)->get();
-        $selectedCountries = $shippingTemplate ? $shippingTemplate->countries->pluck('id')->toArray() : [];
+        $locations = \App\Models\Location::with('country')
+    ->whereNull('parent_id') // если сначала хотим страны
+    ->get();
+
+$selectedLocations = $shippingTemplate
+    ? $shippingTemplate->locations->pluck('id')->toArray()
+    : [];
     @endphp
 
     {{-- Step 1: Basic Info --}}
@@ -133,27 +162,19 @@
                    placeholder="e.g. 3-5 days">
         </div>
 
-        {{-- COUNTRIES --}}
-        <div class="mb-4">
-            <label class="block mb-2 font-medium text-gray-700">Select Countries</label>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto border rounded-lg p-3">
-                @foreach($countries as $country)
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox"
-                               name="countries[]"
-                               value="{{ $country->id }}"
-                               {{ in_array($country->id, old('countries', $selectedCountries)) ? 'checked' : '' }}
-                               class="form-checkbox h-4 w-4 text-blue-600">
-                        <span class="text-sm text-gray-700">
-                            {{ $country->name }}
-                        </span>
-                    </label>
-                @endforeach
-            </div>
-            <p class="text-sm text-gray-500 mt-1">
-                Select one or more countries
-            </p>
-        </div>
+
+        
+        {{-- LOCATIONS --}}
+<x-location-tree 
+    :locations="$countries" 
+    :selectedLocations="old('locations', $selectedLocations ?? [])" 
+/>
+
+
+
+
+
+
     </div>
 
     {{-- Navigation --}}
@@ -166,7 +187,7 @@
 
         <button type="submit"
                 id="submitBtn"
-                class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
+                class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition mt-4">
             Save Template
         </button>
     </div>

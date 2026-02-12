@@ -104,9 +104,12 @@ public function show(Rfq $rfq)
     // Подгружаем офферы, категорию и автора RFQ (покупателя)
     $rfq->load(['offers.supplier', 'category', 'buyer']);
 
-    $shippingTemplates = ShippingTemplate::where('manufacturer_id', auth()->id())
-                                         ->with('translations')
-                                         ->get();
+    $shippingTemplates = ShippingTemplate::where(function ($query) {
+        $query->where('manufacturer_id', auth()->id())
+              ->orWhere('id', 1);
+    })
+    ->with('translations')
+    ->get();
 
     return view('dashboard.manufacturer.rfqs.show', compact('rfq', 'shippingTemplates'));
 }

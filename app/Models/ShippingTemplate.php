@@ -27,9 +27,9 @@ class ShippingTemplate extends Model
     }
 
 
-    public function countries()
+    public function locations()
 {
-    return $this->belongsToMany(Country::class, 'shipping_template_country');
+    return $this->belongsToMany(Location::class, 'shipping_template_location');
 }
 
 public function translations()

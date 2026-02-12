@@ -36,7 +36,7 @@
                     <th class="px-5 py-3 text-left font-medium">Title</th>
                     <th class="px-5 py-3 text-left font-medium">Price</th>
                     <th class="px-5 py-3 text-left font-medium">Delivery Time</th>
-                    <th class="px-5 py-3 text-left font-medium">Countries</th>
+                    <th class="px-5 py-3 text-left font-medium">Locations</th>
                     <th class="px-5 py-3 text-left font-medium">Actions</th>
                 </tr>
             </thead>
@@ -49,9 +49,15 @@
                         <td class="px-5 py-3 text-gray-700">{{ $template->delivery_time }}</td>
                         <td class="px-5 py-3">
                             <div class="flex flex-wrap gap-1">
-                                @foreach($template->countries as $country)
-                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700">
-                                        {{ $country->name }}
+                                @foreach($template->locations as $location)
+                                    @php
+                                        // Если есть parent_id — это город, иначе регион
+                                        $isCity = $location->parent_id !== null;
+                                        $bgColor = $isCity ? 'bg-green-200' : 'bg-blue-100';
+                                        $textColor = $isCity ? 'text-green-800' : 'text-blue-700';
+                                    @endphp
+                                    <span class="px-2 py-1 text-xs rounded-full {{ $bgColor }} {{ $textColor }}">
+                                        {{ $location->name }}
                                     </span>
                                 @endforeach
                             </div>

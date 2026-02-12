@@ -9,8 +9,10 @@
 
 <h2 class="text-2xl font-bold">Edit Shipping Template</h2>
 <p class="text-sm text-gray-500 mb-6">
-                    Manage exchange rates relative to the base currency (USD)
+                    Update prices, delivery times, and assigned locations for this shipping template.
                 </p>
+
+
 
 @include('dashboard.manufacturer.partials.shipping-template-form', [
     'shippingTemplate' => $shippingTemplate

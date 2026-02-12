@@ -25,8 +25,18 @@ class Location extends Model
     }
 
     public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+public function childrenRecursive()
+    {
+        return $this->hasMany(Location::class, 'parent_id')->with('childrenRecursive');
+    }
+
+    public function cities()
 {
-    return $this->belongsTo(Country::class);
+    return $this->hasMany(Location::class, 'parent_id');
 }
 
 }

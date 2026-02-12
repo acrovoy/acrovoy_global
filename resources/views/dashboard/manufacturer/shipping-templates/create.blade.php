@@ -10,7 +10,7 @@
 
 <h2 class="text-2xl font-bold">Add Shipping Template</h2>
 <p class="text-sm text-gray-500 mb-6">
-                    Manage exchange rates relative to the base currency (USD)
+                    Create a shipping template to set prices, delivery times, and assign locations for your products.
                 </p>
 
 @include('dashboard.manufacturer.partials.shipping-template-form', [

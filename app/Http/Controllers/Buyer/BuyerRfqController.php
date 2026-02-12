@@ -38,7 +38,7 @@ class BuyerRfqController extends Controller
      */
     public function create()
     {
-        $categories = Category::where('type', 'rfq')
+        $categories = Category::where('type', 'project')
                           ->orderBy('name')
                           ->get();
 

@@ -22,7 +22,7 @@ class ShippingTemplateController extends Controller
      */
     public function index()
     {
-        $templates = ShippingTemplate::with('countries')->where('manufacturer_id', auth()->id())->get();
+        $templates = ShippingTemplate::with('locations')->where('manufacturer_id', auth()->id())->get();
         return view('dashboard.manufacturer.shipping-templates.index', compact('templates'));
     }
 
@@ -30,9 +30,33 @@ class ShippingTemplateController extends Controller
      * Show create form
      */
     public function create()
-    {
-        $shippingTemplate = new ShippingTemplate(); // пустой объект
-    return view('dashboard.manufacturer.shipping-templates.create', compact('shippingTemplate'));
+{
+    $countries = \App\Models\Country::orderBy('name')->get();
+    $allLocations = \App\Models\Location::orderBy('id')->get();
+    $children = $allLocations->groupBy('parent_id');
+
+    // Привязка регионов и городов к странам
+    $countries = $countries->map(function($country) use ($allLocations, $children) {
+        // регионы этой страны
+        $regions = $allLocations->where('country_id', $country->id)->where('parent_id', null);
+
+        $regions = $regions->map(function($region) use ($children) {
+            $region->children_recursive = $children->get($region->id) ?? collect();
+            return $region;
+        });
+
+        $country->locations = $regions;
+        return $country;
+    });
+
+    $shippingTemplate = new ShippingTemplate();
+    $selectedLocations = $shippingTemplate->locations->pluck('id')->toArray();
+
+    return view('dashboard.manufacturer.shipping-templates.create', compact(
+        'shippingTemplate',
+        'countries',
+        'selectedLocations'
+    ));
 }
 
     /**
@@ -45,8 +69,8 @@ class ShippingTemplateController extends Controller
         'description' => 'nullable|array',
         'price' => 'required|numeric|min:0',
         'delivery_time' => 'nullable|string|max:255',
-        'countries' => 'nullable|array',
-        'countries.*' => 'exists:countries,id',
+        'locations' => 'nullable|array',
+        'locations.*' => 'exists:locations,id',
     ]);
 
     DB::transaction(function () use ($data) {
@@ -75,7 +99,7 @@ class ShippingTemplateController extends Controller
         }
 
         // 3️⃣ Привязка стран
-        $template->countries()->sync($data['countries'] ?? []);
+        $template->locations()->sync($data['locations'] ?? []);
     });
 
     return redirect()->route('manufacturer.shipping-templates.index')
@@ -86,14 +110,44 @@ class ShippingTemplateController extends Controller
      * Show edit form
      */
     public function edit(ShippingTemplate $shippingTemplate)
-    {
-        // Проверяем, что шаблон принадлежит текущему пользователю
-        if($shippingTemplate->manufacturer_id !== auth()->id()){
-            abort(403);
-        }
-
-        return view('dashboard.manufacturer.shipping-templates.edit', compact('shippingTemplate'));
+{
+    // Проверяем, что шаблон принадлежит текущему пользователю
+    if ($shippingTemplate->manufacturer_id !== auth()->id()) {
+        abort(403);
     }
+
+    // Получаем все страны
+    $countries = \App\Models\Country::orderBy('name')->get();
+
+    // Получаем все локации
+    $allLocations = \App\Models\Location::orderBy('id')->get();
+
+    // Группируем дочерние локации по parent_id
+    $children = $allLocations->groupBy('parent_id');
+
+    // Привязка регионов и городов к странам
+    $countries = $countries->map(function ($country) use ($allLocations, $children) {
+        // Регионы этой страны
+        $regions = $allLocations->where('country_id', $country->id)->where('parent_id', null);
+
+        $regions = $regions->map(function ($region) use ($children) {
+            $region->children_recursive = $children->get($region->id) ?? collect();
+            return $region;
+        });
+
+        $country->locations = $regions;
+        return $country;
+    });
+
+    // Определяем выбранные локации
+    $selectedLocations = $shippingTemplate->locations->pluck('id')->toArray();
+
+    return view('dashboard.manufacturer.shipping-templates.edit', compact(
+        'shippingTemplate',
+        'countries',
+        'selectedLocations'
+    ));
+}
 
     /**
      * Update existing template
@@ -106,8 +160,8 @@ class ShippingTemplateController extends Controller
         'description' => 'nullable|array',
         'price' => 'required|numeric|min:0',
         'delivery_time' => 'nullable|string|max:255',
-        'countries' => 'nullable|array',
-        'countries.*' => 'exists:countries,id',
+        'locations' => 'nullable|array',
+        'locations.*' => 'exists:locations,id',
     ]);
 
     DB::transaction(function () use ($shippingTemplate, $data) {
@@ -146,7 +200,7 @@ class ShippingTemplateController extends Controller
         }
 
         // 3️⃣ Обновляем привязку стран
-        $shippingTemplate->countries()->sync($data['countries'] ?? []);
+        $shippingTemplate->locations()->sync($data['locations'] ?? []);
     });
 
     return redirect()->route('manufacturer.shipping-templates.index')
