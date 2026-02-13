@@ -48,6 +48,7 @@ use App\Http\Controllers\Admin\AdminCurrencyController;
 use App\Http\Controllers\Admin\AdminExchangeRateController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AdminShippingCenterController;
+use App\Http\Controllers\Admin\AdminShippingTemplateController;
 use App\Http\Controllers\Admin\Settings\ConstantsController;
 
 
@@ -511,16 +512,22 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
 
     //Shipping-center
     Route::resource('shipping-center', AdminShippingCenterController::class);
+    Route::get('main-shipping-center', [AdminShippingCenterController::class, 'main'])->name('shipping-center.main');
 
-    Route::resource('currencies', AdminCurrencyController::class)
-        ->except(['show']);
+    Route::resource('currencies', AdminCurrencyController::class)->except(['show']);
+    Route::get('exchange-rates', [AdminExchangeRateController::class, 'index'])->name('exchange-rates.index');
+    Route::put('exchange-rates/{currency}', [AdminExchangeRateController::class, 'update'])->name('exchange-rates.update');
 
-    Route::get('exchange-rates', [AdminExchangeRateController::class, 'index'])
-        ->name('exchange-rates.index');
-
-    Route::put('exchange-rates/{currency}', [AdminExchangeRateController::class, 'update'])
-        ->name('exchange-rates.update');
-
+    //Shipping-templates
+    Route::get('shipping-templates', [AdminShippingTemplateController::class, 'index'])->name('shipping-templates.index');
+    // Создание
+    Route::get('shipping-templates/create', [AdminShippingTemplateController::class, 'create'])->name('shipping-templates.create');
+    Route::post('shipping-templates', [AdminShippingTemplateController::class, 'store'])->name('shipping-templates.store');
+    // Редактирование
+    Route::get('shipping-templates/{shippingTemplate}/edit', [AdminShippingTemplateController::class, 'edit'])->name('shipping-templates.edit');
+    Route::put('shipping-templates/{shippingTemplate}', [AdminShippingTemplateController::class, 'update'])->name('shipping-templates.update');
+    // Удаление
+    Route::delete('shipping-templates/{shippingTemplate}', [AdminShippingTemplateController::class, 'destroy'])->name('shipping-templates.destroy');
 
     Route::prefix('settings')->name('settings.')->group(function () {
 

@@ -390,7 +390,7 @@
 
 
 
-        {{-- Shipping Templates --}}
+        
         {{-- Shipping Templates --}}
 <div class="mt-6">
     <h3 class="text-xl font-semibold mb-4">Shipping Templates</h3>
@@ -406,11 +406,16 @@
 
                 <input
                     type="checkbox"
-                    name="shipping_templates[]"
-                    value="{{ $defaultShippingTemplate->id }}"
                     class="mt-1"
                     checked
                     disabled
+                >
+
+                <input
+                    type="hidden"
+                    name="shipping_templates[]"
+                    value="{{ $defaultShippingTemplate->id }}"
+                                        
                 >
 
                 <div>

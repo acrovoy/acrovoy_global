@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 
 use App\Models\ShippingCenter;
 use App\Models\Country;
+use App\Models\OrderItemShipment;
 
 class AdminShippingCenterController extends Controller
 {
@@ -15,6 +16,16 @@ class AdminShippingCenterController extends Controller
     {
         $centers = ShippingCenter::all();
         return view('dashboard.admin.shipping-center.index', compact('centers'));
+    }
+
+    public function main()
+    {
+        $shipments = OrderItemShipment::latest()->get();
+
+        return view(
+            'dashboard.admin.shipping-center.main',
+            compact('shipments')
+        );
     }
 
     public function create()

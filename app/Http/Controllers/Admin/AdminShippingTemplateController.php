@@ -1,18 +1,21 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\ShippingTemplate;
 use App\Models\ShippingTemplateTranslation;
 use App\Models\Country;
 use App\Models\Location;
+use App\Models\LogisticCompany;
 use App\Models\Supplier;
 
 
-class ShippingTemplateController extends Controller
+class AdminShippingTemplateController extends Controller
 {
     public function __construct()
     {
@@ -26,12 +29,9 @@ class ShippingTemplateController extends Controller
      */
     public function index()
     {
-
-
-    $supplier = Supplier::where('user_id', auth()->id())->first();    
-
-        $templates = ShippingTemplate::with('locations')->where('manufacturer_id', $supplier->id)->get();
-        return view('dashboard.manufacturer.shipping-templates.index', compact('templates'));
+  
+        $templates = ShippingTemplate::with('locations')->where('logistic_company_id', 1)->get();
+        return view('dashboard.admin.shipping-templates.index', compact('templates'));
     }
 
     /**
@@ -60,7 +60,7 @@ class ShippingTemplateController extends Controller
     $shippingTemplate = new ShippingTemplate();
     $selectedLocations = $shippingTemplate->locations->pluck('id')->toArray();
 
-    return view('dashboard.manufacturer.shipping-templates.create', compact(
+    return view('dashboard.admin.shipping-templates.create', compact(
         'shippingTemplate',
         'countries',
         'selectedLocations'
@@ -83,10 +83,11 @@ class ShippingTemplateController extends Controller
 
     DB::transaction(function () use ($data) {
 
-    $supplier = Supplier::where('user_id', auth()->id())->first();
+    $logistic_company = LogisticCompany::where('user_id', auth()->id())->first();
         // 1️⃣ Создаем базовую запись шаблона
         $template = ShippingTemplate::create([
-            'manufacturer_id' => $supplier->id,
+            'manufacturer_id' => null,
+            'logistic_company_id' => 1,
             'price' => $data['price'],
             'delivery_time' => $data['delivery_time'] ?? null,
         ]);
@@ -111,7 +112,7 @@ class ShippingTemplateController extends Controller
         $template->locations()->sync($data['locations'] ?? []);
     });
 
-    return redirect()->route('manufacturer.shipping-templates.index')
+    return redirect()->route('admin.shipping-templates.index')
                      ->with('success', 'Shipping template created successfully');
 }
 
@@ -120,9 +121,9 @@ class ShippingTemplateController extends Controller
      */
     public function edit(ShippingTemplate $shippingTemplate)
 {
-    $supplier = Supplier::where('user_id', auth()->id())->first();  
+    $logistic_company = LogisticCompany::where('user_id', auth()->id())->first();  
     // Проверяем, что шаблон принадлежит текущему пользователю
-    if ($shippingTemplate->manufacturer_id !== $supplier->id) {
+    if ($shippingTemplate->logistic_company_id !== $logistic_company->id) {
         abort(403);
     }
 
@@ -152,7 +153,7 @@ class ShippingTemplateController extends Controller
     // Определяем выбранные локации
     $selectedLocations = $shippingTemplate->locations->pluck('id')->toArray();
 
-    return view('dashboard.manufacturer.shipping-templates.edit', compact(
+    return view('dashboard.admin.shipping-templates.edit', compact(
         'shippingTemplate',
         'countries',
         'selectedLocations'
@@ -165,11 +166,11 @@ class ShippingTemplateController extends Controller
     public function update(Request $request, ShippingTemplate $shippingTemplate)
 {
 
-$supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
-
-if ($shippingTemplate->manufacturer_id !== $supplier->id) {
-    abort(403);
-}
+$logistic_company = LogisticCompany::where('user_id', auth()->id())->first();  
+    // Проверяем, что шаблон принадлежит текущему пользователю
+    if ($shippingTemplate->logistic_company_id !== $logistic_company->id) {
+        abort(403);
+    }
 
     // Валидация
     $data = $request->validate([
@@ -220,7 +221,7 @@ if ($shippingTemplate->manufacturer_id !== $supplier->id) {
         $shippingTemplate->locations()->sync($data['locations'] ?? []);
     });
 
-    return redirect()->route('manufacturer.shipping-templates.index')
+    return redirect()->route('admin.shipping-templates.index')
                      ->with('success', 'Shipping template updated successfully');
 }
 
@@ -229,16 +230,16 @@ if ($shippingTemplate->manufacturer_id !== $supplier->id) {
      */
     public function destroy(ShippingTemplate $shippingTemplate)
     {
-        $supplier = Supplier::where('user_id', auth()->id())->first();
-
-        if($shippingTemplate->manufacturer_id !== $supplier->id){
-            abort(403);
-        }
+        $logistic_company = LogisticCompany::where('user_id', auth()->id())->first();  
+    // Проверяем, что шаблон принадлежит текущему пользователю
+    if ($shippingTemplate->logistic_company_id !== $logistic_company->id) {
+        abort(403);
+    }
 
         $shippingTemplate->locations()->detach();
         $shippingTemplate->delete();
 
-        return redirect()->route('manufacturer.shipping-templates.index')
+        return redirect()->route('admin.shipping-templates.index')
                          ->with('success', 'Shipping template deleted successfully');
     }
 }

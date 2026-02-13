@@ -1,20 +1,30 @@
 @extends('dashboard.admin.layout')
 
 @section('dashboard-content')
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-4">
+    <a href="{{ route('admin.shipping-center.main') }}"
+           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+            ← Back to Shipping Center
+</a>
 
     <div class="flex justify-between items-center">
         <div>
-            <h2 class="text-2xl font-semibold text-gray-900">Shipping Centers</h2>
+            <h2 class="text-2xl font-semibold text-gray-900">Admin Shipping Costs</h2>
             <p class="text-sm text-gray-500">
                 Manage your delivery services for the platform
             </p>
         </div>
 
-        <div>
+        
+
+        <div class="flex items-center gap-3">
+           
+
+            
+
             <a href="{{ route('admin.shipping-center.create') }}"
                class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
-                + Add Shipping Center
+                + Add Shipping Cost
             </a>
         </div>
     </div>

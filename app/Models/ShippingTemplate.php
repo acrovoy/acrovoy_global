@@ -14,6 +14,7 @@ class ShippingTemplate extends Model
 
     protected $fillable = [
         'manufacturer_id',
+        'logistic_company_id',
         'title',
         'description',
         'price',
@@ -23,7 +24,7 @@ class ShippingTemplate extends Model
     // Связь с пользователем
     public function manufacturer()
     {
-        return $this->belongsTo(User::class, 'manufacturer_id');
+        return $this->belongsTo(Supplier::class, 'manufacturer_id');
     }
 
 

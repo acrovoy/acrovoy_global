@@ -36,7 +36,7 @@
     @php
 
 // Проверка: доставка Acrovoy и цена 0
-        $isAcrovoyPending = ($order['delivery_method'] === 'Acrovoy Delivery' && ($order['delivery_price'] ?? 0) == 0);
+        $isAcrovoyPending = ($order['delivery_method'] === 'Delivery by Acrovoy' && ($order['delivery_price'] ?? 0) == 0);
 
 @endphp
 
@@ -82,7 +82,7 @@
     @if(!empty($order['delivery_price']) && $order['delivery_price'] > 0)
         <div class="py-3 flex justify-between items-center border-t mt-2 pt-2 text-gray-700 text-sm">
             <span>Delivery: <span class="text-xs text-gray-400">{{$order['delivery_method']}}</span></span>
-            @if($order['delivery_method'] === 'Acrovoy Delivery')
+            @if($order['delivery_method'] === 'Delivery by Acrovoy')
             <span class="font-semibold">0.00 $</span>
             @else
             <span class="font-semibold">{{ number_format($order['delivery_price'], 2) }} $</span>
@@ -293,7 +293,7 @@
         $available = OrderStatusService::availableStatuses($order['status']);
 
         // Проверка: доставка Acrovoy и цена 0
-        $isAcrovoyPending = ($order['delivery_method'] === 'Acrovoy Delivery' && ($order['delivery_price'] ?? 0) == 0);
+        $isAcrovoyPending = ($order['delivery_method'] === 'Delivery by Acrovoy' && ($order['delivery_price'] ?? 0) == 0);
 
 
         if ($isAcrovoyPending) {

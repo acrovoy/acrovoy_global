@@ -50,7 +50,7 @@
                 </li>
 
                 <li>
-                    <a href="{{ route('admin.shipping-center.index') }}" class="menu-link {{ request()->routeIs('admin.shipping-center.*') ? 'font-bold' : '' }}">Shipping Center</a>
+                    <a href="{{ route('admin.shipping-center.main') }}" class="menu-link {{ request()->routeIs('admin.shipping-center.*') ? 'font-bold' : '' }}">Shipping Center</a>
                 </li>
 
                 <li>

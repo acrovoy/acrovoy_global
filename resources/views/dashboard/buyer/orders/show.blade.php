@@ -42,7 +42,7 @@
 @php
 
 // Проверка: доставка Acrovoy и цена 0
-        $isAcrovoyPending = ($order['delivery_method'] === 'Acrovoy Delivery' && ($order['delivery_price'] ?? 0) == 0);
+        $isAcrovoyPending = ($order['delivery_method'] === 'Delivery by Acrovoy' && ($order['delivery_price'] ?? 0) == 0);
 
 @endphp
 
@@ -55,7 +55,7 @@
 
 {{-- ORDER CARD --}}
 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-2">
         <h3 class="font-medium">
             Products in the order:
         </h3>
@@ -64,9 +64,9 @@
     </div>
 
     {{-- Товары --}}
-    <div class="divide-y divide-gray-200">
+    <div class="">
         @foreach($order->items as $item)
-            <div class="py-3 flex justify-between items-center">
+            <div class="py-1 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <img
                         src="{{ $item->product && $item->product->mainImage
@@ -92,12 +92,12 @@
     </div>
 
  {{-- Доставка --}}
-    <div class="flex justify-between text-sm text-gray-700 pt-3 mt-3 border-t">
+    <div class="flex justify-between text-sm text-gray-700 pt-3 mt-6 border-t">
         <span>
             DELIVERY: <span class="text-xs text-gray-400">({{ $order->delivery_method ?? '-' }})</span>
         </span>
 
-        @if($order['delivery_method'] === 'Acrovoy Delivery')
+        @if($order['delivery_method'] === 'Delivery by Acrovoy')
             <span class="font-semibold">0.00 $</span>
             @else
             {{ number_format($order->delivery_price ?? 0, 2) }} $
@@ -116,7 +116,7 @@
 </div>
 
 
-@if($order['delivery_method'] === 'Acrovoy Delivery' && $order['delivery_price'] > 0)
+@if($order['delivery_method'] === 'Delivery by Acrovoy' && $order['delivery_price'] > 0)
     <div class="mt-4 border border-gray-200 rounded-xl bg-white shadow-sm p-5">
         
         <h3 class="text-sm font-semibold text-gray-900 mb-4">

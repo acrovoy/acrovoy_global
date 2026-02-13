@@ -133,13 +133,14 @@ if ($user) {
             $q->where('locale', $locale);
         }])->get();
 
+        $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
         $countries = Country::where('is_active', true)->get();
-        $shippingTemplates = ShippingTemplate::where('manufacturer_id', auth()->id())
+        $shippingTemplates = ShippingTemplate::where('manufacturer_id', $supplier->id)
             ->with('translations')
             ->get();
 
-            // Шаблон доставки по умолчанию (Acrovoy Delivery)
-    $defaultShippingTemplate = ShippingTemplate::with('translations')->find(1);
+            // Шаблоны доставки по умолчанию (Acrovoy Delivery)
+    $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
 
         return view('dashboard.manufacturer.add-product', compact('categories', 'materials', 'shippingTemplates', 'defaultShippingTemplate','countries'));
     }
@@ -147,7 +148,7 @@ if ($user) {
     public function store(StoreProductRequest  $request)
     {
 
-        //dd($request->all());
+      //dd($request->all());
         //dd(ini_get('post_max_size'), ini_get('upload_max_filesize'));
 
 
@@ -392,12 +393,13 @@ if ($user) {
         // Получаем все страны (для select)
         $countries = Country::all();
 
-        $shippingTemplates = ShippingTemplate::where('manufacturer_id', auth()->id())
+        $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
+        $shippingTemplates = ShippingTemplate::where('manufacturer_id', $supplier->id)
             ->with('translations')
             ->get();
 
              // Шаблон доставки по умолчанию (Acrovoy Delivery)
-         $defaultShippingTemplate = ShippingTemplate::with('translations')->find(1);
+         $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
 
 
         // Загружаем материалы с переводами
