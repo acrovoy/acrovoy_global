@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderDispute;
+use App\Models\OrderItemShipment;
 
 class AdminOrdersController extends Controller
 {
@@ -48,11 +49,7 @@ class AdminOrdersController extends Controller
 
     $orders = $ordersQuery->get();
 
-    // 🔹 Заказы с запросом стоимости доставки (Acrovoy + цена 0)
-    $ordersWithTransportRequest = $orders->filter(function ($order) {
-        return $order->delivery_method === 'Acrovoy Delivery'
-            && $order->delivery_price == 0;
-    });
+   
 
     // 🔹 Заказы с открытыми спорами
     $openStatuses = ['pending', 'supplier_offer', 'rejected', 'admin_review'];
@@ -68,7 +65,6 @@ class AdminOrdersController extends Controller
         compact(
             'orders',
             'ordersWithOpenDisputes',
-            'ordersWithTransportRequest',
             'sort',
             'status',
             'userFilter'
@@ -126,6 +122,18 @@ class AdminOrdersController extends Controller
     return view('dashboard.admin.orders.show', compact('orderData'));
 }
 
+public function shipments($orderId)
+{
+    $order = Order::with([
+    'items.shipments' => function($q) {
+        $q->with('orderItem'); // чтобы была возможность вывести product_name и quantity
+    }
+])->findOrFail($orderId);
+
+    return view('dashboard.admin.orders.shipments', compact('order'));
+}
+
+
 public function addDisputeAdminComment(Request $request, OrderDispute $dispute)
 {
     $request->validate([
@@ -156,5 +164,53 @@ public function update(Request $request, OrderDispute $dispute)
 }
 
 
+public function updateShipment(Order $order, OrderItemShipment $orderItemShipment, Request $request)
+{
+    $orderItemShipment->update($request->only([
+        'weight', 'length', 'width', 'height',
+        'delivery_time', 'shipping_price', 'status', 'tracking_number'
+    ]));
+
+    return response()->json(['success' => true, 'shipment' => $orderItemShipment]);
+}
+
+public function uploadInvoiceDelivery(Request $request, Order $order)
+{
+    $request->validate([
+        'invoice_delivery_file' => 'required|file|mimes:pdf|max:10240', // максимум 10 МБ
+    ]);
+
+    if ($request->hasFile('invoice_delivery_file')) {
+        // Удаляем старый файл, если есть
+        if ($order->invoice_delivery_file && \Storage::exists($order->invoice_delivery_file)) {
+            \Storage::delete($order->invoice_delivery_file);
+        }
+
+        $path = $request->file('invoice_delivery_file')->store('invoices/delivery', 'public');
+        $order->invoice_delivery_file = $path;
+        $order->save();
+    }
+
+    return redirect()->back()->with('success', 'Delivery invoice uploaded successfully.');
+}
+
+public function calculateDeliveryPrice(Order $order)
+{
+    // Считаем сумму всех shipping_price всех shipments этого заказа
+    $totalShipping = $order->items->flatMap->shipments->sum('shipping_price');
+
+    // Сохраняем в поле delivery_price
+    $order->delivery_price = $totalShipping;
+    $order->save();
+
+    // Можно отправить уведомление покупателю (если нужно)
+    // Mail::to($order->user->email)->send(new DeliveryPriceCalculated($order));
+
+    return response()->json([
+        'success' => true,
+        'totalShipping' => $totalShipping,
+        'message' => 'Total shipping saved successfully!'
+    ]);
+}
 
 }

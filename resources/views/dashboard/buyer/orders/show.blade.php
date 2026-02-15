@@ -56,7 +56,7 @@
 {{-- ORDER CARD --}}
 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
     <div class="flex items-center justify-between mb-2">
-        <h3 class="font-medium">
+        <h3 class="text-xs uppercase tracking-wide text-gray-500">
             Products in the order:
         </h3>
 
@@ -64,7 +64,7 @@
     </div>
 
     {{-- Товары --}}
-    <div class="">
+    <div class="border-t border-gray-200 pt-4">
         @foreach($order->items as $item)
             <div class="py-1 flex justify-between items-center">
                 <div class="flex items-center gap-3">
@@ -93,7 +93,7 @@
 
  {{-- Доставка --}}
     <div class="flex justify-between text-sm text-gray-700 pt-3 mt-6 border-t">
-        <span>
+        <span class="text-xs uppercase tracking-wide text-gray-500">
             DELIVERY: <span class="text-xs text-gray-400">({{ $order->delivery_method ?? '-' }})</span>
         </span>
 
@@ -116,38 +116,159 @@
 </div>
 
 
+
+
+
+
+{{-- ACROVOY delivery details --}}
 @if($order['delivery_method'] === 'Delivery by Acrovoy' && $order['delivery_price'] > 0)
-    <div class="mt-4 border border-gray-200 rounded-xl bg-white shadow-sm p-5">
-        
-        <h3 class="text-sm font-semibold text-gray-900 mb-4">
+<div class="mt-4 border border-gray-200 rounded-xl bg-white shadow-sm p-5">
+
+    {{-- Notification if delivery price not confirmed --}}
+@if(empty($order['delivery_price_confirmed']) || !$order['delivery_price_confirmed'])
+<div class="flex items-center gap-3 mb-4 p-3 rounded border border-orange-300 bg-orange-50 text-orange-800">
+    <svg class="w-5 h-5 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M12 18.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z"/>
+    </svg>
+    <span class="text-sm font-medium">
+        Carrier is waiting for delivery price confirmation
+    </span>
+</div>
+@endif
+
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xs uppercase tracking-wide text-gray-500 mr-2">
             Acrovoy Delivery Details
         </h3>
+    </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm text-gray-700">
-            
-            {{-- Delivery Price --}}
-            <div>
-                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                    Delivery Cost
-                </div>
-                <div class="text-lg font-semibold text-gray-900">
-                    {{ number_format($order['delivery_price'], 2) }} $
-                </div>
-            </div>
+    {{-- Shipments List --}}
+@if(!empty($order->items))
+    <div class="mt-4 border-t border-gray-200 pt-4">
+        <h4 class="text-xs uppercase tracking-wide text-gray-500 mr-2 mb-2">Shipments:</h4>
+        @foreach($order->items as $item)
+            @if(!empty($item->shipments))
+                @foreach($item->shipments as $shipment)
+                    <div class="relative mb-4 p-4 border rounded-lg bg-gray-50 text-sm text-gray-700 shadow-sm">
 
-            {{-- Delivery Time --}}
-            <div>
-                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">
-                    Delivery Time
-                </div>
-                <div class="text-lg font-semibold text-gray-900">
-                    {{ $order['delivery_time'] ?? '-' }} days
-                </div>
-            </div>
+                        {{-- Status badge in top-right corner --}}
+                        <span class="absolute top-4 right-4 px-2 py-1 text-xs font-semibold rounded-full
+                            @if($shipment->status === 'pending') bg-yellow-100 text-yellow-700
+                            @elseif($shipment->status === 'calculated') bg-blue-100 text-blue-700
+                            @elseif($shipment->status === 'shipped') bg-green-100 text-green-700
+                            @elseif($shipment->status === 'delivered') bg-green-200 text-green-900
+                            @else bg-gray-100 text-gray-600
+                            @endif
+                        ">
+                            {{ ucfirst($shipment->status ?? '-') }}
+                        </span>
 
-        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                            <div>
+                                <div><strong>Product:</strong> {{ $item->product_name ?? 'N/A' }}</div>
+                                <div><strong>Quantity:</strong> {{ $item->quantity ?? '-' }}</div>
+                                <div><strong>Weight:</strong> {{ $shipment->weight ?? '-' }} kg</div>
+                                <div><strong>Dimensions:</strong> 
+                                    {{ $shipment->length ?? '-' }} × 
+                                    {{ $shipment->width ?? '-' }} × 
+                                    {{ $shipment->height ?? '-' }}
+                                </div>
+                                <div><strong>Delivery Time:</strong> {{ $shipment->delivery_time ?? '-' }} days</div>
+                                <div><strong>Shipping Price:</strong> {{ number_format($shipment->shipping_price ?? 0, 2) }} $</div>
+                            </div>
+
+                            {{-- Tracking number block --}}
+                            <div class="flex flex-col justify-center mt-2 sm:mt-0">
+                                <label class="text-xs text-gray-500 mb-1">Tracking Number</label>
+                                <div class="flex items-center bg-white border rounded px-2 py-1 text-gray-800 select-all cursor-pointer"
+                                     onclick="navigator.clipboard.writeText('{{ $shipment->tracking_number ?? '' }}'); alert('Tracking number copied!');">
+                                    {{ $shipment->tracking_number ?? '-' }}
+                                    @if(!empty($shipment->tracking_number))
+                                        <svg class="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8m-8-4h8m-8-4h8" />
+                                        </svg>
+                                    @endif
+                                </div>
+                                <small class="text-gray-400 mt-1">Click to copy</small>
+                            </div>
+
+                        </div>
+                    </div>
+                @endforeach
+            @endif
+        @endforeach
     </div>
 @endif
+
+
+    {{-- Delivery Price --}}
+    <div class="flex justify-end text-sm text-gray-700 mb-4 mt-6">
+        <div>
+        <div class="text-xs uppercase tracking-wide text-gray-500 mr-2">
+            Total Delivery Cost
+        </div>
+        <div class="text-lg font-semibold text-gray-900">
+            {{ number_format($order['delivery_price'], 2) }} $
+        </div>
+        </div>
+    </div>
+
+    {{-- Invoice for Delivery --}}
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+        @if(!empty($order->invoice_delivery_file))
+            <a href="{{ asset('storage/' . $order->invoice_delivery_file) }}"
+               target="_blank"
+               class="px-3 py-1.5 text-sm
+                      border border-blue-300 text-blue-700
+                      rounded-md
+                      hover:bg-blue-50 hover:border-blue-400">
+                Download Delivery Invoice
+            </a>
+        @else
+            <button class="px-3 py-1.5 text-sm
+                           border border-gray-300 text-gray-400
+                           rounded-md cursor-not-allowed"
+                    disabled >
+                Delivery invoice not uploaded by the carrier yet
+            </button>
+        @endif
+
+        {{-- Confirm Delivery Price --}}
+@if(empty($order['delivery_price_confirmed']) || !$order['delivery_price_confirmed'])
+    <form method="POST" action="{{ route('buyer.orders.confirm-delivery-price', $order->id) }}">
+        @csrf
+        <button type="submit"
+                class="px-3 py-1.5 text-sm
+                       border border-green-400 text-green-700
+                       rounded-md
+                       hover:bg-green-50 hover:border-green-500">
+            Confirm Delivery Price
+        </button>
+    </form>
+@else
+    <button type="button"
+        class="px-3 py-1.5 text-sm
+               border border-gray-300 text-gray-400
+               rounded-md cursor-not-allowed flex items-center gap-2"
+        disabled>
+    <!-- Зеленая галочка -->
+    <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+    </svg>
+    Confirmed
+</button>
+@endif
+    </div>
+
+</div>
+@endif
+
+
+
+
+
 
 
 

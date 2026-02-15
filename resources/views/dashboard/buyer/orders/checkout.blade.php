@@ -161,7 +161,7 @@
 
     <label class="flex items-center gap-2 mt-3 text-sm text-gray-600">
         <input type="checkbox" name="save_as_new" value="1">
-        Сохранить как новый адрес
+        Сохранить как новый адрес и контакт
     </label>
 
 
@@ -190,57 +190,6 @@
                        class="w-full border rounded p-2">
             </div>
 
-            {{-- Страна --}}
-            <div>
-                <label class="text-sm text-gray-600">Страна</label>
-                <input type="text"
-                       name="country"
-                       id="country"
-                       placeholder="UA"
-                       value="{{ $lastAddress->country ?? old('country', 'UA') }}"
-                       class="w-full border rounded p-2">
-            </div>
-
-            {{-- Город --}}
-            <div>
-                <label class="text-sm text-gray-600">Город</label>
-                <input type="text"
-                       name="city"
-                       id="city"
-                       value="{{ $lastAddress->city ?? old('city') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
-
-            {{-- Регион --}}
-            <div>
-                <label class="text-sm text-gray-600">Регион / Область</label>
-                <input type="text"
-                       name="region"
-                       id="region"
-                       value="{{ $lastAddress->region ?? old('region') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
-
-            {{-- Почтовый индекс --}}
-            <div>
-                <label class="text-sm text-gray-600">Почтовый индекс</label>
-                <input type="text"
-                       name="postal_code"
-                       id="postal_code"
-                       value="{{ $lastAddress->postal_code ?? old('postal_code') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
-
-            {{-- Улица --}}
-            <div class="sm:col-span-2">
-                <label class="text-sm text-gray-600">Улица, дом, квартира</label>
-                <input type="text"
-                       name="street"
-                       id="street"
-                       value="{{ $lastAddress->street ?? old('street') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
-
             {{-- Телефон --}}
             <div class="sm:col-span-2">
                 <label class="text-sm text-gray-600">Телефон</label>
@@ -250,8 +199,75 @@
                        value="{{ $lastAddress->phone ?? old('phone') ?? '' }}"
                        class="w-full border rounded p-2">
             </div>
+
+          
+            
         </div>
     </div>
+
+
+
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+    <h3 class="font-semibold mb-4">Адрес доставки</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {{-- Страна --}}
+        <div>
+            <label class="text-sm text-gray-600">Страна</label>
+            <select name="country" id="country" class="w-full border rounded p-2">
+                <option value="">Выберите страну</option>
+                @foreach($countries as $country)
+                    <option value="{{ $country->id }}"
+                        {{ $lastAddress && $lastAddress->country == $country->id ? 'selected' : '' }}>
+                        {{ $country->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Регион / область --}}
+<div>
+    <label class="text-sm text-gray-600">Регион / Область</label>
+    <select name="region" id="region" class="w-full border rounded p-2" disabled>
+        <option value="">Выберите регион</option>
+    </select>
+</div>
+
+        {{-- Город --}}
+<div>
+    <label class="text-sm text-gray-600">Город</label>
+    <select name="city" id="city" class="w-full border rounded p-2">
+        <option value="">Выберите город</option>
+    </select>
+    <small class="text-gray-500 block mt-1">
+        Если не нашли свой город или локацию, заполните поле ниже
+    </small>
+    <input type="text" name="city_manual" id="city_manual"
+           placeholder="Введите свой город"
+           class="w-full border rounded p-2 mt-1"
+           disabled>
+</div>
+
+        {{-- Улица --}}
+        <div class="sm:col-span-2">
+            <label class="text-sm text-gray-600">Улица, дом, квартира</label>
+            <input type="text" name="street" id="street"
+                   value="{{ $lastAddress->street ?? '' }}"
+                   class="w-full border rounded p-2">
+        </div>
+
+        {{-- Почтовый индекс --}}
+        <div>
+            <label class="text-sm text-gray-600">Почтовый индекс</label>
+            <input type="text" name="postal_code" id="postal_code"
+                   value="{{ $lastAddress->postal_code ?? '' }}"
+                   class="w-full border rounded p-2">
+        </div>
+    </div>
+</div>
+
+
+
+
 
     <input type="hidden" name="delivery_price" id="delivery-price-input" value="0">
     <input type="hidden" name="total" id="total-input" value="{{ $total }}">
@@ -267,8 +283,21 @@
 {{-- JS --}}
 <script>
 let cartItems = @json($cartItems);
+const regionsUrl = @json(route('buyer.locations.regions'));
+const locationsUrl = @json(route('buyer.locations.locations')); // новый маршрут для подрегионов/городов
 
-// Заполнение формы при выборе адреса
+const countrySelect = document.getElementById('country');
+const regionSelect = document.getElementById('region');
+const cityInput = document.getElementById('city');
+
+// ============================================
+// 0. Инициализация: блокируем регион, если страна не выбрана
+// ============================================
+if (regionSelect) regionSelect.disabled = !countrySelect?.value;
+
+// ============================================
+// 1. Подгрузка и заполнение сохранённых адресов
+// ============================================
 document.getElementById('saved-addresses')?.addEventListener('change', function() {
     const selected = this.options[this.selectedIndex];
     if (!selected.value) return;
@@ -276,14 +305,131 @@ document.getElementById('saved-addresses')?.addEventListener('change', function(
     document.getElementById('first_name').value = selected.dataset.first_name || '';
     document.getElementById('last_name').value = selected.dataset.last_name || '';
     document.getElementById('country').value = selected.dataset.country || '';
-    document.getElementById('city').value = selected.dataset.city || '';
     document.getElementById('region').value = selected.dataset.region || '';
     document.getElementById('street').value = selected.dataset.street || '';
     document.getElementById('postal_code').value = selected.dataset.postal_code || '';
     document.getElementById('phone').value = selected.dataset.phone || '';
+    document.getElementById('city').value = selected.dataset.city || '';
+
+    // Подгрузка регионов
+    if (selected.dataset.country) {
+        fetchRegions(selected.dataset.country, selected.dataset.region);
+        regionSelect.disabled = false;
+    } else {
+        regionSelect.disabled = true;
+        regionSelect.innerHTML = '<option value="">Выберите регион</option>';
+    }
+
+    // Подгрузка локаций по региону
+    if (selected.dataset.region) {
+        fetchLocations(selected.dataset.region, selected.dataset.city);
+    }
 });
 
-// Обновление количества
+// ============================================
+// 2. Подгрузка регионов по выбранной стране
+// ============================================
+countrySelect?.addEventListener('change', function() {
+    const countryId = this.value;
+
+    if (!countryId) {
+        regionSelect.disabled = true;
+        regionSelect.innerHTML = '<option value="">Выберите регион</option>';
+        return;
+    }
+
+    regionSelect.disabled = false;
+    fetchRegions(countryId);
+});
+
+// ============================================
+// 3. Подгрузка локаций по выбранному региону
+// ============================================
+// ============================================
+// Подгрузка городов по выбранному региону
+// ============================================
+regionSelect?.addEventListener('change', function() {
+    const regionId = this.value;
+
+    if (!regionId) {
+        cityInput.innerHTML = '<option value="">Выберите город</option>';
+        cityInput.disabled = true;
+        document.getElementById('city_manual').disabled = true;
+        document.getElementById('city_manual').value = '';
+        return;
+    }
+
+    fetchLocations(regionId);
+});
+
+// ============================================
+// Подгрузка локаций (города)
+function fetchLocations(regionId, selectedCity = null) {
+    if (!cityInput) return;
+
+    cityInput.innerHTML = '<option value="">Нет моего города</option>'; // очистка перед загрузкой
+    cityInput.disabled = true;
+
+    fetch(`${locationsUrl}?region_id=${regionId}`)
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc.name;
+                option.textContent = loc.name;
+                if (selectedCity && selectedCity === loc.name) option.selected = true;
+                cityInput.appendChild(option);
+            });
+            cityInput.disabled = false;
+
+            // Если есть выбранный город вручную, включаем поле
+            document.getElementById('city_manual').disabled = false;
+        })
+        .catch(console.error);
+}
+
+// ============================================
+// Если пользователь выбирает пустой город — включаем ручной ввод
+cityInput?.addEventListener('change', function() {
+    const manualInput = document.getElementById('city_manual');
+    if (this.value === '') {
+        manualInput.disabled = false;
+        manualInput.focus();
+    } else {
+        manualInput.disabled = true;
+        manualInput.value = '';
+    }
+});
+
+// ============================================
+// 4. Подгрузка регионов
+// ============================================
+function fetchRegions(countryId, selectedRegionId = null) {
+    if (!regionSelect) return;
+
+    regionSelect.innerHTML = '<option value="">Выберите регион</option>';
+
+    if (!countryId) return;
+
+    fetch(`${regionsUrl}?country_id=${countryId}`)
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(r => {
+                const option = document.createElement('option');
+                option.value = r.id;
+                option.textContent = r.name;
+                if (selectedRegionId && selectedRegionId == r.id) {
+                    option.selected = true;
+                }
+                regionSelect.appendChild(option);
+            });
+        })
+        .catch(console.error);
+}
+
+// ============================================
+// 5. Работа с корзиной: количество и пересчёт
+// ============================================
 function updateQuantity(itemId, delta) {
     const item = cartItems.find(i => i.id === itemId);
     if (!item) return;
@@ -298,7 +444,6 @@ function updateQuantity(itemId, delta) {
     recalcTotal();
 }
 
-// Пересчёт суммы
 function recalcTotal() {
     let total = cartItems.reduce(
         (sum, i) => sum + i.price * i.quantity,
@@ -332,8 +477,9 @@ function recalcTotal() {
 
 window.addEventListener('DOMContentLoaded', recalcTotal);
 
-
-// Если пользователь меняет любое поле адреса — помечаем как изменённое
+// ============================================
+// 6. Отметка изменения адреса
+// ============================================
 [
   'first_name',
   'last_name',
@@ -351,8 +497,9 @@ window.addEventListener('DOMContentLoaded', recalcTotal);
         document.getElementById('address_modified').value = '1';
     });
 });
-
-
 </script>
+
+
+
 
 @endsection

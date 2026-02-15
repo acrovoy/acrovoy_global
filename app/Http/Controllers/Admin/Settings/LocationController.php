@@ -126,4 +126,15 @@ public function regionsWithChildren(Request $request)
     return response()->json($regions);
 }
 
+public function locationsByRegion(Request $request)
+    {
+        $regionId = $request->get('region_id');
+
+        $locations = Location::where('parent_id', $regionId)
+                    ->get(['id', 'name']);
+
+        return response()->json($locations);
+    }
+
+
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Rfq;
 use App\Models\RfqOffer;
 use App\Models\ShippingTemplate;
+use App\Models\Supplier;
 
 
 
@@ -104,14 +105,21 @@ public function show(Rfq $rfq)
     // Подгружаем офферы, категорию и автора RFQ (покупателя)
     $rfq->load(['offers.supplier', 'category', 'buyer']);
 
+
     $shippingTemplates = ShippingTemplate::where(function ($query) {
-        $query->where('manufacturer_id', auth()->id())
+        $supplier = Supplier::where('user_id', auth()->id())->first();
+        $query->where('manufacturer_id', $supplier->id)
               ->orWhere('id', 1);
     })
     ->with('translations')
     ->get();
 
-    return view('dashboard.manufacturer.rfqs.show', compact('rfq', 'shippingTemplates'));
+
+     // Шаблоны доставки по умолчанию (Acrovoy Delivery)
+    $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->get();
+
+
+    return view('dashboard.manufacturer.rfqs.show', compact('rfq', 'shippingTemplates', 'defaultShippingTemplate'));
 }
 
     /**

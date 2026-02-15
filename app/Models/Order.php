@@ -27,6 +27,7 @@ class Order extends Model
     'phone',
     'tracking_number',
     'invoice_file',
+    'invoice_delivery_file',
     'rfq_offer_id',
     'project_id',
 ];
@@ -61,6 +62,11 @@ public function disputes()
 public function rfqOffer()
 {
     return $this->belongsTo(RfqOffer::class, 'rfq_offer_id', 'id');
+}
+
+public function shipments()
+{
+    return $this->hasMany(\App\Models\OrderItemShipment::class);
 }
 
 }

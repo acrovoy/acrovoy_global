@@ -49,9 +49,19 @@
 
 
     {{-- Товары --}}
-<div class="divide-y divide-gray-200 rounded-lg border p-4 bg-white shadow-sm">
+
+    
+
+<div class="rounded-lg border p-4 bg-white shadow-sm">
+
+    <div class="flex items-center justify-between mb-2 border-b pb-2">
+        <h3 class="text-xs uppercase tracking-wide text-gray-500">
+            Products in the order:
+        </h3>
+    </div>
+
     @foreach($order['items'] as $item)
-        <div class="py-3 flex justify-between items-center">
+        <div class="py-1 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 {{-- Картинка товара --}}
                 <img
@@ -80,8 +90,8 @@
 
     {{-- Стоимость доставки --}}
     @if(!empty($order['delivery_price']) && $order['delivery_price'] > 0)
-        <div class="py-3 flex justify-between items-center border-t mt-2 pt-2 text-gray-700 text-sm">
-            <span>Delivery: <span class="text-xs text-gray-400">{{$order['delivery_method']}}</span></span>
+        <div class="py-3 flex justify-between items-center border-t mt-2 pt-2 text-xs uppercase tracking-wide text-gray-500">
+            <span>Delivery: <span class="text-xs uppercase tracking-wide text-gray-500">{{$order['delivery_method']}}</span></span>
             @if($order['delivery_method'] === 'Delivery by Acrovoy')
             <span class="font-semibold">0.00 $</span>
             @else

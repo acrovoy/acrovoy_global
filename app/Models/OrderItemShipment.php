@@ -19,6 +19,7 @@ class OrderItemShipment extends Model
         'shipping_price',
         'delivery_time',
         'status',
+        'tracking_number',
     ];
 
     protected $casts = [
@@ -70,4 +71,9 @@ class OrderItemShipment extends Model
     {
         return $query->where('status', 'delivered');
     }
+
+    public function orderItem()
+{
+    return $this->belongsTo(OrderItem::class, 'order_item_id');
+}
 }

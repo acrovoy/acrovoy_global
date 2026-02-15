@@ -39,85 +39,82 @@
         <div>
 
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">ID</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">Order</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">Type</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">Weight</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">Dimensions</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">Price</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">Delivery</th>
-                            <th class="px-4 py-3 text-left font-medium text-gray-500 ">Status</th>
-                            <th class="px-4 py-3 text-right font-medium text-gray-500 ">Actions</th>
-                        </tr>
-                    </thead>
+               <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <thead class="bg-gray-50">
+        <tr>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Order</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Type</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Customer</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Destination</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Total</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Created</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            
+        </tr>
+    </thead>
 
-                    <tbody class="bg-white divide-y divide-gray-100">
-                        @forelse($shipments as $shipment)
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-4 py-3 font-medium text-gray-900">
-                                    #{{ $shipment->id }}
-                                </td>
+    <tbody class="bg-white divide-y divide-gray-100">
+        @forelse($orders as $order)
+            <tr onclick="window.location='{{ route('admin.orders.shipments', $order) }}'" class="hover:bg-gray-50 transition cursor-pointer">
+                <td class="px-4 py-3 font-medium text-gray-900">
+                    #{{ $order->id }}
+                </td>
 
-                                <td class="px-4 py-3">
-                                    #{{ $shipment->order_id }}
-                                </td>
+                <td class="px-4 py-3">
+                    {{ ucfirst($order->type) }}
+                </td>
 
-                                <td class="px-4 py-3">
-                                    {{ class_basename($shipment->shippable_type) }}
-                                </td>
+                <td class="px-4 py-3">
+                    {{ $order->first_name }} {{ $order->last_name }}
+                </td>
 
-                                <td class="px-4 py-3">
-                                    {{ $shipment->weight ?? '-' }} kg
-                                </td>
+                <td class="px-4 py-3">
+                    {{ $order->country }}, {{ $order->city }}
+                </td>
 
-                                <td class="px-4 py-3">
-                                    @if($shipment->length && $shipment->width && $shipment->height)
-                                        {{ $shipment->length }} × {{ $shipment->width }} × {{ $shipment->height }}
-                                    @else
-                                        -
-                                    @endif
-                                </td>
+                <td class="px-4 py-3 font-semibold text-gray-900">
+                    {{ number_format($order->total, 2) }} $
+                </td>
 
-                                <td class="px-4 py-3 font-semibold text-gray-900">
-                                    ${{ number_format($shipment->shipping_price, 2) }}
-                                </td>
+                <td class="px-4 py-3">
+                    {{ $order->created_at->format('d M Y') }}
+                </td>
 
-                                <td class="px-4 py-3">
-                                    {{ $shipment->delivery_time ?? '-' }}
-                                </td>
+                <td class="px-4 py-3">
+                    @if($order->status === 'cancelled')
+                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
+                            Cancelled
+                        </span>
 
-                                <td class="px-4 py-3">
-                                    <span class="px-2 py-1 text-xs rounded-full
-                                        @if($shipment->status === 'pending') bg-yellow-100 text-yellow-700
-                                        @elseif($shipment->status === 'processing') bg-blue-100 text-blue-700
-                                        @elseif($shipment->status === 'shipped') bg-indigo-100 text-indigo-700
-                                        @elseif($shipment->status === 'delivered') bg-green-100 text-green-700
-                                        @elseif($shipment->status === 'cancelled') bg-red-100 text-red-700
-                                        @endif
-                                    ">
-                                        {{ ucfirst($shipment->status) }}
-                                    </span>
-                                </td>
+                    @elseif($order->delivery_price <= 0)
+                        <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
+                            Awaiting for Acrovoy calculation
+                        </span>
 
-                                <td class="px-4 py-3 text-right">
-                                    <a href="#"
-                                    class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                                        View
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="px-4 py-6 text-center text-gray-500">
-                                    No shipment requests found.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                    @elseif(!$order->delivery_price_confirmed)
+                        <span class="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700">
+                            Awaiting for buyer confirmation
+                        </span>
+
+                    @else
+                        <span class="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700">
+                            Confirmed by buyer
+                        </span>
+                    @endif
+                </td>
+
+                
+            </tr>
+        @empty
+            <tr>
+                <td colspan="8" class="px-4 py-6 text-center text-gray-500">
+                    No orders awaiting delivery calculation.
+                </td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
+
             </div>
 
         </div>

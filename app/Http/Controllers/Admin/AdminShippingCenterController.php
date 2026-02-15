@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 use App\Models\ShippingCenter;
 use App\Models\Country;
-use App\Models\OrderItemShipment;
+use App\Models\Order;
 
 class AdminShippingCenterController extends Controller
 {
@@ -19,14 +19,19 @@ class AdminShippingCenterController extends Controller
     }
 
     public function main()
-    {
-        $shipments = OrderItemShipment::latest()->get();
+{
+    $orders = Order::with(['items'])
+        ->where('delivery_method', 'Delivery by Acrovoy')
+        ->whereNotIn('status', ['cancelled', 'completed'])
+        ->latest()
+        ->get();
 
-        return view(
-            'dashboard.admin.shipping-center.main',
-            compact('shipments')
-        );
-    }
+    return view(
+        'dashboard.admin.shipping-center.main',
+        compact('orders')
+    );
+}
+
 
     public function create()
     {

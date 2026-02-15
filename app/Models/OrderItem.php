@@ -20,4 +20,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function shipments()
+{
+    return $this->morphMany(OrderItemShipment::class, 'shippable');
+}
 }

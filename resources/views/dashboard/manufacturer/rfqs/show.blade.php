@@ -66,6 +66,11 @@
                                 {{ $template->translations->firstWhere('locale', app()->getLocale())->title ?? $template->id }}
                             </option>
                         @endforeach
+                        @foreach($defaultShippingTemplate as $template)
+                            <option value="{{ $template->id }}">
+                                {{ $template->translations->firstWhere('locale', app()->getLocale())->title ?? $template->id }}
+                            </option>
+                        @endforeach
                     </select>
                     <p class="text-sm text-gray-500 mt-1">Optional: select a shipping template for this offer.</p>
                 </div>

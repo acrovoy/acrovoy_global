@@ -375,6 +375,15 @@ Route::middleware(['auth', 'role:buyer'])->group(function () {
 
     Route::get('/buyer/orders/{order}/track', [OrderController::class, 'track'])
         ->name('buyer.orders.track');
+
+    Route::post('buyer/orders/{order}/confirm-delivery-price', [OrderController::class, 'confirmDeliveryPrice'])
+    ->name('buyer.orders.confirm-delivery-price');
+
+    Route::get('/buyer/locations/regions', [LocationController::class, 'regionsByCountry'])
+        ->name('buyer.locations.regions');
+
+    Route::get('/buyer/locations/locations', [LocationController::class, 'locationsByRegion'])
+    ->name('buyer.locations.locations');
 });
 
 
@@ -390,6 +399,8 @@ Route::prefix('buyer/orders')->middleware(['auth', 'role:buyer'])->group(functio
     Route::get('{order}/supplier-review', [SupplierReviewController::class, 'create'])->name('buyer.orders.supplier.review');
     Route::post('{order}/supplier-review', [SupplierReviewController::class, 'store'])->name('buyer.orders.supplier.review.store');
 });
+
+
 
 Route::prefix('buyer/disputes')
     ->middleware(['auth', 'role:buyer'])
@@ -460,6 +471,15 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
             'content' => 'Добро пожаловать в админку! Здесь можно управлять контентом и модерацией товаров.'
         ]);
     })->name('home');
+
+    Route::get('orders/{order}/shipments', [AdminOrdersController::class, 'shipments'])->name('orders.shipments');
+    Route::put('orders/{order}/shipments/{orderItemShipment}', [AdminOrdersController::class, 'updateShipment'])
+    ->name('orders.shipments.update');
+    Route::post('orders/{order}/upload-invoice-delivery', [AdminOrdersController::class, 'uploadInvoiceDelivery'])
+        ->name('orders.upload-invoice-delivery');
+    Route::post('orders/{order}/calculate-delivery', [AdminOrdersController::class, 'calculateDeliveryPrice'])
+    ->name('orders.calculate-delivery');
+    
 
     // Virify & Trusted
     Route::post('sellers/{seller}/verify-trust', [AdminSellersController::class, 'updateVerifyTrust']);

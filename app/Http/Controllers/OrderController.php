@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\OrderStatusService;
 use App\Models\UserAddress;
+use App\Models\Country;  
+use App\Models\Location;
 
 
 
@@ -68,14 +70,31 @@ class OrderController extends Controller
     // Берём последний сохранённый шаблон
     $lastAddress = $savedAddresses->first();
 
+    $countries = Country::orderBy('name')->get();
+
+    $regions = collect(); // пустой по умолчанию
+
+if ($lastAddress && $lastAddress->country) {
+    $regions = Location::whereNull('parent_id')
+        ->where('country_id', $lastAddress->country)
+        ->orderBy('name')
+        ->get();
+}
+
     return view('dashboard.buyer.orders.checkout', [
         'cartItems'        => $cartItems,
         'total'            => $total,
         'shippingOptions'  => $allShippingTemplates,
         'savedAddresses'   => $savedAddresses, // для селекта
         'lastAddress'      => $lastAddress,    // для предзаполнения формы
+        'countries'        => $countries,
+        'regions'          => $regions,   
     ]);
 }
+
+
+
+
 
     // Сохраняем данные чекаута
     public function store(Request $request)
@@ -189,13 +208,33 @@ if ($request->boolean('save_as_new')) {
 
         // 4️⃣ Добавляем позиции заказа
         foreach ($cartItems as $item) {
-            OrderItem::create([
+            $orderItem = OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $item->product_id,
                 'product_name' => $item->product?->name ?? 'Product unavailable',
                 'price' => $item->price,
                 'quantity' => $item->quantity,
             ]);
+
+            // 🔥 Создаём shipment для каждого order item
+    \App\Models\OrderItemShipment::create([
+        'order_id'       => $order->id,
+        'shippable_type' => \App\Models\OrderItem::class,
+        'shippable_id'   => $orderItem->id,
+
+        // админ заполнит позже
+        'weight'         => null,
+        'length'         => null,
+        'width'          => null,
+        'height'         => null,
+
+        'shipping_price' => 0,
+        'delivery_time'  => null,
+
+        'status'         => 'pending',
+    ]);
+
+
         }
 
         // 5️⃣ Очищаем корзину
@@ -420,6 +459,18 @@ public function updateAddress(Request $request, Order $order)
     ]));
 
     return redirect()->back()->with('success', 'Address updated successfully!');
+}
+
+
+public function confirmDeliveryPrice($orderId)
+{
+    $order = Order::findOrFail($orderId);
+
+    // Например, сохраняем флаг, что покупатель подтвердил стоимость доставки
+    $order->delivery_price_confirmed = true; // добавь поле в таблицу orders, если нужно
+    $order->save();
+
+    return redirect()->back()->with('success', 'Delivery price confirmed successfully.');
 }
 
 }
