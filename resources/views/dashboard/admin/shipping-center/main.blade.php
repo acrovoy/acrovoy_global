@@ -69,7 +69,9 @@
                 </td>
 
                 <td class="px-4 py-3">
-                    {{ $order->country }}, {{ $order->city }}
+                    {{ $order->countryRelation?->name ?? '-' }},
+    {{ $order->regionRelation?->name ?? '-' }},
+    {{ $order->cityRelation?->name ?? $order->city ?? '-' }}
                 </td>
 
                 <td class="px-4 py-3 font-semibold text-gray-900">

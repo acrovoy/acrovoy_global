@@ -292,6 +292,15 @@ Route::prefix('manufacturer')->middleware(['auth', 'role:manufacturer'])->group(
     Route::post('rfqs/{rfq}/offer', [SupplierRfqController::class, 'storeOffer'])->name('manufacturer.rfqs.offer.store');
     Route::get('rfqs', [SupplierRfqController::class, 'index'])->name('supplier.rfqs.index');
     Route::get('rfqs/{rfq}', [SupplierRfqController::class, 'show'])->name('supplier.rfqs.show');
+
+    Route::get('/locations/regions', [LocationController::class, 'regionsByCountry'])
+        ->name('manufacturer.locations.regions');
+
+    Route::get('/locations/locations', [LocationController::class, 'locationsByRegion'])
+    ->name('manufacturer.locations.locations');
+
+    Route::post('orders/origin/{item}', [ManufacturerOrderController::class, 'storeOrigin'])
+    ->name('manufacturer.orders.origin.store');
 });
 
 
@@ -340,6 +349,8 @@ Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {
 
 Route::post('/manufacturer/orders/{order}/update-tracking', [ManufacturerOrderController::class, 'updateTracking'])
     ->name('manufacturer.orders.update-tracking');
+
+
 
 Route::post(
     '/manufacturer/orders/{order}/status',

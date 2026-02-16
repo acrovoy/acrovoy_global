@@ -67,6 +67,54 @@
         </div>
     @endif
 
+
+
+    {{-- Блок неподтверждённых локаций --}}
+@if(isset($unverifiedLocations) && $unverifiedLocations->isNotEmpty())
+    <div class="bg-yellow-50 border border-yellow-200 rounded-xl shadow-sm overflow-hidden mb-6">
+        <div class="px-5 py-3 font-semibold text-yellow-800 bg-yellow-100 border-b">Unverified Locations</div>
+        <table class="w-full text-sm">
+            <thead class="bg-yellow-50 border-b">
+                <tr>
+                    <th class="px-5 py-3 text-left font-medium text-yellow-700">Name</th>
+                    <th class="px-5 py-3 text-left font-medium text-yellow-700">Type</th>
+                    <th class="px-5 py-3 text-left font-medium text-yellow-700">Country</th>
+                    <th class="px-5 py-3 text-right font-medium text-yellow-700">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                @foreach($unverifiedLocations as $loc)
+                    <tr class="hover:bg-yellow-50 transition">
+                        <td class="px-5 py-3 font-semibold text-yellow-900">{{ $loc->name }}</td>
+                        <td class="px-5 py-3 text-yellow-700">
+                            {{ $loc->parent_id ? 'Location' : 'Region' }}
+                        </td>
+                        <td class="px-5 py-3 text-yellow-700">{{ $loc->country->name ?? '—' }}</td>
+                        <td class="px-5 py-3 text-right whitespace-nowrap">
+                            <a href="{{ route('admin.settings.locations.edit', $loc->id) }}"
+                               class="text-sm text-yellow-800 hover:underline mr-3">
+                                Edit
+                            </a>
+                            <form action="{{ route('admin.settings.locations.destroy', $loc->id) }}"
+                                  method="POST"
+                                  class="inline"
+                                  onsubmit="return confirm('Delete location?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="text-sm text-red-600 hover:underline">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
+
+
+
     {{-- Locations Table Card --}}
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">

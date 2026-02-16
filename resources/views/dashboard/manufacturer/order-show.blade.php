@@ -48,11 +48,18 @@
     @endif
 
 
-    {{-- Товары --}}
-
-    
-
-<div class="rounded-lg border p-4 bg-white shadow-sm">
+   {{-- Товары --}}
+<div x-data="{
+    open: false,
+    itemId: null,
+    origin_country_id: null,
+    origin_region_id: null,
+    origin_city_id: null,
+    origin_city_manual: '',
+    origin_address: '',
+    origin_contact_name: '',
+    origin_contact_phone: ''
+}" class="rounded-lg border p-4 bg-white shadow-sm">
 
     <div class="flex items-center justify-between mb-2 border-b pb-2">
         <h3 class="text-xs uppercase tracking-wide text-gray-500">
@@ -81,8 +88,85 @@
                 </div>
             </div>
 
+            @foreach($order_items as $itemO)
+
+                {{-- Место погрузки --}}
+                @php
+                    $shipment = $itemO->shipments->first();
+                @endphp
+
+                <div class="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 w-80">
+                    <div class="flex justify-between text-sm font-medium text-gray-900 mb-1">
+                        <div>
+                             Данные места погрузки
+                        </div>
+                    
+
+
+                    </div>
+
+                    @if($shipment && ($shipment->origin_address || $shipment->origin_city_id || $shipment->origin_region_id))
+                        <div class="mb-4 text-xs text-gray-700 space-y-1">
+                            @if($shipment->origin_contact_name)
+                                <div><strong>Contact Name:</strong> {{ $shipment->origin_contact_name }}</div>
+                            @endif
+                            @if($shipment->origin_contact_phone)
+                                <div><strong>Phone:</strong> {{ $shipment->origin_contact_phone }}</div>
+                            @endif
+                            @if($shipment->origin_address)
+                                <div><strong>Address:</strong> {{ $shipment->origin_address }}</div>
+                            @endif
+                            @if($shipment->originCity?->name)
+                                <div><strong>City:</strong> {{ $shipment->originCity?->name }}</div>
+                            @endif
+                            @if($shipment->originRegion?->name)
+                                <div><strong>Region:</strong> {{ $shipment->originRegion?->name }}</div>
+                            @endif
+                            @if($shipment->originCountry?->name)
+                                <div><strong>Country:</strong> {{ $shipment->originCountry?->name }}</div>
+                            @endif
+                        </div>
+
+                        @foreach($order_items as $itemO)
+                            <button type="button" @click="open = true; itemId = {{ $itemO->id }}; 
+                                origin_country_id = {{ $itemO->shipments->first()?->origin_country_id ?? 'null' }};
+                                origin_region_id = {{ $itemO->shipments->first()?->origin_region_id ?? 'null' }};
+                                origin_city_id = {{ $itemO->shipments->first()?->origin_city_id ?? 'null' }};
+                                origin_city_manual = '{{ $itemO->shipments->first()?->origin_city_manual ?? '' }}';
+                                origin_address = '{{ $itemO->shipments->first()?->origin_address ?? '' }}';
+                                origin_contact_name = '{{ $itemO->shipments->first()?->origin_contact_name ?? '' }}';
+                                origin_contact_phone = '{{ $itemO->shipments->first()?->origin_contact_phone ?? '' }}';
+                            ">
+                                <span class="px-3 py-1.5 text-sm
+                      border border-blue-300 text-blue-700
+                      rounded-md
+                      hover:bg-blue-50 hover:border-blue-400">Edit pickup address</span>
+                            </button>
+                        @endforeach
+
+                    @else
+                        <div class="px-3 py-1.5 text-sm
+                      border border-blue-300 text-blue-700
+                      rounded-md
+                      hover:bg-blue-50 hover:border-blue-400">
+                            Pickup address not entered
+                        </div>
+                        
+                        <button type="button"
+                                class="px-3 py-1.5 text-sm
+                      border border-blue-300 text-blue-700
+                      rounded-md
+                      hover:bg-blue-50 hover:border-blue-400"
+                                @click="open = true; itemId = {{ $itemO->id }}">
+                            Enter Pickup Address
+                        </button>
+                        
+                    @endif
+                </div>
+            @endforeach
+
             {{-- Сумма за товар --}}
-            <div class="font-semibold text-gray-900">
+            <div class="font-semibold text-gray-900 ml-4">
                 {{ number_format($item['total'], 2) }} $
             </div>
         </div>
@@ -98,12 +182,11 @@
             <span class="font-semibold">{{ number_format($order['delivery_price'], 2) }} $</span>
             @endif
         </div>
-        @else
+    @else
         <div class="py-3 flex justify-between items-center border-t mt-2 pt-2 text-gray-700 text-sm">
-            <span>Delivery by Acrovoy</span></span>
+            <span>Delivery by Acrovoy</span>
             <span class="font-semibold">{{$order['delivery_price']}}</span>
         </div>
-
     @endif
 
     {{-- Общая сумма заказа --}}
@@ -111,7 +194,91 @@
         <span>Total</span>
         <span>{{ number_format($order['total'] + ($order['delivery_price'] ?? 0), 2) }} $</span>
     </div>
+
+    {{-- Модалка для ввода места погрузки --}}
+    <div x-show="open" x-transition x-cloak x-data="pickupModal()"
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-lg" @click.away="open = false">
+        <h3 class="text-lg font-semibold mb-4">Enter Pickup Address</h3>
+
+        <form method="POST" :action="`/manufacturer/orders/origin/${itemId}`">
+            @csrf
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {{-- Страна --}}
+                <div>
+                    <label class="text-sm text-gray-600">Country</label>
+                    <select name="origin_country_id" id="origin-country" x-model="origin_country_id" class="w-full ...">
+                        <option value="">Select country</option>
+                        @foreach($countries as $country)
+                            <option value="{{ $country->id }}">{{ $country->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Регион --}}
+                <div>
+                    <label class="text-sm text-gray-600">Region</label>
+                    <select name="origin_region_id" id="origin-region" class="w-full border rounded p-2" disabled>
+                        <option value="">Select region</option>
+                    </select>
+                </div>
+
+                {{-- Город --}}
+                <div>
+                    <label class="text-sm text-gray-600">City</label>
+                    <select name="origin_city_id" id="origin-city" class="w-full border rounded p-2">
+                        <option value="">Select city</option>
+                    </select>
+                    <small class="text-gray-500 block mt-1">
+                        If your city is not listed, enter manually below
+                    </small>
+                    <input type="text" name="origin_city_manual" id="origin-city-manual"
+                            x-model="origin_city_manual"
+                            placeholder="Enter city"
+                            class="w-full border rounded p-2 mt-1">
+                </div>
+
+                {{-- Улица --}}
+                <div class="sm:col-span-2">
+                    <label class="text-sm text-gray-600">Street, house, apartment</label>
+                    <input type="text" name="origin_address" id="origin-address"
+                            x-model="origin_address"
+                            class="w-full border rounded p-2">
+                </div>
+
+                {{-- Контакт --}}
+                <div>
+                    <label class="text-sm text-gray-600">Contact Name</label>
+                    <input type="text" name="origin_contact_name" id="origin-contact-name"
+                        x-model="origin_contact_name"
+                        class="w-full border rounded p-2">
+                </div>
+
+                <div>
+                    <label class="text-sm text-gray-600">Contact Phone</label>
+                    <input type="text" name="origin_contact_phone" id="origin-contact-phone"
+                        x-model="origin_contact_phone"
+                        class="w-full border rounded p-2">
+                </div>
+            </div>
+
+            <div class="text-right mt-4">
+                <button type="submit"
+                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+
+</div>
+
+
+
+
+
 
 
 
@@ -520,4 +687,74 @@
     </div>
 
 </div>
+
+
+
+<script>
+const countrySelect = document.getElementById('origin-country');
+const regionSelect = document.getElementById('origin-region');
+const citySelect = document.getElementById('origin-city');
+const cityManualInput = document.getElementById('origin-city-manual');
+
+const regionsUrl = @json(route('manufacturer.locations.regions'));
+const locationsUrl = @json(route('manufacturer.locations.locations'));
+
+// 1. Выбор страны → подгрузка регионов
+countrySelect?.addEventListener('change', function() {
+    const countryId = this.value;
+    regionSelect.disabled = !countryId;
+    regionSelect.innerHTML = '<option value="">Select region</option>';
+    citySelect.innerHTML = '<option value="">Select city</option>';
+    citySelect.disabled = true;
+    cityManualInput.value = '';
+
+    if (!countryId) return;
+
+    fetch(`${regionsUrl}?country_id=${countryId}`)
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = r.name;
+                regionSelect.appendChild(opt);
+            });
+        })
+        .catch(console.error);
+});
+
+// 2. Выбор региона → подгрузка городов
+regionSelect?.addEventListener('change', function() {
+    const regionId = this.value;
+    citySelect.disabled = !regionId;
+    citySelect.innerHTML = '<option value="">Select city</option>';
+    cityManualInput.value = '';
+
+    if (!regionId) return;
+
+    fetch(`${locationsUrl}?region_id=${regionId}`)
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                citySelect.appendChild(opt);
+            });
+        })
+        .catch(console.error);
+});
+
+// 3. Если выбирают город из списка — очищаем ручной ввод
+citySelect?.addEventListener('change', function() {
+    if (this.value) cityManualInput.value = '';
+});
+
+// 4. Если пользователь вводит город вручную — очищаем select
+cityManualInput?.addEventListener('input', function() {
+    if (this.value.trim() !== '') citySelect.value = '';
+});
+</script>
+
+
 @endsection

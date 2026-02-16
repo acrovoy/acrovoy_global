@@ -10,6 +10,7 @@ class Location extends Model
         'name',
         'parent_id',
         'country_id', 
+        'updated_by',
     ];
 
     // Родительская связь

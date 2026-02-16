@@ -20,6 +20,22 @@ class OrderItemShipment extends Model
         'delivery_time',
         'status',
         'tracking_number',
+
+        // ===== Origin (погрузка) =====
+        'origin_country_id',
+        'origin_region_id',
+        'origin_city_id',
+        'origin_address',
+        'origin_contact_name',
+        'origin_contact_phone',
+
+        // ===== Destination (выгрузка) =====
+        'destination_country_id',
+        'destination_region_id',
+        'destination_city_id',
+        'destination_address',
+        'destination_contact_name',
+        'destination_contact_phone',
     ];
 
     protected $casts = [
@@ -29,6 +45,7 @@ class OrderItemShipment extends Model
         'height' => 'decimal:2',
         'shipping_price' => 'decimal:2',
     ];
+
 
     /*
     |--------------------------------------------------------------------------
@@ -76,4 +93,34 @@ class OrderItemShipment extends Model
 {
     return $this->belongsTo(OrderItem::class, 'order_item_id');
 }
+
+public function destinationCountry()
+    {
+        return $this->belongsTo(\App\Models\Country::class, 'destination_country_id');
+    }
+
+    public function destinationRegion()
+    {
+        return $this->belongsTo(\App\Models\Location::class, 'destination_region_id');
+    }
+
+    public function destinationCity()
+    {
+        return $this->belongsTo(\App\Models\Location::class, 'destination_city_id');
+    }
+
+    public function originCountry()
+    {
+        return $this->belongsTo(\App\Models\Country::class, 'origin_country_id');
+    }
+
+    public function originRegion()
+    {
+        return $this->belongsTo(\App\Models\Location::class, 'origin_region_id');
+    }
+
+    public function originCity()
+    {
+        return $this->belongsTo(\App\Models\Location::class, 'origin_city_id');
+    }
 }

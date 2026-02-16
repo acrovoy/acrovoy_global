@@ -28,6 +28,8 @@
             @csrf
             @method('PUT')
 
+           <input type="hidden" name="updated_by" value="{{ auth()->id() }}">
+
             {{-- Название --}}
             <div>
                 <label for="name" class="block font-medium mb-1">Название</label>

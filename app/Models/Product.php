@@ -22,7 +22,12 @@ class Product extends Model
         'supplier_id',
         'status',
         'country_id',
-        'reject_reason'
+        'reject_reason',
+        'origin_region_id',
+        'origin_city_id',
+        'origin_address',
+        'origin_contact_name',
+        'origin_contact_phone',
     ];
 
 
@@ -199,6 +204,21 @@ public function scopeWithBaseRelations($query)
                 $q->whereHas('order', fn($o) => $o->where('status', 'completed'))
         ], 'quantity');
 }
+
+    public function originCountry()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    public function originRegion()
+    {
+        return $this->belongsTo(Location::class, 'origin_region_id');
+    }
+
+    public function originCity()
+    {
+        return $this->belongsTo(Location::class, 'origin_city_id');
+    }
 
 
 }

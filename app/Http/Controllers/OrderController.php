@@ -100,7 +100,41 @@ if ($lastAddress && $lastAddress->country) {
     public function store(Request $request)
 {
 
+
     $user = auth()->user();
+
+    $finalCity = $request->city_manual ?: null;
+    $cityId = null;
+
+    // 1️⃣ Если пользователь ввёл новый город вручную
+    if ($request->filled('city_manual')) {
+        $existingLocation = \App\Models\Location::where('name', $finalCity)
+                            ->where('parent_id', $request->region)
+                            ->first();
+
+        if ($existingLocation) {
+            $cityId = $existingLocation->id;
+        } else {
+            $newLocation = \App\Models\Location::create([
+                'name'       => $finalCity,
+                'parent_id'  => $request->region ?: null,
+                'country_id' => $request->country,
+                'updated_by' => $user->id,
+            ]);
+            $cityId = $newLocation->id;
+        }
+    }
+
+    // 2️⃣ Если город выбран из списка
+    elseif ($request->filled('city')) {
+        // Здесь важно, чтобы в форме приходил ID выбранного города, а не название
+        $cityId = (int) $request->city;  
+    }
+
+    $cityModel = \App\Models\Location::find($cityId);
+    $finalCity = $cityModel?->name ?? '';
+
+
 
 /**
  * 1️⃣ Адрес из формы (ВСЕГДА снепшот)
@@ -109,7 +143,7 @@ $formAddress = [
     'first_name'  => $request->first_name,
     'last_name'   => $request->last_name,
     'country'     => $request->country,
-    'city'        => $request->city,
+    'city'        => $finalCity,
     'region'      => $request->region,
     'street'      => $request->street,
     'postal_code' => $request->postal_code,
@@ -174,6 +208,7 @@ if ($request->boolean('save_as_new')) {
         $shippingPrice,
         $shippingTemplate,
         $formAddress,
+        $cityId,
         &$order
     ) {
 
@@ -193,7 +228,6 @@ if ($request->boolean('save_as_new')) {
             'street'      => $formAddress['street'],
             'postal_code' => $formAddress['postal_code'],
             'phone'       => $formAddress['phone'],
-
             'notes' => $request->input('notes'),
         ]);
 
@@ -217,10 +251,18 @@ if ($request->boolean('save_as_new')) {
             ]);
 
             // 🔥 Создаём shipment для каждого order item
+          
     \App\Models\OrderItemShipment::create([
         'order_id'       => $order->id,
         'shippable_type' => \App\Models\OrderItem::class,
         'shippable_id'   => $orderItem->id,
+
+        'destination_country_id' => (int)$request->country,
+        'destination_region_id'  => (int)$request->region,
+        'destination_city_id'    => (int)$cityId, 
+        'destination_address'    => $formAddress['street'],
+        'destination_contact_name' => $formAddress['first_name'] . ' ' . $formAddress['last_name'],
+        'destination_contact_phone' => $formAddress['phone'],
 
         // админ заполнит позже
         'weight'         => null,
@@ -230,7 +272,6 @@ if ($request->boolean('save_as_new')) {
 
         'shipping_price' => 0,
         'delivery_time'  => null,
-
         'status'         => 'pending',
     ]);
 

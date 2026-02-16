@@ -104,6 +104,25 @@
                             <div class="font-medium">
                                 Shipment #{{ $shipment->id }}
                             </div>
+
+                         
+                            {{-- Origin / Destination Summary --}}
+                <div class="mt-1 text-sm text-gray-900 space-y-1">
+                    <div>
+                        <span class="font-medium uppercase tracking-wide text-gray-500 text-xs">Pickup:</span>
+                        {{ $shipment->origin_address ?? '-' }},
+                        {{ optional($shipment->originCity)->name ?? '-' }},
+                        {{ optional($shipment->originRegion)->name ?? '-' }},
+                        {{ optional($shipment->originCountry)->name ?? '-' }}
+                    </div>
+                    <div>
+                        <span class="font-medium uppercase tracking-wide text-gray-500  text-xs">Delivery:</span>
+                        {{ $shipment->destination_address ?? '-' }}, {{ optional($shipment->destinationCity)->name ?? '-' }}, 
+                        {{ optional($shipment->destinationRegion)->name ?? '-' }}, 
+                        {{ optional($shipment->destinationCountry)->name ?? '-' }}
+                    </div>
+                </div>
+
                             <div class="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                                 <div class="text-sm font-medium text-gray-900">
                                     {{ $item->product_name ?? 'Product unavailable' }}

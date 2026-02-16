@@ -6,6 +6,19 @@
                     Check your order, choose delivery, and enter invoice or shipping details.
                 </p>
 
+                {{-- Flash messages --}}
+@if(session('success'))
+    <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4">
+        {{ session('error') }}
+    </div>
+@endif
+
 <form method="POST" action="{{ route('buyer.orders.store') }}" id="checkoutForm">
     @csrf
 
@@ -243,8 +256,7 @@
     </small>
     <input type="text" name="city_manual" id="city_manual"
            placeholder="Введите свой город"
-           class="w-full border rounded p-2 mt-1"
-           disabled>
+           class="w-full border rounded p-2 mt-1">
 </div>
 
         {{-- Улица --}}
@@ -284,16 +296,24 @@
 <script>
 let cartItems = @json($cartItems);
 const regionsUrl = @json(route('buyer.locations.regions'));
-const locationsUrl = @json(route('buyer.locations.locations')); // новый маршрут для подрегионов/городов
+const locationsUrl = @json(route('buyer.locations.locations'));
 
 const countrySelect = document.getElementById('country');
 const regionSelect = document.getElementById('region');
 const cityInput = document.getElementById('city');
+const cityManualInput = document.getElementById('city_manual');
 
 // ============================================
-// 0. Инициализация: блокируем регион, если страна не выбрана
+// 0. Инициализация
 // ============================================
 if (regionSelect) regionSelect.disabled = !countrySelect?.value;
+
+// 👉 блокируем select города если регион не выбран
+if (cityInput) cityInput.disabled = !regionSelect?.value;
+
+// ❗ Вариант 2 — поле ручного ввода всегда активно
+if (cityManualInput) cityManualInput.disabled = false;
+
 
 // ============================================
 // 1. Подгрузка и заполнение сохранённых адресов
@@ -309,7 +329,6 @@ document.getElementById('saved-addresses')?.addEventListener('change', function(
     document.getElementById('street').value = selected.dataset.street || '';
     document.getElementById('postal_code').value = selected.dataset.postal_code || '';
     document.getElementById('phone').value = selected.dataset.phone || '';
-    document.getElementById('city').value = selected.dataset.city || '';
 
     // Подгрузка регионов
     if (selected.dataset.country) {
@@ -320,11 +339,17 @@ document.getElementById('saved-addresses')?.addEventListener('change', function(
         regionSelect.innerHTML = '<option value="">Выберите регион</option>';
     }
 
-    // Подгрузка локаций по региону
+    // Подгрузка городов
     if (selected.dataset.region) {
         fetchLocations(selected.dataset.region, selected.dataset.city);
     }
+
+    // 👉 Заполняем ручное поле если город есть
+    if (selected.dataset.city) {
+        cityManualInput.value = selected.dataset.city;
+    }
 });
+
 
 // ============================================
 // 2. Подгрузка регионов по выбранной стране
@@ -335,18 +360,28 @@ countrySelect?.addEventListener('change', function() {
     if (!countryId) {
         regionSelect.disabled = true;
         regionSelect.innerHTML = '<option value="">Выберите регион</option>';
+
+        // очищаем город
+        cityInput.innerHTML = '<option value="">Выберите город</option>';
+        cityInput.disabled = true;
+
+        cityManualInput.value = '';
+
         return;
     }
 
     regionSelect.disabled = false;
+
+    cityInput.innerHTML = '<option value="">Выберите город</option>';
+    cityInput.disabled = true;
+    cityManualInput.value = '';
+
     fetchRegions(countryId);
 });
 
+
 // ============================================
-// 3. Подгрузка локаций по выбранному региону
-// ============================================
-// ============================================
-// Подгрузка городов по выбранному региону
+// 3. Подгрузка городов по выбранному региону
 // ============================================
 regionSelect?.addEventListener('change', function() {
     const regionId = this.value;
@@ -354,50 +389,80 @@ regionSelect?.addEventListener('change', function() {
     if (!regionId) {
         cityInput.innerHTML = '<option value="">Выберите город</option>';
         cityInput.disabled = true;
-        document.getElementById('city_manual').disabled = true;
-        document.getElementById('city_manual').value = '';
         return;
     }
 
     fetchLocations(regionId);
 });
 
+
 // ============================================
 // Подгрузка локаций (города)
-function fetchLocations(regionId, selectedCity = null) {
+// ============================================
+function fetchLocations(regionId, selectedCityId = null) {
     if (!cityInput) return;
 
-    cityInput.innerHTML = '<option value="">Нет моего города</option>'; // очистка перед загрузкой
+    cityInput.innerHTML = '<option value="">Выберите город</option>';
     cityInput.disabled = true;
 
     fetch(`${locationsUrl}?region_id=${regionId}`)
         .then(res => res.json())
         .then(data => {
+
+            let cityFound = false;
+
             data.forEach(loc => {
                 const option = document.createElement('option');
-                option.value = loc.name;
+                
+                // Передаем ID города в value
+                option.value = loc.id;
+
+                // Название города для отображения
                 option.textContent = loc.name;
-                if (selectedCity && selectedCity === loc.name) option.selected = true;
+
+                // Сохраняем название в data-name
+                option.dataset.name = loc.name;
+
+                // Если выбранный город совпадает
+                if (selectedCityId && selectedCityId == loc.id) {
+                    option.selected = true;
+                    cityFound = true;
+                }
+
                 cityInput.appendChild(option);
             });
+
             cityInput.disabled = false;
 
-            // Если есть выбранный город вручную, включаем поле
-            document.getElementById('city_manual').disabled = false;
+            // Если выбранный город не найден — оставляем его в ручном поле
+            if (selectedCityId && !cityFound) {
+                cityManualInput.value = selectedCityId; // Или можно передать название
+            }
         })
         .catch(console.error);
 }
 
+
 // ============================================
-// Если пользователь выбирает пустой город — включаем ручной ввод
+// Если пользователь выбирает город из списка — очищаем ручной ввод
+// ============================================
 cityInput?.addEventListener('change', function() {
-    const manualInput = document.getElementById('city_manual');
-    if (this.value === '') {
-        manualInput.disabled = false;
-        manualInput.focus();
-    } else {
-        manualInput.disabled = true;
-        manualInput.value = '';
+    if (this.value !== '') {
+        // При выборе города из списка очищаем ручной ввод
+        cityManualInput.value = '';
+
+        // Можно дополнительно синхронизировать название:
+        const selectedOption = this.selectedOptions[0];
+        if (selectedOption) {
+            cityManualInput.dataset.name = selectedOption.dataset.name;
+        }
+    }
+});
+
+
+cityManualInput?.addEventListener('input', function() {
+    if (this.value.trim() !== '') {
+        cityInput.value = '';
     }
 });
 
@@ -418,14 +483,17 @@ function fetchRegions(countryId, selectedRegionId = null) {
                 const option = document.createElement('option');
                 option.value = r.id;
                 option.textContent = r.name;
+
                 if (selectedRegionId && selectedRegionId == r.id) {
                     option.selected = true;
                 }
+
                 regionSelect.appendChild(option);
             });
         })
         .catch(console.error);
 }
+
 
 // ============================================
 // 5. Работа с корзиной: количество и пересчёт
@@ -477,6 +545,7 @@ function recalcTotal() {
 
 window.addEventListener('DOMContentLoaded', recalcTotal);
 
+
 // ============================================
 // 6. Отметка изменения адреса
 // ============================================
@@ -498,6 +567,7 @@ window.addEventListener('DOMContentLoaded', recalcTotal);
     });
 });
 </script>
+
 
 
 

@@ -24,6 +24,14 @@ class LocationController extends Controller
         )
         ->get();
 
+
+
+        $unverifiedLocations = Location::whereNull('updated_by')
+    ->orWhere('updated_by', '!=', auth()->id())
+    ->get();
+
+
+
     // основной запрос
     $query = Location::with(['children', 'country'])
         ->whereNull('parent_id');
@@ -47,7 +55,8 @@ class LocationController extends Controller
         'allCountries',
         'allRegions',
         'selectedCountry',
-        'selectedRegion'
+        'selectedRegion',
+        'unverifiedLocations'
     ));
 }
 
@@ -70,7 +79,13 @@ class LocationController extends Controller
             'country_id' => 'required|exists:countries,id',
         ]);
 
-        Location::create($request->all());
+
+        // Добавляем ID пользователя, который создаёт запись
+    $data = $request->all();
+    $data['updated_by'] = auth()->id();
+
+
+        Location::create($data);
         return redirect()->route('admin.settings.locations.index')->with('success', 'Населённый пункт добавлен.');
     }
 
@@ -92,7 +107,12 @@ class LocationController extends Controller
             'country_id' => 'required|exists:countries,id',
         ]);
 
-        $location->update($request->all());
+        // Обновляем данные и ставим ID пользователя, который редактирует
+    $data = $request->all();
+    $data['updated_by'] = auth()->id();
+
+    $location->update($data);
+
         return redirect()->route('admin.settings.locations.index')->with('success', 'Населённый пункт обновлён.');
     }
 

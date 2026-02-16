@@ -69,4 +69,20 @@ public function shipments()
     return $this->hasMany(\App\Models\OrderItemShipment::class);
 }
 
+public function countryRelation()
+{
+    return $this->belongsTo(\App\Models\Country::class, 'country');
+}
+
+public function regionRelation()
+{
+    return $this->belongsTo(\App\Models\Location::class, 'region');
+}
+
+public function cityRelation()
+{
+    return $this->belongsTo(\App\Models\Location::class, 'city_id');
+}
+
+
 }
