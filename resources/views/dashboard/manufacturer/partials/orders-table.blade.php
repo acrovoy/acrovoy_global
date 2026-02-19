@@ -76,7 +76,12 @@
             onclick="window.location='{{ route('manufacturer.orders.show', $order['id']) }}'"
         >
             <td class="px-5 py-3 font-medium text-gray-900 flex items-center gap-2">
-                {{ $order['id'] }}
+                <div>
+                <div>{{ $order['id'] }}</div>
+                <div class="text-xs text-gray-400">{{ $order['type'] }}</div>
+            </div>
+                
+
 
                 <!-- @if(in_array($order['id'], $disputedOrderIds))
                     <a href="{{ route('manufacturer.orders.show', $order['id']) }}"
@@ -101,12 +106,12 @@
                     $statusClasses = [
                         'pending'    => 'bg-yellow-100 text-yellow-800',
                         'paid'       => 'bg-blue-100 text-blue-800',
-                        'confirmed'  => 'bg-blue-100 text-blue-800',
+                        'confirmed'  => 'bg-green-100 text-green-800',
                         'processing' => 'bg-purple-100 text-purple-800',
                         'production' => 'bg-purple-100 text-purple-800',
-                        'shipped'    => 'bg-green-100 text-green-800',
+                        'shipped'    => 'bg-blue-100 text-blue-800',
                         'delivered'  => 'bg-indigo-100 text-indigo-800',
-                        'completed'  => 'bg-green-200 text-green-900',
+                        'completed'  => 'bg-gray-200 text-gray-900',
                         'cancelled'  => 'bg-red-100 text-red-800',
                     ];
                 @endphp

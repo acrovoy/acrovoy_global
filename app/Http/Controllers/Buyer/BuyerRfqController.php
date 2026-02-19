@@ -137,6 +137,9 @@ public function update(StoreRFQRequest $request, Rfq $rfq)
      */
     public function show(Rfq $rfq)
 {
+
+
+
     $this->authorize('view', $rfq);
 
     $rfq->load(['offers.supplier']);
@@ -183,10 +186,27 @@ public function update(StoreRFQRequest $request, Rfq $rfq)
     $offer->update(['status' => 'accepted']);
 
 
+    $shippingTemplate = \App\Models\ShippingTemplate::find($offer->shipping_template->id);
+    
+    $providerType = null;
+    $providerId   = null;
+
+if ($shippingTemplate?->manufacturer_id) {
+    $providerType = \App\Models\Supplier::class;
+    $providerId   = $shippingTemplate->manufacturer_id;
+}
+
+if ($shippingTemplate?->logistic_company_id) {
+    $providerType = \App\Models\LogisticCompany::class;
+    $providerId   = $shippingTemplate->logistic_company_id;
+}
 
 
       // 🔹 Создаём заказ
     $buyer = $rfq->buyer;
+
+    // Сумма товаров
+    $itemsTotal = $offer->price * $rfq->quantity;
 
     $order = Order::create([
         'user_id' => $buyer->id,
@@ -207,16 +227,40 @@ public function update(StoreRFQRequest $request, Rfq $rfq)
         'notes' => $offer->comment ?? '',
     ]);
 
+    // 🔹 ОБЯЗАТЕЛЬНО фиксируем первый статус
+    $order->statusHistory()->create([
+            'status' => 'pending',
+            'comment' => 'Заказ создан покупателем',
+        ]);
+
     // 🔹 Добавляем позицию заказа с lead_time
-    $order->items()->create([
+    $orderItem = $order->items()->create([
         'product_id' => null,
         'product_name' => $rfq->title,
-        'price' => $offer->price,
+        'price' => $itemsTotal,
         'quantity' => $rfq->quantity ?? 1,
         'lead_time_days' => $offer->delivery_days ?? 0,
     ]);
 
 
+    \App\Models\OrderItemShipment::create([
+        'order_id'       => $order->id,
+        'shippable_type' => \App\Models\OrderItem::class,
+        'shippable_id'   => $orderItem->id,
+                
+        'provider_type'  => $providerType,
+        'provider_id'    => $providerId,
+  
+        // админ заполнит позже
+        'weight'         => null,
+        'length'         => null,
+        'width'          => null,
+        'height'         => null,
+
+        'shipping_price' => 0,
+        'delivery_time'  => null,
+        'status'         => 'pending',
+    ]);
 
 
     return redirect()->route('buyer.orders.edit', $order->id)

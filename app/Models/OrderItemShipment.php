@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\OrderItemShipmentStatusHistory;
+
 class OrderItemShipment extends Model
 {
     protected $table = 'order_item_shipments';
@@ -20,6 +22,10 @@ class OrderItemShipment extends Model
         'delivery_time',
         'status',
         'tracking_number',
+
+        // ===== Provider =====
+        'provider_type',
+        'provider_id',
 
         // ===== Origin (погрузка) =====
         'origin_country_id',
@@ -52,6 +58,11 @@ class OrderItemShipment extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
+
+    public function provider()
+    {
+        return $this->morphTo();
+    }
 
     public function order()
     {
@@ -123,4 +134,11 @@ public function destinationCountry()
     {
         return $this->belongsTo(\App\Models\Location::class, 'origin_city_id');
     }
+
+    public function statuses()
+    {
+        return $this->hasMany(OrderItemShipmentStatusHistory::class, 'shipment_id', 'id')
+                    ->orderBy('created_at', 'asc'); // чтобы в хронологическом порядке
+    }
+    
 }

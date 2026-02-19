@@ -87,25 +87,41 @@
                             <p class="text-gray-600 text-sm">Lead time: {{ $offer->delivery_days }} day(s)</p>
                         @endif
 
+                    @php
+                        $order = \App\Models\Order::where('rfq_offer_id', $rfq->id)->first();
+                    @endphp
+
 
                     @if($offer->shipping_template)
                         <div class="mb-4 mt-2 max-w-sm">
                             
-                            <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col gap-2">
+                            <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col">
                                 <h4 class="font-semibold text-gray-900">
                                     {{ $offer->shipping_template->translations->firstWhere('locale', app()->getLocale())->title ?? 'Template #' . $offer->shipping_template_id }}
                                 </h4>
 
+                                @if($order->provider_type === \App\Models\LogisticCompany::class)
+                                @else
+
+                                    @if($offer->shipping_template->delivery_time)
+                                        <div class="flex font-medium text-xs text-gray-400 mb-2">
+                                            <div>Delivery Time:</div>
+                                            <div>{{ $offer->shipping_template->delivery_time }} days</div>
+                                        </div>
+                                    @endif
+                                @endif
+
                                 @if($offer->shipping_template->translations->firstWhere('locale', app()->getLocale())->description)
-                                    <p class="text-gray-700 text-sm mt-1">
+                                    <p class="text-gray-700 text-sm">
                                         {{ $offer->shipping_template->translations->firstWhere('locale', app()->getLocale())->description }}
                                     </p>
                                 @endif
 
                                 <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
 
+                                
 
-                                @if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
+                                @if($order->provider_type === \App\Models\LogisticCompany::class)
                                     <div class="col-span-2 inline-flex items-center gap-2
                                         bg-blue-50 border border-blue-100
                                         px-3 py-1.5 rounded-lg text-gray-900 font-medium text-xs">
@@ -124,12 +140,7 @@
 
                                  @endif                    
 
-                                    @if($offer->shipping_template->delivery_time)
-                                        <div>
-                                            <div class="font-medium">Delivery Time:</div>
-                                            <div>{{ $offer->shipping_template->delivery_time }} days</div>
-                                        </div>
-                                    @endif
+                                    
                                 </div>
                             </div>
                         </div>

@@ -23,7 +23,7 @@ return [
     'shipping_center' => 'Shipping Center',
     'price' => 'Price:',
     'delivery_time' => 'Delivery Time:',
-    'place_of_origin' => 'Place of Origin:',
+    'place_of_origin' => 'Country of Origin:',
     'checkout' => 'Checkout',
     'contact_supllire' => 'Contact Supplier',
     'add_to_cart' => 'Add to Cart',

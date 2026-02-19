@@ -24,34 +24,36 @@ class RfqPolicy
      */
     public function view(User $user, Rfq $rfq): bool
 {
-    // buyer видит только свои RFQ
+    // Покупатель видит только свои RFQ
     if ($user->role === 'buyer') {
         return $rfq->buyer_id === $user->id;
     }
 
-    // supplier (manufacturer)
+    // Админ видит любую RFQ
+    if ($user->role === 'admin') {
+        return true;
+    }
+
+    // Производитель (manufacturer)
     if ($user->role === 'manufacturer') {
         // видит активные RFQ
         if ($rfq->status === 'active') {
             return true;
         }
 
-        // видит закрытые только если есть accepted оффер
+        // видит закрытые только если есть принятый оффер
         if ($rfq->status === 'closed') {
-
             $supplierId = $user->supplier->id ?? null;
-
             return $rfq->offers
                 ->where('supplier_id', $supplierId)
                 ->where('status', 'accepted')
                 ->isNotEmpty();
         }
 
-        // остальные статусы — запрещено
-        return false;
+        return false; // остальные статусы запрещены
     }
 
-    return false;
+    return false; // по умолчанию запрет
 }
 
     /**

@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+use App\Enums\ShipmentStatus;
+use App\Services\ShipmentStatusService;
 use App\Models\Order;
 use App\Models\OrderDispute;
 use App\Models\OrderItemShipment;
@@ -18,6 +22,7 @@ class AdminOrdersController extends Controller
 
     $ordersQuery = Order::with([
         'user',
+        'items.product.supplier.user',
         'items.product',
         'disputes',
     ]);
@@ -47,7 +52,7 @@ class AdminOrdersController extends Controller
             $ordersQuery->orderBy('created_at', 'desc');
     }
 
-    $orders = $ordersQuery->get();
+    $orders = $ordersQuery->paginate(10)->withQueryString();
 
    
 
@@ -77,9 +82,20 @@ class AdminOrdersController extends Controller
 {
     $order = Order::with([
         'items.product',
+        'items.product.mainImage',
+        'items.product.supplier.user',
+        
+        'items.shipments.originCountry',
+        'items.shipments.originRegion',
+        'items.shipments.originCity',
+        'items.shipments.statuses',
+        'rfqOffer.rfq',
         'user',
         'disputes',
         'statusHistory',
+        'items.shipments' => function($q) {
+        $q->with('orderItem'); // чтобы была возможность вывести product_name и quantity
+    }
     ])->findOrFail($id);
 
     // Подготовка данных для блейда
@@ -119,7 +135,7 @@ class AdminOrdersController extends Controller
         'disputes' => $order->disputes()->orderBy('created_at', 'desc')->get(),
     ];
 
-    return view('dashboard.admin.orders.show', compact('orderData'));
+    return view('dashboard.admin.orders.show', compact('orderData', 'order'));
 }
 
 public function shipments($orderId)
@@ -166,12 +182,44 @@ public function update(Request $request, OrderDispute $dispute)
 
 public function updateShipment(Order $order, OrderItemShipment $orderItemShipment, Request $request)
 {
-    $orderItemShipment->update($request->only([
-        'weight', 'length', 'width', 'height',
-        'delivery_time', 'shipping_price', 'status', 'tracking_number'
-    ]));
+    try {
+        // Валидация
+        $validated = $request->validate([
+            'weight'        => 'nullable|numeric|min:0',
+            'length'        => 'nullable|numeric|min:0',
+            'width'         => 'nullable|numeric|min:0',
+            'height'        => 'nullable|numeric|min:0',
+            'delivery_time' => 'nullable|integer|min:0',
+            'shipping_price'=> 'nullable|numeric|min:0',
+            'status'        => ['required', Rule::in(array_column(ShipmentStatus::cases(), 'value'))],
+            'tracking_number'=> 'nullable|string|max:255',
+        ]);
 
-    return response()->json(['success' => true, 'shipment' => $orderItemShipment]);
+        // Устанавливаем кто изменяет
+        $validated['changed_by'] = auth()->id();
+
+        // Обновляем shipment
+        $orderItemShipment->update($validated);
+
+        // Возвращаем успешный JSON
+        return response()->json([
+            'success' => true,
+            'shipment' => $orderItemShipment,
+        ]);
+
+    } catch (\Throwable $e) {
+        // Логируем ошибку и возвращаем 500
+        \Log::error('Shipment update error: '.$e->getMessage(), [
+            'order_id' => $order->id,
+            'shipment_id' => $orderItemShipment->id,
+            'request' => $request->all(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
 }
 
 public function uploadInvoiceDelivery(Request $request, Order $order)

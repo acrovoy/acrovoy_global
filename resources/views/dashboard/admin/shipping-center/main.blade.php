@@ -46,7 +46,7 @@
             <th class="px-4 py-3 text-left font-medium text-gray-500">Type</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Customer</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Destination</th>
-            <th class="px-4 py-3 text-left font-medium text-gray-500">Total</th>
+            <th class="px-4 py-3 text-left font-medium text-gray-500">Costs</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Created</th>
             <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
             
@@ -75,7 +75,7 @@
                 </td>
 
                 <td class="px-4 py-3 font-semibold text-gray-900">
-                    {{ number_format($order->total, 2) }} $
+                    {{ number_format($order->delivery_price, 2) }}$
                 </td>
 
                 <td class="px-4 py-3">

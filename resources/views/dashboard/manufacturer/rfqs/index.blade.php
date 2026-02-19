@@ -22,42 +22,64 @@
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50 uppercase text-gray-600">
                     <tr>
+                        <th class="px-5 py-3 text-left font-medium">RFQ</th>
+                        <th class="px-5 py-3 text-left font-medium">RFQ Status</th>
                         <th class="px-5 py-3 text-left font-medium">Title</th>
-                        <th class="px-5 py-3 text-left font-medium">Description</th>
-                        <th class="px-5 py-3 text-left font-medium">Category</th>
-                        <th class="px-5 py-3 text-left font-medium">Quantity</th>
+                        <!-- <th class="px-5 py-3 text-left font-medium">Description</th> -->
+                        <!-- <th class="px-5 py-3 text-left font-medium">Category</th> -->
+                        <!-- <th class="px-5 py-3 text-left font-medium">Quantity</th> -->
                         <th class="px-5 py-3 text-left font-medium">Deadline</th>
                         <th class="px-5 py-3 text-left font-medium">Attachment</th>
                         <th class="px-5 py-3 text-left font-medium">Offer Status</th>
-                        <th class="px-5 py-3 text-left font-medium">RFQ Status</th>
-                        <th class="px-5 py-3 text-right font-medium">Actions</th>
+                        
+                        <!-- <th class="px-5 py-3 text-right font-medium">Actions</th> -->
                     </tr>
                 </thead>
 
                 <tbody class="bg-white divide-y divide-gray-200">
                     @foreach($rfqs as $rfq)
-                        <tr class="hover:bg-gray-50 transition">
-                            {{-- Title --}}
-                            <td class="px-5 py-3 font-medium text-gray-900">
-                                <a href="{{ route('supplier.rfqs.show', $rfq->id) }}" class="hover:underline text-indigo-600">
-                                    {{ $rfq->title }}
-                                </a>
+                        <tr class="hover:bg-gray-50 transition cursor-pointer"
+            onclick="window.location='{{ route('supplier.rfqs.show', $rfq->id) }}'">
+                            <td class="px-5 py-3 text-gray-700 ">
+                                {{ $rfq->id }}
                             </td>
 
-                            {{-- Description --}}
+                            {{-- RFQ Status --}}
+                            <td class="px-5 py-3">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                    @if($rfq->status === 'active') bg-green-100 text-green-700
+                                    @elseif($rfq->status === 'closed') bg-gray-100 text-gray-600
+                                    @else bg-yellow-100 text-yellow-800
+                                    @endif">
+                                    {{ ucfirst($rfq->status) }}
+                                </span>
+                            </td>
+
+
+                            {{-- Title --}}
+                            <td class="px-5 py-3 font-medium text-gray-900 w-full">
+                                <div class="text-gray-600">
+                                    {{ $rfq->title }}
+</div>
+                                <div class="text-xs text-gray-400">
+                                  {{ $rfq->category?->name ?? '—' }}  
+                                </div>
+                            </td>
+
+                            <!-- {{-- Description --}}
                             <td class="px-5 py-3 text-gray-700 line-clamp-2 max-w-xs">
                                 {{ $rfq->description }}
-                            </td>
+                            </td> -->
 
-                            {{-- Category --}}
+                            <!-- {{-- Category --}}
                             <td class="px-5 py-3 text-gray-700">
                                 {{ $rfq->category?->name ?? '—' }}
-                            </td>
+                            </td> -->
 
-                            {{-- Quantity --}}
+                            <!-- {{-- Quantity --}}
                             <td class="px-5 py-3 text-gray-700">
                                 {{ $rfq->quantity ?? '—' }}
-                            </td>
+                            </td> -->
 
                             {{-- Deadline --}}
                             <td class="px-5 py-3 text-gray-700">
@@ -108,24 +130,15 @@
                                 @endif
                             </td>
 
-                            {{-- RFQ Status --}}
-                            <td class="px-5 py-3">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    @if($rfq->status === 'active') bg-green-100 text-green-700
-                                    @elseif($rfq->status === 'closed') bg-gray-100 text-gray-600
-                                    @else bg-yellow-100 text-yellow-800
-                                    @endif">
-                                    {{ ucfirst($rfq->status) }}
-                                </span>
-                            </td>
+                            
 
-                            {{-- Actions --}}
+                            <!-- {{-- Actions --}}
                             <td class="px-5 py-3 text-right whitespace-nowrap">
                                 <a href="{{ route('supplier.rfqs.show', $rfq->id) }}"
                                    class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
                                     View / Make Offer
                                 </a>
-                            </td>
+                            </td> -->
                         </tr>
                     @endforeach
                 </tbody>

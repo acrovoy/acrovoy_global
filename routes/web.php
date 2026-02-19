@@ -211,12 +211,17 @@ Route::prefix('dashboard/manufacturer')
     ->middleware(['auth', 'role:manufacturer'])
     ->group(function () {
 
-        Route::delete(
+
+
+    Route::put('orders/{order}/shipments/{orderItemShipment}', [ManufacturerOrderController::class, 'updateShipment'])
+    ->name('orders.shipments.update');
+    
+    Route::delete(
             '/certificates/{certificate}',
             [ManufacturerController::class, 'deleteCertificate']
         )->name('certificates.delete');
 
-        Route::resource('shipping-templates', ShippingTemplateController::class)
+    Route::resource('shipping-templates', ShippingTemplateController::class)
             ->except(['show']);
     });
 
@@ -303,7 +308,9 @@ Route::prefix('manufacturer')->middleware(['auth', 'role:manufacturer'])->group(
     ->name('manufacturer.orders.origin.store');
 });
 
-
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('rfqs/{rfq}', [BuyerRfqController::class, 'show'])->name('admin.rfqs.show');
+});
 
 //main buyer
 Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {

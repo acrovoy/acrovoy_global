@@ -74,154 +74,292 @@
 </div>
 
 
+{{-- Product sector --}}
+    @include('dashboard.manufacturer.partials.product-order', ['order_items' => $order_items, 'order' => $order])
+   
+    @if($order['provider_type'] === \App\Models\LogisticCompany::class)
+    @elseif($order['provider_type'] === \App\Models\Supplier::class)
+        {{-- shipment-desk --}}
+        @include('dashboard.manufacturer.partials.shipment-desk', ['order_items' => $order_items, 'order' => $order])
+    @endif
+
 {{-- ACROVOY SHIPMENTS --}}
 @if($order->delivery_method === 'Delivery by Acrovoy')
 
 <div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
 
-    <h3 class="font-medium mb-2 text-xs uppercase tracking-wide text-gray-500 border-b pb-2">
+<div class="flex items-center justify-between pb-2">
+    
+    <h3 class="font-medium text-xs uppercase tracking-wide text-gray-500">
         Acrovoy Shipments (Per Item)
     </h3>
 
-    <div class="divide-y divide-gray-100">
+    <span class="px-2 py-1 text-xs rounded
+        @if(!empty($order->delivery_price_confirmed) && $order->delivery_price_confirmed)
+            bg-emerald-100 text-emerald-700
+        @else
+            bg-red-100 text-red-700
+        @endif
+    ">
+        @if(!empty($order->delivery_price_confirmed) && $order->delivery_price_confirmed)
+            Costs Confirmed by the Buyer
+        @else 
+            Costs are NOT confirmed by the Buyer
+        @endif
+    </span>
 
-        @php
-            $totalShipping = 0;
-        @endphp
+</div>
 
-        @forelse($order->items as $item)
-            @forelse($item->shipments as $shipment)
+    <div class="space-y-6">
 
+@php $totalShipping = 0; @endphp
+
+@forelse($order->items as $item)
+    @forelse($item->shipments as $shipment)
+
+        @php $totalShipping += $shipment->shipping_price ?? 0; @endphp
+
+        <div class="relative bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+
+            {{-- LEFT STATUS STRIPE --}}
+            <div class="absolute left-0 top-0 bottom-0 w-1
+                @switch($shipment->status)
+                    @case('pending') bg-yellow-400 @break
+                    @case('accepted') bg-blue-500 @break
+                    @case('picked_up') bg-indigo-500 @break
+                    @case('in_transit') bg-cyan-500 @break
+                    @case('arrived_at_destination') bg-purple-500 @break
+                    @case('delivered') bg-emerald-500 @break
+                    @case('completed') bg-gray-500 @break
+                    @case('cancelled') bg-red-500 @break
+                    @default bg-gray-300
+                @endswitch
+            "></div>
+
+            <div class="pl-6 pr-6 py-5">
+
+                {{-- TOP HEADER --}}
+                <div class="flex justify-between items-start">
+
+                    <div>
+                        <div class="text-lg font-semibold text-gray-900">
+                            Shipment #{{ $shipment->id }}
+                        </div>
+
+                        <div class="text-xs uppercase tracking-wider text-gray-500 mt-1">
+                            {{ str_replace('_',' ', $shipment->status) }}
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-xs font-medium bg-gray-900 text-white rounded-lg hover:bg-black transition"
+                        @click="openShipmentModal({{ $shipment->id }})"
+                    >
+                        Edit Shipment
+                    </button>
+                </div>
+
+                {{-- PRODUCT BLOCK --}}
+                <div class="mt-5 bg-gray-900 text-white rounded-lg px-5 py-4">
+
+                    <div class="text-sm font-medium">
+                        {{ $item->product_name ?? 'Product unavailable' }}
+                    </div>
+
+                    <div class="mt-1 text-xs text-gray-300 uppercase tracking-wide">
+                        Quantity: {{ $item->quantity ?? '-' }}
+                    </div>
+
+                </div>
+
+                {{-- ROUTE --}}
+                <div class="mt-6 grid md:grid-cols-2 gap-8 text-sm">
+
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                            Pickup Location
+                        </div>
+                        <div class="font-medium text-gray-900 leading-relaxed">
+                            {{ $shipment->origin_address ?? '-' }}<br>
+                            {{ optional($shipment->originCity)->name ?? '-' }},
+                            {{ optional($shipment->originRegion)->name ?? '-' }},
+                            {{ optional($shipment->originCountry)->name ?? '-' }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                            Delivery Location
+                        </div>
+                        <div class="font-medium text-gray-900 leading-relaxed">
+                            {{ $shipment->destination_address ?? '-' }}<br>
+                            {{ optional($shipment->destinationCity)->name ?? '-' }},
+                            {{ optional($shipment->destinationRegion)->name ?? '-' }},
+                            {{ optional($shipment->destinationCountry)->name ?? '-' }}
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- TECH DATA --}}
+                <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm border-t pt-6">
+
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500">
+                            Weight
+                        </div>
+                        <div class="text-lg font-semibold text-gray-900 mt-1">
+                            {{ $shipment->weight ?? '-' }} kg
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500">
+                            Dimensions
+                        </div>
+                        <div class="text-sm font-semibold text-gray-900 mt-1">
+                            {{ $shipment->length ?? '-' }} ×
+                            {{ $shipment->width ?? '-' }} ×
+                            {{ $shipment->height ?? '-' }} cm
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500">
+                            Transit Time
+                        </div>
+                        <div class="text-lg font-semibold text-gray-900 mt-1">
+                            {{ $shipment->delivery_time ?? '-' }} days
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-gray-500">
+                            Shipping Cost
+                        </div>
+                        <div class="text-lg font-bold text-gray-900 mt-1">
+                            {{ number_format($shipment->shipping_price, 2) }} $
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- TRACKING --}}
+                <div class="mt-6 border-t pt-6">
+                    <div class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                        Tracking Number
+                    </div>
+                    <div class="bg-gray-100 rounded-lg px-4 py-3 font-mono text-sm text-gray-900">
+                        {{ $shipment->tracking_number ?? '-' }}
+                    </div>
+                </div>
+
+                {{-- COMPACT SHIPMENT STATUS HISTORY --}}
+
+<div class="mt-6 border-t pt-6">
+    <h4 class="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+        Shipment Status History
+    </h4>
+
+    <div class="relative pl-6">
+        {{-- Vertical line --}}
+        <div class="absolute left-2 top-0 w-px h-full bg-gray-200"></div>
+
+        <div class="space-y-3">
+            @forelse($shipment->statuses ?? [] as $status)
                 @php
-                    $totalShipping += $shipment->shipping_price ?? 0;
+                    $statusValue = $status['status'] instanceof \App\Enums\ShipmentStatus
+                        ? $status['status']->value
+                        : $status['status'];
+                    $isCurrent = $statusValue === $shipment->status;
+                    $displayStatus = str_replace('_', ' ', ucfirst($statusValue));
+                    $displayDate = $status['date'] ?? $status['created_at'] ?? '';
                 @endphp
 
-
-                <div class="py-4">
-
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="flex flex-col">
-                            <div class="font-medium">
-                                Shipment #{{ $shipment->id }}
-                            </div>
-
-                         
-                            {{-- Origin / Destination Summary --}}
-                <div class="mt-1 text-sm text-gray-900 space-y-1">
-                    <div>
-                        <span class="font-medium uppercase tracking-wide text-gray-500 text-xs">Pickup:</span>
-                        {{ $shipment->origin_address ?? '-' }},
-                        {{ optional($shipment->originCity)->name ?? '-' }},
-                        {{ optional($shipment->originRegion)->name ?? '-' }},
-                        {{ optional($shipment->originCountry)->name ?? '-' }}
+                <div class="relative flex items-start space-x-2">
+                    {{-- Timeline Dot --}}
+                    <div class="flex-shrink-0 mt-1 w-2.5 h-2.5 rounded-full
+                        {{ $isCurrent ? 'bg-emerald-500' : 'bg-gray-400' }}">
                     </div>
-                    <div>
-                        <span class="font-medium uppercase tracking-wide text-gray-500  text-xs">Delivery:</span>
-                        {{ $shipment->destination_address ?? '-' }}, {{ optional($shipment->destinationCity)->name ?? '-' }}, 
-                        {{ optional($shipment->destinationRegion)->name ?? '-' }}, 
-                        {{ optional($shipment->destinationCountry)->name ?? '-' }}
+
+                    {{-- Status + Date on one line --}}
+                    <div class="text-sm text-gray-700 flex items-center space-x-3">
+                        <span class="font-medium text-gray-800">{{ $displayStatus }}</span>
+                        <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($displayDate)->format('d M y | H:i') }}</span>
                     </div>
                 </div>
 
-                            <div class="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                                <div class="text-sm font-medium text-gray-900">
-                                    {{ $item->product_name ?? 'Product unavailable' }}
-                                </div>
-
-                                <div class="mt-1 text-xs uppercase tracking-wide text-gray-500">
-                                    Quantity: <span class="font-medium text-gray-700">{{ $item->quantity ?? '-' }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <span class="px-2 py-1 text-xs 
-                            @if(!empty($order->delivery_price_confirmed) && $order->delivery_price_confirmed)
-                                bg-emerald-100 text-emerald-700
-                            @elseif($shipment->status === 'pending')
-                                bg-yellow-100 text-yellow-700
-                            @elseif($shipment->status === 'calculated')
-                                bg-blue-100 text-blue-700
-                            @elseif($shipment->status === 'shipped')
-                                bg-green-100 text-green-700
-                            @elseif($shipment->status === 'delivered')
-                                bg-green-200 text-green-900
-                            @else
-                                bg-gray-100 text-gray-600
-                            @endif
-                        ">
-                            @if(!empty($order->delivery_price_confirmed) && $order->delivery_price_confirmed)
-                                Confirmed by Buyer
-                            @else
-                                {{ ucfirst($shipment->status) }}
-                            @endif
-                        </span>
-
-                        <button type="button"
-                                class="px-2 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                                @click="openShipmentModal({{ $shipment->id }})">
-                            Edit
-                        </button>
+                {{-- Comment (if any) --}}
+                @if(!empty($status['comment']))
+                    <div class="ml-8 mt-1 text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded px-2 py-1">
+                        {{ $status['comment'] }}
                     </div>
+                @endif
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-700">
-
-                        <div>
-                            <div class="text-xs text-gray-500">Weight</div>
-                            <div>{{ $shipment->weight ?? '-' }} kg</div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs text-gray-500">Dimensions (cm)</div>
-                            <div>
-                                {{ $shipment->length ?? '-' }} ×
-                                {{ $shipment->width ?? '-' }} ×
-                                {{ $shipment->height ?? '-' }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs text-gray-500">Delivery Time (days)</div>
-                            <div>{{ $shipment->delivery_time ?? '-' }}</div>
-                        </div>
-
-                        <div>
-                            <div class="text-xs text-gray-500">Shipping Price</div>
-                            <div class="font-semibold">
-                                {{ number_format($shipment->shipping_price, 2) }} $
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {{-- Display tracking number --}}
-                    <div class="mt-2 text-sm text-gray-700">
-                        Tracking Number: {{ $shipment->tracking_number ?? '-' }}
-                    </div>
-
-                </div>
             @empty
-                <div class="py-4 text-sm text-gray-500">
-                    No shipment records for this product yet.
-                </div>
+                <div class="text-sm text-gray-500 ml-6">No status history</div>
             @endforelse
-        @empty
-            <div class="py-4 text-sm text-gray-500">
-                No shipment records created yet.
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+                
+
             </div>
-        @endforelse
+
+        </div>
+
+    @empty
+        <div class="py-6 text-sm text-gray-500">
+            No shipment records for this product yet.
+        </div>
+    @endforelse
+@empty
+    <div class="py-6 text-sm text-gray-500">
+        No shipment records created yet.
+    </div>
+@endforelse
+
+</div>
+
+
+
+
+
+{{-- TOTAL SHIPPING AMOUNT --}}
+<div class="mt-6 border rounded-xl p-4 border-gray-200 bg-gray-50">
+
+    <div class="flex justify-between items-center">
+
+        <div>
+            <div class="text-xs uppercase tracking-wide text-gray-500">
+                Total Shipping Amount
+            </div>
+
+            <div class="mt-1 text-2xl font-semibold text-gray-900">
+                {{ number_format($totalShipping, 2) }} $
+            </div>
+        </div>
 
     </div>
 
-    {{-- Total Shipping Amount --}}
-    <div id="total-shipping-display" class="mt-4 p-3 bg-gray-100 rounded text-right text-lg font-semibold">
-    Total Shipping: {{ number_format($totalShipping, 2) }} $
 </div>
 
 
 
     {{-- Invoice & Calculate Total --}}
 <div class="border rounded-lg p-4 bg-gray-50 mt-4">
-    <h3 class="font-semibold mb-3">Invoice & Total Shipping</h3>
+    <div class="text-xs uppercase tracking-wide text-gray-500">
+                Invoice for delivery service
+            </div>
+    
 
     <form method="POST"
           action="{{ route('admin.orders.upload-invoice-delivery', $order->id) }}"
@@ -295,17 +433,17 @@
 
         <div>
             <div class="text-gray-500">Country</div>
-            <div>{{ $order->country }}</div>
+            <div>{{ $order->countryRelation?->name }}</div>
         </div>
 
         <div>
             <div class="text-gray-500">City</div>
-            <div>{{ $order->city }}</div>
+            <div>{{ $order->cityRelation?->name }}</div>
         </div>
 
         <div>
             <div class="text-gray-500">Region</div>
-            <div>{{ $order->region }}</div>
+            <div>{{ $order->regionRelation?->name }}</div>
         </div>
 
         <div>
@@ -376,15 +514,25 @@
                 </div>
 
                 {{-- Status --}}
-                <div>
-                    <label class="text-sm text-gray-600">Status</label>
-                    <select x-model="form.status" class="w-full border rounded p-2">
-                        <option value="pending">Pending</option>
-                        <option value="calculated">Calculated</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                    </select>
-                </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Status</label>
+                        <select x-model="form.status" class="w-full border rounded p-2">
+                            <template x-for="status in filteredStatuses" :key="status.value">
+                                <option :value="status.value" x-text="status.label"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    {{-- Status Comment --}}
+                    <div x-show="statusChanged">
+                        <label class="text-sm text-gray-600">Status Comment</label>
+                        <textarea
+                            x-model="form.comment"
+                            class="w-full border rounded p-2"
+                            rows="3"
+                            placeholder="Optional comment about status change"
+                        ></textarea>
+                    </div>
 
                 {{-- Tracking Number --}}
                 <div>
@@ -403,6 +551,41 @@
         </form>
     </div>
 </div>
+@php
+$allShipments = $order->items->flatMap(function($item){
+    return $item->shipments->map(function($s){
+        return [
+            'id' => $s->id,
+            'weight' => $s->weight,
+            'length' => $s->length,
+            'width' => $s->width,
+            'height' => $s->height,
+            'delivery_time' => $s->delivery_time,
+            'shipping_price' => $s->shipping_price,
+            'status' => $s->status,
+            'tracking_number' => $s->tracking_number,
+            'origin_address' => $s->origin_address,
+            'originCity' => optional($s->originCity)->name,
+            'originRegion' => optional($s->originRegion)->name,
+            'originCountry' => optional($s->originCountry)->name,
+            'destination_address' => $s->destination_address,
+            'destinationCity' => optional($s->destinationCity)->name,
+            'destinationRegion' => optional($s->destinationRegion)->name,
+            'destinationCountry' => optional($s->destinationCountry)->name,
+        ];
+    });
+})->values();
+@endphp
+
+<script>
+window.allowedTransitions = @json(
+    collect($allShipments)->mapWithKeys(function ($shipment) {
+        return [
+            $shipment['id'] => \App\Services\ShipmentStatusService::availableStatuses($shipment['status'])
+        ];
+    })
+);
+</script>
 
 <script>
 function shipmentPage() {
@@ -417,9 +600,43 @@ function shipmentPage() {
             delivery_time: '',
             shipping_price: '',
             status: '',
-            tracking_number:''
+            tracking_number:'',
+            comment: ''
         },
-        shipments: @json($order->shipments),
+        shipments: @json($allShipments),
+
+        // 🔹 Оставляем полный список (не удаляем!)
+        shipmentStatuses: [
+            { value: 'pending', label: 'Pending' },
+            { value: 'accepted', label: 'Accepted' },
+            { value: 'picked_up', label: 'Picked Up' },
+            { value: 'in_transit', label: 'In Transit' },
+            { value: 'arrived_at_destination', label: 'Arrived at Destination' },
+            { value: 'delivered', label: 'Delivered' },
+            { value: 'completed', label: 'Completed' },
+            { value: 'cancelled', label: 'Cancelled' },
+        ],
+
+        // 🔥 Новый computed список — только разрешённые
+        get filteredStatuses() {
+            if (!this.shipmentId) return this.shipmentStatuses;
+
+            const shipment = this.shipments.find(s => s.id === this.shipmentId);
+            if (!shipment) return this.shipmentStatuses;
+
+            const allowed = window.allowedTransitions[this.shipmentId] ?? [];
+
+            return this.shipmentStatuses.filter(s =>
+                s.value === shipment.status || allowed.includes(s.value)
+            );
+        },
+
+        get statusChanged() {
+            const shipment = this.shipments.find(s => s.id === this.shipmentId);
+            if (!shipment) return false;
+            return shipment.status !== this.form.status;
+        },
+
         openShipmentModal(id) {
             this.shipmentId = id;
             const shipment = this.shipments.find(s => s.id === id);
@@ -431,30 +648,44 @@ function shipmentPage() {
                 this.form.delivery_time = shipment.delivery_time ?? '';
                 this.form.shipping_price = shipment.shipping_price ?? '';
                 this.form.status = shipment.status ?? 'pending';
+                this.form.comment = '';
                 this.form.tracking_number = shipment.tracking_number ?? '';
+            } else {
+                console.warn('Shipment not found for id:', id);
             }
             this.isOpen = true;
         },
+
         closeModal() {
             this.isOpen = false;
         },
+
         async saveShipment() {
-            try {
-                const res = await fetch(`/dashboard/admin/orders/{{ $order->id }}/shipments/${this.shipmentId}`, {
-    method: 'PUT',
-    headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-    },
-    body: JSON.stringify(this.form)
-});
-                if(!res.ok) throw new Error('Failed to save');
-                location.reload();
-            } catch(e) {
-                alert('Error saving shipment');
-                console.error(e);
-            }
+    try {
+        const res = await fetch(`/dashboard/admin/orders/{{ $order->id }}/shipments/${this.shipmentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(this.form)
+        });
+
+        if(!res.ok) {
+            const text = await res.text();  // получаем HTML ошибки
+            console.error(text);
+            throw new Error('Failed to save');
         }
+
+        const data = await res.json(); // теперь можно парсить JSON
+        console.log(data);
+        location.reload();
+    } catch(e) {
+        alert('Error saving shipment');
+        console.error(e);
+    }
+}
+
     }
 }
 </script>

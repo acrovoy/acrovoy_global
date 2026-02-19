@@ -70,9 +70,11 @@ class OrderController extends Controller
     // Берём последний сохранённый шаблон
     $lastAddress = $savedAddresses->first();
 
+    $regions = collect(); // пустой по умолчанию
+
     $countries = Country::orderBy('name')->get();
 
-    $regions = collect(); // пустой по умолчанию
+    
 
 if ($lastAddress && $lastAddress->country) {
     $regions = Location::whereNull('parent_id')
@@ -197,6 +199,18 @@ if ($request->boolean('save_as_new')) {
     // Получаем доставку
     $shippingTemplate = \App\Models\ShippingTemplate::find($request->delivery_template_id);
     $shippingPrice = $shippingTemplate?->price ?? 0;
+    $providerType = null;
+    $providerId   = null;
+
+if ($shippingTemplate?->manufacturer_id) {
+    $providerType = \App\Models\Supplier::class;
+    $providerId   = $shippingTemplate->manufacturer_id;
+}
+
+if ($shippingTemplate?->logistic_company_id) {
+    $providerType = \App\Models\LogisticCompany::class;
+    $providerId   = $shippingTemplate->logistic_company_id;
+}
 
     // Общая сумма
     $total = $itemsTotal + $shippingPrice;
@@ -209,6 +223,8 @@ if ($request->boolean('save_as_new')) {
         $shippingTemplate,
         $formAddress,
         $cityId,
+        $providerType,
+        $providerId,
         &$order
     ) {
 
@@ -257,6 +273,10 @@ if ($request->boolean('save_as_new')) {
         'shippable_type' => \App\Models\OrderItem::class,
         'shippable_id'   => $orderItem->id,
 
+        
+        'provider_type'  => $providerType,
+        'provider_id'    => $providerId,
+
         'destination_country_id' => (int)$request->country,
         'destination_region_id'  => (int)$request->region,
         'destination_city_id'    => (int)$cityId, 
@@ -293,6 +313,8 @@ if ($request->boolean('save_as_new')) {
 
 public function show(Order $order)
 {
+
+    $user = auth()->user();
     // Проверяем, что заказ принадлежит текущему пользователю
     if ($order->user_id !== auth()->id()) {
         abort(403);
@@ -300,10 +322,25 @@ public function show(Order $order)
 
     $order->load([
         'items.product',
+        'items.shipments',
         'statusHistory',
         'user.addresses',
+        'countryRelation',
+        'regionRelation',
+        'cityRelation',
     ]);
 
+    $countries = Country::orderBy('name')->get();
+
+    // Получаем все адресные шаблоны пользователя (по убыванию даты)
+    $savedAddresses = $user->addresses()->orderByDesc('updated_at')->get();
+
+    // Берём последний сохранённый шаблон
+    $lastAddress = $savedAddresses->first();
+
+    $regions = collect(); // пустой по умолчанию
+    
+    
     // Определяем доступные действия
     $canCancel = in_array($order->status, ['pending', 'confirmed', 'paid']);
     $canEditAddress = in_array($order->status, ['pending', 'confirmed', 'paid']);
@@ -314,6 +351,8 @@ public function show(Order $order)
         'canCancel' => $canCancel,
         'canEditAddress' => $canEditAddress,
         'canTrack' => $canTrack,
+        'countries' => $countries,
+        'lastAddress' => $lastAddress,
     ]);
 }
 
@@ -377,6 +416,8 @@ public function edit(int $id)
             ->with('items.product')
             ->firstOrFail();
 
+        $countries = Country::orderBy('name')->get();
+
         // Доступные статусы для изменения
         $availableStatuses = OrderStatusService::availableStatuses($order->status);
 
@@ -387,25 +428,26 @@ public function edit(int $id)
         $lastAddress = $savedAddresses->first();
 
         $orderItems = $order->items->load('product.priceTiers')->map(function($item) {
-    $product = $item->product;
-    return [
-        'id' => $item->id,
-        'product_name' => $item->product_name,
-        'quantity' => $item->quantity,
-        'price' => $item->price ?? 0,
-        'priceTiers' => $product
-            ? $product->priceTiers->map(fn($tier) => [
-                'min_qty' => $tier->min_qty,
-                'max_qty' => $tier->max_qty,
-                'price' => $tier->price,
-            ])->values()->toArray()
-            : [],
-    ];
-})->values()->toArray();
+            $product = $item->product;
+            return [
+                'id' => $item->id,
+                'product_name' => $item->product_name,
+                'quantity' => $item->quantity,
+                'price' => $item->price ?? 0,
+                'priceTiers' => $product
+                    ? $product->priceTiers->map(fn($tier) => [
+                        'min_qty' => $tier->min_qty,
+                        'max_qty' => $tier->max_qty,
+                        'price' => $tier->price,
+                    ])->values()->toArray()
+                    : [],
+                
+            ];
+        })->values()->toArray();
 
 
 
-        return view('dashboard.buyer.orders.edit', compact('order', 'savedAddresses', 'lastAddress', 'orderItems'));
+        return view('dashboard.buyer.orders.edit', compact('order', 'savedAddresses', 'lastAddress', 'orderItems', 'order', 'countries'));
     }
 
     /**
@@ -414,6 +456,38 @@ public function edit(int $id)
     public function update(Request $request, int $id)
 {
 
+    $user = auth()->user();
+
+    $finalCity = $request->city_manual ?: null;
+    $cityId = null;
+
+    // 1️⃣ Если пользователь ввёл новый город вручную
+    if ($request->filled('city_manual')) {
+        $existingLocation = \App\Models\Location::where('name', $finalCity)
+                            ->where('parent_id', $request->region)
+                            ->first();
+
+        if ($existingLocation) {
+            $cityId = $existingLocation->id;
+        } else {
+            $newLocation = \App\Models\Location::create([
+                'name'       => $finalCity,
+                'parent_id'  => $request->region ?: null,
+                'country_id' => $request->country,
+                'updated_by' => $user->id,
+            ]);
+            $cityId = $newLocation->id;
+        }
+    }
+
+    // 2️⃣ Если город выбран из списка
+    elseif ($request->filled('city')) {
+        // Здесь важно, чтобы в форме приходил ID выбранного города, а не название
+        $cityId = (int) $request->city;  
+    }
+
+    $cityModel = \App\Models\Location::find($cityId);
+    $finalCity = $cityModel?->name ?? '';
 
 
 
@@ -422,29 +496,14 @@ public function edit(int $id)
         ->where('status', 'pending') // только pending
         ->firstOrFail();
 
-    // Валидация контактных данных
-    $request->validate([
-        'first_name' => 'required|string|max:255',
-        'last_name' => 'nullable|string|max:255',
-        'country' => 'required|string|max:255',
-        'city' => 'required|string|max:255',
-        'region' => 'nullable|string|max:255',
-        'street' => 'required|string|max:255',
-        'postal_code' => 'nullable|string|max:20',
-        'phone' => 'required|string|max:50',
-        'items' => 'required|array',
-        'items.*.id' => 'required|exists:order_items,id',
-        'items.*.product_name' => 'required|string|max:255',
-        'items.*.quantity' => 'required|integer|min:1',
-        'items.*.price' => 'required|numeric|min:0',
-    ]);
+    
 
     // Обновляем контактные данные
     $order->update([
         'first_name' => $request->first_name,
         'last_name' => $request->last_name,
         'country' => $request->country,
-        'city' => $request->city,
+        'city' => $finalCity,
         'region' => $request->region,
         'street' => $request->street,
         'postal_code' => $request->postal_code,
@@ -453,28 +512,55 @@ public function edit(int $id)
 
     // Обновляем товары в заказе
     foreach ($request->input('items') as $itemData) {
-        $orderItem = $order->items()->find($itemData['id']);
-        if (!$orderItem) continue;
 
-        $quantity = max(1, intval($itemData['quantity']));
-        $orderItem->quantity = $quantity;
+    $orderItem = $order->items()->with('product.priceTiers')->find($itemData['id']);
+    if (!$orderItem) continue;
 
-        // Получаем цену из PriceTier
-        $priceTier = $orderItem->product->priceTiers()
-                        ->where('min_qty', '<=', $quantity)
-                        ->where(function($q) use ($quantity) {
-                            $q->where('max_qty', '>=', $quantity)
-                            ->orWhereNull('max_qty');
-                        })
-                        ->orderBy('min_qty', 'asc')
-                        ->first();
+    $quantity = max(1, intval($itemData['quantity']));
+    $orderItem->quantity = $quantity;
 
-        $orderItem->price = $priceTier->price
-                        ?? $orderItem->product->price
-                        ?? 0;
+    if ($order->type === 'rfq') {
+        $orderItem->price = $itemData['price'];
+    } else {
+        if ($orderItem->product) {
 
-        $orderItem->save();
+            $priceTier = $orderItem->product->priceTiers()
+                ->where('min_qty', '<=', $quantity)
+                ->where(function($q) use ($quantity) {
+                    $q->where('max_qty', '>=', $quantity)
+                      ->orWhereNull('max_qty');
+                })
+                ->orderBy('min_qty', 'desc')
+                ->first();
+
+            $orderItem->price = $priceTier->price
+                ?? $orderItem->product->price
+                ?? 0;
+        } else {
+            $orderItem->price = 0;
+        }
     }
+
+    $orderItem->save();
+
+    
+$shipment = $orderItem->shipment;
+
+if ($shipment) {
+    $shipment->update([
+        'destination_country_id' => (int)$request->country,
+        'destination_region_id'  => (int)$request->region,
+        'destination_city_id'    => $cityId,
+        'destination_address'    => $request->street,
+        'destination_contact_name' => $request->first_name . ' ' . $request->last_name,
+        'destination_contact_phone' => $request->phone,
+    ]);
+}
+
+
+}
+
+   
 
     return redirect()
         ->route('buyer.orders.show', $order->id)
@@ -484,20 +570,64 @@ public function edit(int $id)
 
 public function updateAddress(Request $request, Order $order)
 {
-    $request->validate([
-        'first_name'  => 'required|string|max:255',
-        'last_name'   => 'nullable|string|max:255',
-        'country'     => 'required|string|max:255',
-        'city'        => 'required|string|max:255',
-        'region'      => 'nullable|string|max:255',
-        'street'      => 'required|string|max:255',
-        'postal_code' => 'nullable|string|max:20',
-        'phone'       => 'required|string|max:20',
+    $user = auth()->user();
+
+    $finalCity = $request->city_manual ?: null;
+    $cityId = null;
+
+    if ($request->filled('city_manual')) {
+
+        $existingLocation = \App\Models\Location::where('name', $finalCity)
+            ->where('parent_id', $request->region)
+            ->first();
+
+        if ($existingLocation) {
+            $cityId = $existingLocation->id;
+        } else {
+            $newLocation = \App\Models\Location::create([
+                'name'       => $finalCity,
+                'parent_id'  => $request->region ?: null,
+                'country_id' => $request->country,
+                'updated_by' => $user->id,
+            ]);
+
+            $cityId = $newLocation->id;
+        }
+
+    } elseif ($request->filled('city')) {
+
+        $cityId = (int)$request->city;
+    }
+
+    $cityModel = \App\Models\Location::find($cityId);
+    $finalCity = $cityModel?->name ?? '';
+
+    // Обновляем сам заказ
+    $order->update([
+        'first_name' => $request->first_name,
+        'last_name' => $request->last_name,
+        'country' => $request->country,
+        'city' => $finalCity,
+        'region' => $request->region,
+        'street' => $request->street,
+        'postal_code' => $request->postal_code,
+        'phone' => $request->phone,
     ]);
 
-    $order->update($request->only([
-        'first_name', 'last_name', 'country', 'city', 'region', 'street', 'postal_code', 'phone'
-    ]));
+    // 🔥 Обновляем shipment каждого айтема
+    foreach ($order->items()->with('shipment')->get() as $orderItem) {
+
+        if ($orderItem->shipment) {
+            $orderItem->shipment->update([
+                'destination_country_id' => (int)$request->country,
+                'destination_region_id'  => (int)$request->region,
+                'destination_city_id'    => $cityId,
+                'destination_address'    => $request->street,
+                'destination_contact_name' => $request->first_name . ' ' . $request->last_name,
+                'destination_contact_phone' => $request->phone,
+            ]);
+        }
+    }
 
     return redirect()->back()->with('success', 'Address updated successfully!');
 }

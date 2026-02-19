@@ -25,4 +25,11 @@ class OrderItem extends Model
 {
     return $this->morphMany(OrderItemShipment::class, 'shippable');
 }
+
+public function shipment()
+{
+    return $this->morphOne(OrderItemShipment::class, 'shippable');
+}
+
+
 }

@@ -112,5 +112,4 @@ public function shippingTemplates()
 
 
 
-
 }
