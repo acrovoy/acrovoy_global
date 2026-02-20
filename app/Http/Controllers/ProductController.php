@@ -96,28 +96,28 @@ class ProductController extends Controller
     {
 
         $user = auth()->user();
-        
+
 
 
         $product1 = Product::with(['images', 'mainImage', 'specifications', 'priceTiers', 'supplier', 'category', 'colors', 'colors.linkedProduct'])
             ->where('slug', $slug)
             ->firstOrFail();
 
-         
-
-// Получаем проекты пользователя в статусе draft
-$projects = collect(); // пустая коллекция
-
-if ($user) {
-    // замените 'user_id' на реальную колонку, например 'buyer_id'
-    $projects = Project::where('buyer_id', $user->id) // <-- исправить на правильное поле
-                       ->where('status', 'draft')
-                       ->orderBy('created_at', 'desc')
-                       ->get();
-}
 
 
-       
+        // Получаем проекты пользователя в статусе draft
+        $projects = collect(); // пустая коллекция
+
+        if ($user) {
+            // замените 'user_id' на реальную колонку, например 'buyer_id'
+            $projects = Project::where('buyer_id', $user->id) // <-- исправить на правильное поле
+                ->where('status', 'draft')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+
+
 
         return view('product.show', compact('product1', 'projects'));
     }
@@ -139,16 +139,16 @@ if ($user) {
             ->with('translations')
             ->get();
 
-            // Шаблоны доставки по умолчанию (Acrovoy Delivery)
-    $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
+        // Шаблоны доставки по умолчанию (Acrovoy Delivery)
+        $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
 
-        return view('dashboard.manufacturer.add-product', compact('categories', 'materials', 'shippingTemplates', 'defaultShippingTemplate','countries'));
+        return view('dashboard.manufacturer.add-product', compact('categories', 'materials', 'shippingTemplates', 'defaultShippingTemplate', 'countries'));
     }
 
     public function store(StoreProductRequest  $request)
     {
 
-      //dd($request->all());
+        //dd($request->all());
         //dd(ini_get('post_max_size'), ini_get('upload_max_filesize'));
 
 
@@ -398,8 +398,8 @@ if ($user) {
             ->with('translations')
             ->get();
 
-             // Шаблон доставки по умолчанию (Acrovoy Delivery)
-         $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
+        // Шаблон доставки по умолчанию (Acrovoy Delivery)
+        $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
 
 
         // Загружаем материалы с переводами
@@ -443,9 +443,6 @@ if ($user) {
 
     public function update(UpdateProductRequest $request, Product $product)
     {
-
-
-    
 
         abort_if(
             $product->supplier_id !== auth()->user()->supplier->id,
@@ -555,11 +552,14 @@ if ($user) {
          * 4. Colors / Textures
          * =============================== */
             // ⬅️ логика из store(), но с пересозданием
-            $product->colors()->delete();
 
-            if ($request->materials) {
-                foreach ($request->materials as $material) {
-
+            if ($product->colors && count($product->colors) > 0) {
+                foreach ($product->colors as $color) {
+                    if (empty($request->materials[$color->id])) {
+                        $color->delete();
+                        continue;
+                    }
+                    $material = $request->materials[$color->id];
                     if (
                         empty($material['color']) &&
                         empty($material['texture'])
@@ -573,10 +573,42 @@ if ($user) {
                         $texturePath = $material['texture']->store('textures', 'public');
                     }
 
-                    Color::create([
-                        'product_id'        => $product->id,
+                    $color->update([
                         'color'             => $material['color'] ?? null,
                         'texture_path'      => $texturePath,
+                        'linked_product_id' => $material['linked_product_id'] ?? null,
+                    ]);
+                }
+            }
+
+            if ($request->newMaterials) {
+                foreach ($request->newMaterials as $material) {
+
+                    // если ни цвета, ни текстуры — пропускаем
+                    if (
+                        empty($material['color']) &&
+                        empty($material['texture'])
+                    ) {
+                        continue;
+                    }
+
+                    $texturePath = null;
+
+                    if (!empty($material['texture'])) {
+                        $texturePath = $material['texture']->store('textures', 'public');
+                    }
+
+                    if (!empty($material['linked_product_id'])) {
+                        $linkedProductExists = Product::where('id', $material['linked_product_id'])->exists();
+                        $linkedProductId = $linkedProductExists ? $material['linked_product_id'] : null;
+                    } else {
+                        $linkedProductId = null;
+                    }
+
+                    Color::create([
+                        'product_id' => $product->id,
+                        'color' => $material['color'] ?? null,
+                        'texture_path' => $texturePath,
                         'linked_product_id' => $material['linked_product_id'] ?? null,
                     ]);
                 }

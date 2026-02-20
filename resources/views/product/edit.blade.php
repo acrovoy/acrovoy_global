@@ -375,13 +375,13 @@
                     data-link="{{ $material->linked_product_id ? '/product/' . $material->linked_product_id : '' }}"
                     style="{{ $bgStyle }}"></div>
 
-                <input type="hidden" name="materials[{{ $i }}][color]" id="colorInput-{{ $i }}" value="{{ $material->color }}">
-                <input type="file" name="materials[{{ $i }}][texture]" class="hidden" id="fileInput-{{ $i }}">
-                <button type="button" id="colorBtn-{{ $i }}" class="px-4 py-2 bg-blue-800 text-white rounded">Выбрать цвет</button>
+                <input type="hidden" name="materials[{{ $material->id }}][color]" id="colorInput-{{ $i }}" value="">
+                <input type="file" name="materials[{{ $material->id }}][texture]" class="hidden" id="fileInput-{{ $i }}">
+                <button type="button" id="colorBtn-{{  $i}}" class="px-4 py-2 bg-blue-800 text-white rounded">Выбрать цвет</button>
                 <button type="button" onclick="document.getElementById('fileInput-{{ $i }}').click()" class="px-4 py-2 bg-blue-800 text-white rounded">Выбрать файл</button>
                 <span class="text-gray-500 px-2 flex items-center">🔗</span>
-                <input type="number" name="materials[{{ $i }}][linked_product_id]" placeholder="Product ID" class="w-32 px-2 py-1 border rounded text-sm" oninput="setMaterialLink({{ $i }}, this.value)" value="{{ $material->linked_product_id }}">
-                <button type="button" onclick="removeMaterial({{ $i }})" class="text-red-600 font-bold">✕</button>
+                <input type="number" name="materials[{{ $material->id}}][linked_product_id]" placeholder="Product ID" class="w-32 px-2 py-1 border rounded text-sm" oninput="setMaterialLink({{ $i }}, this.value)" value="{{ $material->linked_product_id }}">
+                <button type="button" id="removeMaterialBtn-{{ $i }}" class="text-red-600 font-bold">✕</button>
             </div>
             @endforeach
         </div>
@@ -744,6 +744,10 @@
 @vite(['resources/js/product-edit.js', 'resources/js/product-form-steps.js'])
 
 @endsection
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+
 
 <script>
     /**

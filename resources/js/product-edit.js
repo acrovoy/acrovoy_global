@@ -206,9 +206,11 @@ document.addEventListener('DOMContentLoaded', () => {
 let materialIndex = document.querySelectorAll('.material-item').length - 1;
 
 window.initMaterial = function (index) {
+
     const preview = document.getElementById(`preview-${index}`);
     const colorInput = document.getElementById(`colorInput-${index}`);
     const fileInput = document.getElementById(`fileInput-${index}`);
+    const removeBtn = document.getElementById(`removeMaterialBtn-${index}`);
 
     if (!preview || !colorInput || !fileInput || !window.Pickr) return;
 
@@ -234,6 +236,7 @@ window.initMaterial = function (index) {
     });
 
     fileInput.addEventListener('change', () => {
+        
         if (!fileInput.files.length) return;
         colorInput.value = '';
         const reader = new FileReader();
@@ -245,6 +248,10 @@ window.initMaterial = function (index) {
         };
         reader.readAsDataURL(fileInput.files[0]);
     });
+
+    removeBtn.addEventListener('click', () => {
+        document.getElementById(`material-${index}`).remove();
+    });
 };
 
 // Инициализация всех существующих материалов
@@ -252,19 +259,20 @@ document.querySelectorAll('.material-item').forEach((_, i) => initMaterial(i));
 
 // Добавление нового материала
 document.getElementById('addMaterialBtn')?.addEventListener('click', () => {
+    
     materialIndex++;
     const wrapper = document.getElementById('materials-wrapper');
 
     wrapper.insertAdjacentHTML('beforeend', `
         <div class="flex items-center gap-4 mt-2 material-item" id="material-${materialIndex}">
             <div class="w-12 h-12 border rounded cursor-pointer" id="preview-${materialIndex}" data-link=""></div>
-            <input type="hidden" name="materials[${materialIndex}][color]" id="colorInput-${materialIndex}">
-            <input type="file" name="materials[${materialIndex}][texture]" class="hidden" id="fileInput-${materialIndex}">
+            <input type="hidden" name="newMaterials[${materialIndex}][color]" id="colorInput-${materialIndex}">
+            <input type="file" name="newMaterials[${materialIndex}][texture]" class="hidden" id="fileInput-${materialIndex}">
             <button type="button" id="colorBtn-${materialIndex}" class="px-4 py-2 bg-blue-800 text-white rounded">Выбрать цвет</button>
             <button type="button" onclick="document.getElementById('fileInput-${materialIndex}').click()" class="px-4 py-2 bg-blue-800 text-white rounded">Выбрать файл</button>
             <span class="text-gray-500 px-2 flex items-center">🔗</span>
-            <input type="number" name="materials[${materialIndex}][linked_product_id]" placeholder="Product ID" class="w-32 px-2 py-1 border rounded text-sm" oninput="setMaterialLink(${materialIndex}, this.value)">
-            <button type="button" onclick="removeMaterial(${materialIndex})" class="text-red-600 font-bold">✕</button>
+            <input type="number" name="newMaterials[${materialIndex}][linked_product_id]" placeholder="Product ID" class="w-32 px-2 py-1 border rounded text-sm" oninput="setMaterialLink(${materialIndex}, this.value)">
+            <button type="button" id="removeMaterialBtn-${materialIndex}" class="text-red-600 font-bold">✕</button>
         </div>
     `);
 
