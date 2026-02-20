@@ -20,10 +20,12 @@ class Specification extends Model
     }
 
     public function translation($locale = null)
-    {
-        $locale = $locale ?? app()->getLocale();
-        return $this->translations->firstWhere('locale', $locale);
-    }
+{
+    $locale = $locale ?? app()->getLocale();
+
+    return $this->translations->firstWhere('locale', $locale)
+        ?? $this->translations->first();
+}
 
     public function getKeyAttribute()
     {

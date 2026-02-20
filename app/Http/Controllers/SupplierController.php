@@ -5,48 +5,69 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Filters\SupplierFilter;
-use App\Filters\ProductFilter;
-
 use App\Models\Supplier;
-use App\Models\Product;
 use App\Models\Category;
-
+use App\Models\Country;
 
 class SupplierController extends Controller
 {
-
     public function index(Request $request)
-{
-    // Загружаем категории для sidebar
-    $categories = Category::all();
+    {
+        // Categories (3 уровня)
+        $categories = Category::with(['children.children'])
+            ->whereNull('parent_id')
+            ->orderBy('sort_order')
+            ->get();
 
-    // Базовый запрос с подсчетом проданных товаров
-    $query = Supplier::withCount('products as sold_count');
+        // Countries
+        $countries = Country::orderBy('name')->get();
 
-    // Применяем фильтры
-    $suppliers = (new SupplierFilter())->apply($query, $request)->get();
+        // Supplier Types
+        $types = [
+            'trusted'  => 'Trusted',
+            'verified' => 'Verified',
+        ];
 
-    // Список типов поставщиков (например премиум, стандарт)
-    $types = [
-        'premium' => 'Premium',
-        'standard' => 'Standard',
-        'new' => 'New',
-    ];
+        // Active Filters
+        $activeCategory = $request->get('category');
+        $activeCountries = collect($request->get('country', []))
+            ->map(fn($id) => (int)$id)
+            ->toArray();
+        $activeTypes = collect($request->get('supplier_type', []))->toArray();
 
-    return view('supplier.index', compact('suppliers', 'categories', 'types'));
-}
+        // Проверяем, применены ли фильтры
+        $hasFilters = $request->filled('category') || $request->filled('country') || $request->filled('supplier_type');
+
+        // Query
+        $query = Supplier::with(['country']);
+
+        // Применяем фильтры, если есть
+        if ($hasFilters) {
+            $query = (new SupplierFilter())->apply($query, $request);
+        }
+
+        // Получаем поставщиков
+        $suppliers = $query->get();
+
+        return view('supplier.index', [
+            'suppliers'       => $suppliers,
+            'categories'      => $categories,
+            'countries'       => $countries,
+            'types'           => $types,
+            'activeCategory'  => $activeCategory,
+            'activeCountries' => $activeCountries,
+            'activeTypes'     => $activeTypes,
+            'hasFilters'      => $hasFilters,
+        ]);
+    }
 
     public function show(Request $request, $slug)
-{
-    // Загружаем поставщика с основной инфой
-    $supplier = Supplier::with('country')
-        ->where('slug', $slug)
-        ->firstOrFail();
+    {
+        $supplier = Supplier::with('country')
+            ->where('slug', $slug)
+            ->firstOrFail();
 
-    // Создаём Builder для продуктов — важно: именно Builder, а не HasMany
-    $productsQuery = Product::query()
-        ->where('supplier_id', $supplier->id)
-        ->with([
+        $productsQuery = $supplier->products()->with([
             'images',
             'priceTiers',
             'reviews',
@@ -55,98 +76,57 @@ class SupplierController extends Controller
             'materials.translations'
         ]);
 
-    // Применяем фильтры через существующий ProductFilter
-    $productsQuery = (new ProductFilter())->apply($productsQuery, $request);
+        // TODO: применяем ProductFilter, если нужен
+        // $productsQuery = (new ProductFilter())->apply($productsQuery, $request);
 
-    // Сортировка
-    $sort = $request->get('sort', 'featured');
-    switch ($sort) {
-        case 'price_asc':
-            $productsQuery->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
-                ->select('products.*')
-                ->groupBy('products.id')
-                ->orderByRaw('MIN(price_tiers.price) ASC');
-            break;
-        case 'price_desc':
-            $productsQuery->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
-                ->select('products.*')
-                ->groupBy('products.id')
-                ->orderByRaw('MIN(price_tiers.price) DESC');
-            break;
-        case 'newest':
-            $productsQuery->orderBy('products.created_at', 'desc');
-            break;
-        default:
-            $productsQuery->orderBy('products.id', 'desc');
-            break;
-    }
-
-    // Получаем продукты
-    $products = $productsQuery->get();
-
-    // Считаем sold_count для каждого продукта (хоть в withSum тоже можно, но так безопасно)
-    $products = $products->map(function ($product) {
-        $soldCount = $product->orderItems
-            ->filter(fn($item) => $item->order && $item->order->status === 'completed')
-            ->sum('quantity');
-        $product->sold_count = $soldCount;
-        return $product;
-    });
-
-    // Сохраняем relation для Blade
-    $supplier->setRelation('products', $products);
-
-     /**
-     * =====================================================
-     * 🟢 КАТЕГОРИИ ПРОДАВЦА (ЛОГИКА ИЗ BLADE)
-     * =====================================================
-     */
-
-     // Продукты продавца для категорий — уже загружены
-$productsForCategories = Product::where('supplier_id', $supplier->id)
-    ->with('category.parent', 'category.children')
-    ->get();
-
-// ID категорий продуктов
-$categoryIds = $productsForCategories->pluck('category_id')->filter()->unique();
-
-// Загружаем категории
-$categories = Category::with(['parent', 'children'])->whereIn('id', $categoryIds)->get();
-
-// Добавляем родителей и рекурсивно собираем всех потомков
-$allCategories = collect();
-
-$collectCategory = function ($cat) use (&$allCategories, &$collectCategory) {
-    $allCategories->push($cat);
-
-    // Добавляем родителя, если есть
-    if ($cat->parent) {
-        $allCategories->push($cat->parent);
-    }
-
-    // Рекурсивно добавляем детей
-    if ($cat->children->count()) {
-        foreach ($cat->children as $child) {
-            $collectCategory($child);
+        $sort = $request->get('sort', 'featured');
+        switch ($sort) {
+            case 'price_asc':
+                $productsQuery->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
+                    ->select('products.*')
+                    ->groupBy('products.id')
+                    ->orderByRaw('MIN(price_tiers.price) ASC');
+                break;
+            case 'price_desc':
+                $productsQuery->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
+                    ->select('products.*')
+                    ->groupBy('products.id')
+                    ->orderByRaw('MIN(price_tiers.price) DESC');
+                break;
+            case 'newest':
+                $productsQuery->orderBy('products.created_at', 'desc');
+                break;
+            default:
+                $productsQuery->orderBy('products.id', 'desc');
+                break;
         }
+
+        $products = $productsQuery->get();
+        $supplier->setRelation('products', $products);
+
+        // ======================================
+        // Категории поставщика для фильтров
+        // ======================================
+        $productsForCategories = $supplier->products()->with('category.parent', 'category.children')->get();
+        $categoryIds = $productsForCategories->pluck('category_id')->filter()->unique();
+        $categories = Category::with(['parent', 'children'])->whereIn('id', $categoryIds)->get();
+
+        $allCategories = collect();
+        $collectCategory = function ($cat) use (&$allCategories, &$collectCategory) {
+            $allCategories->push($cat);
+            if ($cat->parent) $allCategories->push($cat->parent);
+            if ($cat->children->count()) {
+                foreach ($cat->children as $child) {
+                    $collectCategory($child);
+                }
+            }
+        };
+        foreach ($categories as $cat) {
+            $collectCategory($cat);
+        }
+        $allCategories = $allCategories->unique('id');
+        $rootCategories = $allCategories->whereNull('parent_id');
+
+        return view('supplier.show', compact('supplier', 'rootCategories', 'categoryIds'));
     }
-};
-
-// Применяем сбор к всем категориям товаров
-foreach ($categories as $cat) {
-    $collectCategory($cat);
-}
-
-// Убираем дубликаты
-$allCategories = $allCategories->unique('id');
-
-// Корневые категории
-$rootCategories = $allCategories->whereNull('parent_id');
-
-    return view('supplier.show', compact('supplier', 'rootCategories', 'categoryIds'));
-}
-
-
-
-
 }

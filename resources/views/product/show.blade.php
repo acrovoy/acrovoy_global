@@ -258,11 +258,8 @@
 
 @include('product.partials.materials-table', ['product1' => $product1])
 
+               
                 
-
-
-
-                {{-- Commercial Terms --}}
                 {{-- Commercial Terms --}}
 <div class="bg-[#F7F3EA] border border-gray-200 rounded-lg p-6 mb-6">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">

@@ -10,7 +10,7 @@
         @if($shipment?->provider_type === \App\Models\LogisticCompany::class)
             <span >Acrovoy Delivery Details</span>
         @elseif($shipment?->provider_type === \App\Models\Supplier::class)
-            <span >Delivery Details</span>
+            <span >Delivery Details from Supplier of the product</span>
         @else
             <span >Delivery Details</span>
         @endif
@@ -26,6 +26,7 @@
         <div class="mt-4 border-t border-gray-200 pt-4">
         
         {{-- Notification if delivery price not confirmed --}}
+        @if($shipment->provider_type === \App\Models\LogisticCompany::class)
                     @if($order['delivery_price'] > 0)
                     
                         @if(empty($order['delivery_price_confirmed']) || !$order['delivery_price_confirmed'])
@@ -40,7 +41,8 @@
                             </div>
                         @endif
                     @endif
-        
+        @else
+        @endif
         @foreach($order->items as $item)
             @foreach($item->shipments as $shipment)
                 @if($shipment->provider_type === \App\Models\LogisticCompany::class)
@@ -49,7 +51,7 @@
             @endforeach
         @endforeach
 
-            <h4 class="text-xs uppercase tracking-wide text-gray-500 mr-2 mb-2">Shipments:</h4>
+            <h4 class="text-xs uppercase tracking-wide text-gray-500 mr-2 mb-2">Shipment(s):</h4>
             @foreach($order->items as $item)
 
             

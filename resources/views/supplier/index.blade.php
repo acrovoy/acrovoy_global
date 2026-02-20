@@ -14,211 +14,460 @@
     </div>
 </section>
 
-
-
 {{-- MAIN LAYOUT --}}
 <section class="py-8 bg-[#F7F3EA]">
     <div class="container mx-auto px-6">
-
         <div class="flex flex-col md:flex-row gap-6">
-
-
-
 
             {{-- FILTER SIDEBAR --}}
             <aside class="w-full md:w-1/4 mb-4">
 
-            
+                {{-- Category Hierarchy Dropdown --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-5 mb-6">
+                    <h4 class="text-sm font-semibold uppercase tracking-wider text-gray-700 mb-4">
+                        Filter By Category
+                    </h4>
+                    <div class="space-y-3">
+                        @foreach($categories as $level0)
+                            <div x-data="{ open: false }" class="border-b border-gray-100 pb-2">
+                                {{-- LEVEL 0 --}}
+                                <button type="button"
+                                        @click="open = !open"
+                                        class="w-full flex items-center justify-between py-2 text-left group">
 
-   {{-- Category links — кликаем, переход сразу --}}
-<div class="bg-white shadow rounded-xl overflow-hidden px-6 py-4 space-y-4 mb-4">
-    <h4 class="font-medium mb-2">Filter By Category</h4>
-    <ul class="space-y-1">
-        @foreach($categories as $cat)
-            <li>
-                <a href=""
-                   class="text-gray-700 hover:text-black
-                          @if(request('category') == $cat->slug) font-bold text-orange-500 @endif">
-                    {{ $cat->name }}
-                </a>
+                                    <span class="text-sm font-semibold text-gray-800 group-hover:text-black">
+                                        {{ $level0->name }}
+                                    </span>
 
-                {{-- Подкатегории --}}
-                @if($cat->children->count())
-                    <ul class="ml-4 mt-1 space-y-1">
-                        @foreach($cat->children as $child)
-                            <li>
-                                <a href="{{ route('catalog.index', ['category' => $child->slug]) }}"
-                                   class="text-gray-600 hover:text-black
-                                          @if(request('category') == $child->slug) font-bold text-orange-500 @endif">
-                                    {{ $child->name }}
-                                </a>
-                            </li>
+                                    @if($level0->children->count())
+                                        <svg class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                                             :class="{ 'rotate-180': open }"
+                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    @endif
+                                </button>
+
+                                {{-- LEVEL 1 --}}
+                                @if($level0->children->count())
+                                    <div x-show="open" x-transition class="pl-4 mt-2 space-y-2">
+                                        @foreach($level0->children as $level1)
+                                            <div x-data="{ openChild: false }">
+                                                <button type="button"
+                                                        @click="openChild = !openChild"
+                                                        class="w-full flex items-center justify-between text-left text-sm text-gray-700 hover:text-black py-1">
+
+                                                    <span>{{ $level1->name }}</span>
+
+                                                    @if($level1->children->count())
+                                                        <svg class="w-3 h-3 text-gray-400 transition-transform duration-200"
+                                                             :class="{ 'rotate-180': openChild }"
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                  d="M19 9l-7 7-7-7"/>
+                                                        </svg>
+                                                    @endif
+                                                </button>
+
+                                                {{-- LEVEL 2 --}}
+                                                @if($level1->children->count())
+                                                    <div x-show="openChild"
+                                                         x-transition
+                                                         class="pl-4 mt-1 space-y-1">
+                                                        @foreach($level1->children as $level2)
+                                                            <a href="{{ route('suppliers.index', ['category' => $level2->slug]) }}"
+                                                               class="block text-sm text-gray-500 hover:text-black">
+                                                                {{ $level2->name }}
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
                         @endforeach
-                    </ul>
-                @endif
-            </li>
-        @endforeach
-    </ul>
-</div>
-
-
-
-
- {{-- Reputation bar --}}
-<div class="bg-white shadow rounded-xl overflow-hidden px-6 py-4 space-y-4">
-    <h4 class="font-medium mb-2">Supplier Type</h4>
-    <div class="space-y-2 max-h-48 overflow-y-auto p-2 rounded">
-        @php
-            $types = ['premium' => 'Premium', 'verified' => 'Verified', 'featured' => 'Featured'];
-        @endphp
-        @foreach($types as $key => $label)
-            <label class="flex items-center gap-2">
-                <input type="checkbox" name="supplier_type[]" value="{{ $key }}"
-                    @if(in_array($key, (array) request('supplier_type'))) checked @endif>
-                {{ $label }}
-            </label>
-        @endforeach
-    </div>
-</div>
-
-
-
-
-
-    {{-- Material + Price filters — через форму GET --}}
-    <form method="GET" action="" class="mt-4 bg-white shadow rounded-xl overflow-hidden px-6 py-4 space-y-4">
-        {{-- Сохраняем текущую категорию при отправке --}}
-        <input type="hidden" name="category" value="{{ request('category') }}">
-
-
-     {{-- Reset Filters Button styled like section header --}}
-<div class="flex items-center justify-between mb-2">
-    <h2 class="text-xl font-bold">Filter By Products</h2>
-    <a href=""
-       class="inline-flex items-center gap-1 px-3 py-1 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 shadow-sm rounded-full transition">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-        Reset
-    </a>
-</div>
-
-
-        {{-- Material Filter --}}
-            <div>
-                <h4 class="font-medium mb-2">Materials</h4>
-                <div class="max-h-48 overflow-y-auto border p-2 rounded space-y-2">
-                    @foreach(App\Models\Material::all() as $material)
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" name="material[]" value="{{ $material->slug }}"
-                                @if(in_array($material->slug, (array) request('material'))) checked @endif>
-                            {{ $material->name }}
-                        </label>
-                    @endforeach
+                    </div>
                 </div>
-            </div>
 
-        {{-- MOQ Filter --}}
-<div>
-    <h4 class="font-medium mb-2">MOQ</h4>
-    <input type="number" name="min_moq" value="{{ request('min_moq') }}" placeholder="Min MOQ" class="w-full p-2 border rounded">
-</div>
+                {{-- Filters Form --}}
+                <form method="GET" action="" 
+                      class="mt-6 bg-white border border-gray-200 rounded-2xl p-6 space-y-6">
 
+                    {{-- Сохраняем текущую категорию --}}
+                    @if($activeCategory)
+                        <input type="hidden" name="category" value="{{ $activeCategory }}">
+                    @endif
 
-{{-- Sold Filter --}}
-<div>
-    <h4 class="font-medium mb-2">Sold (Min)</h4>
-    <input type="number" name="sold_from" value="{{ request('sold_from') }}" placeholder="Min sold" class="w-full p-2 border rounded">
-</div>
+                    {{-- Сохраняем выбранные типы для sidebar --}}
+                    @foreach($activeTypes as $type)
+                        <input type="hidden" name="supplier_type[]" value="{{ $type }}">
+                    @endforeach
 
-{{-- Lead Time Filter --}}
-<div>
-    <h4 class="font-medium mb-2">Lead Time (days)</h4>
-    <div class="flex space-x-2">
-        <input type="number" name="min_lead_time" value="{{ request('min_lead_time') }}" placeholder="Min" class="w-1/2 p-2 border rounded">
-        <input type="number" name="max_lead_time" value="{{ request('max_lead_time') }}" placeholder="Max" class="w-1/2 p-2 border rounded">
-    </div>
-</div>
+                    {{-- Header --}}
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700">
+                            Filters by Country
+                        </h2>
 
-        {{-- Price Filter --}}
-        <div>
-            <h4 class="font-medium mb-2">Price</h4>
-            <div class="flex space-x-2">
-                <input type="number" name="min_price" value="{{ request('min_price') }}" placeholder="Min" class="w-1/2 p-2 border rounded">
-                <input type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Max" class="w-1/2 p-2 border rounded">
-            </div>
-        </div>
+                        
+                    </div>
 
+                    {{-- Country Filter --}}
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">
+                            Country of Origin
+                        </h4>
 
+                        <div class="max-h-56 overflow-y-auto space-y-2 pr-1">
+                            @foreach($countries as $country)
+                                <label class="flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 cursor-pointer transition">
+                                    <span>{{ $country->name }}</span>
 
-        {{-- Country Filter --}}
-        <div>
-            <h4 class="font-medium mb-2">Country of Origin</h4>
-            <div class="space-y-2 max-h-48 overflow-y-auto border p-2 rounded">
-                @foreach(App\Models\Country::all() as $country)
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" name="country[]" value="{{ $country->id }}"
-                            @if(in_array($country->id, (array) request('country'))) checked @endif>
-                        {{ $country->name }}
-                    </label>
-                @endforeach
-            </div>
-        </div>
+                                    <input type="checkbox"
+                                           name="country[]"
+                                           value="{{ $country->id }}"
+                                           @checked(in_array($country->id, $activeCountries))
+                                           class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-0">
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
 
+                    {{-- Apply Button --}}
+                    <button type="submit"
+                            class="w-full py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium 
+                                   hover:bg-gray-800 transition duration-200">
+                        Apply Filters
+                    </button>
 
-        <button type="submit" class="w-full bg-blue-900 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-            Apply Filters
-        </button>
-    </form>
+                </form>
 
-</aside>
-
-
-
-
-
+            </aside>
 
             {{-- SUPPLIER CONTENT --}}
             <div class="w-full md:flex-1">
 
-                {{-- Sort Bar --}}
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
-                    <div class="text-gray-700 text-sm mb-2 sm:mb-0">
-                        Showing {{ count($suppliers) }} suppliers
-                    </div>
-                    <select class="border rounded p-2 bg-white shadow-sm">
-                        
-                        <option>Sort by: Name A-Z</option>
-                        <option>Sort by: Name Z-A</option>
-                        <option>Sort by: Newest</option>
-                               
-                        
-                    </select>
-                </div>
+                {{-- Top Filter Bar --}}
+<form method="GET" action="/suppliers" 
+      class="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-5">
+
+    {{-- Сохраняем текущую категорию --}}
+    @if($activeCategory)
+        <input type="hidden" name="category" value="{{ $activeCategory }}">
+    @endif
+
+    {{-- Сохраняем выбранные страны --}}
+    @foreach($activeCountries as $countryId)
+        <input type="hidden" name="country[]" value="{{ $countryId }}">
+    @endforeach
+
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+        {{-- Left: Results count + Reset --}}
+        <div class="flex items-center gap-4 text-sm text-gray-600 tracking-wide">
+            <span>
+                Showing 
+                <span class="font-semibold text-gray-900">
+                    {{ $suppliers->count() }}
+                </span> supplier(s)
+            </span>
+            <a href="{{ route('suppliers.index') }}"
+               class="text-sm text-gray-500 hover:text-gray-900 transition underline">
+                Reset all filters
+            </a>
+        </div>
+
+        {{-- Right: Supplier Type --}}
+        <div class="flex flex-wrap items-center gap-6">
+            @foreach($types as $key => $label)
+                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer group">
+                    <input type="checkbox"
+                           name="supplier_type[]"
+                           value="{{ $key }}"
+                           onchange="this.form.submit()"
+                           @checked(in_array($key, $activeTypes))
+                           class="w-4 h-4 border-gray-300 rounded text-yellow-700 focus:ring-yellow-700">
+
+                    <span class="group-hover:text-black transition">
+                        {{ $label }}
+                    </span>
+                </label>
+            @endforeach
+
+ {{-- Новый фильтр Golden Supplier --}}
+ 
+    {{-- Новый фильтр Golden Supplier --}}
+<label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer group">
+
+    <input type="checkbox"
+           name="supplier_type[]"
+           value="gold"
+           onchange="this.form.submit()"
+           @checked(in_array('gold', $activeTypes))
+           class="w-4 h-4 border-gray-300 rounded text-amber-600 focus:ring-amber-600">
+
+    <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-semibold tracking-wide
+                 bg-amber-100 text-amber-700 border border-amber-200">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M5 12l5 5L20 7"/>
+        </svg>
+        GOLD
+    </span>
+
+</label>
+
+
+        </div>
+
+    </div>
+</form>
 
                 {{-- Supplier Grid --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($suppliers as $supplier)
-                        <a href="{{ url('/supplier/' . $supplier->slug) }}"
-                        class="block bg-white rounded-xl shadow hover:shadow-2xl transition overflow-hidden supplier-card"
-                        data-country="{{ $supplier->country->name ?? '' }}">
-                            <img src="{{ $supplier->catalog_image ? asset('storage/' . $supplier->catalog_image) : asset('images/no-logo.png') }}" 
-                            class="w-full h-48 object-cover rounded-t-lg" 
-                            alt="{{ $supplier->name }}">
-                            <div class="p-4 text-center">
-                                
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    @forelse($suppliers as $supplier)
+        <a href="{{ url('/supplier/' . $supplier->slug) }}"
+           class="group relative block bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden supplier-card"
+           data-country="{{ $supplier->country->name ?? '' }}">
 
-                                <h3 class="text-lg font-semibold">{{ $supplier->name }}</h3>
-                    <p class="text-gray-600">{{ $supplier->country->name ?? '' }} | {{ $supplier->short_description }}</p>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
+            @php
+                    $score = $supplier->reputation ?? 0;
+
+                    if ($score <= 50) {
+                        $level = 'Basic';
+                        $color = 'bg-gray-200';
+                        $textColor = 'text-gray-600';
+                        $nextLevelScore = 51;
+                    } elseif ($score <= 120) {
+                        $level = 'Silver';
+                        $color = 'bg-gray-400';
+                        $textColor = 'text-white';
+                        $nextLevelScore = 121;
+                    } elseif ($score <= 200) {
+                        $level = 'Gold';
+                        $color = 'bg-yellow-500';
+                        $textColor = 'text-white';
+                        $nextLevelScore = 201;
+                    } else {
+                        $level = 'Platinum';
+                        $color = 'bg-blue-600';
+                        $textColor = 'text-white';
+                        $nextLevelScore = $score;
+                    }
+
+                    $progress = ($score / $nextLevelScore) * 100;
+                    if ($progress > 100) $progress = 100;
+
+                    $rating = $supplier->reviews()->avg('rating') ?? 0;
+                    $rating = round($rating, 1);
+                @endphp
+
+            
+
+            
+
+            {{-- Картинка --}}
+            <div class="overflow-hidden">
+                <img src="{{ $supplier->catalog_image ? asset('storage/' . $supplier->catalog_image) : asset('images/no-logo.png') }}" 
+                     class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105" 
+                     alt="{{ $supplier->name }}">
+            </div>
+
+
+            {{-- Supplier Level Badge --}}
+<div class="px-5 pt-3">
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide shadow-xl
+        {{ $level === 'Basic' ? 'bg-gray-50 text-gray-400 border border-gray-200' : '' }}
+        {{ $level === 'Silver' ? 'bg-gray-200 text-gray-700 border border-gray-300' : '' }}
+        {{ $level === 'Gold' ? 'bg-amber-100 text-amber-700 border border-amber-200' : '' }}
+        {{ $level === 'Platinum' ? 'bg-slate-800 text-white border border-slate-700' : '' }}
+    ">
+
+        @if($level === 'Basic')
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="8"/>
+            </svg>
+        @elseif($level === 'Silver')
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path d="M12 3l7 18H5l7-18z"/>
+            </svg>
+        @elseif($level === 'Gold')
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path d="M5 12l5 5L20 7"/>
+            </svg>
+        @elseif($level === 'Platinum')
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path d="M12 2l3 7h7l-5.5 4.2L18 21l-6-4-6 4 1.5-7.8L2 9h7z"/>
+            </svg>
+        @endif
+
+        {{ strtoupper($level) }}
+    </span>
+</div>
+
+           
+
+            <div class="p-5 pt-1 text-center flex flex-col items-center">
+
+
+
+           
+
+
+
+
+
+
+
+
+
+                {{-- Название --}}
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-1 justify-center group-hover:text-black transition">
+                    {{ $supplier->name }}
+                    @if($supplier->is_verified)
+                        <img src="{{ asset('images/icons/verified_icon.png') }}" 
+                             alt="Verified" 
+                             class="w-4 h-4">
+                    @endif
+                </h3>
+
+                
+
+                {{-- Страна + описание --}}
+                <p class="text-xs text-gray-500">
+                    {{ $supplier->country->name ?? '' }}
+                    
+                </p>
+
+                {{-- Additional Supplier Info --}}
+<div class="text-xs text-gray-600 space-y-2 mt-4 border-t pt-4 w-full pb-5">
+
+    <div class="flex justify-between items-center">
+        <span class="flex items-center gap-1.5">
+            {{-- Type --}}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M3 21h18M4 21V7l8-4 8 4v14"/>
+            </svg>
+            Type
+        </span>
+        <span class="font-medium text-gray-800">Manufacturer</span>
+    </div>
+
+    <div class="flex justify-between items-center">
+        <span class="flex items-center gap-1.5">
+            {{-- Years --}}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z"/>
+            </svg>
+            Years
+        </span>
+        <span class="font-medium text-gray-800">5+</span>
+    </div>
+
+    <div class="flex justify-between items-center">
+        <span class="flex items-center gap-1.5">
+            {{-- Export --}}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <circle cx="12" cy="12" r="9" stroke-width="1.5"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>
+            </svg>
+            Export
+        </span>
+        <span class="font-medium text-gray-800">Asia, Europe</span>
+    </div>
+
+    <div class="flex justify-between items-center">
+        <span class="flex items-center gap-1.5">
+            {{-- MOQ --}}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <rect x="3" y="7" width="18" height="13" rx="2" stroke-width="1.5"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M3 7l9 6 9-6"/>
+            </svg>
+            MOQ
+        </span>
+        <span class="font-medium text-gray-800">12</span>
+    </div>
+
+    <div class="flex justify-between items-center">
+        <span class="flex items-center gap-1.5">
+            {{-- Rating --}}
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.036 6.26h6.584c.969 0 1.371 1.24.588 1.81l-5.329 3.87 2.036 6.26c.3.921-.755 1.688-1.54 1.118L12 17.77l-5.326 3.474c-.785.57-1.84-.197-1.54-1.118l2.036-6.26-5.329-3.87c-.783-.57-.38-1.81.588-1.81h6.584l2.036-6.26z"/>
+            </svg>
+            Rating
+        </span>
+        <span class="font-medium text-gray-800">{{ $rating }} / 5</span>
+    </div>
+
+    <div class="flex justify-between items-center">
+    <span class="inline-flex items-center gap-1">
+        {{-- SVG иконка документа --}}
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h5l5 5v9a2 2 0 01-2 2z"/>
+        </svg>
+        Completed Orders
+    </span>
+    <span class="font-medium text-gray-800">28+</span>
+</div>
+
+
+
+    @if($supplier->has_logistics)
+        <div class="flex justify-between items-center text-green-700 mb-4">
+            <span class="flex items-center gap-1.5">
+                {{-- Logistics --}}
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <rect x="1" y="7" width="15" height="10" rx="2" stroke-width="1.5"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M16 10h3l3 3v4h-6z"/>
+                </svg>
+                Logistics
+            </span>
+            <span class="font-medium">Available</span>
+        </div>
+    @endif
+ {{-- TRUSTED бейдж под картинкой --}}
+
+</div>
+
+                
 
             </div>
+            @if($supplier->is_trusted == 1)
+                <div class="absolute bottom-0 left-0 w-full bg-emerald-900 text-white text-xs font-semibold tracking-wide text-center py-2">
+                    TRUSTED SUPPLIER
+                </div>
+                @else
+<div class="absolute bottom-0 left-0 w-full bg-gray-200 text-white text-xs font-semibold tracking-wide text-center py-2">
+                    STANDARD
+                </div>
+
+            @endif
+        </a>
+    @empty
+        <p class="text-gray-500 col-span-full">No suppliers found for selected filters.</p>
+    @endforelse
+</div>
+
+
+
+
+
+
+
+
+            </div>
+
         </div>
     </div>
 </section>
-
 
 @endsection

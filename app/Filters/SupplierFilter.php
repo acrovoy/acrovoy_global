@@ -10,38 +10,40 @@ class SupplierFilter
     public function apply(Builder $query, Request $request): Builder
     {
         return $query
-            ->when($request->category, fn($q) =>
-                $q->whereHas('products.category', fn($c) =>
-                    $c->where('slug', $request->category)
-                )
+            // Фильтр по категории
+            ->when($request->category, function($q) use ($request) {
+                    $q->whereHas('products.category', function($cat) use ($request) {
+                        $cat->where('slug', $request->category);
+                    });
+                })
+
+            // Фильтр по странам
+            ->when($request->country, fn($q) =>
+                $q->whereIn('country_id', (array) $request->country)
             )
-            ->when($request->material, fn($q) =>
-                $q->whereHas('products.materials', fn($m) =>
-                    $m->whereIn('slug', (array) $request->material)
-                )
-            )
-            ->when($request->min_price, fn($q) =>
-                $q->whereHas('products.priceTiers', fn($p) =>
-                    $p->where('price', '>=', $request->min_price)
-                )
-            )
-            ->when($request->max_price, fn($q) =>
-                $q->whereHas('products.priceTiers', fn($p) =>
-                    $p->where('price', '<=', $request->max_price)
-                )
-            )
-            ->when($request->min_moq, fn($q) =>
-                $q->whereHas('products', fn($p) =>
-                    $p->where('moq', '>=', $request->min_moq)
-                )
-            )
-            ->when($request->max_moq, fn($q) =>
-                $q->whereHas('products', fn($p) =>
-                    $p->where('moq', '<=', $request->max_moq)
-                )
-            )
-            ->when($request->sold_from, fn($q) =>
-                $q->having('sold_count', '>=', $request->sold_from)
-            );
+
+            // Фильтр по типу поставщика
+            ->when($request->supplier_type, function($q) use ($request) {
+                $types = (array) $request->supplier_type;
+
+                $q->where(function($q2) use ($types) {
+                    foreach ($types as $type) {
+                        switch ($type) {
+                            case 'trusted':
+                                $q2->orWhere('is_trusted', 1);
+                                break;
+                            case 'verified':
+                                $q2->orWhere('is_verified', 1);
+                                break;
+                            case 'premium':
+                                $q2->orWhere('is_premium', 1);
+                                break;
+                            case 'gold':
+                                $q2->orWhere('reputation', '>', 121);
+                                break;
+                        }
+                    }
+                });
+            });
     }
 }

@@ -23,7 +23,7 @@
 
                 {{-- Дата --}}
                 <time class="block text-sm text-gray-500">
-                    {{ $history->created_at->format('d.m.Y H:i') }}
+                    {{ $history->created_at->format('d.m.y | H:i') }}
                 </time>
 
                 {{-- Комментарий --}}
