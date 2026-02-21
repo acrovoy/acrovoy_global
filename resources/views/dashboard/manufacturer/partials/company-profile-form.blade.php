@@ -75,6 +75,82 @@
 
 
 
+    <h3 class="mt-6 text-xl font-semibold mb-4">Supplier Types</h3>
+
+<div id="selected-supplier-types" class="flex flex-wrap gap-2 mb-2"></div>
+
+<input type="text"
+       id="supplierTypeSearch"
+       placeholder="Search supplier types..."
+       class="w-full mb-2 border rounded px-3 py-2 text-sm">
+
+<div id="supplier-types-options"
+     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+
+    @foreach($supplierTypes as $type)
+
+        @php
+            $name = $type->translation?->name ?? $type->slug;
+        @endphp
+
+        <button type="button"
+                class="shadow-sm supplier-type-option px-2 py-2 border rounded bg-white text-xs hover:bg-gray-50 transition"
+                data-id="{{ $type->id }}"
+                data-name="{{ $name }}">
+
+            {{ $name }}
+        </button>
+
+    @endforeach
+
+</div>
+
+<input type="hidden"
+       name="supplier_types_selected"
+       id="supplierTypesSelectedInput">
+
+
+
+{{-- Export Markets --}}
+    <h3 class="mt-6 text-xl font-semibold mb-4">Export Markets</h3>
+
+<div id="selected-export-markets" class="flex flex-wrap gap-2 mb-2"></div>
+
+<input type="text"
+       id="exportMarketSearch"
+       placeholder="Search export markets..."
+       class="w-full mb-2 border rounded px-3 py-2 text-sm">
+
+<div id="export-markets-options"
+     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+
+    @foreach($exportMarkets as $market)
+
+        @php
+            $name = $market->translation?->name ?? $market->slug;
+        @endphp
+
+        <button type="button"
+                class="shadow-sm export-market-option px-2 py-2 border rounded bg-white text-xs hover:bg-gray-50 transition"
+                data-id="{{ $market->id }}"
+                data-name="{{ $name }}">
+
+            {{ $name }}
+        </button>
+
+    @endforeach
+
+</div>
+
+<input type="hidden"
+       name="export_markets_selected"
+       id="exportMarketsSelectedInput">
+       
+       
+
+
+
+
     {{-- Registration Country --}}
 <div>
     <label class="block font-medium mb-1">Registration Country</label>
@@ -275,4 +351,205 @@ catalogDropzone.addEventListener('drop', e => {
 });
 </script>
 
+<script>
 
+/* ===========================
+ * SUPPLIER TYPES CHIP SELECTOR
+ * =========================== */
+
+const selectedTypesContainer = document.getElementById('selected-supplier-types');
+const typeOptions = document.querySelectorAll('.supplier-type-option');
+const selectedTypesInput = document.getElementById('supplierTypesSelectedInput');
+const typeSearch = document.getElementById('supplierTypeSearch');
+const supplierTypeMap = @json(
+    $supplierTypes->mapWithKeys(function($type){
+
+        return [
+            (string)$type->id =>
+                $type->translation?->name ?? $type->slug
+        ];
+
+    })
+);
+
+let selectedTypes = @json(
+    collect($selectedTypes)->map(fn($id)=>[
+        'id'=>(string)$id,
+        'name'=>''
+    ])
+);
+
+/* Render chips */
+function renderSelectedTypes() {
+    selectedTypesContainer.innerHTML = '';
+
+    selectedTypes.forEach((item, index) => {
+
+        const chip = document.createElement('div');
+        chip.className = 'px-2 py-1 bg-blue-100 text-blue-800 text-xs flex items-center gap-1 shadow-sm';
+
+        chip.innerHTML = `
+            <span>${item.name}</span>
+            <button type="button" class="hover:text-red-600">&times;</button>
+        `;
+
+        chip.querySelector('button').onclick = () => {
+            selectedTypes.splice(index, 1);
+            updateSelectedTypesInput();
+            renderSelectedTypes();
+        };
+
+        selectedTypesContainer.appendChild(chip);
+    });
+}
+
+/* Sync hidden input */
+function updateSelectedTypesInput() {
+    selectedTypesInput.value = selectedTypes.map(t => t.id).join(',');
+}
+
+/* Type option click */
+typeOptions.forEach(btn => {
+    btn.addEventListener('click', () => {
+
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+
+        if (!selectedTypes.find(t => t.id === id)) {
+            selectedTypes.push({ id, name });
+        }
+
+        updateSelectedTypesInput();
+        renderSelectedTypes();
+    });
+});
+
+/* Search filter */
+if (typeSearch) {
+    typeSearch.addEventListener('input', function () {
+
+        const search = this.value.toLowerCase();
+
+        typeOptions.forEach(btn => {
+
+            const name = btn.dataset.name.toLowerCase();
+
+            btn.style.display = name.includes(search) ? '' : 'none';
+        });
+    });
+}
+
+function initSelectedTypes() {
+
+    selectedTypes = selectedTypes.map(item => ({
+        id: item.id,
+        name: supplierTypeMap[item.id] || item.name
+    }));
+
+    updateSelectedTypesInput();
+    renderSelectedTypes();
+}
+
+initSelectedTypes();
+</script>
+
+<script>
+window.initialExportMarkets = @json(
+    $company->exportMarkets->map(function($market){
+        return [
+            'id' => (string) $market->id,
+            'name' => $market->translation?->name ?? $market->slug
+        ];
+    })
+);
+</script>
+
+<script>
+
+/* ===========================
+ * EXPORT MARKETS CHIP SELECTOR
+ * =========================== */
+
+const selectedExportContainer = document.getElementById('selected-export-markets');
+const exportOptions = document.querySelectorAll('.export-market-option');
+const exportSelectedInput = document.getElementById('exportMarketsSelectedInput');
+const exportSearch = document.getElementById('exportMarketSearch');
+
+/* === Initialize from backend data === */
+let selectedExportMarkets = typeof window.initialExportMarkets !== 'undefined'
+    ? window.initialExportMarkets
+    : [];
+
+/* Render chips */
+function renderExportMarkets() {
+
+    selectedExportContainer.innerHTML = '';
+
+    selectedExportMarkets.forEach((item, index) => {
+
+        const chip = document.createElement('div');
+        chip.className = 'px-2 py-1 bg-blue-100 text-blue-800 text-xs flex items-center gap-1 shadow-sm rounded-full';
+
+        chip.innerHTML = `
+            <span>${item.name}</span>
+            <button type="button" class="hover:text-red-600">&times;</button>
+        `;
+
+        chip.querySelector('button').onclick = () => {
+            selectedExportMarkets.splice(index, 1);
+            updateExportInput();
+            renderExportMarkets();
+        };
+
+        selectedExportContainer.appendChild(chip);
+    });
+}
+
+/* Sync hidden input */
+function updateExportInput() {
+    exportSelectedInput.value =
+        selectedExportMarkets.map(m => m.id).join(',');
+}
+
+/* Click selection */
+exportOptions.forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+
+        if (!selectedExportMarkets.find(m => m.id === id)) {
+            selectedExportMarkets.push({ id, name });
+        }
+
+        updateExportInput();
+        renderExportMarkets();
+    });
+
+});
+
+/* Search filter */
+if (exportSearch) {
+
+    exportSearch.addEventListener('input', function () {
+
+        const search = this.value.toLowerCase();
+
+        exportOptions.forEach(btn => {
+
+            const name = btn.dataset.name.toLowerCase();
+
+            btn.style.display =
+                name.includes(search) ? '' : 'none';
+        });
+    });
+}
+
+/* Initial render */
+document.addEventListener('DOMContentLoaded', () => {
+    renderExportMarkets();
+    updateExportInput();
+});
+
+</script>

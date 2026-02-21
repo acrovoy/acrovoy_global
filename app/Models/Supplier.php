@@ -110,6 +110,15 @@ public function shippingTemplates()
     return $this->hasMany(\App\Models\ShippingTemplate::class, 'manufacturer_id');
 }
 
+public function supplierTypes()
+{
+    return $this->belongsToMany(SupplierType::class);
+}
 
+public function exportMarkets()
+{
+    return $this->belongsToMany(ExportMarket::class,'export_market_supplier'
+    )->withTimestamps();
+}
 
 }

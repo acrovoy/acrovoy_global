@@ -343,18 +343,34 @@
 
                 {{-- Additional Supplier Info --}}
 <div class="text-xs text-gray-600 space-y-2 mt-4 border-t pt-4 w-full pb-5">
+    {{-- Type --}}
+    @php
+        $types = $supplier->supplierTypes->map(function($type){
+            return $type->translation?->name ?? $type->slug;
+        })->filter()->values();
+    @endphp
 
+    @if($types->isNotEmpty())
     <div class="flex justify-between items-center">
         <span class="flex items-center gap-1.5">
-            {{-- Type --}}
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M3 21h18M4 21V7l8-4 8 4v14"/>
+
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M3 21h18M4 21V7l8-4 8 4v14"/>
             </svg>
+
             Type
         </span>
-        <span class="font-medium text-gray-800">Manufacturer</span>
+
+        <span class="font-medium text-gray-800 text-right">
+            {{ $types->implode(', ') }}
+        </span>
     </div>
+    @endif
+
+
+
+
 
     <div class="flex justify-between items-center">
         <span class="flex items-center gap-1.5">
@@ -365,7 +381,7 @@
             </svg>
             Years
         </span>
-        <span class="font-medium text-gray-800">5+</span>
+        <span class="font-medium text-gray-800">{{ $supplier->years_on_platform }}+</span>
     </div>
 
     <div class="flex justify-between items-center">

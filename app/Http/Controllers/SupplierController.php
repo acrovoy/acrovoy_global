@@ -49,6 +49,10 @@ class SupplierController extends Controller
         // Получаем поставщиков
         $suppliers = $query->get();
 
+        $suppliers->each(function ($supplier) {
+            $supplier->years_on_platform = now()->diffInYears($supplier->created_at);
+        });
+
         return view('supplier.index', [
             'suppliers'       => $suppliers,
             'categories'      => $categories,

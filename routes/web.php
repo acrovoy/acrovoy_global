@@ -50,8 +50,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AdminShippingCenterController;
 use App\Http\Controllers\Admin\AdminShippingTemplateController;
 use App\Http\Controllers\Admin\Settings\ConstantsController;
-
-
+use App\Http\Controllers\Admin\Settings\SupplierTypeController;
 use App\Http\Controllers\Admin\Settings\UnitsController;
 use App\Http\Controllers\Admin\Settings\MaterialsController;
 use App\Http\Controllers\Admin\Settings\LanguagesController;
@@ -577,6 +576,9 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
 
         Route::resource('languages', LanguagesController::class)->except(['show']);
         Route::get('languages/{language}', [LanguagesController::class, 'show'])->name('languages.show');
+
+        // Supplier type
+        Route::resource('supplier-types', SupplierTypeController::class);
 
         // Materials
         Route::get('materials', [MaterialsController::class, 'index'])->name('materials.index');

@@ -17,16 +17,24 @@ class ManufacturerController extends Controller
      */
     public function companyProfile()    
 {
-
+    
+    $exportMarkets = \App\Models\ExportMarket::with('translations')->get();
+    $supplierTypes = \App\Models\SupplierType::with('translations')->get();
     $countries = Country::orderBy('name')->get();
-    $company = auth()->user()->supplier; // или company(), если связь переименуешь
+    $company = auth()->user()->supplier->load('exportMarkets.translation');
+    $selectedTypes = $company->supplierTypes
+    ->pluck('id')
+    ->toArray();
+    $selectedMarkets = $company?->exportMarkets->pluck('id')->toArray() ?? [];
 
     if (!$company) {
         // Создаём пустую модель для формы, чтобы Blade работал без ошибок
         $company = new \App\Models\Supplier();
     }
 
-    return view('dashboard.manufacturer.company-profile', compact('company','company', 'countries'));
+    return view('dashboard.manufacturer.company-profile', compact('company', 'countries', 
+    'exportMarkets','supplierTypes','selectedTypes',
+    'selectedMarkets'));
 }
 
     /**
@@ -59,6 +67,15 @@ class ManufacturerController extends Controller
         $data['logo'] = $request->file('logo')->store('company-logos', 'public');
     }
 
+    // Обработка export_markets
+    if ($request->filled('export_markets_selected')) {
+
+    $ids = array_filter(
+        explode(',', $request->export_markets_selected)
+    );
+
+    $company->exportMarkets()->sync($ids);
+}
     // Обработка сертификатов
     if ($request->hasFile('certificates')) {
         foreach ($request->file('certificates') as $file) {
@@ -97,6 +114,18 @@ class ManufacturerController extends Controller
 
     // Обновление данных компании
     $company->update($data);
+
+
+    // ===== SUPPLIER TYPES SYNC =====
+    if ($request->filled('supplier_types_selected')) {
+
+        $typeIds = collect(
+            explode(',', $request->supplier_types_selected)
+        )->filter()->map(fn($id) => (int)$id)->toArray();
+
+        $company->supplierTypes()->sync($typeIds);
+    }
+
 
     // Редирект обратно с сообщением
     return redirect()->route('manufacturer.company.profile')

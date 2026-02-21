@@ -75,7 +75,7 @@
 @endif
 
 
-@include('dashboard.manufacturer.partials.company-profile-form')
+@include('dashboard.manufacturer.partials.company-profile-form', ['supplierTypes' => $supplierTypes])
 
 {{-- Certificates modal --}}
 <div id="certificatesModal"
