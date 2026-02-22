@@ -94,7 +94,7 @@
 
                 {{-- Filters Form --}}
                 <form method="GET" action="" 
-                      class="mt-6 bg-white border border-gray-200 rounded-2xl p-6 space-y-6">
+                      class="mt-6 bg-white border border-gray-200 rounded-2xl p-6  space-y-6">
 
                     {{-- Сохраняем текущую категорию --}}
                     @if($activeCategory)
@@ -109,7 +109,7 @@
                     {{-- Header --}}
                     <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                         <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-700">
-                            Filters by Country
+                            Filters 
                         </h2>
 
                         
@@ -123,18 +123,73 @@
 
                         <div class="max-h-56 overflow-y-auto space-y-2 pr-1">
                             @foreach($countries as $country)
-                                <label class="flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 cursor-pointer transition">
-                                    <span>{{ $country->name }}</span>
-
-                                    <input type="checkbox"
+                                <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                   <input type="checkbox"
                                            name="country[]"
                                            value="{{ $country->id }}"
                                            @checked(in_array($country->id, $activeCountries))
                                            class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-0">
+                               
+                                           <span>{{ $country->name }}</span>
+
+                                    
                                 </label>
                             @endforeach
                         </div>
                     </div>
+
+
+                    {{-- Export Markets Filter --}}
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">
+                            Export Markets
+                        </h4>
+
+                        <div class="max-h-56 overflow-y-auto space-y-2 pr-1">
+
+                            @foreach($exportMarkets as $market)
+
+                                <label class="flex items-center gap-2 text-sm cursor-pointer">
+
+                                    <input type="checkbox"
+                                    name="export_market[]"
+                                    value="{{ $market->id }}"
+                                    @checked(in_array($market->id, $activeExportMarkets))
+                                    class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-0">
+
+                                    <span>
+                                        {{ $market->translation?->name ?? $market->slug }}
+                                    </span>
+
+                                </label>
+
+                            @endforeach
+                        </div>
+
+                    </div>
+                    
+
+                    {{-- Years on Platform Filter --}}
+                    <div >
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">
+                            Years on Platform
+                        </h4>
+
+                        <select name="years"
+                                class="w-full border-gray-300 rounded text-sm">
+
+                            <option value="">Any</option>
+                            <option value="1" @selected($activeYears == 1)>1+ years</option>
+                            <option value="3" @selected($activeYears == 3)>3+ years</option>
+                            <option value="5" @selected($activeYears == 5)>5+ years</option>
+                            <option value="10" @selected($activeYears == 10)>10+ years</option>
+
+                        </select>
+                    </div>
+
+
+
+
 
                     {{-- Apply Button --}}
                     <button type="submit"
@@ -164,6 +219,14 @@
         <input type="hidden" name="country[]" value="{{ $countryId }}">
     @endforeach
 
+    @if($activeYears)
+        <input type="hidden" name="years" value="{{ $activeYears }}">
+    @endif
+
+    @foreach($activeExportMarkets as $marketId)
+        <input type="hidden" name="export_market[]" value="{{ $marketId }}">
+    @endforeach
+
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 
         {{-- Left: Results count + Reset --}}
@@ -175,7 +238,7 @@
                 </span> supplier(s)
             </span>
             <a href="{{ route('suppliers.index') }}"
-               class="text-sm text-gray-500 hover:text-gray-900 transition underline">
+               class="text-sm text-orange-800 hover:text-gray-900 transition underline">
                 Reset all filters
             </a>
         </div>
@@ -384,31 +447,66 @@
         <span class="font-medium text-gray-800">{{ $supplier->years_on_platform }}+</span>
     </div>
 
-    <div class="flex justify-between items-center">
-        <span class="flex items-center gap-1.5">
-            {{-- Export --}}
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <circle cx="12" cy="12" r="9" stroke-width="1.5"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>
-            </svg>
-            Export
-        </span>
-        <span class="font-medium text-gray-800">Asia, Europe</span>
-    </div>
 
-    <div class="flex justify-between items-center">
-        <span class="flex items-center gap-1.5">
-            {{-- MOQ --}}
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <rect x="3" y="7" width="18" height="13" rx="2" stroke-width="1.5"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M3 7l9 6 9-6"/>
-            </svg>
-            MOQ
-        </span>
-        <span class="font-medium text-gray-800">12</span>
+
+
+    @php
+    $markets = $supplier->exportMarkets
+        ->map(fn($m) => $m->translation?->name ?? $m->slug)
+        ->filter();
+@endphp
+
+@if($markets->isNotEmpty())
+<div class="flex justify-between items-center">
+    <span class="flex items-center gap-1.5">
+        {{-- Export --}}
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <circle cx="12" cy="12" r="9" stroke-width="1.5"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>
+        </svg>
+        Export
+    </span>
+
+    <div class="flex flex-wrap gap-1 justify-end">
+        @foreach($markets as $market)
+            <span class="px-2 py-0.5 text-[10px] font-medium
+                         bg-gray-100 text-gray-700 shadow-sm">
+                {{ $market }}
+            </span>
+        @endforeach
     </div>
+</div>
+@endif
+
+
+
+
+
+
+    @if($supplier->moq_range)
+
+<div class="flex justify-between items-center">
+    <span class="flex items-center gap-1.5">
+        {{-- MOQ --}}
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <rect x="3" y="7" width="18" height="13" rx="2" stroke-width="1.5"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M3 7l9 6 9-6"/>
+        </svg>
+        MOQ
+    </span>
+
+    <span class="font-medium text-gray-800">
+        {{ $supplier->moq_range['min'] }} - {{ $supplier->moq_range['max'] }}
+    </span>
+</div>
+
+@endif
+
+
+
+
 
     <div class="flex justify-between items-center">
         <span class="flex items-center gap-1.5">

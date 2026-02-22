@@ -8,6 +8,7 @@ use App\Filters\SupplierFilter;
 use App\Models\Supplier;
 use App\Models\Category;
 use App\Models\Country;
+use App\Models\ExportMarket;
 
 class SupplierController extends Controller
 {
@@ -34,12 +35,22 @@ class SupplierController extends Controller
             ->map(fn($id) => (int)$id)
             ->toArray();
         $activeTypes = collect($request->get('supplier_type', []))->toArray();
+        $exportMarkets = ExportMarket::with('translation')->get();
+        $activeExportMarkets = collect($request->get('export_market', []))
+            ->map(fn($id) => (int)$id)
+            ->toArray();
+        $activeYears = $request->get('years');
 
         // Проверяем, применены ли фильтры
-        $hasFilters = $request->filled('category') || $request->filled('country') || $request->filled('supplier_type');
+        $hasFilters = $request->filled('category') || $request->filled('country') || $request->filled('supplier_type') ||
+    $request->filled('export_market') ||
+    $request->filled('years');
 
         // Query
-        $query = Supplier::with(['country']);
+        $query = Supplier::with([
+            'country',
+            'products'
+        ]);
 
         // Применяем фильтры, если есть
         if ($hasFilters) {
@@ -62,6 +73,9 @@ class SupplierController extends Controller
             'activeCountries' => $activeCountries,
             'activeTypes'     => $activeTypes,
             'hasFilters'      => $hasFilters,
+            'activeExportMarkets' => $activeExportMarkets,
+            'exportMarkets' => $exportMarkets,
+            'activeYears' => $activeYears,
         ]);
     }
 

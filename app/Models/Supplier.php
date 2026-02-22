@@ -121,4 +121,21 @@ public function exportMarkets()
     )->withTimestamps();
 }
 
+public function getMoqRangeAttribute()
+{
+    $moqs = $this->products()
+        ->pluck('moq')
+        ->filter();
+
+    if ($moqs->isEmpty()) {
+        return null;
+    }
+
+    return [
+        'min' => $moqs->min(),
+        'max' => $moqs->max(),
+        'avg' => round($moqs->avg())
+    ];
+}
+
 }

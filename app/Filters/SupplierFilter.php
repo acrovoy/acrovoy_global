@@ -22,6 +22,26 @@ class SupplierFilter
                 $q->whereIn('country_id', (array) $request->country)
             )
 
+            // Фильтр по export
+            ->when($request->filled('export_market'), function($q) use ($request) {
+
+                    $markets = (array) $request->input('export_market');
+
+                    $q->whereHas('exportMarkets', function($query) use ($markets) {
+                        $query->whereIn('export_market_id', $markets);
+                    });
+
+                })
+
+
+            // Фильтр по years
+            ->when($request->filled('years'), function($q) use ($request) {
+
+                $years = (int) $request->years;
+
+                $q->where('created_at', '<=', now()->subYears($years));
+            })
+
             // Фильтр по типу поставщика
             ->when($request->supplier_type, function($q) use ($request) {
                 $types = (array) $request->supplier_type;
