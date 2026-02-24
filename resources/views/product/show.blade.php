@@ -217,11 +217,15 @@
 
                         // Заголовок
                         $title = $material->color ?? 'Texture';
+                        $isActive = $material->linked_product_id == $product1->id;
                         @endphp
 
                         <button
                             class="color-option w-12 h-12 rounded-md border border-gray-300 shadow-sm
-                                    hover:border-black transition"
+                                    hover:border-black transition
+                                    {{ $isActive 
+                        ? 'border-2 border-blue-600 ring-2 ring-blue-600' 
+                        : 'border border-gray-300 hover:border-black' }}"
                             style="{{ $bgStyle }} 
                                     @if($textureUrl) background-image: url('{{ $textureUrl }}'); background-size: cover; background-position: center; @endif"
                             data-link="{{ $link }}"

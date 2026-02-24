@@ -24,31 +24,62 @@
 
     {{-- Form Card --}}
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-        <form action="{{ route('admin.settings.locations.store') }}" method="POST" class="p-6 flex flex-col gap-6">
+        <form action="{{ route('admin.settings.locations.store') }}"
+              method="POST"
+              class="p-6 flex flex-col gap-6">
+
             @csrf
 
-            {{-- Название --}}
-            <div>
-                <label for="name" class="block font-medium mb-1">Название</label>
-                <input type="text" name="name" id="name" value="{{ old('name') }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2"
-                       required>
-                @error('name')
-                    <p class="text-red-600 mt-1">{{ $message }}</p>
-                @enderror
+            @php
+                use App\Models\Language;
+
+                $languages = Language::where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->get();
+            @endphp
+
+            {{-- Translations --}}
+            <div class="border rounded-xl p-4 space-y-4">
+
+                <h3 class="font-medium text-gray-700 text-sm">
+                    Translations
+                </h3>
+
+                @foreach($languages as $lang)
+
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">
+                            Name ({{ strtoupper($lang->code) }})
+                        </label>
+
+                        <input type="text"
+                               name="translations[{{ $lang->code }}]"
+                               value="{{ old('translations.' . $lang->code) }}"
+                               class="w-full border border-gray-300 rounded px-3 py-2"
+                               required>
+                    </div>
+
+                @endforeach
+
             </div>
 
             {{-- Страна --}}
             <div>
                 <label for="country_id" class="block font-medium mb-1">Страна</label>
-                <select name="country_id" id="country_id" class="w-full border border-gray-300 rounded px-3 py-2">
+                <select name="country_id" id="country_id"
+                        class="w-full border border-gray-300 rounded px-3 py-2">
+
                     <option value="">Выберите страну</option>
+
                     @foreach($countries as $country)
-                        <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                        <option value="{{ $country->id }}"
+                            {{ old('country_id') == $country->id ? 'selected' : '' }}>
                             {{ $country->name }}
                         </option>
                     @endforeach
+
                 </select>
+
                 @error('country_id')
                     <p class="text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -56,15 +87,24 @@
 
             {{-- Регион --}}
             <div>
-                <label for="parent_id" class="block font-medium mb-1">Регион (если это область)</label>
-                <select name="parent_id" id="parent_id" class="w-full border border-gray-300 rounded px-3 py-2">
+                <label for="parent_id" class="block font-medium mb-1">
+                    Регион (если это область)
+                </label>
+
+                <select name="parent_id" id="parent_id"
+                        class="w-full border border-gray-300 rounded px-3 py-2">
+
                     <option value="">— Нет —</option>
+
                     @foreach($regions as $region)
-                        <option value="{{ $region->id }}" {{ old('parent_id') == $region->id ? 'selected' : '' }}>
+                        <option value="{{ $region->id }}"
+                            {{ old('parent_id') == $region->id ? 'selected' : '' }}>
                             {{ $region->name }}
                         </option>
                     @endforeach
+
                 </select>
+
                 @error('parent_id')
                     <p class="text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -76,11 +116,13 @@
                    class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
                     Отмена
                 </a>
+
                 <button type="submit"
                         class="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
                     Сохранить
                 </button>
             </div>
+
         </form>
     </div>
 </div>

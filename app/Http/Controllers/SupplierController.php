@@ -9,6 +9,7 @@ use App\Models\Supplier;
 use App\Models\Category;
 use App\Models\Country;
 use App\Models\ExportMarket;
+use App\Models\Product;
 
 class SupplierController extends Controller
 {
@@ -21,7 +22,8 @@ class SupplierController extends Controller
             ->get();
 
         // Countries
-        $countries = Country::orderBy('name')->get();
+        $countries = Country::withCurrentTranslation()
+            ->orderBy('name')->get();
 
         // Supplier Types
         $types = [
@@ -43,8 +45,8 @@ class SupplierController extends Controller
 
         // Проверяем, применены ли фильтры
         $hasFilters = $request->filled('category') || $request->filled('country') || $request->filled('supplier_type') ||
-    $request->filled('export_market') ||
-    $request->filled('years');
+            $request->filled('export_market') ||
+            $request->filled('years');
 
         // Query
         $query = Supplier::with([
@@ -58,11 +60,9 @@ class SupplierController extends Controller
         }
 
         // Получаем поставщиков
-        $suppliers = $query->get();
+        $suppliers = $query->paginate(20)->withQueryString();
 
-        $suppliers->each(function ($supplier) {
-            $supplier->years_on_platform = now()->diffInYears($supplier->created_at);
-        });
+        
 
         return view('supplier.index', [
             'suppliers'       => $suppliers,
@@ -76,75 +76,234 @@ class SupplierController extends Controller
             'activeExportMarkets' => $activeExportMarkets,
             'exportMarkets' => $exportMarkets,
             'activeYears' => $activeYears,
+            
         ]);
     }
 
     public function show(Request $request, $slug)
     {
-        $supplier = Supplier::with('country')
+        $tabs = config('marketplace.supplier_tabs');
+        $activeTab = $request->get('tab', 'home');
+
+        $supplier = Supplier::with([
+            'country',
+            'supplierReviews.order.user',
+            'supplierTypes.translation',
+            'reviews'
+        ])
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $productsQuery = $supplier->products()->with([
-            'images',
-            'priceTiers',
-            'reviews',
-            'orderItems.order',
-            'category',
-            'materials.translations'
-        ]);
+        /*
+    |--------------------------------------------------------------------------
+    | Reputation & Level Logic
+    |--------------------------------------------------------------------------
+    */
 
-        // TODO: применяем ProductFilter, если нужен
-        // $productsQuery = (new ProductFilter())->apply($productsQuery, $request);
+        $score = $supplier->reputation ?? 0;
+
+        /*
+    |--------------------------------------------------------------------------
+    | Reputation Level (Accessor Driven)
+    |--------------------------------------------------------------------------
+    */
+
+        $level = $supplier->level;
+
+        /*
+    |--------------------------------------------------------------------------
+    | Progress toward next level (optional)
+    |--------------------------------------------------------------------------
+    */
+
+        $nextLevelScore = match ($level) {
+            'Basic' => 51,
+            'Silver' => 121,
+            'Gold' => 201,
+            default => max($score, 1)
+        };
+
+        $progress = min(($score / $nextLevelScore) * 100, 100);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Ratings
+    |--------------------------------------------------------------------------
+    */
+
+        $supplierRating = round(
+            $supplier->supplierReviews->avg('rating') ?? 0,
+            1
+        );
+
+        $reviewsProductsCount = $supplier->reviews->count();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Supplier Types
+    |--------------------------------------------------------------------------
+    */
+
+        $types = $supplier->supplierTypes
+            ->map(
+                fn($type) =>
+                $type->translation?->name ?? $type->slug
+            )
+            ->filter()
+            ->values();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Years on Platform
+    |--------------------------------------------------------------------------
+    */
+
+        $yearsOnPlatform = now()->diffInYears($supplier->created_at);
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | Products Query (Main List Query)
+    |--------------------------------------------------------------------------
+    */
+
+        $productsQuery = Product::query()
+            ->where('supplier_id', $supplier->id)
+            ->with([
+                'images',
+                'priceTiers',
+                'reviews',
+                'orderItems.order',
+                'category',
+                'materials.translations'
+            ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Apply Filter Pipeline
+    |--------------------------------------------------------------------------
+    */
+
+        $productsQuery = (new \App\Filters\ProductFilter())
+            ->apply($productsQuery, $request);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Sorting Layer
+    |--------------------------------------------------------------------------
+    */
 
         $sort = $request->get('sort', 'featured');
-        switch ($sort) {
-            case 'price_asc':
-                $productsQuery->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
-                    ->select('products.*')
-                    ->groupBy('products.id')
-                    ->orderByRaw('MIN(price_tiers.price) ASC');
-                break;
-            case 'price_desc':
-                $productsQuery->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
-                    ->select('products.*')
-                    ->groupBy('products.id')
-                    ->orderByRaw('MIN(price_tiers.price) DESC');
-                break;
-            case 'newest':
-                $productsQuery->orderBy('products.created_at', 'desc');
-                break;
-            default:
-                $productsQuery->orderBy('products.id', 'desc');
-                break;
+
+        if ($sort === 'price_asc') {
+
+            $productsQuery
+                ->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
+                ->select('products.*')
+                ->groupBy('products.id')
+                ->orderByRaw('MIN(price_tiers.price) ASC');
+        } elseif ($sort === 'price_desc') {
+
+            $productsQuery
+                ->leftJoin('price_tiers', 'price_tiers.product_id', '=', 'products.id')
+                ->select('products.*')
+                ->groupBy('products.id')
+                ->orderByRaw('MIN(price_tiers.price) DESC');
+        } elseif ($sort === 'newest') {
+
+            $productsQuery->orderBy('products.created_at', 'desc');
+        } else {
+
+            $productsQuery->orderBy('products.id', 'desc');
         }
 
-        $products = $productsQuery->get();
-        $supplier->setRelation('products', $products);
+        $productsQuery->distinct('products.id');
 
-        // ======================================
-        // Категории поставщика для фильтров
-        // ======================================
-        $productsForCategories = $supplier->products()->with('category.parent', 'category.children')->get();
-        $categoryIds = $productsForCategories->pluck('category_id')->filter()->unique();
-        $categories = Category::with(['parent', 'children'])->whereIn('id', $categoryIds)->get();
+        /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    */
 
-        $allCategories = collect();
-        $collectCategory = function ($cat) use (&$allCategories, &$collectCategory) {
-            $allCategories->push($cat);
-            if ($cat->parent) $allCategories->push($cat->parent);
-            if ($cat->children->count()) {
-                foreach ($cat->children as $child) {
-                    $collectCategory($child);
-                }
-            }
-        };
-        foreach ($categories as $cat) {
-            $collectCategory($cat);
-        }
-        $allCategories = $allCategories->unique('id');
-        $rootCategories = $allCategories->whereNull('parent_id');
+        $products = $productsQuery
+            ->paginate(25)
+            ->withQueryString();
 
-        return view('supplier.show', compact('supplier', 'rootCategories', 'categoryIds'));
+        /*
+    |--------------------------------------------------------------------------
+    | Catalog Facet Aggregation Query (Sidebar Tree Source)
+    |--------------------------------------------------------------------------
+    |
+    | IMPORTANT:
+    | Company catalog tree must shrink only when product filters shrink dataset.
+    | Category navigation filter itself should not affect sidebar tree.
+    |
+    */
+
+        $catalogFacetQuery = Product::query()
+            ->where('supplier_id', $supplier->id);
+
+        /*
+     Clone request and remove category filter for navigation facet aggregation
+    */
+
+        $facetRequest = clone $request;
+
+        $facetRequest->merge([
+            'category' => null
+        ]);
+
+        $catalogFacetQuery = (new \App\Filters\ProductFilter())
+            ->apply($catalogFacetQuery, $facetRequest);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Category Tree Facet Calculation
+    |--------------------------------------------------------------------------
+    */
+
+        $categoryIds = $catalogFacetQuery
+            ->pluck('category_id')
+            ->filter()
+            ->unique();
+
+        $leafCategoryIds = Category::query()
+            ->whereIn('id', $categoryIds)
+            ->whereDoesntHave('children')
+            ->pluck('id');
+
+        $categories = Category::query()
+            ->where(function ($query) use ($leafCategoryIds) {
+
+                $query->whereIn('id', $leafCategoryIds)
+                    ->orWhereHas('children', fn($q) =>
+                    $q->whereIn('id', $leafCategoryIds))
+                    ->orWhereHas('children.children', fn($q) =>
+                    $q->whereIn('id', $leafCategoryIds));
+            })
+            ->orderBy('sort_order')
+            ->get();
+
+        $tree = $categories->groupBy('parent_id');
+
+        $rootCategories = $tree[null] ?? collect();
+
+        
+
+        return view('supplier.show', compact(
+            'supplier',
+            'rootCategories',
+            'categoryIds',
+            'tree',
+            'products',
+            'level',
+            'progress',
+            'supplierRating',
+            'reviewsProductsCount',
+            'types',
+            'yearsOnPlatform',
+            'tabs',
+            'activeTab'
+        ));
     }
 }

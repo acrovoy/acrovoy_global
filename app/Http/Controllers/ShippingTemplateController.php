@@ -39,7 +39,8 @@ class ShippingTemplateController extends Controller
      */
     public function create()
 {
-    $countries = Country::orderBy('name')->get();
+    $countries = Country::withCurrentTranslation()
+    ->orderBy('name')->get();
     $allLocations = Location::orderBy('id')->get();
     $children = $allLocations->groupBy('parent_id');
 
@@ -127,7 +128,8 @@ class ShippingTemplateController extends Controller
     }
 
     // Получаем все страны
-    $countries = Country::orderBy('name')->get();
+    $countries = Country::withCurrentTranslation()
+    ->orderBy('name')->get();
 
     // Получаем все локации
     $allLocations = Location::orderBy('id')->get();

@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\Country;
+use App\Models\CountryTranslation;
 
 class CountriesController extends Controller
 {
     public function index()
     {
-        $countries = Country::orderBy('sort_order')->get();
+        $countries = Country::withCurrentTranslation()
+            ->orderBy('sort_order')
+            ->get();
 
         return view('dashboard.admin.settings.countries.index', compact('countries'));
     }
@@ -25,21 +28,41 @@ class CountriesController extends Controller
     {
         $data = $request->validate([
             'code'        => 'required|string|max:5|unique:countries,code',
-            'name'        => 'required|string|max:255',
             'is_active'   => 'boolean',
             'is_priority' => 'boolean',
             'is_default'  => 'boolean',
             'sort_order'  => 'nullable|integer',
+
+            // translations
+            'translations' => 'nullable|array',
         ]);
 
-        Country::create([
+        $country = Country::create([
             'code'        => strtolower($data['code']),
-            'name'        => $data['name'],
             'is_active'   => $data['is_active'] ?? false,
             'is_priority' => $data['is_priority'] ?? false,
             'is_default'  => $data['is_default'] ?? false,
             'sort_order'  => $data['sort_order'] ?? null,
         ]);
+
+        // Save translations
+        if (!empty($data['translations'])) {
+
+            foreach ($data['translations'] as $locale => $name) {
+
+                if (!$name) continue;
+
+                CountryTranslation::updateOrCreate(
+                    [
+                        'country_id' => $country->id,
+                        'locale' => $locale,
+                    ],
+                    [
+                        'name' => $name
+                    ]
+                );
+            }
+        }
 
         return redirect()
             ->route('admin.settings.countries.index')
@@ -48,6 +71,8 @@ class CountriesController extends Controller
 
     public function edit(Country $country)
     {
+        $country->load('translations');
+
         return view('dashboard.admin.settings.countries.edit', compact('country'));
     }
 
@@ -55,21 +80,40 @@ class CountriesController extends Controller
     {
         $data = $request->validate([
             'code'        => 'required|string|max:5|unique:countries,code,' . $country->id,
-            'name'        => 'required|string|max:255',
             'is_active'   => 'boolean',
             'is_priority' => 'boolean',
             'is_default'  => 'boolean',
             'sort_order'  => 'nullable|integer',
+
+            'translations' => 'nullable|array',
         ]);
 
         $country->update([
             'code'        => strtolower($data['code']),
-            'name'        => $data['name'],
             'is_active'   => $data['is_active'] ?? false,
             'is_priority' => $data['is_priority'] ?? false,
             'is_default'  => $data['is_default'] ?? false,
             'sort_order'  => $data['sort_order'] ?? null,
         ]);
+
+        // Update translations
+        if (!empty($data['translations'])) {
+
+            foreach ($data['translations'] as $locale => $name) {
+
+                if (!$name) continue;
+
+                CountryTranslation::updateOrCreate(
+                    [
+                        'country_id' => $country->id,
+                        'locale' => $locale,
+                    ],
+                    [
+                        'name' => $name
+                    ]
+                );
+            }
+        }
 
         return redirect()
             ->route('admin.settings.countries.index')

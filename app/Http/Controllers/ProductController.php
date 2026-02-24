@@ -134,7 +134,8 @@ class ProductController extends Controller
         }])->get();
 
         $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
-        $countries = Country::where('is_active', true)->get();
+        $countries = Country::withCurrentTranslation()
+    ->where('is_active', true)->get();
         $shippingTemplates = ShippingTemplate::where('manufacturer_id', $supplier->id)
             ->with('translations')
             ->get();
@@ -391,7 +392,8 @@ class ProductController extends Controller
         }
 
         // Получаем все страны (для select)
-        $countries = Country::all();
+        $countries = Country::withCurrentTranslation()
+    ->all();
 
         $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
         $shippingTemplates = ShippingTemplate::where('manufacturer_id', $supplier->id)

@@ -7,69 +7,93 @@ use Illuminate\Http\Request;
 
 class ProductFilter
 {
-    /**
-     * Применяем фильтры к query.
-     *
-     * @param Builder $query
-     * @param Request $request
-     * @return Builder
-     */
     public function apply(Builder $query, Request $request): Builder
     {
-        return $query
-            // Фильтр по категории (slug)
-            ->when($request->category, fn($q) =>
-                $q->whereHas('category', fn($c) =>
-                    $c->where('slug', $request->category)
-                )
-            )
+        /*
+        |--------------------------------------------------------------------------
+        | Category Filter
+        |--------------------------------------------------------------------------
+        */
 
-            // Фильтр по материалам (multi select)
-            ->when($request->material, fn($q) =>
-                $q->whereHas('materials', fn($m) =>
-                    $m->whereIn('slug', (array) $request->material)
-                )
-            )
+        if ($request->filled('category')) {
 
-            // Фильтр по минимальной цене
-            ->when($request->min_price, fn($q) =>
-                $q->whereHas('priceTiers', fn($p) =>
-                    $p->where('price', '>=', $request->min_price)
-                )
-            )
+            $query->whereHas('category', function ($c) use ($request) {
+                $c->where('slug', $request->category);
+            });
+        }
 
-            // Фильтр по максимальной цене
-            ->when($request->max_price, fn($q) =>
-                $q->whereHas('priceTiers', fn($p) =>
-                    $p->where('price', '<=', $request->max_price)
-                )
-            )
+        /*
+        |--------------------------------------------------------------------------
+        | Material Filter (Multi select)
+        |--------------------------------------------------------------------------
+        */
 
-            // MOQ
-            ->when($request->min_moq, fn($q) =>
-                $q->where('moq', '>=', $request->min_moq)
-            )
-            ->when($request->max_moq, fn($q) =>
-                $q->where('moq', '<=', $request->max_moq)
-            )
+        if ($request->filled('material')) {
 
-             // Sold count (агрегат)
-            ->when($request->sold_from, fn($q) =>
-                $q->having('sold_count', '>=', $request->sold_from)
-            )
+            $materials = (array) $request->material;
 
+            $query->whereHas('materials', function ($m) use ($materials) {
+                $m->whereIn('slug', $materials);
+            });
+        }
 
-            // Lead time
-            ->when($request->min_lead_time, fn($q) => $q->where('lead_time', '>=', $request->min_lead_time))
-            ->when($request->max_lead_time, fn($q) => $q->where('lead_time', '<=', $request->max_lead_time))
+        /*
+        |--------------------------------------------------------------------------
+        | Price Tier Filter
+        |--------------------------------------------------------------------------
+        */
 
-            // Country filter
-            ->when($request->country, fn($q) =>
-                $q->whereIn('country_id', (array) $request->country)
-            )
+        if ($request->filled('min_price')) {
 
+            $query->whereHas('priceTiers', function ($p) use ($request) {
+                $p->where('price', '>=', $request->min_price);
+            });
+        }
 
-            // Можно добавить другие фильтры, например sold_count, country_id и т.д.
-            ;
+        if ($request->filled('max_price')) {
+
+            $query->whereHas('priceTiers', function ($p) use ($request) {
+                $p->where('price', '<=', $request->max_price);
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MOQ Filter
+        |--------------------------------------------------------------------------
+        */
+
+       if ($request->filled('min_moq')) {
+    $query->where('moq', '<=', (int) $request->min_moq);
+}
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lead Time Filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('min_lead_time')) {
+            $query->where('lead_time', '>=', $request->min_lead_time);
+        }
+
+        if ($request->filled('max_lead_time')) {
+            $query->where('lead_time', '<=', $request->max_lead_time);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Country Filter
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('country')) {
+
+            $countries = (array) $request->country;
+
+            $query->whereIn('country_id', $countries);
+        }
+
+        return $query;
     }
 }

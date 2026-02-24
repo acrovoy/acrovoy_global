@@ -40,4 +40,29 @@ public function childrenRecursive()
     return $this->hasMany(Location::class, 'parent_id');
 }
 
+public function translations()
+    {
+        return $this->hasMany(LocationTranslation::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors (Backward compatibility)
+    |--------------------------------------------------------------------------
+    |
+    | Чтобы твой старый код {{ $location->name }} продолжал работать.
+    | Будет возвращать перевод текущего locale.
+    |
+    */
+
+    public function getNameAttribute($value)
+    {
+        $locale = app()->getLocale();
+
+        $translation = $this->translations
+            ->firstWhere('locale', $locale);
+
+        return $translation?->name ?? $value;
+    }
+    
 }

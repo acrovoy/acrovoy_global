@@ -165,7 +165,8 @@ class ManufacturerOrderController extends Controller
     });
 
 
-        $countries = Country::orderBy('name')->get();
+        $countries = Country::withCurrentTranslation()
+    ->orderBy('name')->get();
         $shipment = OrderItemShipment::where('order_id', $order->id)->first();
     
 

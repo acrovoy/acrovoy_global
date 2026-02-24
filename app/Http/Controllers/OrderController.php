@@ -72,7 +72,8 @@ class OrderController extends Controller
 
     $regions = collect(); // пустой по умолчанию
 
-    $countries = Country::orderBy('name')->get();
+    $countries = Country::withCurrentTranslation()
+    ->orderBy('name')->get();
 
     
 
@@ -330,7 +331,8 @@ public function show(Order $order)
         'cityRelation',
     ]);
 
-    $countries = Country::orderBy('name')->get();
+    $countries = Country::withCurrentTranslation()
+    ->orderBy('name')->get();
 
     // Получаем все адресные шаблоны пользователя (по убыванию даты)
     $savedAddresses = $user->addresses()->orderByDesc('updated_at')->get();
@@ -416,7 +418,8 @@ public function edit(int $id)
             ->with('items.product')
             ->firstOrFail();
 
-        $countries = Country::orderBy('name')->get();
+        $countries = Country::withCurrentTranslation()
+    ->orderBy('name')->get();
 
         // Доступные статусы для изменения
         $availableStatuses = OrderStatusService::availableStatuses($order->status);

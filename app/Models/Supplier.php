@@ -10,22 +10,31 @@ class Supplier extends Model
     use HasFactory;
 
     protected $fillable = [
-    'user_id',
-    'name',
-    'email',
-    'slug',       
-    'is_verified',
-    'is_trusted',
-    'is_premium',
-    'status',
-    'phone',
-    'address',
-    'country_id',
-    'logo',
-    'catalog_image',
-    'short_description',
-    'description',
-];
+        'user_id',
+        'name',
+        'email',
+        'slug',
+        'is_verified',
+        'is_trusted',
+        'is_premium',
+        'status',
+        'phone',
+        'address',
+        'country_id',
+        'logo',
+        'catalog_image',
+        'short_description',
+        'description',
+    ];
+
+
+    protected $with = [
+        'country',
+        'supplierTypes.translation',
+        'exportMarkets.translation'
+    ];
+
+    protected $appends = ['years_on_platform'];
 
     /**
      * Связь с пользователем
@@ -47,37 +56,42 @@ class Supplier extends Model
 
 
     public function reviews()
-{
-    return $this->hasManyThrough(
-        Review::class,    // Модель, которую хотим получить
-        Product::class,   // Промежуточная модель
-        'supplier_id',    // В Product - внешний ключ на Supplier
-        'product_id',     // В Review - внешний ключ на Product
-        'id',             // Локальный ключ Supplier
-        'id'              // Локальный ключ Product
-    );
-}
+    {
+        return $this->hasManyThrough(
+            Review::class,    // Модель, которую хотим получить
+            Product::class,   // Промежуточная модель
+            'supplier_id',    // В Product - внешний ключ на Supplier
+            'product_id',     // В Review - внешний ключ на Product
+            'id',             // Локальный ключ Supplier
+            'id'              // Локальный ключ Product
+        );
+    }
 
-// Получить все споры по заказам своих товаров
-public function disputes()
-{
-    return $this->hasManyThrough(
-        OrderDispute::class, 
-        OrderItem::class,   // через OrderItem получаем заказ -> споры
-        'product_id',       // В OrderItem - внешний ключ на Product
-        'order_id',         // В OrderDispute - внешний ключ на Order
-        'id',               // В Supplier - локальный ключ
-        'order_id'          // В OrderItem - локальный ключ
-    );
-}
+    public function supplierReviews()
+    {
+        return $this->hasMany(SupplierReview::class);
+    }
 
-public function certificates()
-{
-    return $this->hasMany(SupplierCertificate::class);
-}
+    // Получить все споры по заказам своих товаров
+    public function disputes()
+    {
+        return $this->hasManyThrough(
+            OrderDispute::class,
+            OrderItem::class,   // через OrderItem получаем заказ -> споры
+            'product_id',       // В OrderItem - внешний ключ на Product
+            'order_id',         // В OrderDispute - внешний ключ на Order
+            'id',               // В Supplier - локальный ключ
+            'order_id'          // В OrderItem - локальный ключ
+        );
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(SupplierCertificate::class);
+    }
 
 
-public function getBadgesAttribute(): array
+    public function getBadgesAttribute(): array
     {
         $badges = [];
 
@@ -101,41 +115,59 @@ public function getBadgesAttribute(): array
 
 
     public function reputationLogs()
-{
-    return $this->hasMany(\App\Models\SupplierReputationLog::class)->orderByDesc('created_at');
-}
-
-public function shippingTemplates()
-{
-    return $this->hasMany(\App\Models\ShippingTemplate::class, 'manufacturer_id');
-}
-
-public function supplierTypes()
-{
-    return $this->belongsToMany(SupplierType::class);
-}
-
-public function exportMarkets()
-{
-    return $this->belongsToMany(ExportMarket::class,'export_market_supplier'
-    )->withTimestamps();
-}
-
-public function getMoqRangeAttribute()
-{
-    $moqs = $this->products()
-        ->pluck('moq')
-        ->filter();
-
-    if ($moqs->isEmpty()) {
-        return null;
+    {
+        return $this->hasMany(\App\Models\SupplierReputationLog::class)->orderByDesc('created_at');
     }
 
-    return [
-        'min' => $moqs->min(),
-        'max' => $moqs->max(),
-        'avg' => round($moqs->avg())
-    ];
-}
+    public function shippingTemplates()
+    {
+        return $this->hasMany(\App\Models\ShippingTemplate::class, 'manufacturer_id');
+    }
 
+    public function supplierTypes()
+    {
+        return $this->belongsToMany(SupplierType::class);
+    }
+
+    public function exportMarkets()
+    {
+        return $this->belongsToMany(
+            ExportMarket::class,
+            'export_market_supplier'
+        )->withTimestamps();
+    }
+
+    public function getMoqRangeAttribute()
+    {
+        $moqs = $this->products()
+            ->pluck('moq')
+            ->filter();
+
+        if ($moqs->isEmpty()) {
+            return null;
+        }
+
+        return [
+            'min' => $moqs->min(),
+            'max' => $moqs->max(),
+            'avg' => round($moqs->avg())
+        ];
+    }
+
+    public function getLevelAttribute()
+    {
+        $score = $this->reputation ?? 0;
+
+        return match (true) {
+            $score <= 50 => 'Basic',
+            $score <= 120 => 'Silver',
+            $score <= 200 => 'Gold',
+            default => 'Platinum'
+        };
+    }
+
+    public function getYearsOnPlatformAttribute(): int
+    {
+        return now()->diffInYears($this->created_at);
+    }
 }

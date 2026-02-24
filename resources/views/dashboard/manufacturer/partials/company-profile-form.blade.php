@@ -1,107 +1,143 @@
-{{-- Показываем сообщение об успешном обновлении --}}
-@if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md " role="alert">
-        {{ session('success') }}
+
+
+<form action="{{ route('manufacturer.company.update') }}"
+      method="POST"
+      enctype="multipart/form-data"
+      class="max-w-7xl mx-auto space-y-10">
+
+@csrf
+
+{{-- ================= MAIN PROFILE CARD ================= --}}
+
+<div class="bg-white border rounded-2xl shadow-sm p-8 space-y-10">
+    <div class="text-sm text-gray-400 uppercase tracking-wider">
+    Identity & Description
+</div>
+
+
+
+{{-- ================= BASIC COMPANY INFO ================= --}}
+
+<div class="grid lg:grid-cols-3 gap-10">
+
+    {{-- Logo --}}
+    <div class="space-y-4">
+
+        <label class="block font-medium text-sm">
+            Company Logo
+        </label>
+
+        <div id="logo-dropzone"
+             class="w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl
+                    flex items-center justify-center bg-gray-50 relative cursor-pointer
+                    overflow-hidden group">
+
+            <img id="logo-preview"
+                 src="{{ $company->logo ? asset('storage/' . $company->logo) : asset('images/no-logo.png') }}"
+                 class="w-full h-full object-cover">
+
+            <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center
+                        opacity-0 group-hover:opacity-100 transition rounded-xl">
+                <span class="text-white text-xs">Change</span>
+            </div>
+        </div>
+
+        <input type="file" name="logo" accept="image/*" id="logo-input" class="hidden">
+
+        <p class="text-xs text-gray-400">
+            Drag & drop or click to upload
+        </p>
     </div>
-@endif
 
-                       <div class="flex gap-8 items-start">
-    
-    {{-- Левая часть — описание --}}
-    <div class="flex-1">
-       
 
-       
 
-       
-    </div>
+    {{-- Core Fields --}}
+    <div class="lg:col-span-2 space-y-6">
 
-    {{-- Правая часть — карточка --}}
-    <div class="w-80">
-       
+        <div>
+            <label class="block font-medium mb-2">Company Name</label>
+
+            <input type="text"
+                   name="name"
+                   value="{{ old('name', $company->name ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl p-3"
+                   required>
+        </div>
+
+
+
+        <div>
+            <label class="block font-medium mb-2">
+                Short Listing Description
+            </label>
+
+            <input type="text"
+                   name="short_description"
+                   value="{{ old('short_description', $company->short_description ?? '') }}"
+                   maxlength="255"
+                   class="w-full border border-gray-300 rounded-xl p-3">
+
+            <p class="text-xs text-gray-400 mt-1">
+                Short text for catalog cards (max 35 chars recommended)
+            </p>
+        </div>
+
+
+
+        <div>
+            <label class="block font-medium mb-2">
+                Company Description
+            </label>
+
+            <textarea name="description"
+                      rows="5"
+                      class="w-full border border-gray-300 rounded-xl p-3">{{ old('description', $company->description ?? '') }}</textarea>
+        </div>
+
     </div>
 
 </div>
 
 
-<form action="{{ route('manufacturer.company.update') }}" method="POST" class="space-y-4" enctype="multipart/form-data">
-    @csrf
 
-    {{-- Company Name --}}
-    <div>
-        <label class="block font-medium mb-1">Company Name</label>
-        <input type="text" name="name" value="{{ old('name', $company->name ?? '') }}"
-               class="w-full border border-gray-300 rounded-md p-2" required>
-    </div>
+{{-- ================= MARKET INTELLIGENCE ================= --}}
 
-    {{-- Logo Drag & Drop --}}
-        <div>
-            <label class="block font-medium mb-2">Company Logo</label>
-            <div id="logo-dropzone" 
-                 class="w-32 h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50 relative cursor-pointer overflow-hidden group">
-                <img id="logo-preview" 
-                     src="{{ $company->logo ? asset('storage/' . $company->logo) : asset('images/no-logo.png') }}" 
-                     alt="Logo Preview" 
-                     class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                    <span class="text-white text-sm">Change</span>
-                </div>
-            </div>
-            <input type="file" name="logo" accept="image/*" id="logo-input" class="hidden">
-            <p class="text-sm text-gray-500 mt-1">Drag & drop or click to select a logo</p>
-        </div>
+<div class="pt-8 border-t space-y-6">
+<div class="text-sm text-gray-400 uppercase tracking-wider">
+    Market Intelligence
+</div>
+<h3 class="text-xl font-semibold">
+Supplier Classification
+</h3>
 
 
-        {{-- Short Description --}}
-    <div>
-        <label class="block font-medium mb-1">Short Listing Description</label>
-        <input type="text"
-            name="short_description"
-            value="{{ old('short_description', $company->short_description ?? '') }}"
-            class="w-full border border-gray-300 rounded-md p-2"
-            maxlength="255">
-        <p class="text-xs text-gray-500 mt-1">
-            Short text for cards and lists (max 35 chars)
-        </p>
-    </div>
-
-    {{-- Company Description --}}
-    <div>
-        <label class="block font-medium mb-1">Company Description</label>
-        <textarea name="description"
-                rows="5"
-                class="w-full border border-gray-300 rounded-md p-2">{{ old('description', $company->description ?? '') }}</textarea>
-    </div>
-
-
-
-    <h3 class="mt-6 text-xl font-semibold mb-4">Supplier Types</h3>
 
 <div id="selected-supplier-types" class="flex flex-wrap gap-2 mb-2"></div>
 
 <input type="text"
        id="supplierTypeSearch"
        placeholder="Search supplier types..."
-       class="w-full mb-2 border rounded px-3 py-2 text-sm">
+       class="w-full border rounded-xl px-4 py-2 text-sm mb-3">
 
 <div id="supplier-types-options"
-     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
 
-    @foreach($supplierTypes as $type)
+@foreach($supplierTypes as $type)
 
-        @php
-            $name = $type->translation?->name ?? $type->slug;
-        @endphp
+@php
+$name = $type->translation?->name ?? $type->slug;
+@endphp
 
-        <button type="button"
-                class="shadow-sm supplier-type-option px-2 py-2 border rounded bg-white text-xs hover:bg-gray-50 transition"
-                data-id="{{ $type->id }}"
-                data-name="{{ $name }}">
+<button type="button"
+        class="supplier-type-option border rounded-xl bg-white text-xs p-3
+               hover:bg-gray-50 transition shadow-sm"
+        data-id="{{ $type->id }}"
+        data-name="{{ $name }}">
 
-            {{ $name }}
-        </button>
+    {{ $name }}
+</button>
 
-    @endforeach
+@endforeach
 
 </div>
 
@@ -112,170 +148,185 @@
 
 
 {{-- Export Markets --}}
-    <h3 class="mt-6 text-xl font-semibold mb-4">Export Markets</h3>
+
+<h3 class="text-xl font-semibold mt-8">
+    Export Markets
+</h3>
+
+
 
 <div id="selected-export-markets" class="flex flex-wrap gap-2 mb-2"></div>
 
 <input type="text"
        id="exportMarketSearch"
        placeholder="Search export markets..."
-       class="w-full mb-2 border rounded px-3 py-2 text-sm">
+       class="w-full border rounded-xl px-4 py-2 text-sm mb-3">
 
 <div id="export-markets-options"
-     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
 
-    @foreach($exportMarkets as $market)
+@foreach($exportMarkets as $market)
 
-        @php
-            $name = $market->translation?->name ?? $market->slug;
-        @endphp
+@php
+$name = $market->translation?->name ?? $market->slug;
+@endphp
 
-        <button type="button"
-                class="shadow-sm export-market-option px-2 py-2 border rounded bg-white text-xs hover:bg-gray-50 transition"
-                data-id="{{ $market->id }}"
-                data-name="{{ $name }}">
+<button type="button"
+        class="export-market-option border rounded-xl bg-white text-xs p-3
+               hover:bg-gray-50 transition shadow-sm"
+        data-id="{{ $market->id }}"
+        data-name="{{ $name }}">
 
-            {{ $name }}
-        </button>
+    {{ $name }}
 
-    @endforeach
+</button>
+
+@endforeach
 
 </div>
 
 <input type="hidden"
        name="export_markets_selected"
        id="exportMarketsSelectedInput">
-       
-       
+
+</div>
 
 
 
+{{-- ================= CONTACT BLOCK ================= --}}
 
-    {{-- Registration Country --}}
-<div>
-    <label class="block font-medium mb-1">Registration Country</label>
+<div class="pt-8 border-t space-y-6">
+<div class="text-sm text-gray-400 uppercase tracking-wider">
+    Contact Information
+</div>
+<h3 class="text-xl font-semibold">
+Contact & Registration
+</h3>
 
-    <select name="country_id"
-            class="w-full border border-gray-300 rounded-md p-2">
-        <option value="">Select country</option>
+<div class="grid md:grid-cols-2 gap-6">
 
-        @foreach($countries as $country)
+    <div>
+        <label class="block font-medium mb-2">
+            Registration Country
+        </label>
+
+        <select name="country_id"
+                class="w-full border border-gray-300 rounded-xl p-3">
+
+            <option value="">Select country</option>
+
+            @foreach($countries as $country)
             <option value="{{ $country->id }}"
-                @selected(
-                    old('country_id', $company->country_id ?? null) == $country->id
-                )
-            >
+                @selected(old('country_id', $company->country_id ?? null) == $country->id)>
                 {{ $country->name }}
             </option>
-        @endforeach
-    </select>
+            @endforeach
+
+        </select>
+    </div>
+
+
+
+    <div>
+        <label class="block font-medium mb-2">Email</label>
+
+        <input type="email"
+               name="email"
+               required
+               value="{{ old('email', $company->email ?? '') }}"
+               class="w-full border border-gray-300 rounded-xl p-3">
+    </div>
+
+
+
+    <div>
+        <label class="block font-medium mb-2">Phone</label>
+
+        <input type="text"
+               name="phone"
+               value="{{ old('phone', $company->phone ?? '') }}"
+               class="w-full border border-gray-300 rounded-xl p-3">
+    </div>
+
+
+
+    <div>
+        <label class="block font-medium mb-2">Address</label>
+
+        <textarea name="address"
+                  class="w-full border border-gray-300 rounded-xl p-3">{{ old('address', $company->address ?? '') }}</textarea>
+    </div>
+
+</div>
+
 </div>
 
 
- {{-- Address --}}
-    <div>
-        <label class="block font-medium mb-1">Address</label>
-        <textarea name="address" class="w-full border border-gray-300 rounded-md p-2">{{ old('address', $company->address ?? '') }}</textarea>
+
+{{-- ================= CATALOG VISUAL BLOCK ================= --}}
+
+<div class="grid lg:grid-cols-2 gap-12 pt-10 border-t">
+<div class="col-span-full text-sm text-gray-400 uppercase tracking-wider">
+    Catalog Presentation
+</div>
+<div class="space-y-4">
+
+    <div class="flex flex-col items-center space-y-2">
+        
+        <div id="catalog-dropzone"
+             class="w-64 h-64 border-2 border-dashed border-gray-300
+                    rounded-xl flex items-center justify-center
+                    bg-gray-50 relative cursor-pointer
+                    overflow-hidden group">
+
+            <img id="catalog-preview"
+                 src="{{ $company->catalog_image ? asset('storage/' . $company->catalog_image) : asset('images/no-image.png') }}"
+                 class="w-full h-full object-cover">
+
+            <div class="absolute inset-0 bg-black/30 flex items-center justify-center
+                        opacity-0 group-hover:opacity-100 transition">
+                <span class="text-white text-sm">Change</span>
+            </div>
+
+            <input type="file" name="catalog_image" accept="image/*" id="catalog-input" class="hidden">
+        </div>
+
+        <p class="text-xs text-gray-400 text-center">
+            Used in supplier catalog cards
+        </p>
+
     </div>
 
+</div>
 
-
-    {{-- Email --}}
-    <div>
-        <label class="block font-medium mb-1">Email</label>
-        <input type="email" name="email" value="{{ old('email', $company->email ?? '') }}"
-               class="w-full border border-gray-300 rounded-md p-2" required>
-    </div>
-
-    {{-- Phone --}}
-    <div>
-        <label class="block font-medium mb-1">Phone</label>
-        <input type="text" name="phone" value="{{ old('phone', $company->phone ?? '') }}"
-               class="w-full border border-gray-300 rounded-md p-2">
-    </div>
-
-   
-   
-<p class="bg-yellow-50 border border-yellow-200 text-yellow-900
-          px-4 py-3 rounded-lg mb-2 text-sm">
-    Listing card in catalog. Profile shows verified manufacturer information,
-    including country of registration and short business description.
-</p>
-
-<div class="flex flex-col lg:flex-row gap-8 items-start">
+    {{-- Preview Card --}}
+<div class="flex justify-center items-start">
+    @include('dashboard.manufacturer.partials.preview-card')
+</div>
     
 
- 
-
-    {{-- Левая часть — описание --}}
-    <div class="flex-1">
-        
-
-        {{-- Catalog Image --}}
-        <div class="mt-4" style="width: 240px;">
-            <label class="block font-medium mb-2">Catalog Image</label>
-            <div id="catalog-dropzone"
-                 class="border-2 border-dashed border-gray-300 
-                        h-40 flex items-center justify-center bg-gray-50 relative cursor-pointer overflow-hidden group">
-                <img id="catalog-preview"
-                     src="{{ $company->catalog_image ? asset('storage/' . $company->catalog_image) : asset('images/no-image.png') }}"
-                     class="object-cover max-w-full max-h-full">
-                <div class="absolute inset-0 bg-black bg-opacity-30
-                            flex items-center justify-center opacity-0
-                            group-hover:opacity-100 transition">
-                    <span class="text-white text-sm">Change</span>
-                </div>
-            </div>
-            <input type="file" name="catalog_image" accept="image/*" id="catalog-input" class="hidden">
-            <p class="text-sm text-gray-500 mt-1">Used in supplier catalog cards</p>
-        </div>
-    </div>
-
-    {{-- Правая часть — карточка --}}
-    <div class="w-full lg:w-[340px] flex flex-col items-center mt-6 lg:mt-0">
-        {{-- Текст над карточкой --}}
-        <p class="text-gray-500 text-sm mb-2 mt-12">Example Company Card</p>
-
-        <a href=""
-           class="block bg-white rounded-xl shadow hover:shadow-2xl transition overflow-hidden supplier-card w-full max-w-[340px]">
-            <img src="{{ $company->catalog_image ? asset('storage/' . $company->catalog_image) : asset('images/no-logo.png') }}" 
-                 class="w-full h-48 object-cover" 
-                 alt="{{ $company->name }}">
-
-            <div class="p-4 text-center">
-                <h3 class="text-lg font-semibold">{{ $company->name }}</h3>
-                <p class="text-gray-600 text-sm">
-                    {{ $company->country->name ?? '' }} | {{ $company->short_description }}
-                </p>
-            </div>
-        </a>
-    </div>
+</div>
 
 
 
+{{-- ================= SUBMIT ================= --}}
 
-    {{-- еще Правее часть — карточка --}}
-    <div class="w-full lg:w-[50px] flex flex-col items-center mt-6 lg:mt-0">
-       
-    </div>
+<div class="pt-10 border-t">
 
+<button type="submit"
+        class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4
+               rounded-xl text-lg font-semibold transition">
+
+Save Company Profile
+
+</button>
 
 </div>
 
 
 
+</div>
 
-
-
-    {{-- SUBMIT --}}
-    <div class="pt-6 border-t">
-        <button
-            type="submit"
-            class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4
-                   rounded-xl text-lg font-semibold transition">
-            Save Company Profile
-        </button>
-    </div>
 </form>
 
 {{-- JS для drag&drop превью --}}
@@ -488,7 +539,7 @@ function renderExportMarkets() {
     selectedExportMarkets.forEach((item, index) => {
 
         const chip = document.createElement('div');
-        chip.className = 'px-2 py-1 bg-blue-100 text-blue-800 text-xs flex items-center gap-1 shadow-sm rounded-full';
+        chip.className = 'px-2 py-1 bg-blue-100 text-blue-800 text-xs flex items-center gap-1 shadow-sm';
 
         chip.innerHTML = `
             <span>${item.name}</span>

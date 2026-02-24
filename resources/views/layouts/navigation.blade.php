@@ -24,9 +24,10 @@
     </span>
 
     @php
-        $countries = \App\Models\Country::where('is_active', 1)
-            ->orderBy('name')
-            ->get();
+        $countries = \App\Models\Country::withCurrentTranslation()
+    ->where('is_active', 1)
+    ->orderBy('translated_name')
+    ->get();
 
         $currentCountry = strtolower(
             auth()->user()->purchase_country 
