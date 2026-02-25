@@ -166,6 +166,10 @@ Route::prefix('dashboard/manufacturer')->name('manufacturer.')->group(function (
     Route::post('/company-profile', [ManufacturerController::class, 'updateCompany'])
         ->name('company.update');
 
+    // SHOW PAGE
+    Route::get('/company-profile/show', [ManufacturerController::class, 'showCompanyProfile'])
+        ->name('company.show');
+
     Route::get('/premium-seller-plans', [PremiumSellerPlanController::class, 'index'])
         ->name('premium-plans');
 

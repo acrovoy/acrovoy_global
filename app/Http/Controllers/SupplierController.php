@@ -83,7 +83,7 @@ class SupplierController extends Controller
     public function show(Request $request, $slug)
     {
         $tabs = config('marketplace.supplier_tabs');
-        $activeTab = $request->get('tab', 'home');
+        $activeTab = $request->get('tab', 'profile');
 
         $supplier = Supplier::with([
             'country',
@@ -288,6 +288,8 @@ class SupplierController extends Controller
 
         $rootCategories = $tree[null] ?? collect();
 
+        $supplierRating = round($supplier->supplierReviews->avg('rating'), 1);
+        $count = $supplier->supplierReviews->count();
         
 
         return view('supplier.show', compact(
@@ -303,7 +305,9 @@ class SupplierController extends Controller
             'types',
             'yearsOnPlatform',
             'tabs',
-            'activeTab'
+            'activeTab',
+            'supplierRating',
+            'count'
         ));
     }
 }

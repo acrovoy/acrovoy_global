@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Blade;
+
 use App\Models\Category;
 use App\Models\Language;
 
@@ -22,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Blade::component('supplier.certificate-card', \App\View\Components\Supplier\CertificateCard::class);
        
     }
 }

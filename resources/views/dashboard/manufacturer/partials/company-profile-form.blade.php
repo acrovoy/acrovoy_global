@@ -3,13 +3,13 @@
 <form action="{{ route('manufacturer.company.update') }}"
       method="POST"
       enctype="multipart/form-data"
-      class="max-w-7xl mx-auto space-y-10">
+      class="max-w-7xl mx-auto">
 
 @csrf
 
 {{-- ================= MAIN PROFILE CARD ================= --}}
 
-<div class="bg-white border rounded-2xl shadow-sm p-8 space-y-10">
+<div class="bg-white border rounded-2xl shadow-sm p-8 space-y-10 mt-4">
     <div class="text-sm text-gray-400 uppercase tracking-wider">
     Identity & Description
 </div>
@@ -65,6 +65,25 @@
         </div>
 
 
+        <div>
+            <label class="block font-medium mb-2">
+                Registration Country
+            </label>
+
+            <select name="country_id"
+                    class="w-full border border-gray-300 rounded-xl p-3">
+
+                <option value="">Select country</option>
+
+                @foreach($countries as $country)
+                <option value="{{ $country->id }}"
+                    @selected(old('country_id', $company->country_id ?? null) == $country->id)>
+                    {{ $country->name }}
+                </option>
+                @endforeach
+
+            </select>
+        </div>
 
         <div>
             <label class="block font-medium mb-2">
@@ -94,19 +113,9 @@
                       class="w-full border border-gray-300 rounded-xl p-3">{{ old('description', $company->description ?? '') }}</textarea>
         </div>
 
-    </div>
-
-</div>
 
 
-
-{{-- ================= MARKET INTELLIGENCE ================= --}}
-
-<div class="pt-8 border-t space-y-6">
-<div class="text-sm text-gray-400 uppercase tracking-wider">
-    Market Intelligence
-</div>
-<h3 class="text-xl font-semibold">
+        <h3 class="font-medium">
 Supplier Classification
 </h3>
 
@@ -122,22 +131,22 @@ Supplier Classification
 <div id="supplier-types-options"
      class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
 
-@foreach($supplierTypes as $type)
+    @foreach($supplierTypes as $type)
 
-@php
-$name = $type->translation?->name ?? $type->slug;
-@endphp
+        @php
+        $name = $type->translation?->name ?? $type->slug;
+        @endphp
 
-<button type="button"
-        class="supplier-type-option border rounded-xl bg-white text-xs p-3
-               hover:bg-gray-50 transition shadow-sm"
-        data-id="{{ $type->id }}"
-        data-name="{{ $name }}">
+        <button type="button"
+                class="supplier-type-option border rounded-xl bg-white text-xs p-3
+                    hover:bg-gray-50 transition shadow-sm"
+                data-id="{{ $type->id }}"
+                data-name="{{ $name }}">
 
-    {{ $name }}
-</button>
+            {{ $name }}
+        </button>
 
-@endforeach
+    @endforeach
 
 </div>
 
@@ -147,47 +156,222 @@ $name = $type->translation?->name ?? $type->slug;
 
 
 
-{{-- Export Markets --}}
-
-<h3 class="text-xl font-semibold mt-8">
-    Export Markets
-</h3>
 
 
-
-<div id="selected-export-markets" class="flex flex-wrap gap-2 mb-2"></div>
-
-<input type="text"
-       id="exportMarketSearch"
-       placeholder="Search export markets..."
-       class="w-full border rounded-xl px-4 py-2 text-sm mb-3">
-
-<div id="export-markets-options"
-     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-
-@foreach($exportMarkets as $market)
-
-@php
-$name = $market->translation?->name ?? $market->slug;
-@endphp
-
-<button type="button"
-        class="export-market-option border rounded-xl bg-white text-xs p-3
-               hover:bg-gray-50 transition shadow-sm"
-        data-id="{{ $market->id }}"
-        data-name="{{ $name }}">
-
-    {{ $name }}
-
-</button>
-
-@endforeach
+    </div>
 
 </div>
 
-<input type="hidden"
-       name="export_markets_selected"
-       id="exportMarketsSelectedInput">
+
+
+{{-- ================= General Information ================= --}}
+
+<div class="pt-8 border-t space-y-8">
+
+    <div class="text-sm text-gray-400 uppercase tracking-wider">
+        General Information
+    </div>
+
+    {{-- About us --}}
+    <h3 class="font-medium mb-2">
+        About us
+    </h3>
+
+    <div>
+        <textarea name="about_us_description"
+                  rows="5"
+                  class="w-full border border-gray-300 rounded-xl p-3">{{ old('about_us_description', $company->about_us_description ?? '') }}</textarea>
+    </div>
+
+
+    {{-- Company Metrics --}}
+    <div class="grid sm:grid-cols-2 gap-6">
+
+        {{-- Founded --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Founded
+            </label>
+            <input type="number"
+                   name="founded_year"
+                   placeholder="e.g. 2015"
+                   value="{{ old('founded_year', $company->founded_year ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+        {{-- Annual Export Revenue --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Annual Export Revenue (USD)
+            </label>
+            <input type="number"
+                   name="annual_export_revenue"
+                   placeholder="e.g. 650000"
+                   value="{{ old('annual_export_revenue', $company->annual_export_revenue ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+        {{-- Total Employees --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Total Employees
+            </label>
+            <input type="number"
+                   name="total_employees"
+                   placeholder="e.g. 50"
+                   value="{{ old('total_employees', $company->total_employees ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+        {{-- Company Registration Capital --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Company Registration Capital (USD or local currency)
+            </label>
+            <input type="number"
+                   name="registration_capital"
+                   placeholder="e.g. 1000000"
+                   value="{{ old('registration_capital', $company->registration_capital ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+    </div>
+
+
+
+    {{-- Export Markets --}}
+    <h3 class="font-medium mb-2">
+        Export Markets
+    </h3>
+
+    <div id="selected-export-markets" class="flex flex-wrap gap-2 mb-2"></div>
+
+    <input type="text"
+           id="exportMarketSearch"
+           placeholder="Search export markets..."
+           class="w-full border rounded-xl px-4 py-2 text-sm mb-3">
+
+    <div id="export-markets-options"
+         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+
+        @foreach($exportMarkets as $market)
+
+            @php
+                $name = $market->translation?->name ?? $market->slug;
+            @endphp
+
+            <button type="button"
+                    class="export-market-option border rounded-xl bg-white text-xs p-3
+                           hover:bg-gray-50 transition shadow-sm"
+                    data-id="{{ $market->id }}"
+                    data-name="{{ $name }}">
+
+                {{ $name }}
+
+            </button>
+
+        @endforeach
+
+    </div>
+
+    <input type="hidden"
+           name="export_markets_selected"
+           id="exportMarketsSelectedInput">
+
+</div>
+
+
+
+{{-- ================= MANUFACTURING PROFILE ================= --}}
+<div class="pt-10 border-t space-y-8">
+
+    <div class="text-sm text-gray-400 uppercase tracking-wider">
+        Manufacturing Profile
+    </div>
+
+    {{-- Manufacturing Overview --}}
+    <div>
+        <label class="block text-sm font-medium mb-2">
+            Manufacturing Overview
+        </label>
+
+        <textarea name="manufacturing_description"
+                  rows="6"
+                  class="w-full border border-gray-300 rounded-xl p-3 text-sm">{{ old('manufacturing_description', $company->manufacturing_description ?? '') }}</textarea>
+    </div>
+
+
+    {{-- Production Metrics --}}
+    <div class="grid sm:grid-cols-2 gap-6">
+
+        
+
+        {{-- Factory Area --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Factory Area (m²)
+            </label>
+
+            <input type="number"
+                   name="factory_area"
+                   placeholder="e.g. 2500"
+                   value="{{ old('factory_area', $company->factory_area ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+        {{-- Production Lines --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Production Lines
+            </label>
+
+            <input type="number"
+                   name="production_lines"
+                   placeholder="e.g. 4"
+                   value="{{ old('production_lines', $company->production_lines ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+        {{-- MOQ --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                MOQ (Minimum Order Quantity)
+            </label>
+
+            <input type="number"
+                   name="moq"
+                   placeholder="e.g. 50"
+                   value="{{ old('moq', $company->moq ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+        {{-- Monthly Production Capacity --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Monthly Production Capacity (units)
+            </label>
+
+            <input type="number"
+                   name="monthly_capacity"
+                   placeholder="e.g. 1200"
+                   value="{{ old('monthly_capacity', $company->monthly_capacity ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+        {{-- Average Lead Time --}}
+        <div>
+            <label class="block text-sm font-medium mb-2">
+                Average Lead Time (days)
+            </label>
+
+            <input type="number"
+                   name="lead_time_days"
+                   placeholder="e.g. 30"
+                   value="{{ old('lead_time_days', $company->lead_time_days ?? '') }}"
+                   class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+        </div>
+
+    </div>
 
 </div>
 
@@ -199,36 +383,16 @@ $name = $market->translation?->name ?? $market->slug;
 <div class="text-sm text-gray-400 uppercase tracking-wider">
     Contact Information
 </div>
-<h3 class="text-xl font-semibold">
-Contact & Registration
-</h3>
+
 
 <div class="grid md:grid-cols-2 gap-6">
 
-    <div>
-        <label class="block font-medium mb-2">
-            Registration Country
-        </label>
-
-        <select name="country_id"
-                class="w-full border border-gray-300 rounded-xl p-3">
-
-            <option value="">Select country</option>
-
-            @foreach($countries as $country)
-            <option value="{{ $country->id }}"
-                @selected(old('country_id', $company->country_id ?? null) == $country->id)>
-                {{ $country->name }}
-            </option>
-            @endforeach
-
-        </select>
-    </div>
+    
 
 
 
     <div>
-        <label class="block font-medium mb-2">Email</label>
+        <label class="block font-medium mb-2">Company Email</label>
 
         <input type="email"
                name="email"
@@ -240,7 +404,7 @@ Contact & Registration
 
 
     <div>
-        <label class="block font-medium mb-2">Phone</label>
+        <label class="block font-medium mb-2">Company Phone</label>
 
         <input type="text"
                name="phone"
@@ -251,7 +415,7 @@ Contact & Registration
 
 
     <div>
-        <label class="block font-medium mb-2">Address</label>
+        <label class="block font-medium mb-2">Company Address</label>
 
         <textarea name="address"
                   class="w-full border border-gray-300 rounded-xl p-3">{{ old('address', $company->address ?? '') }}</textarea>

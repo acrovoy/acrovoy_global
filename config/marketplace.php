@@ -9,7 +9,7 @@ return [
     */
 
     'supplier_tabs' => [
-        'home' => 'Home',
+        // 'home' => 'Home',
         'profile' => 'Company Profile',
         'products' => 'Products',
         'contacts' => 'Contacts',

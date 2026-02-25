@@ -12,6 +12,37 @@ use App\Services\ReputationService;
 class ManufacturerController extends Controller
 {
 
+
+    /**
+ * Show company profile (read-only page)
+ */
+public function showCompanyProfile()
+{
+    $user = auth()->user();
+
+    $company = optional($user)->supplier;
+
+    if (!$company) {
+        return redirect()
+            ->route('manufacturer.company.profile')
+            ->withErrors('Company profile not found.');
+    }
+
+    $company->load([
+        'exportMarkets.translation',
+        'supplierTypes.translation',
+        'country',
+        'certificates'
+    ]);
+
+    return view(
+        'dashboard.manufacturer.profile.show',
+        compact('company')
+    );
+}
+
+
+
     /**
      * Показ страницы профиля компании
      */

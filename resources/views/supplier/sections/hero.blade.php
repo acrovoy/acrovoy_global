@@ -1,5 +1,5 @@
 {{-- Supplier Info --}}
-<div x-data="{ openReviews: false }" class="@if($supplier->is_trusted)paper-notch @endif relative flex flex-col lg:flex-row items-start gap-6 rounded-t-xl border  p-6 mb-4
+<div x-data="{ openReviews: false }" class="@if($supplier->is_trusted)paper-notch @endif relative flex flex-col lg:flex-row items-start gap-6 rounded-xl border  p-6 mb-4
             @if(($supplier->reputation ?? 0) > 120)bg-gradient-to-br from-white via-[#f7f3ec] to-[#e1d8cb] shadow-lg border-gray-100
             @else
             bg-gradient-to-br from-white via-[#f9f7f3] to-[#f9f7f3] shadow-sm border-gray-200
