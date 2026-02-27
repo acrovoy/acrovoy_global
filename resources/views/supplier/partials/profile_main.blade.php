@@ -171,20 +171,49 @@
 
 
         {{-- Factory Base --}}
-        <div class="lg:col-span-2 space-y-6">
+<div class="lg:col-span-2 space-y-6">
 
-            <h3 class="text-lg font-semibold text-gray-900 border-l-2 border-yellow-500 pl-3">
-                Factory & Production Base
-            </h3>
+    <h3 class="text-lg font-semibold text-gray-900 border-l-2 border-yellow-500 pl-3">
+        Factory & Production Base
+    </h3>
 
-            <div class="grid md:grid-cols-4 gap-6">
-                @for($i = 0; $i < 4; $i++)
-                    <div class="aspect-square rounded-xl border border-gray-200/70
-                                bg-gray-50 hover:shadow-lg transition duration-300"></div>
-                @endfor
-            </div>
+    @if($supplier->factoryPhotos->isNotEmpty())
+
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
+
+            @foreach($supplier->factoryPhotos as $photo)
+
+                <a href="{{ asset('storage/'.$photo->path) }}"
+                   target="_blank"
+                   class="group relative block w-full aspect-square rounded-xl overflow-hidden border border-gray-200/70">
+
+                    <img
+                        src="{{ asset('storage/'.$photo->thumbnail_path) }}"
+                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                        alt="Factory photo">
+
+                    {{-- Hover overlay --}}
+                    <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">
+                            Open
+                        </span>
+                    </div>
+
+                </a>
+
+            @endforeach
 
         </div>
+
+    @else
+
+        <div class="text-sm text-gray-400">
+            No factory photos available.
+        </div>
+
+    @endif
+
+</div>
 
     </div>
 </div>

@@ -33,6 +33,19 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
+
+            // Media module routes
+            Route::group([], function () {
+
+                Route::prefix('api/media')
+                    ->group(base_path('routes/modules/media/api.php'));
+
+                Route::middleware('web')
+                    ->prefix('media')
+                    ->group(base_path('routes/modules/media/web.php'));
+
+            });
+
         });
     }
 

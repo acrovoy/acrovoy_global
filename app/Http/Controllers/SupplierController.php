@@ -89,7 +89,9 @@ class SupplierController extends Controller
             'country',
             'supplierReviews.order.user',
             'supplierTypes.translation',
-            'reviews'
+            'reviews',
+            'factoryPhotos',
+    'factoryPhotos:id,supplier_id,thumbnail_path,path'
         ])
             ->where('slug', $slug)
             ->firstOrFail();

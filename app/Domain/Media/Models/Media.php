@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Domain\Media\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Media extends Model
+{
+    use SoftDeletes;
+
+    protected $table = 'media';
+
+    protected $fillable = [
+        'uuid',
+        'model_type',
+        'model_id',
+        'collection',
+        'file_name',
+        'file_path',
+        'cdn_url',
+        'mime_type',
+        'extension',
+        'size_bytes',
+        'width',
+        'height',
+        'checksum_hash',
+        'is_private',
+        'is_primary',
+        'processing_status'
+    ];
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_QUEUED = 'queued';
+    const STATUS_PROCESSING = 'processing';
+    const STATUS_OPTIMIZED = 'optimized';
+    const STATUS_READY = 'ready';
+    const STATUS_FAILED = 'failed';
+
+
+
+
+
+    
+}

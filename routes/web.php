@@ -231,6 +231,15 @@ Route::prefix('dashboard/manufacturer')
 Route::post('/certificates/upload', [ManufacturerController::class, 'uploadCertificate'])
     ->name('manufacturer.certificates.upload');
 
+Route::post('/factory/photos/upload',
+    [ManufacturerController::class, 'uploadFactoryPhotos']
+)->name('manufacturer.factory.photos.upload');
+
+
+Route::delete('/factory/photos/{id}',
+    [ManufacturerController::class, 'deleteFactoryPhoto']
+)->name('manufacturer.factory.photos.delete');
+
 
 
 

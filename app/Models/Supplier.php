@@ -170,4 +170,9 @@ class Supplier extends Model
     {
         return now()->diffInYears($this->created_at);
     }
+
+    public function factoryPhotos()
+{
+    return $this->hasMany(SupplierFactoryPhoto::class);
+}
 }
