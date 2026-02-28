@@ -6,6 +6,8 @@ use App\Domain\Media\Contracts\StorageInterface;
 use App\Domain\Media\Repositories\MediaRepository;
 use App\Domain\Media\Services\CdnUrlService;
 use App\Domain\Media\DTO\UploadMediaDTO;
+use App\Domain\Media\Models\Media;
+use App\Domain\Media\Jobs\DeleteMediaJob;
 
 use Illuminate\Support\Str;
 
@@ -37,7 +39,7 @@ class MediaService
     {
         // Override parameters using DTO if provided
         $file = $dto->file;
-        $user = $dto->user;
+        $model = $dto->model;
         $collection = $dto->collection;
         $private = $dto->private;
 
@@ -49,22 +51,18 @@ class MediaService
         
 
         $fileName = $uuid . '.' . $file->getClientOriginalExtension();
-        $path = "media/{$collection}/{$uuid}/{$fileName}";
+        $basePath = "media/{$collection}/{$uuid}";
+        $originalPath = "{$basePath}/original/{$fileName}";
 
-        // ✅ 1. Upload file FIRST
-    $this->storage->upload(
-        $file,
-        $path,
-        $private
-    );
+       
         // 3. Persist media record FIRST
         $media = $this->repository->create([
             'uuid' => $uuid,
-            'model_type' => get_class($user),
-            'model_id' => $user->id,
+            'model_type' => get_class($model),
+            'model_id' => $model->id,
             'collection' => $collection,
             'file_name' => $fileName,
-            'file_path' => $path,
+            'file_path' => $originalPath,
             'mime_type' => $file->getMimeType(),
             'extension' => $file->getClientOriginalExtension(),
             'size_bytes' => $file->getSize(),
@@ -74,8 +72,21 @@ class MediaService
             'processing_status' => 'pending'
         ]);
 
+         //  Upload file
+        $this->storage->upload(
+            $file,
+            $originalPath,
+            $private
+        );
+
+        $cdnUrl = $this->cdnService->generate($originalPath, $private);
+
+        $media->update([
+            'cdn_url' => $cdnUrl
+        ]);
+
         // 4. Dispatch pipeline AFTER media creation
-        $this->processingService->dispatchPipeline($media);
+        $this->processingService->dispatchPipeline($media, 2);
 
         
 
@@ -87,7 +98,7 @@ class MediaService
     /**
      * Extract basic metadata
      */
-    protected function extractMetadata($file): array
+    public function extractMetadata($file): array
     {
         try {
             if (str_starts_with($file->getMimeType(), 'image')) {
@@ -105,4 +116,15 @@ class MediaService
 
         return [];
     }
+
+    public function delete(Media $media): void
+{
+    $media->update([
+        'processing_status' => 'deleting'
+    ]);
+
+    DeleteMediaJob::dispatch($media->uuid)
+        ->onQueue('media');
+}
+
 }

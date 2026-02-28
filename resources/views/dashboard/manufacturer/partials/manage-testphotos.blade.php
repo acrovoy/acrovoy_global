@@ -5,6 +5,8 @@
 >
     @csrf
 
+    <input type="hidden" name="model_type" value="App\Models\Supplier">
+    <input type="hidden" name="model_id" value="{{ $company->id }}">
     <input type="hidden" name="collection" value="test_photos">
     <input type="hidden" name="private" value="0">
 

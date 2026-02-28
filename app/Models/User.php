@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
+use App\Domain\Media\Models\Media;
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -114,6 +116,20 @@ public function orderDisputes()
 public function orders()
 {
     return $this->hasMany(Order::class);
+}
+
+
+public function media()
+{
+    return $this->morphMany(Media::class, 'model');
+}
+
+public function avatar()
+{
+    return $this->media()
+        ->where('collection', 'avatars')
+        ->latest()
+        ->first();
 }
 
 }

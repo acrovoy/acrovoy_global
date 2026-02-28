@@ -8,15 +8,17 @@ use App\Domain\Media\Jobs\ProcessMediaJob;
 use App\Domain\Media\Jobs\OptimizeMediaJob;
 use App\Domain\Media\Jobs\GenerateThumbnailJob;
 use App\Domain\Media\Jobs\VideoTranscodingJob;
+use App\Domain\Media\Processing\Resolvers\MediaProcessingStrategyResolver;
 
 class MediaProcessingService
 {
     /**
      * Dispatch async pipeline
      */
-    public function dispatchPipeline(Media $media): void
+    public function dispatchPipeline(Media $media, int $delaySeconds = 0): void
 {
     ProcessMediaJob::dispatch($media->uuid)
+        ->delay(now()->addSeconds($delaySeconds))
         ->onQueue('media');
 }
 
@@ -30,7 +32,11 @@ class MediaProcessingService
 
 public function optimize(Media $media): void
 {
-    // optimization pipeline logic
+    $resolver = app(MediaProcessingStrategyResolver::class);
+
+    $strategy = $resolver->resolve($media);
+
+    $strategy->process($media);
 }
 
 public function generateThumbnail(Media $media): void

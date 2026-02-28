@@ -20,7 +20,14 @@
         </div>
     </div>
 
+@if(session('success'))
+<div class="bg-green-50 border border-green-200 text-green-800
+            px-4 py-3 rounded-xl text-sm">
 
+    {{ session('success') }}
+
+</div>
+@endif
 
 
    
@@ -58,8 +65,11 @@
                 <div class="text-xs text-gray-400 uppercase mb-2">Logo</div>
 
                 <div class="w-24 h-24 rounded-xl overflow-hidden border bg-gray-50">
-                    <img src="{{ $company->logo ? asset('storage/'.$company->logo) : asset('images/no-logo.png') }}"
-                         class="w-full h-full object-cover">
+                    
+                    <img
+                        src="{{ $company->logo()?->cdn_url ?? asset('images/no-logo.png') }}"
+                        class="w-full h-full object-cover"
+                    >
                 </div>
             </div>
 
@@ -453,10 +463,14 @@
 
         
 
+    @forelse($testPhotos as $photo)
+
     <div class="relative group">
 
-        <img src=""
-             class="aspect-square w-full object-cover rounded-xl border">
+        <img 
+            src="{{ $photo->cdn_url }}"
+            class="aspect-square w-full object-cover rounded-xl border"
+        >
 
         <button
             type="button"
@@ -467,6 +481,14 @@
         </button>
 
     </div>
+
+@empty
+
+    <p class="text-gray-400 text-sm">
+        No photos uploaded yet.
+    </p>
+
+@endforelse
 
 
 
@@ -528,7 +550,43 @@
     
 
 </div>
+<script>
 
+    function testUploader() {
+    return {
+        async deletePhoto(id) {
+
+            if (!confirm('Delete this photo?')) return;
+
+            try {
+
+                const response = await fetch(`/media/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                console.log('Delete response:', data);
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Delete failed');
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert('Request error');
+            }
+        }
+    }
+}
+
+</script>
 
 <script>
 function openModal(id){

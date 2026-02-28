@@ -33,7 +33,7 @@
                     overflow-hidden group">
 
             <img id="logo-preview"
-                 src="{{ $company->logo ? asset('storage/' . $company->logo) : asset('images/no-logo.png') }}"
+                 src="{{ $company->logo()?->cdn_url ?? asset('images/no-logo.png') }}"
                  class="w-full h-full object-cover">
 
             <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center

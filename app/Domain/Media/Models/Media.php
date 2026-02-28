@@ -39,7 +39,15 @@ class Media extends Model
 
 
 
+public function basePath(): string
+{
+    return dirname(dirname($this->file_path));
+}
 
+public function previewPath(): string
+{
+    return $this->basePath() . '/preview/' . $this->file_name;
+}
 
     
 }

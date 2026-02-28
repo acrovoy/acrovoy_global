@@ -15,7 +15,10 @@ class CdnUrlService
      */
     public function generate(string $path, bool $private = false): string
     {
-        $baseUrl = rtrim(config('media.cdn.base_url'), '/');
+        $baseUrl = rtrim(
+            config('media.cdn.base_url', env('MEDIA_CDN_BASE_URL', '')),
+            '/'
+        );
 
         $path = ltrim($path, '/');
 
@@ -23,7 +26,7 @@ class CdnUrlService
             return $this->generateSignedUrl($path);
         }
 
-        return $baseUrl . '/' . $path;
+        return $baseUrl . '/storage/' . $path;
     }
 
     /**
@@ -37,13 +40,16 @@ class CdnUrlService
      */
     protected function generateSignedUrl(string $path): string
     {
-        $baseUrl = rtrim(config('media.cdn.base_url'), '/');
+        $baseUrl = rtrim(
+            config('media.cdn.base_url', env('MEDIA_CDN_BASE_URL', '')),
+            '/'
+        );
 
         if (!config('media.cdn.signed_urls.enabled')) {
             return $baseUrl . '/' . $path;
         }
 
-        $ttl = config('media.cdn.signed_urls.ttl', 3600);
+        $ttl = max(1, config('media.cdn.signed_urls.ttl', 3600));
 
         $expires = time() + $ttl;
 

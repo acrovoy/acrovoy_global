@@ -18,8 +18,7 @@ interface StorageInterface
     /**
      * Delete file from storage
      */
-    public function delete(string $path): bool;
-
+    public function deleteDirectory(string $path): bool;
     /**
      * Get public or signed URL
      */

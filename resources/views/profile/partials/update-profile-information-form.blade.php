@@ -13,9 +13,56 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form 
+    method="post" 
+    action="{{ route('profile.update') }}" 
+    class="mt-6 space-y-6"
+    enctype="multipart/form-data"
+>
         @csrf
         @method('patch')
+
+
+
+        <div class="flex flex-col items-center space-y-3">
+
+    <div class="relative group w-32 h-32">
+
+   
+
+        {{-- Avatar Image --}}
+        <img
+        id="avatar-preview"
+            src="{{ $user->avatar()?->cdn_url ?? asset('images/default-avatar.png') }}"
+            class="w-32 h-32 rounded-full object-cover border border-gray-200 shadow-sm"
+        >
+
+        {{-- Overlay --}}
+        <label 
+            for="avatar"
+            class="absolute inset-0 flex items-center justify-center 
+                   bg-black bg-opacity-0 group-hover:bg-opacity-40 
+                   text-white text-sm font-medium 
+                   rounded-full cursor-pointer 
+                   transition"
+        >
+            <span class="opacity-0 group-hover:opacity-100 transition">
+                Change
+            </span>
+        </label>
+
+        <input 
+            type="file"
+            id="avatar"
+            name="avatar"
+            accept="image/*"
+            class="hidden"
+        >
+    </div>
+
+    <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
+</div>
+
 
         <div>
             <x-input-label for="name" :value="__('Name')" />
@@ -89,4 +136,39 @@
             @endif
         </div>
     </form>
+
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const input = document.getElementById('avatar');
+    const preview = document.getElementById('avatar-preview');
+
+    if (!input || !preview) return;
+
+    input.addEventListener('change', function (event) {
+
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        // Проверка типа
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+        };
+
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+
+
 </section>

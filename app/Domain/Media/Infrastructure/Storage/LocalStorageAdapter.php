@@ -16,18 +16,27 @@ class LocalStorageAdapter implements StorageInterface
 
         $disk = $private ? 'private' : 'public';
 
+        $directory = dirname($path);
+
+if (!Storage::disk($disk)->exists($directory)) {
+    Storage::disk($disk)->makeDirectory($directory);
+}
+
         Storage::disk($disk)->put(
             $path,
-            file_get_contents($file->getPathname())
+            file_get_contents($file->getPathname()),
+    'public'
         );
 
         return $path;
     }
 
     public function delete(string $path): bool
-    {
-        return Storage::disk('public')->delete($path);
-    }
+{
+    \Log::info('Storage DELETE', ['path' => $path]);
+
+    return Storage::disk('public')->delete($path);
+}
 
     public function getUrl(string $path, bool $private = false): string
     {
@@ -40,4 +49,12 @@ class LocalStorageAdapter implements StorageInterface
     {
         return Storage::disk('public')->exists($path);
     }
+
+    public function deleteDirectory(string $path): bool
+{
+    \Log::info('DELETE DIRECTORY CALLED', ['path' => $path]);
+
+    return Storage::disk('public')->deleteDirectory($path);
+}
+
 }

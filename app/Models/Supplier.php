@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Domain\Media\Models\Media;
 
 class Supplier extends Model
 {
@@ -175,4 +176,18 @@ class Supplier extends Model
 {
     return $this->hasMany(SupplierFactoryPhoto::class);
 }
+
+public function media()
+{
+    return $this->morphMany(Media::class, 'model');
+}
+
+public function logo()
+{
+    return $this->media()
+        ->where('collection', 'company_logos')
+        ->latest()
+        ->first();
+}
+
 }

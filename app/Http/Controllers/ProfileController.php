@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
+use App\Domain\Media\Services\MediaService;
+use App\Domain\Media\Jobs\DeleteMediaJob;
+use App\Domain\Media\DTO\UploadMediaDTO;
+
 class ProfileController extends Controller
 {
     /**
@@ -24,8 +28,12 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(
+    ProfileUpdateRequest $request,
+    MediaService $mediaService
+): RedirectResponse
 {
+
 
 
     $user = $request->user();
@@ -61,6 +69,30 @@ class ProfileController extends Controller
 
     // 4️⃣ Сохраняем пользователя
     $user->save();
+
+    // 6️⃣ Обработка аватара
+if ($request->hasFile('avatar')) {
+
+    // Удаляем старую аватарку
+    $oldAvatar = $user->media()
+        ->where('collection', 'avatars')
+        ->first();
+
+    if ($oldAvatar) {
+        DeleteMediaJob::dispatch($oldAvatar->uuid);
+    }
+
+    // Загружаем новую
+    $dto = new UploadMediaDTO(
+        file: $request->file('avatar'),
+        model: $user,
+        collection: 'avatars',
+        private: false
+    );
+
+    $mediaService->upload($dto);
+}
+
 
     // ✅ 5️⃣ Если роль реально изменилась — обновляем UI-сессию
     if ($oldRole !== $user->role) {

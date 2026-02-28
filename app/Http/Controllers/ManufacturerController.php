@@ -13,6 +13,10 @@ use Illuminate\Support\Str;
 use App\Models\SupplierCertificate;
 use App\Services\ReputationService;
 
+use App\Domain\Media\Services\MediaService;
+use App\Domain\Media\DTO\UploadMediaDTO;
+use App\Domain\Media\Jobs\DeleteMediaJob;
+
 class ManufacturerController extends Controller
 {
 
@@ -24,6 +28,7 @@ public function showCompanyProfile()
 {
     $user = auth()->user();
 
+    
     $company = optional($user)->supplier;
 
     if (!$company) {
@@ -36,12 +41,17 @@ public function showCompanyProfile()
         'exportMarkets.translation',
         'supplierTypes.translation',
         'country',
-        'certificates'
+        'certificates',
+        'media'
     ]);
+
+    $testPhotos = $company->media()
+        ->where('collection', 'test_photos')
+        ->get();
 
     return view(
         'dashboard.manufacturer.profile.show',
-        compact('company')
+        compact('company', 'testPhotos')
     );
 }
 
@@ -61,7 +71,8 @@ public function showCompanyProfile()
                 'exportMarkets.translation',
                 'supplierTypes.translation',
                 'country',
-                'certificates'
+                'certificates',
+                'media'
             ]);
         } else {
             $company = new \App\Models\Supplier();
@@ -92,7 +103,7 @@ public function showCompanyProfile()
     /**
      * Обновление профиля компании
      */
-    public function updateCompany(Request $request)
+    public function updateCompany(Request $request, MediaService $mediaService)
     {
         $company = auth()->user()->supplier;
 
@@ -115,12 +126,24 @@ public function showCompanyProfile()
         /** LOGO */
         if ($request->hasFile('logo')) {
 
-            if ($company->logo) {
-                Storage::disk('public')->delete($company->logo);
+            unset($data['logo']); 
+
+            $oldLogo = $company->media()
+                ->where('collection', 'company_logos')
+                ->first();
+
+            if ($oldLogo) {
+                DeleteMediaJob::dispatch($oldLogo->uuid);
             }
 
-            $data['logo'] = $request->file('logo')
-                ->store('company-logos', 'public');
+            $dto = new UploadMediaDTO(
+                file: $request->file('logo'),
+                model: $company,
+                collection: 'company_logos',
+                private: false
+            );
+
+            $mediaService->upload($dto);
         }
 
         /** CATALOG IMAGE */
