@@ -238,6 +238,7 @@
         </div>
 
         {{-- Регион / область --}}
+        
 <div>
     <label class="text-sm text-gray-600">Регион / Область</label>
     <select name="region" id="region" class="w-full border rounded p-2" disabled>
@@ -314,6 +315,20 @@ if (cityInput) cityInput.disabled = !regionSelect?.value;
 // ❗ Вариант 2 — поле ручного ввода всегда активно
 if (cityManualInput) cityManualInput.disabled = false;
 
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Если есть сохранённый адрес с выбранной страной и регионом — подгружаем их
+    @if($lastAddress)
+        @if($lastAddress->country)
+            fetchRegions({{ $lastAddress->country }}, {{ $lastAddress->region }});
+            regionSelect.disabled = false;
+        @endif
+
+        @if($lastAddress->region)
+            fetchLocations({{ $lastAddress->region }}, '{{ $lastAddress->city }}');
+        @endif
+    @endif
+});
 
 // ============================================
 // 1. Подгрузка и заполнение сохранённых адресов
@@ -422,9 +437,9 @@ function fetchLocations(regionId, selectedCityId = null) {
 
                 // Сохраняем название в data-name
                 option.dataset.name = loc.name;
-
+                
                 // Если выбранный город совпадает
-                if (selectedCityId && selectedCityId == loc.id) {
+                if (selectedCityId && (selectedCityId == loc.id || selectedCityId == loc.name)) {
                     option.selected = true;
                     cityFound = true;
                 }

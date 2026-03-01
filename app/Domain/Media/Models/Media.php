@@ -16,6 +16,8 @@ class Media extends Model
         'model_type',
         'model_id',
         'collection',
+        'media_role',
+        'original_file_name',
         'file_name',
         'file_path',
         'cdn_url',
@@ -27,7 +29,14 @@ class Media extends Model
         'checksum_hash',
         'is_private',
         'is_primary',
-        'processing_status'
+        'processing_status',
+        'metadata'
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
+        'is_private' => 'boolean',
+        'is_primary' => 'boolean'
     ];
 
     const STATUS_PENDING = 'pending';

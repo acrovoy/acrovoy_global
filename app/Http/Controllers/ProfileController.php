@@ -82,13 +82,17 @@ if ($request->hasFile('avatar')) {
         DeleteMediaJob::dispatch($oldAvatar->uuid);
     }
 
+    $file = $request->file('avatar');
+    
     // Загружаем новую
     $dto = new UploadMediaDTO(
-        file: $request->file('avatar'),
-        model: $user,
-        collection: 'avatars',
-        private: false
-    );
+    file: $file,
+    model: $user,
+    collection: 'avatars',
+    private: false,
+    mediaRole: 'avatar',
+    originalFileName: $file?->getClientOriginalName()
+);
 
     $mediaService->upload($dto);
 }

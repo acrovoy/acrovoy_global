@@ -219,7 +219,7 @@
         <span>Order date: {{ $order['date'] }}</span>
         
     </div>
-
+    {{ $lastAddress->origin_region_id }}
 </div>
 
 <script>
@@ -227,9 +227,9 @@ function pickupModal() {
     return {
         open: false,
         itemId: null,
-        origin_country_id: null,
-        origin_region_id: null,
-        origin_city_id: null,
+        origin_country_id: {{$lastAddress->origin_country_id ?? 'null'}},
+        origin_region_id: {{$lastAddress->origin_region_id ?? 'null'}},
+        origin_city_id: {{$lastAddress->origin_city_id ?? 'null'}},
         origin_city_manual: '',
         origin_address: '',
         origin_contact_name: '',
@@ -240,10 +240,9 @@ function pickupModal() {
         height: null,
         regions: [],
         cities: [],
-        async fetchRegions() {
+        async fetchRegions() {       
             if(!this.origin_country_id) {
                 this.regions = [];
-                this.origin_region_id = null;
                 this.cities = [];
                 this.origin_city_id = null;
                 return;
@@ -251,7 +250,6 @@ function pickupModal() {
             try {
                 const res = await fetch(`{{ route('manufacturer.locations.regions') }}?country_id=${this.origin_country_id}`);
                 this.regions = await res.json();
-                this.origin_region_id = null;
                 this.cities = [];
                 this.origin_city_id = null;
             } catch (e) {

@@ -168,6 +168,7 @@ class ManufacturerOrderController extends Controller
         $countries = Country::withCurrentTranslation()
     ->orderBy('name')->get();
         $shipment = OrderItemShipment::where('order_id', $order->id)->first();
+        $lastAddress = OrderItemShipment::where('order_id', $order->id)->first();
     
 
         return view('dashboard.manufacturer.order-show', [
@@ -224,6 +225,7 @@ class ManufacturerOrderController extends Controller
             'countries' => $countries,
             'order_items' => $orderItems,
             'r_order' => $order,
+            'lastAddress' => $lastAddress,
         ]);
     }
 

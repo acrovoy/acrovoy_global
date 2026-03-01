@@ -75,12 +75,12 @@
 
 
 {{-- Product sector --}}
-    @include('dashboard.manufacturer.partials.product-order', ['order_items' => $order_items, 'order' => $order])
+    @include('dashboard.admin.orders.partials.product-order', ['order' => $order])
    
     @if($order['provider_type'] === \App\Models\LogisticCompany::class)
     @elseif($order['provider_type'] === \App\Models\Supplier::class)
         {{-- shipment-desk --}}
-        @include('dashboard.manufacturer.partials.shipment-desk', ['order_items' => $order_items, 'order' => $order])
+        @include('dashboard.manufacturer.partials.shipment-desk', ['order' => $order])
     @endif
 
 {{-- ACROVOY SHIPMENTS --}}

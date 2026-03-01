@@ -32,7 +32,8 @@ class Supplier extends Model
     protected $with = [
         'country',
         'supplierTypes.translation',
-        'exportMarkets.translation'
+        'exportMarkets.translation',
+        'factoryPhotos'
     ];
 
     protected $appends = ['years_on_platform'];
@@ -86,10 +87,7 @@ class Supplier extends Model
         );
     }
 
-    public function certificates()
-    {
-        return $this->hasMany(SupplierCertificate::class);
-    }
+    
 
 
     public function getBadgesAttribute(): array
@@ -174,7 +172,9 @@ class Supplier extends Model
 
     public function factoryPhotos()
 {
-    return $this->hasMany(SupplierFactoryPhoto::class);
+    return $this->media()
+        ->where('collection', 'factory_photos')
+        ->orderByDesc('id');
 }
 
 public function media()
@@ -189,5 +189,13 @@ public function logo()
         ->latest()
         ->first();
 }
+
+public function certificatesMedia()
+{
+    return $this->media()
+        ->where('collection', 'supplier_certificates')
+        ->where('media_role', 'certificate');
+}
+
 
 }

@@ -183,12 +183,12 @@
 
             @foreach($supplier->factoryPhotos as $photo)
 
-                <a href="{{ asset('storage/'.$photo->path) }}"
+                <a href="{{ asset(''.$photo->cdn_url) }}"
                    target="_blank"
                    class="group relative block w-full aspect-square rounded-xl overflow-hidden border border-gray-200/70">
 
                     <img
-                        src="{{ asset('storage/'.$photo->thumbnail_path) }}"
+                        src="{{ asset(''.$photo->cdn_url) }}"
                         class="w-full h-full object-cover transition duration-500 group-hover:scale-105"
                         alt="Factory photo">
 
@@ -229,12 +229,98 @@
 
     <div class="flex flex-wrap gap-4">
 
-        @forelse($supplier->certificates ?? [] as $cert)
-            <x-supplier.certificate-card :certificate="$cert"/>
+        @forelse($supplier->certificatesMedia as $certificate)
+
+            @php
+                $meta = is_array($certificate->metadata)
+                    ? $certificate->metadata
+                    : json_decode($certificate->metadata ?? '{}', true);
+
+                $name = $meta['certificate_name']
+                    ?? $certificate->original_file_name;
+
+                $number = $meta['certificate_number'] ?? null;
+                $validFrom = $meta['valid_from'] ?? null;
+                $validUntil = $meta['valid_until'] ?? null;
+            @endphp
+
+            <div class="border rounded-xl p-4 bg-white shadow-sm w-full md:w-72 space-y-3">
+
+    {{-- Preview --}}
+    <div class="w-full h-40 rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
+
+        
+    
+    @if(str_contains($certificate->mime_type, 'pdf'))
+
+    <iframe
+        src="{{ $certificate->cdn_url }}"
+        class="w-full h-full"
+        frameborder="0">
+    </iframe>
+
+
+    
+    @elseif(str_contains($certificate->mime_type, 'image'))
+
+            <img src="{{ $certificate->cdn_url }}"
+                 class="w-full h-full object-cover">
+
+        @elseif(str_contains($certificate->mime_type, 'pdf'))
+
+            <div class="text-gray-400 text-xs text-center space-y-2">
+                📄 PDF Document
+            </div>
+
+        @else
+
+            <div class="text-gray-400 text-xs">
+                Document Preview
+            </div>
+
+        @endif
+
+    </div>
+
+    {{-- Metadata --}}
+    <div class="space-y-1">
+
+        <a href="{{ $certificate->cdn_url }}"
+           target="_blank"
+           class="font-semibold hover:underline block text-sm">
+
+            {{ $name }}
+        </a>
+
+        <div class="text-xs text-gray-500 space-y-1">
+
+            @if($number)
+                <div>Number: {{ $number }}</div>
+            @endif
+
+            @if($validFrom)
+                <div>Valid from: {{ $validFrom }}</div>
+            @endif
+
+            @if($validUntil)
+                <div>Valid until: {{ $validUntil }}</div>
+            @endif
+
+            <div class="uppercase text-gray-400">
+                {{ ucfirst($certificate->processing_status) }}
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
         @empty
+
             <div class="text-sm text-gray-400">
                 No certifications uploaded
             </div>
+
         @endforelse
 
     </div>

@@ -91,11 +91,12 @@ class SupplierController extends Controller
             'supplierTypes.translation',
             'reviews',
             'factoryPhotos',
-    'factoryPhotos:id,supplier_id,thumbnail_path,path'
+            'certificatesMedia'
         ])
             ->where('slug', $slug)
             ->firstOrFail();
 
+            
         /*
     |--------------------------------------------------------------------------
     | Reputation & Level Logic

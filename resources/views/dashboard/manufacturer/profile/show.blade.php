@@ -293,82 +293,250 @@
 
 
 
- {{-- ================= CERTIFICATES BLOCK ================= --}}
+ 
 
-<div class="bg-white border rounded-2xl shadow-sm p-6 space-y-5 mt-6">
+{{-- ================= CERTIFICATES BLOCK ================= --}}
 
-<div class="flex justify-between">
-    <h3 class="text-sm text-gray-400 uppercase tracking-wider">
-        Certificates
-    </h3>
-    <button
-        type="button"
-        onclick="openModal('certificatesModal')"
-        class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50 transition">
+<div class="bg-white border rounded-2xl shadow-sm p-6 space-y-6 mt-6">
 
-        + Certificates
-    </button>
-</div>
-    @if($company->certificates->count())
+    <div class="flex justify-between items-center">
+        <h3 class="text-sm text-gray-400 uppercase tracking-wider">
+            Certificates
+        </h3>
 
-    <div class="flex flex-wrap gap-4">
+        <button
+            type="button"
+            onclick="openCertificateModal()"
+            class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50 transition">
 
-        @foreach($company->certificates as $certificate)
+            + Add Certificate
+        </button>
+    </div>
 
-            <x-supplier.certificate-card :certificate="$certificate" />
+    @php
+        $certificates = $company->certificatesMedia()->get();
+    @endphp
+
+    <div id="certificatesContainer" class="grid md:grid-cols-2 gap-4">
+
+        @foreach($certificates as $certificate)
+
+            @php
+                $meta = is_array($certificate->metadata)
+                    ? $certificate->metadata
+                    : json_decode($certificate->metadata ?? '{}', true);
+
+                $certificateName = $meta['certificate_name'] ?? '';
+                $certificateNumber = $meta['certificate_number'] ?? '';
+                $validFrom = $meta['valid_from'] ?? '';
+                $validUntil = $meta['valid_until'] ?? '';
+            @endphp
+
+            <div class="certificate-card border rounded-xl p-4 bg-gray-50 space-y-2">
+
+                <div class="flex justify-between items-start">
+
+                    <div class="space-y-1">
+
+                        <a href="{{ $certificate->cdn_url }}"
+                           target="_blank"
+                           class="text-sm font-semibold hover:underline block">
+
+                            {{ $certificateName ?: $certificate->original_file_name }}
+                        </a>
+
+                        <div class="text-xs text-gray-500 space-y-1">
+
+                            @if($certificateNumber)
+                                <div>Number: {{ $certificateNumber }}</div>
+                            @endif
+
+                            @if($validFrom)
+                                <div>Valid From: {{ $validFrom }}</div>
+                            @endif
+
+                            @if($validUntil)
+                                <div>Valid Until: {{ $validUntil }}</div>
+                            @endif
+
+                            <div class="text-gray-400">
+                                Status: {{ ucfirst($certificate->processing_status) }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <button class="delete-certificate-btn text-red-500 text-sm hover:underline"
+                            data-id="{{ $certificate->id }}">
+                        Delete
+                    </button>
+
+                </div>
+
+            </div>
 
         @endforeach
 
     </div>
 
-    @else
-
-    <p class="text-sm text-gray-400">
-        No certificates uploaded yet
-    </p>
-
-    @endif
-
 </div>
 
 {{-- ================= CERTIFICATE MODAL ================= --}}
 
-<div id="certificatesModal"
-     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+<div id="certificateFormModal"
+     class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
 
-    <div class="bg-white w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 space-y-4">
 
-        <div class="flex justify-between items-center px-6 py-4 border-b">
+        <h3 class="text-lg font-semibold">Add Certificate</h3>
 
-            <h3 class="text-lg font-semibold">
-                Manage certificates
-            </h3>
+        <input id="certificateName" type="text"
+               placeholder="Certificate Name"
+               class="w-full border rounded-lg p-3 text-sm">
 
-            <button type="button"
-                    onclick="closeModal('certificatesModal')"
-                    class="text-gray-400 hover:text-gray-600 text-2xl leading-none">
+        <input id="certificateNumber" type="text"
+               placeholder="Certificate Number"
+               class="w-full border rounded-lg p-3 text-sm">
 
-                &times;
+        <div class="grid grid-cols-2 gap-3">
 
-            </button>
+            <input id="validFrom" type="date"
+                   class="border rounded-lg p-3 text-sm">
+
+            <input id="validUntil" type="date"
+                   class="border rounded-lg p-3 text-sm">
 
         </div>
 
+        <input id="certificateFile" type="file"
+               accept=".jpg,.jpeg,.png,.webp,.pdf"
+               class="w-full border rounded-lg p-3 text-sm">
 
-        <div class="p-6 max-h-[70vh] overflow-y-auto">
-            @include('dashboard.manufacturer.partials.manage-certificates')
+        <div class="flex justify-end gap-3">
+
+            <button onclick="closeCertificateModal()"
+                    class="px-4 py-2 text-sm border rounded-lg">
+                Cancel
+            </button>
+
+            <button onclick="submitCertificate()"
+                    class="px-4 py-2 bg-black text-white rounded-lg">
+                Upload
+            </button>
+
         </div>
 
     </div>
 </div>
 
+<script>
 
+/* ================= MODAL CONTROL ================= */
 
+function openCertificateModal() {
+    document.getElementById('certificateFormModal').classList.remove('hidden');
+}
+
+function closeCertificateModal() {
+    document.getElementById('certificateFormModal').classList.add('hidden');
+
+    document.getElementById('certificateName').value = '';
+    document.getElementById('certificateNumber').value = '';
+    document.getElementById('validFrom').value = '';
+    document.getElementById('validUntil').value = '';
+    document.getElementById('certificateFile').value = '';
+}
+
+/* ================= SUBMIT CERTIFICATE ================= */
+
+function submitCertificate() {
+
+    const file = document.getElementById('certificateFile').files[0];
+
+    if (!file) {
+        alert("Select certificate file");
+        return;
+    }
+
+    const metadata = {
+        certificate_name: document.getElementById('certificateName').value,
+        certificate_number: document.getElementById('certificateNumber').value,
+        valid_from: document.getElementById('validFrom').value,
+        valid_until: document.getElementById('validUntil').value
+    };
+
+    const formData = new FormData();
+
+    formData.append('certificate', file);
+    formData.append('metadata', JSON.stringify(metadata));
+
+    fetch("{{ route('manufacturer.certificates.upload') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(response => {
+
+        if (response.success) {
+
+            closeCertificateModal();
+            location.reload();
+        } else {
+            alert(response.message || 'Upload failed');
+        }
+
+    })
+    .catch(() => alert("Upload failed"));
+}
+
+/* ================= DELETE CERTIFICATE ================= */
+
+document.addEventListener('click', function(e){
+
+    if(e.target?.classList.contains('delete-certificate-btn')){
+
+        deleteCertificate(e.target.dataset.id);
+    }
+
+});
+
+function deleteCertificate(id) {
+
+    const url = "{{ route('manufacturer.certificates.delete', ['certificate' => 'CERT_ID']) }}"
+        .replace('CERT_ID', id);
+
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.success) {
+
+            document.querySelector(
+                `.delete-certificate-btn[data-id="${id}"]`
+            )?.closest('.certificate-card')?.remove();
+        }
+
+    })
+    .catch(() => alert('Delete failed'));
+}
+
+</script>
 
 
 {{-- ================= FACTORY PHOTO BLOCK ================= --}}
 
-<div x-data="factoryUploader()" class="bg-white border rounded-2xl shadow-sm p-8 pt-4 space-y-8">
+<div x-data="FactoryUploader()" class="bg-white border rounded-2xl shadow-sm p-8 pt-4 space-y-8">
 
     <div class="flex justify-between items-center">
         <h3 class="text-sm text-gray-400 uppercase tracking-wider">
@@ -387,7 +555,7 @@
 
     <div class="relative group">
 
-        <img src="{{ asset('storage/'.$photo->path) }}"
+        <img src="{{ $photo->cdn_url }}"
              class="aspect-square w-full object-cover rounded-xl border">
 
         <button
@@ -444,91 +612,7 @@
 
 
 
-{{-- ================= TEST PHOTO BLOCK ================= --}}
 
-<div x-data="testUploader()" class="bg-white border rounded-2xl shadow-sm p-8 pt-4 space-y-8">
-
-    <div class="flex justify-between items-center">
-        <h3 class="text-sm text-gray-400 uppercase tracking-wider">
-            TEST Photos
-        </h3>
-
-        <button onclick="openModal('testPhotosModal')"
-                class="px-4 py-2 text-sm rounded-lg border hover:bg-gray-50 transition">
-            + Add Test Photo
-        </button>
-    </div>
-
-    <div class="grid md:grid-cols-4 gap-5">
-
-        
-
-    @forelse($testPhotos as $photo)
-
-    <div class="relative group">
-
-        <img 
-            src="{{ $photo->cdn_url }}"
-            class="aspect-square w-full object-cover rounded-xl border"
-        >
-
-        <button
-            type="button"
-            @click="deletePhoto({{ $photo->id }})"
-            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition bg-red-600 text-white text-xs px-2 py-1 rounded-lg"
-        >
-            Delete
-        </button>
-
-    </div>
-
-@empty
-
-    <p class="text-gray-400 text-sm">
-        No photos uploaded yet.
-    </p>
-
-@endforelse
-
-
-
-           
-
-        
-
-    </div>
-
-</div>
-{{-- ================= TEST MODAL ================= --}}
-
-<div id="testPhotosModal"
-     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-
-    <div class="bg-white w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden">
-
-        <div class="flex justify-between items-center px-6 py-4 border-b">
-
-            <h3 class="text-lg font-semibold">
-                Manage test photos
-            </h3>
-
-            <button type="button"
-                    onclick="closeModal('testPhotosModal')"
-                    class="text-gray-400 hover:text-gray-600 text-2xl leading-none">
-
-                &times;
-
-            </button>
-
-        </div>
-
-
-        <div class="p-6 max-h-[70vh] overflow-y-auto">
-            @include('dashboard.manufacturer.partials.manage-testphotos')
-        </div>
-
-    </div>
-</div>
 
 
 
@@ -552,7 +636,7 @@
 </div>
 <script>
 
-    function testUploader() {
+    function FactoryUploader() {
     return {
         async deletePhoto(id) {
 
@@ -560,7 +644,7 @@
 
             try {
 
-                const response = await fetch(`/media/${id}`, {
+                const response = await fetch(`/factory/photos/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

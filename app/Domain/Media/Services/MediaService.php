@@ -37,62 +37,78 @@ class MediaService
      */
     public function upload(UploadMediaDTO $dto)
     {
-        // Override parameters using DTO if provided
         $file = $dto->file;
         $model = $dto->model;
         $collection = $dto->collection;
         $private = $dto->private;
-
-        // 1. Metadata extraction
-        $metadata = $this->extractMetadata($file);
-
-        // 2. Generate identity
-        $uuid = Str::uuid()->toString();
+        $mediaRole = $dto->mediaRole;
+        $originalFileName = $dto->originalFileName;
         
 
+        $metadata = $this->extractMetadata($file);
+        $metadata = $dto->metadata;
+
+        $uuid = Str::uuid()->toString();
+
         $fileName = $uuid . '.' . $file->getClientOriginalExtension();
+
         $basePath = "media/{$collection}/{$uuid}";
         $originalPath = "{$basePath}/original/{$fileName}";
 
-       
-        // 3. Persist media record FIRST
-        $media = $this->repository->create([
-            'uuid' => $uuid,
-            'model_type' => get_class($model),
-            'model_id' => $model->id,
-            'collection' => $collection,
-            'file_name' => $fileName,
-            'file_path' => $originalPath,
-            'mime_type' => $file->getMimeType(),
-            'extension' => $file->getClientOriginalExtension(),
-            'size_bytes' => $file->getSize(),
-            'width' => $metadata['width'] ?? null,
-            'height' => $metadata['height'] ?? null,
-            'is_private' => $private,
-            'processing_status' => 'pending'
-        ]);
+        $media = null;
 
-         //  Upload file
-        $this->storage->upload(
-            $file,
-            $originalPath,
-            $private
-        );
+        try {
 
-        $cdnUrl = $this->cdnService->generate($originalPath, $private);
+            // State transition → uploading stage
+            $media = $this->repository->create([
+                'uuid' => $uuid,
+                'model_type' => get_class($model),
+                'model_id' => $model->id,
+                'collection' => $collection,
+                'media_role' => $mediaRole,
+                'original_file_name' => $originalFileName,
+                'file_name' => $fileName,
+                'file_path' => $originalPath,
+                'mime_type' => $file->getMimeType(),
+                'extension' => $file->getClientOriginalExtension(),
+                'size_bytes' => $file->getSize(),
+                'width' => $metadata['width'] ?? null,
+                'height' => $metadata['height'] ?? null,
+                'metadata' => json_encode($metadata),
+                'is_private' => $private,
+                'processing_status' => 'uploading'
+            ]);
 
-        $media->update([
-            'cdn_url' => $cdnUrl
-        ]);
+            // Upload storage artifact
+            $this->storage->upload(
+                $file,
+                $originalPath,
+                $private
+            );
 
-        // 4. Dispatch pipeline AFTER media creation
-        $this->processingService->dispatchPipeline($media, 2);
+            // Update CDN + processing state
+            $cdnUrl = $this->cdnService->generate($originalPath, $private);
 
-        
+            $media->update([
+                'cdn_url' => $cdnUrl,
+                'processing_status' => 'queued'
+            ]);
 
-       
+            // Async pipeline dispatch
+            $this->processingService->dispatchPipeline($media, 2);
 
-        return $media;
+            return $media;
+
+        } catch (\Throwable $e) {
+
+            if ($media) {
+                $media->update([
+                    'processing_status' => 'failed'
+                ]);
+            }
+
+            throw $e;
+        }
     }
 
     /**

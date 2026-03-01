@@ -10,7 +10,7 @@ use Intervention\Image\Drivers\Gd\Driver;
 
 use App\Models\Country;
 use Illuminate\Support\Str;
-use App\Models\SupplierCertificate;
+
 use App\Services\ReputationService;
 
 use App\Domain\Media\Services\MediaService;
@@ -136,11 +136,15 @@ public function showCompanyProfile()
                 DeleteMediaJob::dispatch($oldLogo->uuid);
             }
 
+            $file = $request->file('logo');
+
             $dto = new UploadMediaDTO(
-                file: $request->file('logo'),
+                file: $file,
                 model: $company,
                 collection: 'company_logos',
-                private: false
+                mediaRole: 'company_logo',
+                private: false,
+                originalFileName: $file?->getClientOriginalName()
             );
 
             $mediaService->upload($dto);
@@ -203,96 +207,89 @@ public function showCompanyProfile()
     /**
      * Delete certificate
      */
-    public function deleteCertificate(
-        SupplierCertificate $certificate,
-        ReputationService $reputationService
-    ) {
-        try {
-
-            $supplier = auth()->user()->supplier;
-
-            if (!$supplier) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Supplier not found'
-                ], 404);
-            }
-
-            if ($certificate->supplier_id !== $supplier->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Forbidden'
-                ], 403);
-            }
-
-            if (Storage::disk('public')->exists($certificate->file_path)) {
-                Storage::disk('public')->delete($certificate->file_path);
-            }
-
-            $certificate->delete();
-
-            $newScore = $reputationService->recalculate($supplier);
-
-            return response()->json([
-                'success' => true,
-                'reputation' => $newScore,
-            ]);
-
-        } catch (\Throwable $e) {
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
+    
 
     /**
      * Upload certificate
      */
-    public function uploadCertificate(
-        Request $request,
-        ReputationService $reputationService
-    ) {
+    public function uploadCertificate(Request $request)
+{
+    $request->validate([
+        'certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+    ]);
+
+    $company = auth()->user()?->supplier;
+
+    if (!$company) {
+        return response()->json([
+            'message' => 'Company profile not found.'
+        ], 404);
+    }
+
+    // ✅ Decode metadata JSON from frontend
+    $metadata = [];
+
+    if ($request->filled('metadata')) {
+        $metadata = json_decode($request->input('metadata'), true) ?? [];
+    }
+
+    $dto = new \App\Domain\Media\DTO\UploadMediaDTO(
+        file: $request->file('certificate'),
+        model: $company,
+        collection: 'supplier_certificates',
+        mediaRole: 'certificate',
+        private: false,
+        originalFileName: $request->file('certificate')->getClientOriginalName(),
+        metadata: $metadata
+    );
+
+    $media = app(\App\Domain\Media\Services\MediaService::class)->upload($dto);
+
+    return response()->json([
+        'success' => true,
+        'id' => $media->id,
+        'name' => $media->original_file_name,
+        'status' => $media->processing_status,
+        'url' => $media->cdn_url
+    ]);
+}
+
+    
+public function deleteCertificate($id)
+{
+    try {
 
         $supplier = auth()->user()->supplier;
 
-        if (!$supplier) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Supplier not found'
-            ], 404);
-        }
+        $media = $supplier->media()
+            ->where('collection', 'supplier_certificates')
+            ->where('id', $id)
+            ->firstOrFail();
 
-        $request->validate([
-            'certificate' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:4096',
+        // State transition
+        $media->update([
+            'processing_status' => 'deleting'
         ]);
 
-        $file = $request->file('certificate');
-
-        $path = $file->store('supplier-certificates', 'public');
-
-        $certificate = $supplier->certificates()->create([
-            'file_path' => $path,
-            'name' => $file->getClientOriginalName(),
-        ]);
-
-        $newScore = $reputationService->recalculate($supplier);
+        // Async delete pipeline
+        DeleteMediaJob::dispatch($media->uuid);
 
         return response()->json([
-            'success' => true,
-            'certificate' => [
-                'id' => $certificate->id,
-                'name' => $certificate->name,
-                'url' => asset('storage/' . $certificate->file_path)
-            ],
-            'reputation' => $newScore,
+            'success' => true
+        ]);
+
+    } catch (\Throwable $e) {
+
+        \Log::error($e);
+
+        return response()->json([
+            'success' => true
         ]);
     }
+}
 
     
-    
-    public function uploadFactoryPhotos(Request $request)
+    public function uploadFactoryPhotos(Request $request, MediaService $mediaService)
 {
     $supplier = auth()->user()->supplier;
 
@@ -306,79 +303,21 @@ public function showCompanyProfile()
 
     try {
 
-        $manager = new ImageManager(new Driver());
-
         foreach ($request->file('photos') ?? [] as $file) {
 
-            $uuid = Str::uuid()->toString();
-
-            /** Original */
-            $originalPath = "factory-photos/original/{$uuid}.jpg";
-
-            Storage::disk('public')->put(
-                $originalPath,
-                file_get_contents($file->getRealPath())
+            $dto = new UploadMediaDTO(
+                file: $file,
+                model: $supplier,
+                collection: 'factory_photos',
+                mediaRole: 'factory_photo',
+                private: false,
+                originalFileName: $file->getClientOriginalName()
             );
 
-            /** Thumbnail */
-            $thumbnailPath = "factory-photos/thumbnail/{$uuid}.jpg";
-
-            $thumbnail = $manager
-                ->read($file->getRealPath())
-                ->cover(400, 400);
-
-            Storage::disk('public')->put(
-                $thumbnailPath,
-                (string) $thumbnail->toJpeg(85)
-            );
-
-            $supplier->factoryPhotos()->create([
-                'path' => $originalPath,
-                'thumbnail_path' => $thumbnailPath,
-            ]);
+            $mediaService->upload($dto);
         }
 
-        return response()->json([
-            'success' => true
-        ]);
-
-    } catch (\Throwable $e) {
-
-        \Log::error($e);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Upload failed'
-        ], 500);
-    }
-}
-
-
-public function deleteFactoryPhoto($id)
-{
-    $supplier = auth()->user()->supplier;
-
-    $photo = $supplier->factoryPhotos()->findOrFail($id);
-
-    try {
-
-        $disk = \Storage::disk('public');
-
-        // Delete original
-        if ($photo->path && $disk->exists($photo->path)) {
-            $disk->delete($photo->path);
-        }
-
-        // Delete thumbnail
-        if ($photo->thumbnail_path && $disk->exists($photo->thumbnail_path)) {
-            $disk->delete($photo->thumbnail_path);
-        }
-
-        $photo->delete();
-
-        return response()->json([
-            'success' => true
-        ]);
+        return response()->json(['success' => true]);
 
     } catch (\Throwable $e) {
 
@@ -388,6 +327,23 @@ public function deleteFactoryPhoto($id)
             'success' => false
         ], 500);
     }
+}
+
+
+public function deleteFactoryPhoto($id)
+{
+    $supplier = auth()->user()->supplier;
+
+    $media = $supplier->media()
+        ->where('collection', 'factory_photos')
+        ->where('id', $id)
+        ->firstOrFail();
+
+    DeleteMediaJob::dispatch($media->uuid);
+
+    return response()->json([
+        'success' => true
+    ]);
 }
 
 }

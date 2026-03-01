@@ -11,16 +11,24 @@ class UploadMediaDTO
         public readonly UploadedFile $file,
         public readonly Model $model,
         public readonly string $collection = 'default',
-        public readonly bool $private = false
+        public readonly string $mediaRole = 'default',
+        public readonly bool $private = false,
+        public readonly ?string $originalFileName = null,
+        public readonly array $metadata = []
     ) {}
 
     public static function fromRequest($request, Model $model): self
     {
+        $file = $request->file('file');
+
         return new self(
-            file: $request->file('file'),
+            file: $file,
             model: $model,
             collection: $request->get('collection', 'default'),
-            private: $request->boolean('private', false)
+            mediaRole: $request->get('media_role', 'default'),
+            private: $request->boolean('private', false),
+            originalFileName: $file?->getClientOriginalName(),
+            metadata: $request->get('metadata', [])
         );
     }
 }
