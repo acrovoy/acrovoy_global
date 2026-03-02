@@ -260,7 +260,7 @@
                 </label>
             @endforeach
 
- {{-- Новый фильтр Golden Supplier --}}
+
  
     {{-- Новый фильтр Golden Supplier --}}
 <label class="flex items-center gap-3 text-sm text-gray-700 cursor-pointer group">
@@ -333,9 +333,32 @@
 
             {{-- Картинка --}}
             <div class="overflow-hidden">
-                <img src="{{ $supplier->catalog_image ? asset('storage/' . $supplier->catalog_image) : asset('images/no-logo.png') }}" 
-                     class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105" 
-                     alt="{{ $supplier->name }}">
+
+
+                
+
+                @if($supplier->catalog_preview)
+
+                    @if($supplier->catalog_preview?->cdn_url)
+                        <img src="{{ $supplier->catalog_preview->cdn_url }}"
+                            class="w-full h-full object-cover rounded-t-xl">
+                    @endif
+
+                @else
+
+                    <div class="w-full h-[200px] rounded-t-xl flex items-center justify-center
+                                bg-gradient-to-br from-gray-100 to-gray-200">
+
+                        <span class="text-4xl font-semibold text-gray-500">
+                            {{ strtoupper(substr($supplier->name, 0, 1)) }}
+                        </span>
+
+                    </div>
+
+                @endif
+
+
+
             </div>
 
 

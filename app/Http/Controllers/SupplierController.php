@@ -51,7 +51,8 @@ class SupplierController extends Controller
         // Query
         $query = Supplier::with([
             'country',
-            'products'
+            'products',
+            'catalogImageMedia'
         ]);
 
         // Применяем фильтры, если есть
@@ -61,6 +62,7 @@ class SupplierController extends Controller
 
         // Получаем поставщиков
         $suppliers = $query->paginate(20)->withQueryString();
+        
 
         
 
@@ -91,7 +93,8 @@ class SupplierController extends Controller
             'supplierTypes.translation',
             'reviews',
             'factoryPhotos',
-            'certificatesMedia'
+            'certificatesMedia',
+            'profile.manufacturingCapabilities.translations'
         ])
             ->where('slug', $slug)
             ->firstOrFail();

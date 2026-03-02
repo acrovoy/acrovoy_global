@@ -15,13 +15,13 @@
     </div>
 
     {{-- Logo --}}
-    @if($supplier->logo)
     <div class="flex-shrink-0">
-        <img src="{{ asset('storage/' . $supplier->logo) }}"
+        <img 
+            src="{{ $supplier->logo?->cdn_url ?? asset('images/no-logo.png') }}"
             alt="{{ $supplier->name }}"
-            class="w-28 h-28 object-cover rounded-lg">
+            class="w-28 h-28 object-cover rounded-lg"
+        >
     </div>
-    @endif
 
     {{-- Info --}}
     <div class="flex-1 flex flex-col gap-2">

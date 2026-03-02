@@ -57,6 +57,7 @@ use App\Http\Controllers\Admin\Settings\LanguagesController;
 use App\Http\Controllers\Admin\Settings\CountriesController;
 use App\Http\Controllers\Admin\Settings\CategoryController;
 use App\Http\Controllers\Admin\Settings\LocationController;
+use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 
 
@@ -215,9 +216,11 @@ Route::prefix('dashboard/manufacturer')
     ->group(function () {
 
 
+    Route::post('catalog-image', [ManufacturerController::class, 'uploadCatalogImage'])
+        ->name('catalog.upload');
 
     Route::put('orders/{order}/shipments/{orderItemShipment}', [ManufacturerOrderController::class, 'updateShipment'])
-    ->name('orders.shipments.update');
+        ->name('orders.shipments.update');
     
     Route::delete(
             '/certificates/{certificate}',
@@ -601,6 +604,14 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         Route::put('materials/{material}', [MaterialsController::class, 'update'])->name('materials.update');
         Route::delete('materials/{material}', [MaterialsController::class, 'destroy'])->name('materials.destroy');
         
+        // Manufacturing capabilities
+        Route::get('manufacturing-capabilities',[ManufacturingCapabilityController::class, 'index'])->name('manufacturing-capabilities.index');
+        Route::get('manufacturing-capabilities/create',[ManufacturingCapabilityController::class, 'create'])->name('manufacturing-capabilities.create');
+        Route::post('manufacturing-capabilities',[ManufacturingCapabilityController::class, 'store'])->name('manufacturing-capabilities.store');
+        Route::get('manufacturing-capabilities/{capability}/edit',[ManufacturingCapabilityController::class, 'edit'])->name('manufacturing-capabilities.edit');
+        Route::put('manufacturing-capabilities/{capability}',[ManufacturingCapabilityController::class, 'update'])->name('manufacturing-capabilities.update');
+        Route::delete('manufacturing-capabilities/{capability}',[ManufacturingCapabilityController::class, 'destroy'])->name('manufacturing-capabilities.destroy');
+
         //Locations
         Route::get('locations/regions', [LocationController::class, 'regionsByCountry'])->name('locations.regions');
         Route::get('locations/locations', [LocationController::class, 'regionsWithChildren'])->name('locations.locations');

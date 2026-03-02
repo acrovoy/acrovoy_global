@@ -27,13 +27,15 @@
             Company Logo
         </label>
 
+        
+
         <div id="logo-dropzone"
              class="w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl
                     flex items-center justify-center bg-gray-50 relative cursor-pointer
                     overflow-hidden group">
 
             <img id="logo-preview"
-                 src="{{ $company->logo()?->cdn_url ?? asset('images/no-logo.png') }}"
+                 src="{{ $company->logo?->cdn_url ?? asset('images/no-logo.png') }}"
                  class="w-full h-full object-cover">
 
             <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center
@@ -180,7 +182,14 @@ Supplier Classification
     <div>
         <textarea name="about_us_description"
                   rows="5"
-                  class="w-full border border-gray-300 rounded-xl p-3">{{ old('about_us_description', $company->about_us_description ?? '') }}</textarea>
+                  class="w-full border border-gray-300 rounded-xl p-3">
+
+{{ old(
+    'about_us_description',
+    $company->profile?->about_us_description ?? ''
+) }}
+
+</textarea>
     </div>
 
 
@@ -192,10 +201,11 @@ Supplier Classification
             <label class="block text-sm font-medium mb-2">
                 Founded
             </label>
+
             <input type="number"
                    name="founded_year"
                    placeholder="e.g. 2015"
-                   value="{{ old('founded_year', $company->founded_year ?? '') }}"
+                   value="{{ old('founded_year', $company->profile?->founded_year ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
@@ -204,10 +214,11 @@ Supplier Classification
             <label class="block text-sm font-medium mb-2">
                 Annual Export Revenue (USD)
             </label>
+
             <input type="number"
                    name="annual_export_revenue"
                    placeholder="e.g. 650000"
-                   value="{{ old('annual_export_revenue', $company->annual_export_revenue ?? '') }}"
+                   value="{{ old('annual_export_revenue', $company->profile?->annual_export_revenue ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
@@ -216,22 +227,24 @@ Supplier Classification
             <label class="block text-sm font-medium mb-2">
                 Total Employees
             </label>
+
             <input type="number"
                    name="total_employees"
                    placeholder="e.g. 50"
-                   value="{{ old('total_employees', $company->total_employees ?? '') }}"
+                   value="{{ old('total_employees', $company->profile?->total_employees ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
-        {{-- Company Registration Capital --}}
+        {{-- Registration Capital --}}
         <div>
             <label class="block text-sm font-medium mb-2">
-                Company Registration Capital (USD or local currency)
+                Company Registration Capital
             </label>
+
             <input type="number"
                    name="registration_capital"
                    placeholder="e.g. 1000000"
-                   value="{{ old('registration_capital', $company->registration_capital ?? '') }}"
+                   value="{{ old('registration_capital', $company->profile?->registration_capital ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
@@ -282,31 +295,80 @@ Supplier Classification
 
 
 
-{{-- ================= MANUFACTURING PROFILE ================= --}}
+{{-- ================= Manufacturing Profile ================= --}}
+
 <div class="pt-10 border-t space-y-8">
 
     <div class="text-sm text-gray-400 uppercase tracking-wider">
         Manufacturing Profile
     </div>
 
-    {{-- Manufacturing Overview --}}
+    
+
+
+        {{-- Manufacturing Capabilities --}}
+<h3 class="font-medium mb-2 mt-6">
+    Manufacturing Capabilities
+</h3>
+
+<div id="selected-capabilities" class="flex flex-wrap gap-2 mb-2"></div>
+
+<input type="text"
+       id="capabilitySearch"
+       placeholder="Search capabilities..."
+       class="w-full border rounded-xl px-4 py-2 text-sm mb-3">
+
+<div id="capabilities-options"
+     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+
+    @foreach($manufacturingCapabilities as $capability)
+
+        @php
+            $name = $capability->name ?? $capability->slug;
+        @endphp
+
+        <button type="button"
+                class="capability-option border rounded-xl bg-white text-xs p-3
+                       hover:bg-gray-50 transition shadow-sm"
+                data-id="{{ $capability->id }}"
+                data-name="{{ $name }}">
+
+            {{ $name }}
+
+        </button>
+
+    @endforeach
+
+</div>
+
+<input type="hidden"
+       name="manufacturing_capabilities_selected"
+       id="capabilitiesSelectedInput">
+
+
+{{-- Manufacturing Overview --}}
     <div>
         <label class="block text-sm font-medium mb-2">
             Manufacturing Overview
         </label>
 
+
         <textarea name="manufacturing_description"
                   rows="6"
-                  class="w-full border border-gray-300 rounded-xl p-3 text-sm">{{ old('manufacturing_description', $company->manufacturing_description ?? '') }}</textarea>
+                  class="w-full border border-gray-300 rounded-xl p-3 text-sm">
+
+{{ old(
+    'manufacturing_description',
+    $company->profile?->manufacturing_description ?? ''
+) }}
+
+</textarea>
     </div>
 
 
     {{-- Production Metrics --}}
     <div class="grid sm:grid-cols-2 gap-6">
 
-        
-
-        {{-- Factory Area --}}
         <div>
             <label class="block text-sm font-medium mb-2">
                 Factory Area (m²)
@@ -314,12 +376,10 @@ Supplier Classification
 
             <input type="number"
                    name="factory_area"
-                   placeholder="e.g. 2500"
-                   value="{{ old('factory_area', $company->factory_area ?? '') }}"
+                   value="{{ old('factory_area', $company->profile?->factory_area ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
-        {{-- Production Lines --}}
         <div>
             <label class="block text-sm font-medium mb-2">
                 Production Lines
@@ -327,38 +387,33 @@ Supplier Classification
 
             <input type="number"
                    name="production_lines"
-                   placeholder="e.g. 4"
-                   value="{{ old('production_lines', $company->production_lines ?? '') }}"
+                   value="{{ old('production_lines', $company->profile?->production_lines ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
-        {{-- MOQ --}}
         <div>
             <label class="block text-sm font-medium mb-2">
-                MOQ (Minimum Order Quantity)
+                MOQ
             </label>
 
             <input type="number"
                    name="moq"
                    placeholder="e.g. 50"
-                   value="{{ old('moq', $company->moq ?? '') }}"
+                   value="{{ old('moq', $company->profile?->moq ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
-        {{-- Monthly Production Capacity --}}
         <div>
             <label class="block text-sm font-medium mb-2">
-                Monthly Production Capacity (units)
+                Monthly Production Capacity
             </label>
 
             <input type="number"
                    name="monthly_capacity"
-                   placeholder="e.g. 1200"
-                   value="{{ old('monthly_capacity', $company->monthly_capacity ?? '') }}"
+                   value="{{ old('monthly_capacity', $company->profile?->monthly_capacity ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
 
-        {{-- Average Lead Time --}}
         <div>
             <label class="block text-sm font-medium mb-2">
                 Average Lead Time (days)
@@ -366,10 +421,11 @@ Supplier Classification
 
             <input type="number"
                    name="lead_time_days"
-                   placeholder="e.g. 30"
-                   value="{{ old('lead_time_days', $company->lead_time_days ?? '') }}"
+                   value="{{ old('lead_time_days', $company->profile?->lead_time_days ?? '') }}"
                    class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
         </div>
+
+
 
     </div>
 
@@ -427,47 +483,7 @@ Supplier Classification
 
 
 
-{{-- ================= CATALOG VISUAL BLOCK ================= --}}
 
-<div class="grid lg:grid-cols-2 gap-12 pt-10 border-t">
-<div class="col-span-full text-sm text-gray-400 uppercase tracking-wider">
-    Catalog Presentation
-</div>
-<div class="space-y-4">
-
-    <div class="flex flex-col items-center space-y-2">
-        
-        <div id="catalog-dropzone"
-             class="w-64 h-64 border-2 border-dashed border-gray-300
-                    rounded-xl flex items-center justify-center
-                    bg-gray-50 relative cursor-pointer
-                    overflow-hidden group">
-
-            <img id="catalog-preview"
-                 src="{{ $company->catalog_image ? asset('storage/' . $company->catalog_image) : asset('images/no-image.png') }}"
-                 class="w-full h-full object-cover">
-
-            <div class="absolute inset-0 bg-black/30 flex items-center justify-center
-                        opacity-0 group-hover:opacity-100 transition">
-                <span class="text-white text-sm">Change</span>
-            </div>
-
-            <input type="file" name="catalog_image" accept="image/*" id="catalog-input" class="hidden">
-        </div>
-
-        <p class="text-xs text-gray-400 text-center">
-            Used in supplier catalog cards
-        </p>
-
-    </div>
-
-</div>
-
-    {{-- Preview Card --}}
-<div class="flex justify-center items-start">
-    @include('dashboard.manufacturer.partials.preview-card')
-</div>
-    
 
 </div>
 
@@ -765,6 +781,107 @@ if (exportSearch) {
 document.addEventListener('DOMContentLoaded', () => {
     renderExportMarkets();
     updateExportInput();
+});
+
+</script>
+
+<script>
+window.initialCapabilities = @json(
+    $company->profile?->manufacturingCapabilities->map(function($capability){
+        return [
+            'id' => (string) $capability->id,
+            'name' => $capability->name ?? $capability->slug
+        ];
+    })
+);
+</script>
+
+<script>
+
+/* ===========================
+ * MANUFACTURING CAPABILITIES CHIP SELECTOR
+ * =========================== */
+
+const selectedCapabilitiesContainer = document.getElementById('selected-capabilities');
+const capabilityOptions = document.querySelectorAll('.capability-option');
+const capabilitiesSelectedInput = document.getElementById('capabilitiesSelectedInput');
+const capabilitySearch = document.getElementById('capabilitySearch');
+
+/* Initialize */
+let selectedCapabilities = typeof window.initialCapabilities !== 'undefined'
+    ? window.initialCapabilities
+    : [];
+
+/* Render chips */
+function renderCapabilities() {
+
+    selectedCapabilitiesContainer.innerHTML = '';
+
+    selectedCapabilities.forEach((item, index) => {
+
+        const chip = document.createElement('div');
+        chip.className = 'px-2 py-1 bg-green-100 text-green-800 text-xs flex items-center gap-1 shadow-sm';
+
+        chip.innerHTML = `
+            <span>${item.name}</span>
+            <button type="button" class="hover:text-red-600">&times;</button>
+        `;
+
+        chip.querySelector('button').onclick = () => {
+            selectedCapabilities.splice(index, 1);
+            updateCapabilitiesInput();
+            renderCapabilities();
+        };
+
+        selectedCapabilitiesContainer.appendChild(chip);
+    });
+}
+
+/* Sync hidden input */
+function updateCapabilitiesInput() {
+    capabilitiesSelectedInput.value =
+        selectedCapabilities.map(c => c.id).join(',');
+}
+
+/* Click selection */
+capabilityOptions.forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+
+        if (!selectedCapabilities.find(c => c.id === id)) {
+            selectedCapabilities.push({ id, name });
+        }
+
+        updateCapabilitiesInput();
+        renderCapabilities();
+    });
+
+});
+
+/* Search filter */
+if (capabilitySearch) {
+
+    capabilitySearch.addEventListener('input', function () {
+
+        const search = this.value.toLowerCase();
+
+        capabilityOptions.forEach(btn => {
+
+            const name = btn.dataset.name.toLowerCase();
+
+            btn.style.display =
+                name.includes(search) ? '' : 'none';
+        });
+    });
+}
+
+/* Initial render */
+document.addEventListener('DOMContentLoaded', () => {
+    renderCapabilities();
+    updateCapabilitiesInput();
 });
 
 </script>

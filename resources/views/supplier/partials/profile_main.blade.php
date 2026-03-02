@@ -13,7 +13,7 @@
 
         {{-- Description --}}
         <p class="text-sm text-gray-600 leading-relaxed">
-            {{ $supplier->about ?? 'We are a professional manufacturer specializing in high-quality custom furniture solutions for commercial and residential projects. With strong global experience, we focus on precision engineering, material traceability, and consistent production standards.' }}
+            {{ $supplier->profile?->about_us_description ?? '-' }}
         </p>
 
         {{-- Core Metrics --}}
@@ -23,7 +23,7 @@
             <div>
                 <div class="text-gray-400 text-xs">Founded</div>
                 <div class="font-semibold text-gray-900">
-                    {{ $supplier->founded_year ?? '2015' }}
+                    {{ $supplier->profile?->founded_year ?? '-' }}
                 </div>
             </div>
 
@@ -31,10 +31,10 @@
             <div>
                 <div class="text-gray-400 text-xs">Years in Industry</div>
                 <div class="font-semibold text-gray-900">
-                    @if($supplier->founded_year)
-                        {{ now()->year - $supplier->founded_year }}+
+                    @if($supplier->profile?->founded_year)
+                        {{ now()->year - $supplier->profile?->founded_year }}+
                     @else
-                        35+
+                        -
                     @endif
                 </div>
             </div>
@@ -57,7 +57,7 @@
             <div>
                 <div class="text-gray-400 text-xs">Annual Export Revenue</div>
                 <div class="font-semibold text-gray-900">
-                    {{ number_format($supplier->annual_export_revenue ?? 651170) }} USD
+                    {{ number_format($supplier->profile?->annual_export_revenue ?? 0) }} USD
                 </div>
             </div>
 
@@ -65,7 +65,7 @@
             <div>
                 <div class="text-gray-400 text-xs">Total Employees</div>
                 <div class="font-semibold text-gray-900">
-                    {{ $supplier->total_employees ?? 29 }}
+                    {{ $supplier->profile?->total_employees ?? 0 }}
                 </div>
             </div>
 
@@ -73,7 +73,7 @@
             <div>
                 <div class="text-gray-400 text-xs">Company Registration Capital</div>
                 <div class="font-semibold text-gray-900">
-                    {{ number_format($supplier->registration_capital ?? 1000000) }} USD
+                    {{ number_format($supplier->profile?->registration_capital ?? 0) }} USD
                 </div>
             </div>
 
@@ -101,7 +101,7 @@
             </h3>
 
             <div class="text-sm text-gray-600 leading-relaxed bg-white/80 backdrop-blur-sm border rounded-2xl p-6 shadow-sm">
-                {!! $supplier->description ?? 'Our manufacturing facilities integrate modern CNC systems, skilled craftsmanship, and strict quality control procedures to ensure consistent output across global projects.' !!}
+                {!! $supplier->profile?->manufacturing_description ?? '-' !!}
             </div>
 
         </div>
@@ -119,18 +119,18 @@
                 @php
                     $capabilities = [
                         [
-                            'label' => 'Registration Date',
-                            'value' => optional($supplier->created_at)->format('d-m-Y'),
+                            'label' => 'Registration Year',
+                            'value' => ($supplier->profile?->founded_year ?? '-'),
                             'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14'
                         ],
                         [
                             'label' => 'Factory Area',
-                            'value' => ($supplier->factory_area ?? 2580) . ' m²',
+                            'value' => ($supplier->profile?->factory_area ?? 0) . ' m²',
                             'icon' => 'M4 5h16v14H4z'
                         ],
                         [
                             'label' => 'Production Lines',
-                            'value' => '4',
+                            'value' => ($supplier->profile?->production_lines ?? 0),
                             'icon' => 'M3 6h18M3 12h18M3 18h18'
                         ],
                     ];
@@ -235,7 +235,7 @@
                 $meta = is_array($certificate->metadata)
                     ? $certificate->metadata
                     : json_decode($certificate->metadata ?? '{}', true);
-
+                $badge = strtoupper($meta['certificate_type'] ?? '');
                 $name = $meta['certificate_name']
                     ?? $certificate->original_file_name;
 
@@ -247,7 +247,7 @@
             <div class="border rounded-xl p-4 bg-white shadow-sm w-full md:w-72 space-y-3">
 
     {{-- Preview --}}
-    <div class="w-full h-40 rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
+    <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
 
         
     
@@ -291,6 +291,15 @@
 
             {{ $name }}
         </a>
+
+       @if($badge)
+
+            <span class="px-2 py-0.5 text-[10px] font-semibold
+                        bg-yellow-100 text-yellow-700 rounded-full">
+                {{ $badge }}
+            </span>
+
+        @endif
 
         <div class="text-xs text-gray-500 space-y-1">
 

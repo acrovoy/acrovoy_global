@@ -41,17 +41,15 @@ public function showCompanyProfile()
         'exportMarkets.translation',
         'supplierTypes.translation',
         'country',
-        'certificates',
-        'media'
+        'media',
+        'profile'
     ]);
 
-    $testPhotos = $company->media()
-        ->where('collection', 'test_photos')
-        ->get();
+    $catalogMedia = $company->catalogImageMedia()->first();
 
     return view(
         'dashboard.manufacturer.profile.show',
-        compact('company', 'testPhotos')
+        compact('company', 'catalogMedia')
     );
 }
 
@@ -71,14 +69,19 @@ public function showCompanyProfile()
                 'exportMarkets.translation',
                 'supplierTypes.translation',
                 'country',
-                'certificates',
-                'media'
+                'media',
+                'profile'
             ]);
         } else {
             $company = new \App\Models\Supplier();
         }
 
         $exportMarkets = \App\Models\ExportMarket::with('translations')->get();
+
+        $manufacturingCapabilities = \App\Models\ManufacturingCapability::visible()
+            ->ordered()
+            ->with('translations')
+            ->get();
 
         $supplierTypes = \App\Models\SupplierType::with('translations')->get();
 
@@ -90,13 +93,20 @@ public function showCompanyProfile()
 
         $selectedMarkets = $company->exportMarkets?->pluck('id')->toArray() ?? [];
 
+        $profile = $company->profile;
+
+$selectedmanufacturingCapabilities =
+    $profile?->manufacturingCapabilities?->pluck('id')->toArray() ?? [];
+
         return view('dashboard.manufacturer.company-profile', compact(
             'company',
             'countries',
             'exportMarkets',
             'supplierTypes',
             'selectedTypes',
-            'selectedMarkets'
+            'selectedMarkets',
+            'manufacturingCapabilities',
+            'selectedmanufacturingCapabilities'
         ));
     }
 
@@ -179,6 +189,30 @@ public function showCompanyProfile()
 
         $company->update($data);
 
+        //Saveing profile details
+        $profileData = $request->only([
+            'about_us_description',
+            'founded_year',
+            'total_employees',
+            'manufacturing_description',
+            'factory_area',
+            'production_lines',
+            'monthly_capacity',
+            'moq',
+            'lead_time_days',
+            'annual_export_revenue',
+            'registration_capital'
+        ]);
+
+        if (!empty(array_filter($profileData))) {
+
+            $company->profile()->updateOrCreate(
+                ['supplier_id' => $company->id],
+                $profileData
+            );
+        }
+
+
         /** SUPPLIER TYPES */
         if ($request->filled('supplier_types_selected')) {
 
@@ -188,6 +222,23 @@ public function showCompanyProfile()
 
             $company->supplierTypes()->sync($typeIds);
         }
+
+
+        
+        /** MANUFACTURING CAPABILITIES */
+        if ($request->manufacturing_capabilities_selected) {
+
+            $ids = explode(',', $request->manufacturing_capabilities_selected);
+            $profile = $company->profile;
+
+             $profile->manufacturingCapabilities()->sync($ids);
+
+        } else {
+            $profile = $company->profile;
+
+             $profile->manufacturingCapabilities()->detach();
+        }
+
 
         /** EXPORT MARKETS */
         if ($request->filled('export_markets_selected')) {
@@ -343,6 +394,39 @@ public function deleteFactoryPhoto($id)
 
     return response()->json([
         'success' => true
+    ]);
+}
+
+public function uploadCatalogImage(Request $request)
+{
+    $request->validate([
+        'catalog_image' => 'required|image|max:10240',
+    ]);
+
+    $company = auth()->user()?->supplier;
+
+    if (!$company) {
+        return response()->json(['message' => 'Company not found'], 404);
+    }
+
+    // Удаляем старую картинку каталога
+    $company->catalogImageMedia()->delete();
+
+    $dto = new UploadMediaDTO(
+        file: $request->file('catalog_image'),
+        model: $company,
+        collection: 'catalog_images',
+        mediaRole: 'catalog_image',
+        private: false,
+        originalFileName: $request->file('catalog_image')->getClientOriginalName()
+    );
+
+    $media = app(MediaService::class)
+        ->upload($dto);
+
+    return response()->json([
+        'success' => true,
+        'url' => $media->cdn_url
     ]);
 }
 

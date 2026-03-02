@@ -22,8 +22,6 @@ class Supplier extends Model
         'phone',
         'address',
         'country_id',
-        'logo',
-        'catalog_image',
         'short_description',
         'description',
     ];
@@ -33,7 +31,8 @@ class Supplier extends Model
         'country',
         'supplierTypes.translation',
         'exportMarkets.translation',
-        'factoryPhotos'
+        'factoryPhotos',
+        'profile'
     ];
 
     protected $appends = ['years_on_platform'];
@@ -56,6 +55,7 @@ class Supplier extends Model
         return $this->belongsTo(Country::class);
     }
 
+  
 
     public function reviews()
     {
@@ -90,26 +90,15 @@ class Supplier extends Model
     
 
 
-    public function getBadgesAttribute(): array
-    {
-        $badges = [];
-
-        foreach ($this->certificates as $cert) {
-            $name = strtoupper($cert->name);
-
-            if (str_contains($name, 'ISO')) $badges[] = 'ISO';
-            if (str_contains($name, 'ECO')) $badges[] = 'ECO';
-            if (str_contains($name, 'FSC')) $badges[] = 'FSC';
-        }
-
-        return array_unique($badges);
-    }
-
+    
     // Проверка полного профиля
     public function isProfileComplete(): bool
-    {
-        return $this->name && $this->logo && $this->catalog_image;
-    }
+{
+    return
+        filled($this->name) &&
+        $this->logo()->exists() &&
+        $this->catalogImageMedia()->exists();
+}
 
 
 
@@ -190,11 +179,44 @@ public function logo()
         ->first();
 }
 
+public function getLogoAttribute()
+{
+    return $this->media
+        ->where('collection', 'company_logos')
+        ->first();
+}
+
 public function certificatesMedia()
 {
     return $this->media()
         ->where('collection', 'supplier_certificates')
         ->where('media_role', 'certificate');
+}
+
+public function catalogImageMedia()
+{
+    return $this->media()
+        ->where('collection', 'catalog_images')
+        ->latest();
+}
+
+public function getCatalogPreviewAttribute()
+{
+    return $this->catalogImageMedia()->first();
+}
+
+public function profile()
+{
+    return $this->hasOne(SupplierProfile::class);
+}
+
+
+public function manufacturingCapabilities()
+{
+    return $this->belongsToMany(
+        \App\Models\ManufacturingCapability::class,
+        'company_manufacturing_capability'
+    );
 }
 
 

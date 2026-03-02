@@ -38,7 +38,7 @@
 
 {{-- Image --}}
 <div class="overflow-hidden">
-    <img src="{{ $company->catalog_image ? asset('storage/' . $company->catalog_image) : asset('images/no-logo.png') }}"
+    <img src="{{ $catalogMedia?->cdn_url ?? asset('images/no-catalog-image.png') }}"
          class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
          alt="{{ $company->name }}">
 </div>

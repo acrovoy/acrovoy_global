@@ -139,33 +139,45 @@
 
 
 
+           
+
+
+
             {{-- Capabilities --}}
             <div class="pt-4 border-t space-y-3">
 
-                <div class="text-xs uppercase tracking-wide text-gray-400">
-                    Manufacturing Capabilities
-                </div>
+                @if($supplier->profile?->manufacturingCapabilities?->isNotEmpty())
 
-                <div class="flex flex-wrap gap-2 text-xs">
+                    <div class="border-t pt-6 space-y-4">
 
-                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
-                        Drawing-based customization
-                    </span>
+                        <div class="text-xs text-gray-400 uppercase tracking-wider">
+                            Manufacturing Capabilities
+                        </div>
 
-                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
-                        Minor customization
-                    </span>
+                        <div class="flex flex-wrap gap-2">
 
-                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
-                        Raw material traceability
-                    </span>
+                            @foreach($supplier->profile->manufacturingCapabilities as $capability)
 
-                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
-                        Finished product inspection
-                    </span>
+                                <span class="px-3 py-1 text-xs rounded-full
+                                    bg-blue-50 text-blue-700 border border-blue-200">
 
-                </div>
+                                    {{ $capability->name }}
+
+                                </span>
+
+                            @endforeach
+
+                        </div>
+
+                    </div>
+
+                @endif
+
+
             </div>
+
+
+
 
         </div>
 

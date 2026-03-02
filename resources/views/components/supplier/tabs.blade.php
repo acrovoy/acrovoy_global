@@ -2,7 +2,7 @@
     $currentTab = request('tab', 'profile');
 @endphp
 
-<div class="sticky top-0 bg-gradient-to-r from-[#fdfcf9] via-[#fdfcf9] to-[#fdfcf9]  border-b mb-4 shadow-sm">
+<div class="sticky top-0 bg-gradient-to-r from-[#f9f7f3] via-[#fdfcf9] to-[#f9f7f3]  border-b mb-4 shadow-sm">
     <div class="flex justify-center overflow-x-auto scrollbar-hide px-6 space-x-8 text-sm">
 
         @foreach($tabs as $id => $label)

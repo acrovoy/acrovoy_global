@@ -49,6 +49,15 @@
             Supplier Types
         </a>
 
+        <a href="{{ route('admin.settings.manufacturing-capabilities.index') }}"
+        class="px-4 py-2 rounded-t-lg transition
+        {{ request()->routeIs('admin.settings.manufacturing-capabilities.*')
+                ? 'bg-white font-semibold shadow'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+
+            Manufacturing Capabilities
+        </a>
+
         <a href="{{ route('admin.settings.constants') }}"
            class="px-5 py-2 rounded-t-lg text-sm font-medium transition-colors duration-200
            {{ request()->routeIs('admin.settings.constants*') ? 'bg-white text-gray-900 shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">

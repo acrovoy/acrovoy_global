@@ -64,10 +64,10 @@
             <div>
                 <div class="text-xs text-gray-400 uppercase mb-2">Logo</div>
 
-                <div class="w-24 h-24 rounded-xl overflow-hidden border bg-gray-50">
+                <div class="w-32 h-32 rounded-xl overflow-hidden border bg-gray-50">
                     
                     <img
-                        src="{{ $company->logo()?->cdn_url ?? asset('images/no-logo.png') }}"
+                        src="{{ $company->logo?->cdn_url ?? asset('images/no-logo.png') }}"
                         class="w-full h-full object-cover"
                     >
                 </div>
@@ -126,7 +126,7 @@
                 <div>
                     <div class="text-xs text-gray-400 uppercase mb-1">About Us</div>
                     <div class="text-sm text-gray-700 leading-relaxed">
-                        {!! $company->about_us_description ?? '—' !!}
+                        {!! $company->profile?->about_us_description ?? '—' !!}
                     </div>
                 </div>
 
@@ -155,28 +155,28 @@
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Founded</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->founded_year ?? '—' }}
+                        {{ $company->profile?->founded_year ?? '—' }}
                     </div>
                 </div>
 
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Employees</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->total_employees ?? '—' }}
+                        {{ $company->profile?->total_employees ?? '—' }}
                     </div>
                 </div>
 
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Export Revenue</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->annual_export_revenue ? '$'.number_format($company->annual_export_revenue) : '—' }}
+                        {{ $company->profile?->annual_export_revenue ? '$'.number_format($company->profile?->annual_export_revenue) : '—' }}
                     </div>
                 </div>
 
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Registration Capital</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->registration_capital ? '$'.number_format($company->registration_capital) : '—' }}
+                        {{ $company->profile?->registration_capital ? '$'.number_format($company->profile?->registration_capital) : '—' }}
                     </div>
                 </div>
 
@@ -195,6 +195,41 @@
             Manufacturing Profile
         </div>
 
+
+        {{-- Capabilities --}}
+            <div class="space-y-3">
+
+                @if($company->profile?->manufacturingCapabilities?->isNotEmpty())
+
+                    <div class="space-y-4">
+
+                        <div class="text-xs text-gray-400 uppercase tracking-wider">
+                            Manufacturing Capabilities
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+
+                            @foreach($company->profile->manufacturingCapabilities as $capability)
+
+                                <span class="px-3 py-1 text-xs rounded-full
+                                    bg-blue-50 text-blue-700 border border-blue-200">
+
+                                    {{ $capability->name }}
+
+                                </span>
+
+                            @endforeach
+
+                        </div>
+
+                    </div>
+
+                @endif
+
+
+            </div>
+
+
         <div class="space-y-5">
 
             <div>
@@ -203,7 +238,7 @@
                 </div>
 
                 <div class="text-sm text-gray-700 leading-relaxed">
-                    {!! $company->manufacturing_description ?? '—' !!}
+                    {!! $company->profile?->manufacturing_description ?? '—' !!}
                 </div>
             </div>
 
@@ -213,35 +248,35 @@
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Factory Area</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->factory_area ? $company->factory_area.' m²' : '—' }}
+                        {{ $company->profile?->factory_area ? $company->profile?->factory_area.' m²' : '—' }}
                     </div>
                 </div>
 
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Lines</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->production_lines ?? '—' }}
+                        {{ $company->profile?->production_lines ?? '—' }}
                     </div>
                 </div>
 
                 <div>
                     <div class="text-xs text-gray-400 uppercase">MOQ</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->moq ?? '—' }}
+                        {{ $company->profile?->moq ?? '—' }}
                     </div>
                 </div>
 
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Capacity</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->monthly_capacity ?? '—' }}
+                        {{ $company->profile?->monthly_capacity ?? '—' }}
                     </div>
                 </div>
 
                 <div>
                     <div class="text-xs text-gray-400 uppercase">Lead Time</div>
                     <div class="font-semibold text-gray-900">
-                        {{ $company->lead_time_days ? $company->lead_time_days.' days' : '—' }}
+                        {{ $company->profile?->lead_time_days ? $company->profile?->lead_time_days.' days' : '—' }}
                     </div>
                 </div>
 
@@ -317,7 +352,8 @@
         $certificates = $company->certificatesMedia()->get();
     @endphp
 
-    <div id="certificatesContainer" class="grid md:grid-cols-2 gap-4">
+    <div id="certificatesContainer"
+     class="flex flex-wrap gap-4 justify-start items-start">
 
         @foreach($certificates as $certificate)
 
@@ -327,50 +363,85 @@
                     : json_decode($certificate->metadata ?? '{}', true);
 
                 $certificateName = $meta['certificate_name'] ?? '';
+                $certificateType = strtoupper($meta['certificate_type'] ?? '');
+
+                $upperName = strtoupper($certificateName ?: $certificate->original_file_name);
+
+                if (str_contains($upperName, 'ISO')) $badges[] = 'ISO';
+                if (str_contains($upperName, 'ECO')) $badges[] = 'ECO';
+                if (str_contains($upperName, 'FSC')) $badges[] = 'FSC';
                 $certificateNumber = $meta['certificate_number'] ?? '';
                 $validFrom = $meta['valid_from'] ?? '';
                 $validUntil = $meta['valid_until'] ?? '';
             @endphp
 
-            <div class="certificate-card border rounded-xl p-4 bg-gray-50 space-y-2">
+            <div class="certificate-card border rounded-xl p-4 bg-gray-50 space-y-3 w-60">
 
-                <div class="flex justify-between items-start">
+                {{-- Preview --}}
+    <div class="w-full aspect-[3/4] border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
 
-                    <div class="space-y-1">
+        @if(str_contains($certificate->mime_type, 'pdf'))
+
+            <iframe
+                src="{{ $certificate->cdn_url }}"
+                class="w-full h-full object-cover"
+            ></iframe>
+
+        @elseif(str_contains($certificate->mime_type, 'image'))
+
+            <img src="{{ $certificate->cdn_url }}"
+                 class="w-full h-full object-cover">
+
+        @else
+
+            <div class="text-gray-400 text-xs text-center p-3">
+                Document Preview
+            </div>
+
+        @endif
+
+    </div>
+
+                {{-- Content --}}
+                <div class="p-4 space-y-2">
+
+                    <div class="flex justify-between items-start gap-2">
 
                         <a href="{{ $certificate->cdn_url }}"
-                           target="_blank"
-                           class="text-sm font-semibold hover:underline block">
+                        target="_blank"
+                        class="text-sm font-semibold hover:underline line-clamp-2">
 
                             {{ $certificateName ?: $certificate->original_file_name }}
                         </a>
 
-                        <div class="text-xs text-gray-500 space-y-1">
-
-                            @if($certificateNumber)
-                                <div>Number: {{ $certificateNumber }}</div>
-                            @endif
-
-                            @if($validFrom)
-                                <div>Valid From: {{ $validFrom }}</div>
-                            @endif
-
-                            @if($validUntil)
-                                <div>Valid Until: {{ $validUntil }}</div>
-                            @endif
-
-                            <div class="text-gray-400">
-                                Status: {{ ucfirst($certificate->processing_status) }}
-                            </div>
-
-                        </div>
+                        <button class="delete-certificate-btn text-red-400 hover:text-red-600 transition text-xs"
+                                data-id="{{ $certificate->id }}">
+                            ✕
+                        </button>
 
                     </div>
 
-                    <button class="delete-certificate-btn text-red-500 text-sm hover:underline"
-                            data-id="{{ $certificate->id }}">
-                        Delete
-                    </button>
+                    <div class="text-gray-400 text-[11px]">
+                            {{ $certificate->original_file_name }}
+                        </div>
+
+                    <div class="text-xs text-gray-500 space-y-1">
+
+                        @if($certificateNumber)
+                            <div># {{ $certificateNumber }}</div>
+                        @endif
+
+                        @if($validFrom)
+                            <div>Valid from: {{ $validFrom }}</div>
+                        @endif
+
+                        @if($validUntil)
+                            <div>Valid until: {{ $validUntil }}</div>
+                        @endif
+
+                        
+
+                    </div>
 
                 </div>
 
@@ -394,6 +465,16 @@
         <input id="certificateName" type="text"
                placeholder="Certificate Name"
                class="w-full border rounded-lg p-3 text-sm">
+
+        <select id="certificateType"
+                class="w-full border rounded-lg p-3 text-sm">
+            <option value="">Select Certificate Type</option>
+            <option value="ISO">ISO</option>
+            <option value="FSC">FSC</option>
+            <option value="ECO">ECO</option>
+            <option value="CE">CE</option>
+            <option value="OTHER">Other</option>
+        </select>
 
         <input id="certificateNumber" type="text"
                placeholder="Certificate Number"
@@ -461,6 +542,7 @@ function submitCertificate() {
 
     const metadata = {
         certificate_name: document.getElementById('certificateName').value,
+        certificate_type: document.getElementById('certificateType').value,
         certificate_number: document.getElementById('certificateNumber').value,
         valid_from: document.getElementById('validFrom').value,
         valid_until: document.getElementById('validUntil').value
@@ -616,24 +698,93 @@ function deleteCertificate(id) {
 
 
 
- {{-- ================= CATALOG ================= --}}
+ {{-- ================= CATALOG VISUAL BLOCK ================= --}}
 
 <div class="bg-white border rounded-2xl shadow-sm p-6 space-y-5 mt-6">
 
-<div>
-    <h3 class="text-sm text-gray-400 uppercase tracking-wider">
-        Catalog Presentation
-    </h3>
-    <div class="flex justify-center">
-            @include('dashboard.manufacturer.partials.preview-card', [
-                'company' => $company
-            ])
+<div class="grid lg:grid-cols-2 gap-12 p-2">
+<div class="col-span-full text-sm text-gray-400 uppercase tracking-wider">
+    Catalog Presentation
+</div>
+<div class="space-y-4">
+
+    <div class="flex flex-col items-center space-y-2">
+        
+        <div id="catalog-dropzone"
+             class="w-64 h-64 border-2 border-dashed border-gray-300
+                    rounded-xl flex items-center justify-center
+                    bg-gray-50 relative cursor-pointer
+                    overflow-hidden group">
+
+            <img id="catalog-preview"
+     src="{{ $catalogMedia?->cdn_url ?? asset('images/no-catalog-image.png') }}"
+     class="w-full h-full object-cover">
+
+            <div class="absolute inset-0 bg-black/30 flex items-center justify-center
+                        opacity-0 group-hover:opacity-100 transition">
+                <span class="text-white text-sm">Change</span>
+            </div>
+
+            <input type="file" name="catalog_image" accept="image/*" id="catalog-input" class="hidden">
         </div>
-    
+
+        <p class="text-xs text-gray-400 text-center">
+            Used in supplier catalog cards
+        </p>
+
+    </div>
+
+</div>
+
+    {{-- Preview Card --}}
+<div class="flex justify-center items-start">
+    @include('dashboard.manufacturer.partials.preview-card')
 </div>
     
 
 </div>
+    
+
+</div>
+
+<script>
+document.getElementById('catalog-dropzone').addEventListener('click', function() {
+    document.getElementById('catalog-input').click();
+});
+
+document.getElementById('catalog-input').addEventListener('change', function(e) {
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('catalog_image', file);
+
+    fetch("{{ route('manufacturer.catalog.upload') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.success) {
+            document.getElementById('catalog-preview').src = data.url;
+        }
+
+    })
+    .catch(() => alert('Upload failed'));
+
+});
+</script>
+
+
+
+
+
 <script>
 
     function FactoryUploader() {
