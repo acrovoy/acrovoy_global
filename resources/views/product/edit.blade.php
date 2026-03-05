@@ -278,64 +278,74 @@
 
     {{-- ================= STEP 2: Images & Price Tiers ================= --}}
     <div class="form-step hidden" data-step="2">
-        <h3 class="text-xl font-semibold mb-4">Product Images</h3>
 
-        <label
-            for="productImages"
-            class="border-2 border-dashed border-gray-300 rounded-xl p-8
-                   flex flex-col items-center justify-center
-                   cursor-pointer hover:border-blue-600 hover:bg-blue-50
-                   transition text-center bg-white">
-            <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M7 16V4m0 0L3 8m4-4l4 4m6 4v8m0 0l4-4m-4 4l-4-4" />
-            </svg>
+    
+        {{-- Images --}}
+        <div id="productImagesUploader" class="space-y-4">
 
-            <span class="text-lg font-medium text-gray-700">
-                Upload product images
-            </span>
+            <h3 class="text-xl font-semibold">Product Images</h3>
 
             <input
                 type="file"
+                id="productImages"
                 name="images[]"
                 multiple
-                id="productImages"
+                accept="image/png,image/jpeg"
                 class="hidden"
-                accept="image/jpeg,image/png,image/webp" />
+            />
 
-        </label>
+            {{-- Drop Zone --}}
+            <label
+                for="productImages"
+                id="productImagesDropZone"
+                class="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8
+                    flex flex-col items-center justify-center
+                    cursor-pointer hover:border-blue-600 hover:bg-blue-50
+                    transition text-center">
 
-        <p class="text-sm text-gray-500 mt-2">
-            JPG, PNG. Max 5 MB per image.
-        </p>
+                <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 4v8m0 0l4-4m-4 4l-4-4"/>
+                </svg>
 
-        {{-- Превью уже загруженных изображений --}}
-        <div id="imagesPreview" class="flex gap-2 flex-wrap">
-            @foreach($product->images as $key => $image)
-            <div class="image-wrapper relative w-24 h-24 pb-3 mb-4" data-id="{{ $image->id }}"
-                data-order="{{ $key }}"
-                data-main="{{ $image->is_main }}">
-                <img src="{{ asset('storage/' . $image->image_path) }}"
-                    class="w-full h-full object-cover rounded shadow"
-                    data-id="{{ $image->id }}">
+                <span class="text-lg font-medium text-gray-700">
+                    Upload product images
+                </span>
 
+                <p class="text-sm text-gray-500 mt-2">
+                    JPG, PNG. Max 5 MB per image.
+                </p>
+            </label>
 
-                <div @if(!$image->is_main) style="display: none;" @endif class="main-label absolute bottom-5 left-0 bg-yellow-400 text-black text-xs px-1">MAIN</div>
+            {{-- Preview Container --}}
+            <div id="imagesPreview" class="flex flex-wrap gap-4 mt-4"></div>
 
+            <div id="imagesMetaInputs"></div>
 
-                <button type="button"
-                    class="img-dlt-btn absolute top-0 right-0 bg-red-600 text-white text-xs px-1 rounded">×</button>
-
-                <input type="hidden" name="existing_images[{{ $image->id }}][id]" value="{{ $image->id }}">
-                <input type="hidden" name="existing_images[{{ $image->id }}][order]" class="image-order" value="{{ $key }}">
-                <input type="hidden" name="existing_images[{{ $image->id }}][main]" class="image-main" value="{{ $image->is_main ? '1' : '0' }}">
-
-                <button type="button" @if($image->is_main) style="display: none;" @endif class="mt-1 px-3 w-full py-0 bg-yellow-300 text-sm text-black border border-black rounded main-img-btn">Make Main</button>
-            </div>
-            @endforeach
         </div>
 
+        @if($product->images->isNotEmpty())
+        <script>
+        window.existingImages = {!! json_encode(
+            $product->images
+                ->sortBy('sort_order')
+                ->values()
+                ->map(function ($img) {
+                    return [
+                        'id' => $img->id,
+                        'url' => $img->cdn_url,
+                        'sort_order' => $img->sort_order ?? 0,
+                    ];
+                })
+        ) !!};
+        </script>
+        @endif
 
+        @vite([
+            'resources/js/product-edit-uploader.js',
+            'resources/js/product-edit.js',
+            'resources/js/product-form-steps.js'
+        ])
 
        {{--  PRICE TIERS  --}}
         <h3 class="text-xl font-semibold mt-6 mb-4">Price Tiers</h3>
@@ -600,7 +610,15 @@
     </button>
 </div>
 
+<script>
+            window.appLanguages = @json($languages->pluck('code'));
 
+            window.existingSpecs = @json(
+                collect($product->specifications ?? [])->values()
+            );
+            </script>
+
+@vite(['resources/js/product-edit-specifications.js'])
 
     {{-- ================= STEP 5: Commercial Terms ================= --}}
     <div class="form-step hidden" data-step="5">
@@ -743,139 +761,15 @@
 
 @vite(['resources/js/product-edit.js', 'resources/js/product-form-steps.js'])
 
+
 @endsection
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" />
+
+
+
+
 <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
 
 
-<script>
-    /**
-     * Определяем стартовый индекс спецификаций
-     * Для edit-формы — берём количество уже существующих specs
-     * Для create — начнётся с 1
-     */
-    specIndex = Date.now()
 
-    /**
-     * Добавление спецификации
-     */
-    function addSpec(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-
-        let html = `
-        <div x-data="{ open: false }" class="border rounded p-4 bg-white" id="spec-${specIndex}">
-            <div class="flex justify-between items-center mb-3">
-                <h4 class="font-semibold">Specification</h4>
-                <button type="button"
-                        onclick="removeSpec(${specIndex})"
-                        class="text-red-600 hover:text-red-800 font-semibold">
-                    ✕
-                </button>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-1 font-medium">Parameter</label>
-        `;
-
-        @foreach($languages as $index => $language)
-            @if($index === 0)
-                html += `
-                    <label class="block text-sm text-gray-600 mb-1">
-                        {{ strtoupper($language->code) }}
-                    </label>
-                    <input type="text"
-                           name="specs[${specIndex}][{{ $language->code }}][key]"
-                           class="input mb-2 w-full"
-                           placeholder="Parameter ({{ $language->code }})">
-                `;
-            @else
-                html += `
-                    <div x-show="open" x-collapse>
-                        <label class="block text-sm text-gray-600 mb-1">
-                            {{ strtoupper($language->code) }}
-                        </label>
-                        <input type="text"
-                               name="specs[${specIndex}][{{ $language->code }}][key]"
-                               class="input mb-2 w-full"
-                               placeholder="Parameter ({{ $language->code }})">
-                    </div>
-                `;
-            @endif
-        @endforeach
-
-        html += `
-            </div>
-
-            <div>
-                <label class="block mb-1 font-medium">Value</label>
-        `;
-
-        @foreach($languages as $index => $language)
-            @if($index === 0)
-                html += `
-                    <label class="block text-sm text-gray-600 mb-1">
-                        {{ strtoupper($language->code) }}
-                    </label>
-                    <input type="text"
-                           name="specs[${specIndex}][{{ $language->code }}][value]"
-                           class="input mb-2 w-full"
-                           placeholder="Value ({{ $language->code }})">
-                `;
-            @else
-                html += `
-                    <div x-show="open" x-collapse>
-                        <label class="block text-sm text-gray-600 mb-1">
-                            {{ strtoupper($language->code) }}
-                        </label>
-                        <input type="text"
-                               name="specs[${specIndex}][{{ $language->code }}][value]"
-                               class="input mb-2 w-full"
-                               placeholder="Value ({{ $language->code }})">
-                    </div>
-                `;
-            @endif
-        @endforeach
-
-        html += `
-            </div>
-
-            <button type="button"
-                    @click="open = !open"
-                    class="mt-3 text-sm text-blue-600 hover:underline flex items-center gap-1">
-                Other Languages
-                <svg :class="{ 'rotate-180': open }"
-                     class="w-4 h-4 transition-transform"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24">
-                    <path stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
-        </div>
-        `;
-
-        container.insertAdjacentHTML('beforeend', html);
-
-        // 🔴 КРИТИЧНО: инициализация Alpine для динамически добавленного блока
-        if (window.Alpine) {
-            Alpine.initTree(container.lastElementChild);
-        }
-
-        specIndex++;
-    }
-
-    /**
-     * Удаление спецификации
-     */
-    function removeSpec(index) {
-        const el = document.getElementById(`spec-${index}`);
-        if (el) {
-            el.remove();
-        }
-    }
-</script>

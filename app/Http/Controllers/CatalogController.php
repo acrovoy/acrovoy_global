@@ -33,7 +33,7 @@ class CatalogController extends Controller
 
         // Продукты через ProductFilter + withBaseRelations + агрегаты
         $products = $filter->apply(
-            Product::query()->withBaseRelations(),
+            Product::query()->withBaseRelations()->with(['images']),
             $request
         )->paginate(24);
 

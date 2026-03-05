@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\Product\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Specification;
-use App\Domain\Media\Models\Media;
 
 class Product extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-                
+        'name',
+        'undername',
         'slug',
+        'description',
         'category_id',
         'moq',
         'lead_time',
@@ -67,7 +68,27 @@ class Product extends Model
         ->value('price');
 }
 
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
     
+
+    public function getImageUrlAttribute()
+{
+    if ($this->mainImage && $this->mainImage->image_path) {
+        return asset('storage/' . $this->mainImage->image_path);
+    }
+
+    return asset('images/no-image.png'); // заглушка
+}
+
+
+    public function mainImage()
+{
+    return $this->hasOne(ProductImage::class)->where('is_main', 1);
+}
 
 // Материалы (pivot)
     public function materials()
@@ -199,12 +220,5 @@ public function scopeWithBaseRelations($query)
         return $this->belongsTo(Location::class, 'origin_city_id');
     }
 
-
-    public function images()
-{
-    return $this->morphMany(Media::class, 'model')
-        ->where('collection', 'product_gallery')
-        ->orderBy('id');
-}
 
 }

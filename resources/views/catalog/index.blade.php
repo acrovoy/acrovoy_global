@@ -162,16 +162,25 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                     @if($products->count())
                         @foreach ($products as $product)
+
+                        @php
+                        $mainImage = $product->images
+                            ->firstWhere('is_main', 1)
+                            ?? $product->images->first();
+                        @endphp
+
                             <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
 
                                 @if($product->slug)
                                     <a href="{{ route('product.show', $product->slug) }}">
-                                        <img src="{{ $product->image_url }}"
-                                            class="w-full h-auto object-contain">
+                                        
+
+                                        <a href="{{ route('product.show', $product->slug) }}">
+                                            <img src="{{ $mainImage?->cdn_url ?? $product->image_url }}" class="w-full h-auto object-contain">
+                                        </a>
                                     </a>
                                 @else
-                                    <img src="{{ $product->image_url }}"
-                                        class="w-full h-auto object-contain">
+                                    <img src="{{ $mainImage?->cdn_url ?? $product->image_url }}" class="w-full h-auto object-contain">
                                 @endif
 
                                 <div class="p-4">

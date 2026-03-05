@@ -37,15 +37,13 @@ class MediaService
      */
     public function upload(UploadMediaDTO $dto)
     {
+    
         $file = $dto->file;
         $model = $dto->model;
         $collection = $dto->collection;
         $private = $dto->private;
         $mediaRole = $dto->mediaRole;
         $originalFileName = $dto->originalFileName;
-        
-
-        $metadata = $this->extractMetadata($file);
         $metadata = $dto->metadata;
 
         $uuid = Str::uuid()->toString();
@@ -76,7 +74,10 @@ class MediaService
                 'height' => $metadata['height'] ?? null,
                 'metadata' => json_encode($metadata),
                 'is_private' => $private,
-                'processing_status' => 'uploading'
+                'processing_status' => 'uploading',
+                'sort_order' => $dto->sortOrder,
+                'is_main' => $dto->isMain,
+                
             ]);
 
             // Upload storage artifact

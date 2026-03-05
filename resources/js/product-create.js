@@ -1,138 +1,263 @@
 document.addEventListener('DOMContentLoaded', () => {
+    
 
-    /* ===========================
-     * IMAGES UPLOAD + SORT
+     /* ===========================
+     * IMAGE
      * =========================== */
-    const productImagesInput = document.getElementById('productImages');
-    const imagesPreview = document.getElementById('imagesPreview');
+ 
 
+    const input = document.getElementById("productImages");
+    const previewContainer = document.getElementById("imagesPreview");
+    const dropZone = document.getElementById("productImagesDropZone");
+    const MAX_FILES = 6;
+    const metaContainer = document.getElementById("imagesMetaInputs");
+    
 
-    function updateMainLabel() {
-        if (!imagesPreview) return;
-        const wrappers = imagesPreview.querySelectorAll('.image-wrapper');
-        wrappers.forEach((w, i) => {
+    if (!input || !previewContainer || !dropZone) {
+    console.warn("Uploader DOM not ready");
+    return;
+}
 
-            const label = w.querySelector('.main-label');
-            const btn = w.querySelector('.main-img-btn');
-            const input = w.querySelector('input.image-main');
-            if (!label) return;
-            label.style.display = input.value == '1' ? 'block' : 'none';
-            btn.style.display = input.value != '1' ? 'block' : 'none';
-        });
-    }
+    let filesState = []; 
+    // [{ file: File, hash: string }]
 
-    function addImagePreview(file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'image-wrapper relative w-24 h-24  pb-3 mb-3';
+    function renderPreview() {
 
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'w-full h-full object-cover rounded shadow';
-            wrapper.appendChild(img);
+    previewContainer.innerHTML = "";
 
-            const mainLabel = document.createElement('div');
-            mainLabel.className = 'main-label absolute bottom-5 left-0 bg-yellow-400 text-black text-xs px-1';
-            mainLabel.innerText = 'MAIN';
-            mainLabel.style.display = 'none';
-            wrapper.appendChild(mainLabel);
+    filesState.forEach((item, index) => {
 
-            const delBtn = document.createElement('button');
-            delBtn.className = 'absolute top-0 right-0 bg-red-600 text-white text-xs px-1 rounded';
-            delBtn.innerText = '×';
-            delBtn.type = 'button';
+        const url = URL.createObjectURL(item.file);
 
-            delBtn.onclick = (e) => {
-                const wrapper = e.target.closest('.image-wrapper');
-                const inputVal = wrapper.querySelector('input.image-main').value;
-                
-                wrapper.remove();
+        const wrapper = document.createElement("div");
+        wrapper.className = "relative group w-28 flex flex-col items-center";
 
-                if (inputVal== '1') {
-                    const wrappers = imagesPreview.querySelectorAll('.image-wrapper');
-                    if (wrappers.length > 1) {
-                        const firstWrapper = wrappers[0];
-                    console.log(firstWrapper);
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "w-28 h-28 object-cover rounded-lg shadow border";
 
-                        const firstMainInput = firstWrapper.querySelector('input.image-main');
-                        if (firstMainInput) {
-                            firstMainInput.value = '1';
-                        }
-                    }
-                }
-                updateOrders();
-                updateMainLabel();
+        img.onload = () => URL.revokeObjectURL(url);
 
-            };
-            wrapper.appendChild(delBtn);
+        const controls = document.createElement("div");
+        controls.className = "flex items-center justify-center gap-3 mt-2 text-sm";
 
-            wrapper.draggable = true;
-            wrapper.addEventListener('dragstart', () => wrapper.classList.add('dragging'));
-            wrapper.addEventListener('dragend', () => {
-                wrapper.classList.remove('dragging');
-                updateOrders();
-            });
+        controls.innerHTML = `
+    <div class="flex items-center justify-center gap-3 mt-2 text-sm">
 
-            const mainInput = document.createElement('input');
-            mainInput.type = 'hidden';
-            mainInput.name = `new_images_main[]`;
-            mainInput.className = 'image-main';
-            wrapper.appendChild(mainInput);
+        <div class="flex items-center gap-3 px-2 py-1 bg-white rounded-xl
+                    border border-gray-200 shadow-sm">
 
-            const mainBtn = document.createElement('button');
-            mainBtn.type = 'button';
-            mainBtn.className = 'mt-1 px-3 w-full py-0 bg-yellow-300 text-sm text-black border border-black rounded main-img-btn';
-            mainBtn.innerText = 'MakeMain';
-            mainBtn.onclick = (e) => setMainImage(e);
-            wrapper.appendChild(mainBtn);
+            <button type="button"
+                data-action="left"
+                data-index="${index}"
+                class="w-6 h-6 flex items-center justify-center
+                    text-gray-400 hover:text-gray-700
+                    hover:bg-gray-50 rounded-lg transition">
 
-            imagesPreview.appendChild(wrapper);
-            updateOrders();
-        };
-        reader.readAsDataURL(file);
-    }
+                ‹
+            </button>
 
-    productImagesInput?.addEventListener('change', () => {
-        Array.from(productImagesInput.files).forEach(addImagePreview);
+            <span class="text-[14px] font-semibold text-gray-500 tracking-wide min-w-[36px] text-center">
+                ${index === 0 ? "MAIN" : index + 1}
+            </span>
+
+            <button type="button"
+                data-action="right"
+                data-index="${index}"
+                class="w-6 h-6 flex items-center justify-center
+                    text-gray-400 hover:text-gray-700
+                    hover:bg-gray-50 rounded-lg transition">
+
+                ›
+            </button>
+
+            
+
+        </div>
+    </div>
+`;
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.dataset.action = "delete";
+        deleteBtn.dataset.index = index;
+
+        deleteBtn.className =
+            "absolute -top-2 -right-2 w-6 h-6 flex items-center justify-center" +
+            " rounded-lg border border-red-200 bg-white" +
+            " text-red-400 hover:text-red-600 hover:bg-red-50" +
+            " transition shadow-sm";
+
+        deleteBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        `;
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(deleteBtn);
+        wrapper.appendChild(controls);
+
+        previewContainer.appendChild(wrapper);
     });
+}
 
-    function setMainImage(e) {
+    
+    async function getFileHash(file) {
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
 
-        const wrappers = imagesPreview.querySelectorAll('.image-wrapper');
-        wrappers.forEach(w => {
-            const input = w.querySelector('input.image-main');
-            if (input) {
-                input.value = '0';
-            }
+
+    function syncMetaInputs() {
+
+        metaContainer.innerHTML = "";
+
+        filesState.forEach((file, index) => {
+
+            const sortInput = document.createElement("input");
+            sortInput.type = "hidden";
+            sortInput.name = "sort_order[]";
+            sortInput.value = index;
+
+            const mainInput = document.createElement("input");
+            mainInput.type = "hidden";
+            mainInput.name = "is_main[]";
+            mainInput.value = index === 0 ? 1 : 0;
+
+            metaContainer.appendChild(sortInput);
+            metaContainer.appendChild(mainInput);
         });
+    }
 
-        const wrapper = e.target.closest('.image-wrapper');
-        const input = wrapper.querySelector('input.image-main');
-        if (input) {
-            input.value = '1';
+
+    async function addFiles(newFiles) {
+
+    for (const file of newFiles) {
+
+        if (filesState.length >= MAX_FILES) {
+            alert(`Maximum ${MAX_FILES} images allowed`);
+            break;
         }
-        updateMainLabel();
-    }
 
-    function updateOrders() {
-        const wrappers = imagesPreview.querySelectorAll('.image-wrapper');
-        wrappers.forEach((wrapper, index) => {
-            wrapper.dataset.order = index;
+        if (!file.type.startsWith("image/")) continue;
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Max file size 5MB");
+            continue;
+        }
+
+        const newHash = await getFileHash(file);
+
+        const exists = filesState.some(existing =>
+            existing.hash === newHash
+        );
+
+        if (exists) continue;
+
+        filesState.push({
+            file: file,
+            hash: newHash
         });
     }
 
-    imagesPreview?.addEventListener('dragover', e => {
-        e.preventDefault();
-        const dragging = imagesPreview.querySelector('.dragging');
-        const after = [...imagesPreview.children]
-            .filter(el => el !== dragging)
-            .find(el => e.clientX < el.getBoundingClientRect().right);
+    renderPreview();
+    syncInputFiles();
+}
 
-        after ? imagesPreview.insertBefore(dragging, after)
-            : imagesPreview.appendChild(dragging);
-        updateOrders();
+
+
+    function moveLeft(index) {
+        if (index <= 0) return;
+
+        [filesState[index - 1], filesState[index]] =
+            [filesState[index], filesState[index - 1]];
+
+        renderPreview();
+        syncInputFiles();
+    }
+
+    function moveRight(index) {
+        if (index >= filesState.length - 1) return;
+
+        [filesState[index + 1], filesState[index]] =
+            [filesState[index], filesState[index + 1]];
+
+        renderPreview();
+        syncInputFiles();
+    }
+
+    function deleteImage(index) {
+        filesState.splice(index, 1);
+        renderPreview();
+        syncInputFiles();
+    }
+
+
+    function syncInputFiles() {
+
+        const dataTransfer = new DataTransfer();
+        filesState.forEach(item => dataTransfer.items.add(item.file));
+        input.files = dataTransfer.files;
+
+        syncMetaInputs();
+    }
+
+    // Events
+
+    input.addEventListener("change", async e => {
+        await addFiles(e.target.files);
+        input.value = "";
     });
+
+    previewContainer.addEventListener("click", e => {
+
+        const btn = e.target.closest("button");
+        if (!btn) return;
+
+        e.preventDefault();
+
+        const index = parseInt(btn.dataset.index);
+        const action = btn.dataset.action;
+
+        if (action === "left") moveLeft(index);
+        if (action === "right") moveRight(index);
+        if (action === "delete") deleteImage(index);
+    });
+
+    // Drag & Drop
+
+    dropZone.addEventListener("dragover", e => {
+        e.preventDefault();
+        dropZone.classList.add("border-blue-600", "bg-blue-50");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("border-blue-600", "bg-blue-50");
+    });
+
+    dropZone.addEventListener("drop", e => {
+        e.preventDefault();
+
+        dropZone.classList.remove("border-blue-600", "bg-blue-50");
+
+        if (e.dataTransfer.files) {
+            addFiles(e.dataTransfer.files);
+        }
+    });
+
+
+
+   
 
 
     /* ===========================
@@ -340,5 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = preview.dataset.link;
         }
     });
+
+    document.getElementById("productForm")?.addEventListener("submit", () => {
+    syncInputFiles();
+});
 
 });

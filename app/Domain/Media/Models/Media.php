@@ -29,6 +29,8 @@ class Media extends Model
         'checksum_hash',
         'is_private',
         'is_primary',
+        'sort_order',
+        'is_main',
         'processing_status',
         'metadata'
     ];

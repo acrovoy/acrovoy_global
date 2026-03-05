@@ -7,8 +7,24 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+
 /* === REQUEST === */
 use App\Http\Requests\UpdateProductRequest;
+
+/* === SERVICES === */
+use App\Domain\Media\Services\MediaService;
+use App\Domain\Media\DTO\UploadMediaDTO;
+use App\Domain\Product\Services\ProductFormDataService;
+use App\Domain\Product\Services\ProductEditQueryService;
+use App\Domain\Product\Services\ProductViewQueryService;
+use App\Domain\Product\Services\ProductListQueryService;
+
+/* === ACTIONS === */
+use App\Domain\Product\Actions\DeleteProductAction;
+use App\Domain\Product\Actions\UpdateProductAction;
+
+/* === DTO === */
+use App\Domain\Product\DTO\ProductDTO;
 
 /* === MODELS === */
 use App\Models\Product;
@@ -29,659 +45,154 @@ use App\Models\MessageThread;
 use App\Models\Project;
 
 
-
-
+use App\Domain\Product\Actions\CreateProductAction;
+use App\Domain\Product\Actions\SyncProductTranslationAction;
+use App\Domain\Product\Actions\SyncProductMediaAction;
+use App\Domain\Product\Actions\SyncProductPriceTierAction;
+use App\Domain\Product\Actions\SyncProductSpecificationAction;
+use App\Domain\Product\Actions\SyncProductMaterialAction;
 
 
 class ProductController extends Controller
 {
 
-    private function generateUniqueSlug($name)
-    {
-        $slug = Str::slug($name);
-        $count = Product::where('slug', 'LIKE', "{$slug}%")->count();
+     public function index(Request $request, ProductListQueryService $service)
+{
+    $products = $service->getSupplierProducts(
+        Auth::user()->supplier->id,
+        $request->only(['sort', 'status', 'user'])
+    );
 
-        return $count ? "{$slug}-{$count}" : $slug;
+    return view('dashboard.manufacturer.products', [
+        'products' => $products,
+        'sort' => $request->sort,
+        'status' => $request->status,
+        'userFilter' => $request->user,
+    ]);
+}
+
+
+    public function show(string $slug, ProductViewQueryService $service)
+    {
+        return view('product.show', $service->getProductViewData($slug));
     }
 
-    public function index(Request $request)
+    public function create(ProductFormDataService $service)
     {
-        $sort = $request->get('sort');
-        $status = $request->get('status');
-        $userFilter = $request->get('user');
-        $supplier = Auth::user()->supplier;
+        $data = $service->getCreateFormData();
 
-        $query = Product::query()
-            ->with([
-                'user',
-                'category',
-                'images',
-                'priceTiers',
-                'mainImage',
-            ])
-            // Добавляем фильтр по текущему пользователю
-            ->where('supplier_id', $supplier->id);
-
-        // Фильтр по статусу
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        // Поиск по пользователю (можно оставить для админки)
-        if ($userFilter) {
-            $query->whereHas('user', function ($q) use ($userFilter) {
-                $q->where('name', 'like', "%{$userFilter}%");
-            });
-        }
-
-        // Сортировка
-        match ($sort) {
-            'oldest' => $query->orderBy('created_at', 'asc'),
-            'status' => $query->orderBy('status'),
-            default => $query->orderBy('created_at', 'desc'),
-        };
-
-        $products = $query->get();
-
-        return view('dashboard.manufacturer.products', compact(
-            'products',
-            'sort',
-            'status',
-            'userFilter'
-        ));
+        return view('dashboard.manufacturer.add-product', $data);
     }
 
 
-    public function show(string $slug)
-    {
+    public function store(StoreProductRequest $request, CreateProductAction $createProduct, SyncProductTranslationAction $translationAction, SyncProductMediaAction $mediaAction,
+    SyncProductPriceTierAction $priceAction, SyncProductSpecificationAction $specAction, SyncProductMaterialAction $materialAction
+    ) {
 
-        $user = auth()->user();
+        DB::transaction(function () use (
+            $request,
+            $createProduct,
+            $translationAction,
+            $priceAction,
+            $specAction,
+            $materialAction
+        ) {
+            $product = $createProduct->execute(ProductDTO::fromRequest($request));
 
+            $translationAction->execute(
+                $product,
+                $request->name,
+                $request->undername,
+                $request->description
+            );
 
+            $mediaService = app(MediaService::class);
 
-        $product1 = Product::with(['images', 'mainImage', 'specifications', 'priceTiers', 'supplier', 'category', 'colors', 'colors.linkedProduct'])
-            ->where('slug', $slug)
-            ->firstOrFail();
-
-
-
-        // Получаем проекты пользователя в статусе draft
-        $projects = collect(); // пустая коллекция
-
-        if ($user) {
-            // замените 'user_id' на реальную колонку, например 'buyer_id'
-            $projects = Project::where('buyer_id', $user->id) // <-- исправить на правильное поле
-                ->where('status', 'draft')
-                ->orderBy('created_at', 'desc')
-                ->get();
-        }
-
-
-
-
-        return view('product.show', compact('product1', 'projects'));
-    }
-
-
-    public function create()
-    {
-        $categories = Category::all();
-
-        $locale = app()->getLocale();
-
-        $materials = Material::with(['translations' => function ($q) use ($locale) {
-            $q->where('locale', $locale);
-        }])->get();
-
-        $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
-        $countries = Country::withCurrentTranslation()
-    ->where('is_active', true)->get();
-        $shippingTemplates = ShippingTemplate::where('manufacturer_id', $supplier->id)
-            ->with('translations')
-            ->get();
-
-        // Шаблоны доставки по умолчанию (Acrovoy Delivery)
-        $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
-
-        return view('dashboard.manufacturer.add-product', compact('categories', 'materials', 'shippingTemplates', 'defaultShippingTemplate', 'countries'));
-    }
-
-    public function store(StoreProductRequest  $request)
-    {
-
-        //dd($request->all());
-        //dd(ini_get('post_max_size'), ini_get('upload_max_filesize'));
-
-
-        DB::transaction(function () use ($request) {
-
-            /* ===============================
-         * 1. PRODUCT (base)
-         * =============================== */
-
-            // Берём первый язык как дефолт
-            $defaultLocale = array_key_first($request->name);
-            $defaultName = $request->name[$defaultLocale] ?? null;
-            $defaultUndername = $request->undername[$defaultLocale] ?? null;
-            $defaultDescription = $request->description[$defaultLocale] ?? null;
-
-            $slug = $this->generateUniqueSlug($defaultName);
-            $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
-            $product = Product::create([
-                'supplier_id' => $supplier->id,
-                'name'        => $defaultName,
-                'slug'        => $slug,
-                'undername'   => $defaultUndername,
-                'description' => $defaultDescription,
-                'category_id' => $request->category,
-                'moq'         => $request->moq,
-                'lead_time'   => $request->lead_time,
-                'customization' => $request->customization === 'available',
-                'materials_selected' => $request->materials_selected,
-                'country_id' => $request->country_id,
+           
+            $files = $request->file('images', []);
+            \Log::info('FILES DEBUG', [
+                'has_images' => $request->hasFile('images'),
+                'files_raw' => $request->file('images'),
+                'all_request' => $request->all()
             ]);
 
-            /* ===============================
-         * 2. PRODUCT TRANSLATIONS
-         * =============================== */
+            foreach ($files as $index => $file) {
 
-            if (is_array($request->name)) {
-                foreach ($request->name as $locale => $name) {
+                $dto = new UploadMediaDTO(
+                    file: $file,
+                    model: $product,
+                    collection: 'product_gallery',
+                    mediaRole: 'product_image',
+                    private: false,
+                    originalFileName: $file->getClientOriginalName(),
+                    metadata: [],
+                    sortOrder: $request->sort_order[$index] ?? $index,
+                    isMain: ($request->is_main[$index] ?? 0) == 1
+                );
 
-                    if (
-                        empty($name) &&
-                        empty($request->undername[$locale] ?? null) &&
-                        empty($request->description[$locale] ?? null)
-                    ) {
-                        continue;
-                    }
-
-                    \App\Models\ProductTranslation::create([
-                        'product_id' => $product->id,
-                        'locale'     => $locale,
-                        'name'       => $name,
-                        'undername'  => $request->undername[$locale] ?? null,
-                        'description' => $request->description[$locale] ?? null,
-                    ]);
-                }
+                $mediaService->upload($dto);
             }
 
-            /* ===============================
-         * 2. IMAGES (drag & drop + MAIN)
-         * =============================== */
+            
+             
+            $priceAction->execute($product, $request->price_tiers ?? []);
 
+            $materialIds = explode(',', $request->materials_selected ?? '');
+            $materialAction->execute($product, array_filter($materialIds));
 
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $image) {
-                    $path = 'products/no-photo.png';
-                    // Сохраняем на диск 'public' в папку 'products'
-                    $path = $image->store('products', 'public');
-
-
-                    // $path теперь что-то вроде: "products/php652C.png"
-                    ProductImage::create([
-                        'product_id' => $product->id,
-                        'image_path' => $path,
-                        'sort_order' => $index,
-                        'is_main' => $index === 0 ? 1 : 0,
-                    ]);
-                }
-            }
-
-            /* ===============================
-         * 3. PRICE TIERS
-         * =============================== */
-            if ($request->price_tiers) {
-                foreach ($request->price_tiers as $tier) {
-                    if (!empty($tier['price'])) {
-                        $product->priceTiers()->create([
-                            'min_qty' => $tier['min_qty'] ?? null,
-                            'max_qty' => $tier['max_qty'] ?? null,
-                            'price' => $tier['price'],
-                        ]);
-                    }
-                }
-            }
-
-            /* ===============================
-         * 4. COLORS / TEXTURES
-         * =============================== */
-            if ($request->materials) {
-                foreach ($request->materials as $material) {
-
-                    // если ни цвета, ни текстуры — пропускаем
-                    if (
-                        empty($material['color']) &&
-                        empty($material['texture'])
-                    ) {
-                        continue;
-                    }
-
-                    $texturePath = null;
-
-                    if (!empty($material['texture'])) {
-                        $texturePath = $material['texture']->store('textures', 'public');
-                    }
-
-                    if (!empty($material['linked_product_id'])) {
-                        $linkedProductExists = Product::where('id', $material['linked_product_id'])->exists();
-                        $linkedProductId = $linkedProductExists ? $material['linked_product_id'] : null;
-                    } else {
-                        $linkedProductId = null;
-                    }
-
-                    Color::create([
-                        'product_id' => $product->id,
-                        'color' => $material['color'] ?? null,
-                        'texture_path' => $texturePath,
-                        'linked_product_id' => $material['linked_product_id'] ?? null,
-                    ]);
-                }
-            }
-
-
-
-            /* ===============================
-        * 5. MATERIALS (many-to-many)
-        * =============================== */
-
-            if ($request->filled('materials_selected')) {
-                // materials_selected приходит как "1,2,3"
-                $materialIds = explode(',', $request->materials_selected);
-
-                // Сохраняем через pivot
-                $product->materials()->sync($materialIds);
-            }
-
-            /* ===============================
- * 6. SHIPPING TEMPLATES
- * =============================== */
-            if ($request->filled('shipping_templates')) {
-                // shipping_templates приходит как массив
-                $templateIds = $request->shipping_templates;
-
-                // сохраняем привязку через pivot
-                $product->shippingTemplates()->sync($templateIds);
-            }
-
-            /* ===============================
-         * 5. SPECIFICATIONS
-         * =============================== */
-            if ($request->specs) {
-                foreach ($request->specs as $specData) {
-
-                    // создаём specification (без текста)
-                    $spec = Specification::create([
-                        'product_id' => $product->id,
-                    ]);
-
-                    // сохраняем переводы
-                    foreach ($specData as $locale => $values) {
-                        if (
-                            !empty($values['key']) &&
-                            !empty($values['value'])
-                        ) {
-                            $spec->translations()->create([
-                                'locale' => $locale,
-                                'key'    => $values['key'],
-                                'value'  => $values['value'],
-                            ]);
-                        }
-                    }
-                }
-            }
+            $specAction->execute($product, $request->specs ?? []);
         });
 
-
-
-
-
-        return redirect()
-            ->route('manufacturer.products.index')
+        return redirect()->route('manufacturer.products.index')
             ->with('success', 'Product created successfully');
     }
 
 
-    public function edit(Product $product)
+    public function edit(Product $product, ProductEditQueryService $service)
     {
-        // 🔐 Защита: только владелец
+        return view(
+            'product.edit',
+            $service->getEditViewData($product)
+        );
+    }
+
+    public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $action) 
+    {
+
         abort_if(
             $product->supplier_id !== auth()->user()->supplier->id,
             403
         );
 
-        $product->load([
-            'translations',
-            'category',
-            'materials',
-            'priceTiers',
-            'shippingTemplates',
-            'images',
-        ]);
+        $dto = ProductDTO::fromUpdateRequest($request);
 
+       $translations = [];
 
-
-        $categories = Category::all();
-        // Получаем все активные языки
-        $languages = Language::where('is_active', true)->get();
-
-
-        // Подготовка массива переводов
-        $translations = [];
-        foreach ($languages as $language) {
-            $translation = $product->translations->firstWhere('locale', $language->code);
-            $translations[$language->code] = [
-                'name' => $translation->name ?? '',
-                'undername' => $translation->undername ?? '',
-                'description' => $translation->description ?? '',
+        foreach ($request->name as $locale => $name) {
+            $translations[$locale] = [
+                'name' => $name,
+                'undername' => $request->undername[$locale] ?? null,
+                'description' => $request->description[$locale] ?? null,
             ];
         }
 
-        // Получаем спецификации с переводами
-        $specsTranslations = [];
-        foreach ($languages as $language) {
-            $specsTranslations[$language->code] = [];
-
-            foreach ($product->specifications as $i => $spec) {
-                $translation = $spec->translations->firstWhere('locale', $language->code);
-                $specsTranslations[$language->code][$i] = [
-                    'key' => $translation->key ?? '',
-                    'value' => $translation->value ?? '',
-                ];
-            }
-        }
-
-        // Получаем все страны (для select)
-        $countries = Country::withCurrentTranslation()
-    ->all();
-
-        $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
-        $shippingTemplates = ShippingTemplate::where('manufacturer_id', $supplier->id)
-            ->with('translations')
-            ->get();
-
-        // Шаблон доставки по умолчанию (Acrovoy Delivery)
-        $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->first();
-
-
-        // Загружаем материалы с переводами
-        $materials = Material::with('translations')->get();
-
-        // Подготавливаем массив для редактирования
-        $materialsPrepared = [];
-
-        foreach ($materials as $material) {
-            $materialData = ['id' => $material->id, 'translations' => []];
-
-            foreach ($languages as $language) {
-                $translation = $material->translations->firstWhere('locale', $language->code);
-                $materialData['translations'][$language->code] = [
-                    'name' => $translation->name ?? '',
-                ];
-            }
-
-            $materialsPrepared[] = $materialData;
-        }
-
-        // Получаем материалы, уже привязанные к продукту
-        $selectedMaterials = $product->materials->pluck('id')->toArray();
-
-        $mainImage = $product->images->firstWhere('is_main', 1)->order ?? null;
-
-        return view('product.edit', compact(
-            'product',
-            'categories',
-            'languages',
-            'countries',
-            'shippingTemplates',
-            'defaultShippingTemplate',
-            'materialsPrepared',  // все материалы с переводами
-            'selectedMaterials',  // выбранные материалы для продукта
-            'translations',
-            'specsTranslations',
-            'mainImage'
-        ));
-    }
-
-    public function update(UpdateProductRequest $request, Product $product)
-    {
-
-        abort_if(
-            $product->supplier_id !== auth()->user()->supplier->id,
-            403
-        );
-        DB::transaction(function () use ($request, $product) {
-
-            /* ===============================
-         * 1. Base product
-         * =============================== */
-
-            $defaultLocale = array_key_first($request->name);
-
-            $product->update([
-                'name'        => $request->name[$defaultLocale],
-                'undername'   => $request->undername[$defaultLocale] ?? null,
-                'description' => $request->description[$defaultLocale] ?? null,
-                'category_id' => $request->category,
-                'country_id'  => $request->country_id,
-                'moq'         => $request->moq,
-                'lead_time'   => $request->lead_time,
-                'customization' => $request->boolean('customization'),
-
-            ]);
-
-            /* ===============================
-         * 2. Translations
-         * =============================== */
-
-            foreach ($request->name as $locale => $name) {
-                if (!$name) continue;
-
-                $product->translations()->updateOrCreate(
-                    ['locale' => $locale],
-                    [
-                        'name'        => $name,
-                        'undername'   => $request->undername[$locale] ?? null,
-                        'description' => $request->description[$locale] ?? null,
-                    ]
-                );
-            }
-
-
-            /* ===============================
-         * 2. IMAGES (drag & drop + MAIN)
-         * =============================== */
-
-
-            $main_image = $request->input('main_image', 0);
-
-            $existingImages = $request->input('existing_images', []);
-            $existingImagesIds = collect($existingImages)->pluck('id')->toArray();
-
-            // Получаем текущие изображения продукта
-            $currentImages = $product->images()->pluck('id')->toArray();
-
-            // 1️⃣1. Удаляем те, которых нет в форме
-            $toDelete = array_diff($currentImages, $existingImagesIds);
-            foreach ($toDelete as $id) {
-                $img = $product->images()->find($id);
-                if ($img) {
-                    Storage::disk('public')->delete($img->image_path);
-                    $img->delete();
-                }
-            }
-            // 1️⃣2. Обновляем порядок и is_main для оставшихся
-            foreach ($existingImagesIds as $id) {
-                $img = $product->images()->find($id);
-                if ($img) {
-                    $img->sort_order = $existingImages[$id]['order'] ?? 0;
-                    $img->is_main = $existingImages[$id]['main'];
-                    $img->save();
-                }
-            }
-
-            // 2️⃣ Новые картинки
-            $newFiles = $request->file('new_images', []);
-            $newOrders = $request->input('new_images_order', []);
-            $newMain = $request->input('new_images_main', []);
-
-            if (is_array($newFiles)) {
-                foreach ($newFiles as $index => $file) {
-                    $path = $file->store('products', 'public');
-
-                    ProductImage::create([
-                        'product_id' => $product->id,
-                        'image_path' => $path,
-                        'sort_order' => $newOrders[$index] ?? 0,
-                        'is_main' => $newMain[$index] ?? 0,
-                    ]);
-                }
-            }
-
-
-            /* ===============================
-         * 3. Materials (many-to-many)
-         * =============================== */
-            // ⬅️ ТОЛЬКО ID материалов (как в store)
-            if ($request->filled('materials_selected')) {
-                $materialIds = explode(',', $request->materials_selected);
-                $product->materials()->sync($materialIds);
-            } else {
-                $product->materials()->sync([]);
-            }
-
-            /* ===============================
-         * 4. Colors / Textures
-         * =============================== */
-            // ⬅️ логика из store(), но с пересозданием
-
-            if ($product->colors && count($product->colors) > 0) {
-                foreach ($product->colors as $color) {
-                    if (empty($request->materials[$color->id])) {
-                        $color->delete();
-                        continue;
-                    }
-                    $material = $request->materials[$color->id];
-                    if (
-                        empty($material['color']) &&
-                        empty($material['texture'])
-                    ) {
-                        continue;
-                    }
-
-                    $texturePath = null;
-
-                    if (!empty($material['texture'])) {
-                        $texturePath = $material['texture']->store('textures', 'public');
-                    }
-
-                    $color->update([
-                        'color'             => $material['color'] ?? null,
-                        'texture_path'      => $texturePath,
-                        'linked_product_id' => $material['linked_product_id'] ?? null,
-                    ]);
-                }
-            }
-
-            if ($request->newMaterials) {
-                foreach ($request->newMaterials as $material) {
-
-                    // если ни цвета, ни текстуры — пропускаем
-                    if (
-                        empty($material['color']) &&
-                        empty($material['texture'])
-                    ) {
-                        continue;
-                    }
-
-                    $texturePath = null;
-
-                    if (!empty($material['texture'])) {
-                        $texturePath = $material['texture']->store('textures', 'public');
-                    }
-
-                    if (!empty($material['linked_product_id'])) {
-                        $linkedProductExists = Product::where('id', $material['linked_product_id'])->exists();
-                        $linkedProductId = $linkedProductExists ? $material['linked_product_id'] : null;
-                    } else {
-                        $linkedProductId = null;
-                    }
-
-                    Color::create([
-                        'product_id' => $product->id,
-                        'color' => $material['color'] ?? null,
-                        'texture_path' => $texturePath,
-                        'linked_product_id' => $material['linked_product_id'] ?? null,
-                    ]);
-                }
-            }
-
-            /* ===============================
-         * 5. Price tiers
-         * =============================== */
-
-            $product->priceTiers()->delete();
-
-            foreach ($request->price_tiers as $tier) {
-                if (!empty($tier['price'])) {
-                    $product->priceTiers()->create([
-                        'min_qty' => $tier['min_qty'] ?? null,
-                        'max_qty' => $tier['max_qty'] ?? null,
-                        'price'   => $tier['price'],
-                    ]);
-                }
-            }
-
-
-
-            /* ===============================
-            * 7. Specifications
-            * =============================== */
-
-            // удаляем старые спецификации и их переводы
-            $product->specifications()->each(function ($spec) {
-                $spec->translations()->delete();
-                $spec->delete();
-            });
-
-            // создаём новые из формы
-            if ($request->specs) {
-                foreach ($request->specs as $specData) {
-
-                    // создаём specification (без текста)
-                    $spec = Specification::create([
-                        'product_id' => $product->id,
-                    ]);
-
-                    // сохраняем переводы
-                    foreach ($specData as $locale => $values) {
-
-                        if (
-                            !empty($values['key']) &&
-                            !empty($values['value'])
-                        ) {
-                            $spec->translations()->create([
-                                'locale' => $locale,
-                                'key'    => $values['key'],
-                                'value'  => $values['value'],
-                            ]);
-                        }
-                    }
-                }
-            }
-
-
-            /* ===============================
-         * 6. Shipping templates
-         * =============================== */
-
-            $product->shippingTemplates()->sync(
-                $request->shipping_templates ?? []
-            );
-        });
+        $action->execute(
+        product: $product,
+        data: $dto,
+        translations: $translations,
+        shippingTemplates: $request->shipping_templates ?? [],
+        mediaFiles: $request->file('images', []),
+        existingIds: $request->existing_ids ?? [],
+        sortOrder: $request->sort_order ?? [],
+        existingSortOrder: $request->existing_sort_order ?? [],
+        isMain: $request->is_main ?? [],
+        priceTiers: $request->price_tiers ?? [],
+        materialsSelected: $request->materials_selected ?? '',
+        specifications: $request->specs ?? []
+    );
 
         return redirect()
-            ->route('manufacturer.products.index', $product)
+            ->route('manufacturer.products.index')
             ->with('success', 'Product updated successfully');
     }
 
@@ -706,21 +217,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function destroy(Product $product)
+    public function destroy(Product $product, DeleteProductAction $action) 
     {
-        // Получаем supplier_id текущего пользователя
-        $supplierId = auth()->user()->supplier?->id;
-
-        if (!$supplierId) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        // Находим продукт только своего поставщика
-        $product = Product::where('id', $product->id)
-            ->where('supplier_id', $supplierId)
-            ->firstOrFail();
-
-        $product->delete();
+        $action->execute($product);
 
         return response()->json([
             'success' => true,

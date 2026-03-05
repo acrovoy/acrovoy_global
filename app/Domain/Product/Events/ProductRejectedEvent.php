@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Domain\Product\Events;
+
+use App\Models\Product;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class ProductRejectedEvent
+{
+    use Dispatchable, SerializesModels;
+
+    public function __construct(
+        public Product $product,
+        public ?string $reason = null
+    ) {}
+}

@@ -20,7 +20,7 @@ class AdminProductController extends Controller
             'category',
             'images',
             'priceTiers',
-            'mainImage',
+            
         ])
         ->where('status', 'pending'); // 🔴 ключевой момент
 
@@ -50,7 +50,7 @@ public function show(Product $product)
     {
         $product->load([
             'images',
-            'mainImage',
+            
             'specifications',
             'priceTiers',
             'supplier',

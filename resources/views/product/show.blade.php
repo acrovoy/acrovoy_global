@@ -22,17 +22,27 @@
 
             {{-- Images --}}
             <div class="bg-white rounded-xl shadow p-4 mb-4">
+
+                @php
+                    $mainImage = $product1->images->firstWhere('is_main', 1)
+                        ?? $product1->images->sortBy('sort_order')->first();
+                @endphp
+
                 <img id="mainImage"
-                    src="{{ $product1->image_url }}"
+                    src="{{ $mainImage?->cdn_url ?? '/images/no-image.png' }}"
                     class="w-full h-auto object-contain rounded-lg cursor-pointer"
                     alt="Product Image">
 
                 <div class="flex gap-4 mt-4">
-                    @foreach($product1->images as $img)
-                    <img src="{{ asset('storage/' . $img->image_path) }}"
-                        class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border border-gray-300 hover:border-blue-900"
-                        data-src="{{ asset('storage/' . $img->image_path) }}">
+
+                    @foreach($product1->images->sortBy('sort_order') as $img)
+
+                        <img src="{{ $img->cdn_url }}"
+                            class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border hover:border-blue-900 {{ $img->is_main ? 'border-blue-700' : 'border-gray-300' }}"
+                            data-src="{{ $img->cdn_url }}">
+
                     @endforeach
+
                 </div>
             </div>
 

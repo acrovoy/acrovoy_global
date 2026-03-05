@@ -15,14 +15,24 @@
 
         <tbody class="divide-y divide-gray-100">
             @forelse ($products as $product)
+
+            @php
+                $image = $product->images?->where('is_main', 1)->first()?->cdn_url 
+                    ?? $product->images?->first()?->cdn_url;
+            @endphp
+
                 <tr class="hover:bg-gray-50 transition">
                     <td class="px-4 py-2 font-mono text-gray-800">{{ $product->id }}</td>
 
                     <td class="px-4 py-2 flex items-center gap-2">
                         @if(isset($product->images) && count($product->images) > 0)
-                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-12 h-12 object-cover rounded">
+                            <img
+                                src="{{ $image ?? asset('images/no-image.png') }}"
+                                alt="{{ $product->name }}"
+                                class="w-12 h-12 object-cover rounded"
+                            >
                         @else
-                            <img src="https://via.placeholder.com/50" alt="No Image" class="w-12 h-12 object-cover rounded">
+                            <img src="" alt="No Image" class="w-12 h-12 object-cover rounded">
                         @endif
                         <span class="text-gray-800">{{ $product->name }}</span>
                     </td>

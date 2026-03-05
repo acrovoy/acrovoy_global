@@ -14,7 +14,10 @@ class UploadMediaDTO
         public readonly string $mediaRole = 'default',
         public readonly bool $private = false,
         public readonly ?string $originalFileName = null,
-        public readonly array $metadata = []
+        public readonly array $metadata = [],
+        public readonly ?int $sortOrder = null,
+        public readonly ?bool $isMain = null,
+        
     ) {}
 
     public static function fromRequest($request, Model $model): self
@@ -28,7 +31,9 @@ class UploadMediaDTO
             mediaRole: $request->get('media_role', 'default'),
             private: $request->boolean('private', false),
             originalFileName: $file?->getClientOriginalName(),
-            metadata: $request->get('metadata', [])
+            metadata: $request->get('metadata', []),
+            sortOrder: $request->integer('sort_order', 0),
+            isMain: $request->boolean('is_main', false)
         );
     }
 }
