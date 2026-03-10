@@ -85,18 +85,25 @@
 
             {{-- Images --}}
             <div class="bg-white rounded-xl shadow p-4 mb-4">
+
                 <img id="mainImage"
-                     src="{{ $product1->image_url }}"
-                     class="w-full h-auto object-contain rounded-lg cursor-pointer"
-                     alt="Product Image">
+                    src="{{ $product1->mainImage?->cdn_url ?? '/images/no-image.png' }}"
+                    class="w-full h-auto object-contain rounded-lg cursor-pointer"
+                    alt="Product Image">
 
                 <div class="flex gap-4 mt-4">
-                    @foreach($product1->images as $img)
-                        <img src="{{ asset('storage/' . $img->image_path) }}"
-                             class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border border-gray-300 hover:border-blue-900"
-                             data-src="{{ asset('storage/' . $img->image_path) }}">
+
+                    @foreach($images as $img)
+
+                        <img src="{{ $img->cdn_url }}"
+                            class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border
+                            {{ $img->is_main ? 'border-blue-800' : 'border-gray-300 hover:border-blue-900' }}"
+                            data-src="{{ $img->cdn_url }}">
+
                     @endforeach
+
                 </div>
+
             </div>
 
             {{-- Info --}}

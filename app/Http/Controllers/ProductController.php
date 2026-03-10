@@ -6,10 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\Auth;
+use App\Domain\Product\Factories\ProductDTOFactory;
 
 /* === REQUEST === */
 use App\Http\Requests\UpdateProductRequest;
+use App\Http\Requests\StoreProductRequest;
 
 /* === SERVICES === */
 use App\Domain\Media\Services\MediaService;
@@ -22,6 +24,7 @@ use App\Domain\Product\Services\ProductListQueryService;
 /* === ACTIONS === */
 use App\Domain\Product\Actions\DeleteProductAction;
 use App\Domain\Product\Actions\UpdateProductAction;
+use App\Domain\Product\Actions\AttachProductVariantAction;
 
 /* === DTO === */
 use App\Domain\Product\DTO\ProductDTO;
@@ -37,20 +40,21 @@ use App\Models\Category;
 use App\Models\Supplier;
 use App\Models\Color;
 use App\Models\ShippingTemplate;
-use App\Http\Requests\StoreProductRequest;
-use Illuminate\Support\Facades\Auth;
+use App\Models\ProductVariantGroup;
+use App\Models\ProductVariantItem;
+
 use App\Models\Country;
 use App\Models\Language;
 use App\Models\MessageThread;
 use App\Models\Project;
 
-
 use App\Domain\Product\Actions\CreateProductAction;
 use App\Domain\Product\Actions\SyncProductTranslationAction;
-use App\Domain\Product\Actions\SyncProductMediaAction;
+
 use App\Domain\Product\Actions\SyncProductPriceTierAction;
 use App\Domain\Product\Actions\SyncProductSpecificationAction;
 use App\Domain\Product\Actions\SyncProductMaterialAction;
+use App\Domain\Product\Actions\SyncShippingTemplateAction;
 
 
 class ProductController extends Controller
@@ -80,72 +84,203 @@ class ProductController extends Controller
     public function create(ProductFormDataService $service)
     {
         $data = $service->getCreateFormData();
+        $products = Product::with('translations') // Загружаем сразу переводы
+        ->where('supplier_id', Auth::user()->supplier->id)
+        ->get();
 
-        return view('dashboard.manufacturer.add-product', $data);
+        return view('dashboard.manufacturer.add-product', array_merge($data, [
+        'products' => $products
+    ]));
     }
 
 
-    public function store(StoreProductRequest $request, CreateProductAction $createProduct, SyncProductTranslationAction $translationAction, SyncProductMediaAction $mediaAction,
-    SyncProductPriceTierAction $priceAction, SyncProductSpecificationAction $specAction, SyncProductMaterialAction $materialAction
+    public function store(
+    StoreProductRequest $request,
+    CreateProductAction $createProduct,
+    SyncProductTranslationAction $translationAction,
+    SyncProductPriceTierAction $priceAction,
+    SyncProductSpecificationAction $specAction,
+    SyncProductMaterialAction $materialAction,
+    SyncShippingTemplateAction $shippingAction,
+    AttachProductVariantAction $attachProductVariantAction,
+    ProductDTOFactory $dtoFactory,
+) {
+
+    DB::transaction(function () use (
+        $request,
+        $createProduct,
+        $translationAction,
+        $priceAction,
+        $specAction,
+        $materialAction,
+        $shippingAction,
+        $dtoFactory,
+        $attachProductVariantAction,
     ) {
 
-        DB::transaction(function () use (
-            $request,
-            $createProduct,
-            $translationAction,
-            $priceAction,
-            $specAction,
-            $materialAction
-        ) {
-            $product = $createProduct->execute(ProductDTO::fromRequest($request));
+        /*
+        |-------------------------------------------------------------------------- 
+        | Create Product
+        |-------------------------------------------------------------------------- 
+        */
+        $productDTO = $dtoFactory->fromRequest($request);
+        $product = $createProduct->execute($productDTO);
 
-            $translationAction->execute(
-                $product,
-                $request->name,
-                $request->undername,
-                $request->description
-            );
+        /*
+        |-------------------------------------------------------------------------- 
+        | Translation Sync
+        |-------------------------------------------------------------------------- 
+        */
+        $translationAction->execute(
+            $product,
+            $request->name,
+            $request->undername,
+            $request->description
+        );
 
-            $mediaService = app(MediaService::class);
+        /*
+        |-------------------------------------------------------------------------- 
+        | Variant Group Guarantee
+        |-------------------------------------------------------------------------- 
+        */
 
-           
-            $files = $request->file('images', []);
-            \Log::info('FILES DEBUG', [
-                'has_images' => $request->hasFile('images'),
-                'files_raw' => $request->file('images'),
-                'all_request' => $request->all()
+        $variantProducts = $request->input('variant_products', []);
+        $variantTitles = $request->input('variant_titles', []);
+        $variantImages = $request->file('variant_images', []);
+
+        $parentTitle = $request->input('parent_title', $product->name);
+        $parentFile = $request->file('parent_image');
+
+        // 🔹 Создаём или берём группу
+        $group = $product->variant_group_id
+            ? ProductVariantGroup::findOrFail($product->variant_group_id)
+            : ProductVariantGroup::create([
+                'name' => $parentTitle,
+                'variant_hash' => \Illuminate\Support\Str::uuid()->toString(),
             ]);
 
-            foreach ($files as $index => $file) {
+        if (!$product->variant_group_id) {
+            $product->update(['variant_group_id' => $group->id]);
+        }
 
-                $dto = new UploadMediaDTO(
+        $mediaService = app(\App\Domain\Media\Services\MediaService::class);
+
+        // 🔹 Создаём ProductVariantItem для родителя (без media_id)
+        $parentVariantItem = \App\Models\ProductVariantItem::updateOrCreate(
+            [
+                'variant_group_id' => $group->id,
+                'product_id' => $product->id,
+            ],
+            [
+                'title' => $parentTitle,
+            ]
+        );
+
+        // 🔹 Загружаем media для родителя
+        if ($parentFile) {
+            $dto = new \App\Domain\Media\DTO\UploadMediaDTO(
+                file: $parentFile,
+                model: $product,
+                collection: 'product_variant_image',
+                mediaRole: 'variant_image',
+                private: false,
+                originalFileName: $parentFile->getClientOriginalName(),
+                metadata: [],
+                sortOrder: 0,
+                isMain: true
+            );
+
+            $uploadedMedia = $mediaService->upload($dto);
+
+            $parentVariantItem->update([
+                'media_id' => $uploadedMedia->id
+            ]);
+        }
+
+        // 🔹 Обрабатываем все варианты
+        foreach ($variantProducts as $index => $variantProductId) {
+            if (empty($variantProductId)) continue;
+
+            $variantProduct = Product::find($variantProductId);
+            if (!$variantProduct) continue;
+            if ($variantProduct->supplier_id !== $product->supplier_id) continue;
+
+            // Attach к группе (только связывает, не трогает media_id)
+            $group = $attachProductVariantAction->execute($product, $variantProduct);
+
+            // Создаём или обновляем ProductVariantItem для варианта
+            $title = $variantTitles[$index] ?? $variantProduct->name;
+            $variantItem = \App\Models\ProductVariantItem::updateOrCreate(
+                [
+                    'variant_group_id' => $group->id,
+                    'product_id' => $variantProduct->id,
+                ],
+                [
+                    'title' => $title,
+                ]
+            );
+
+            // 🔹 Загружаем media для варианта
+            $file = $variantImages[$index] ?? null;
+            if ($file) {
+                $dto = new \App\Domain\Media\DTO\UploadMediaDTO(
                     file: $file,
-                    model: $product,
-                    collection: 'product_gallery',
-                    mediaRole: 'product_image',
+                    model: $variantProduct,
+                    collection: 'product_variant_image',
+                    mediaRole: 'variant_image',
                     private: false,
                     originalFileName: $file->getClientOriginalName(),
                     metadata: [],
-                    sortOrder: $request->sort_order[$index] ?? $index,
-                    isMain: ($request->is_main[$index] ?? 0) == 1
+                    sortOrder: $index,
+                    isMain: true
                 );
 
-                $mediaService->upload($dto);
+                $uploadedMedia = $mediaService->upload($dto);
+
+                $variantItem->update([
+                    'media_id' => $uploadedMedia->id
+                ]);
             }
+        }
 
-            
-             
-            $priceAction->execute($product, $request->price_tiers ?? []);
+        /*
+        |-------------------------------------------------------------------------- 
+        | Other Syncs
+        |-------------------------------------------------------------------------- 
+        */
+        $files = $request->file('images', []);
 
-            $materialIds = explode(',', $request->materials_selected ?? '');
-            $materialAction->execute($product, array_filter($materialIds));
+        foreach ($files as $index => $file) {
+            $dto = new UploadMediaDTO(
+                file: $file,
+                model: $product,
+                collection: 'product_gallery',
+                mediaRole: 'product_image',
+                private: false,
+                originalFileName: $file->getClientOriginalName(),
+                metadata: [],
+                sortOrder: $request->sort_order[$index] ?? $index,
+                isMain: ($request->is_main[$index] ?? 0) == 1
+            );
+            $mediaService->upload($dto);
+        }
 
-            $specAction->execute($product, $request->specs ?? []);
-        });
+        $priceAction->execute($product, $request->price_tiers ?? []);
 
-        return redirect()->route('manufacturer.products.index')
-            ->with('success', 'Product created successfully');
-    }
+        $materialIds = explode(',', $request->materials_selected ?? '');
+        $materialAction->execute($product, array_filter($materialIds));
+
+        $specAction->execute($product, $request->specs ?? []);
+
+        $shippingAction->execute(
+            $product,
+            $request->shipping_templates ?? []
+        );
+    });
+
+    return redirect()->route('manufacturer.products.index')
+        ->with('success', 'Product created successfully');
+}
 
 
     public function edit(Product $product, ProductEditQueryService $service)
@@ -156,27 +291,80 @@ class ProductController extends Controller
         );
     }
 
-    public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $action) 
-    {
+    public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $action, ProductDTOFactory $dtoFactory) 
+{
 
-        abort_if(
-            $product->supplier_id !== auth()->user()->supplier->id,
-            403
-        );
+    abort_if(
+        $product->supplier_id !== auth()->user()->supplier->id,
+        403
+    );
 
-        $dto = ProductDTO::fromUpdateRequest($request);
+    $dto = $dtoFactory->fromUpdateRequest($request);
 
-       $translations = [];
+    $translations = [];
 
-        foreach ($request->name as $locale => $name) {
-            $translations[$locale] = [
-                'name' => $name,
-                'undername' => $request->undername[$locale] ?? null,
-                'description' => $request->description[$locale] ?? null,
-            ];
+    foreach ($request->name as $locale => $name) {
+        $translations[$locale] = [
+            'name' => $name,
+            'undername' => $request->undername[$locale] ?? null,
+            'description' => $request->description[$locale] ?? null,
+        ];
+    }
+
+    if ($request->has('variants')) {
+
+        $mediaService = app(\App\Domain\Media\Services\MediaService::class);
+
+        foreach ($request->variants as $variantData) {
+
+            if (!empty($variantData['id'])) {
+                // 🔹 Существующий вариант
+                $variant = \App\Models\ProductVariantItem::find($variantData['id']);
+                if (!$variant) continue;
+
+                $variant->update([
+                    'title' => $variantData['title']
+                ]);
+
+            } else {
+                // 🔹 Новый вариант — обязательно передаём variant_group_id
+                $variantGroupId = $product->variantGroup?->id;
+
+                // Если группы нет, создаём
+                if (!$variantGroupId) {
+                    $variantGroup = \App\Models\ProductVariantGroup::create([
+                        'product_id' => $product->id,
+                    ]);
+                    $variantGroupId = $variantGroup->id;
+                }
+
+                $variant = \App\Models\ProductVariantItem::create([
+                    'product_id' => $product->id,
+                    'variant_group_id' => $variantGroupId,
+                    'title' => $variantData['title']
+                ]);
+            }
+
+            // 🔹 Обработка изображения
+            if (!empty($variantData['image'])) {
+                $media = $mediaService->upload(
+                    new \App\Domain\Media\DTO\UploadMediaDTO(
+                        file: $variantData['image'],
+                        model: $variant,
+                        collection: 'product_variant_image',
+                        sortOrder: 0,
+                        isMain: false
+                    )
+                );
+
+                $variant->update([
+                    'media_id' => $media->id
+                ]);
+            }
         }
+    }
 
-        $action->execute(
+    $action->execute(
         product: $product,
         data: $dto,
         translations: $translations,
@@ -191,10 +379,10 @@ class ProductController extends Controller
         specifications: $request->specs ?? []
     );
 
-        return redirect()
-            ->route('manufacturer.products.index')
-            ->with('success', 'Product updated successfully');
-    }
+    return redirect()
+        ->route('manufacturer.products.index')
+        ->with('success', 'Product updated successfully');
+}
 
     public function updateStock(Request $request, Product $product)
     {

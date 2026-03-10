@@ -27,6 +27,7 @@ class Product extends Model
         'origin_address',
         'origin_contact_name',
         'origin_contact_phone',
+        'variant_group_id',
     ];
 
 
@@ -205,6 +206,32 @@ public function scopeWithBaseRelations($query)
     return $this->morphMany(Media::class, 'model')
         ->where('collection', 'product_gallery')
         ->orderBy('id');
+}
+
+public function getMainImageAttribute()
+{
+    $images = $this->images->sortBy('sort_order');
+
+    return $images->firstWhere('is_main', 1) ?? $images->first();
+}
+
+
+public function variantGroup()
+{
+    return $this->belongsTo(ProductVariantGroup::class);
+}
+
+public function variants()
+{
+    return $this->hasMany(Product::class, 'variant_group_id', 'variant_group_id');
+}
+
+
+public function variantPreview()
+{
+    return $this->morphOne(Media::class, 'model')
+        ->where('collection', 'product_variant_image')
+        ->orderBy('id', 'asc');
 }
 
 }

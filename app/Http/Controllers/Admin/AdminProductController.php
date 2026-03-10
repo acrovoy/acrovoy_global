@@ -16,7 +16,8 @@ class AdminProductController extends Controller
 
     $query = Product::query()
         ->with([
-            'supplier.user', // кто создал
+            'images',
+            'supplier.user', 
             'category',
             'images',
             'priceTiers',
@@ -50,7 +51,6 @@ public function show(Product $product)
     {
         $product->load([
             'images',
-            
             'specifications',
             'priceTiers',
             'supplier',
@@ -60,9 +60,13 @@ public function show(Product $product)
             'user',
         ]);
 
-      
+        $images = $product->images->sortBy('sort_order')->values();
+
+        
+
         return view('dashboard.admin.products.show', [
-            'product1' => $product
+            'product1' => $product,
+            'images' => $images
         ]);
     }
 
@@ -74,7 +78,9 @@ public function show(Product $product)
             'approved_at' => now(),
         ]);
 
-        return back()->with('success','Product approved');
+        return redirect()
+    ->route('admin.products.index')
+    ->with('success', "Product #{$product->id} ({$product->name}) approved");
     }
 
     public function reject(Request $request, Product $product)

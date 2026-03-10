@@ -208,11 +208,11 @@ const bootstrapUploader = () => {
     ============================== */
 
     async function addFiles(newFiles) {
-        
+
         const files = Array.from(newFiles);
 
         for (const file of files) {
-            
+
             if (filesState.length >= MAX_FILES) break;
 
             if (!file.type.startsWith("image/")) continue;
@@ -303,12 +303,14 @@ const bootstrapUploader = () => {
         }
     });
 
+    document.addEventListener("DOMContentLoaded", syncInputFiles);
     renderPreview();
 };
 
 /* =============================
 BOOTSTRAP SAFE INIT
 ============================= */
+
 
 if (document.readyState !== "loading") {
     bootstrapUploader();

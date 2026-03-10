@@ -49,6 +49,12 @@
         </a>
     </div>
 
+    @if(session('success'))
+    <div class="mb-4 px-4 py-3 rounded-lg bg-green-100 text-green-800 border border-green-200">
+        {{ session('success') }}
+    </div>
+@endif
+
     {{-- ================= TABLE ================= --}}
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
@@ -70,9 +76,20 @@
                         {{-- ID --}}
                         <td class="px-5 py-3 font-semibold text-gray-900">{{ $product->id }}</td>
 
-                        {{-- Title --}}
+                        {{-- Title + Image --}}
                         <td class="px-5 py-3 font-medium text-gray-900">
-                            {{ $product->name }}
+
+                            <div class="flex items-center gap-3">
+
+                                <img
+                                    src="{{ $product->mainImage?->cdn_url ?? '/images/no-image.png' }}"
+                                    class="w-10 h-10 object-cover rounded border border-gray-200"
+                                    alt="">
+
+                                <span>{{ $product->name }}</span>
+
+                            </div>
+
                         </td>
 
                         {{-- Created by --}}

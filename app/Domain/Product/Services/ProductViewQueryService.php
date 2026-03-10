@@ -12,17 +12,20 @@ class ProductViewQueryService
     {
         $user = Auth::user();
 
+        // Загружаем продукт с необходимыми связями, включая варианты
         $product1 = Product::with([
             'images',
-            'specifications',
+            'specifications.translations', // чтобы сразу были переводы ключей/значений
             'priceTiers',
             'supplier',
             'category',
-            'colors',
-            'colors.linkedProduct'
+            'variantGroup.items.product',
+            'variantGroup.items.product.images',
+            'variantGroup.items.media',
+    
         ])
-            ->where('slug', $slug)
-            ->firstOrFail();
+        ->where('slug', $slug)
+        ->firstOrFail();
 
         $projects = collect();
 

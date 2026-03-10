@@ -181,7 +181,9 @@ class SupplierController extends Controller
                 'reviews',
                 'orderItems.order',
                 'category',
-                'materials.translations'
+                'materials.translations',
+                'variantGroup.items.product',
+                'variantGroup.items.media',
             ]);
 
         /*

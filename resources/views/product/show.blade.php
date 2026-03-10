@@ -203,48 +203,71 @@
 
 
                 
-                {{-- Color / Material Options --}}
+               
+               
+               {{-- Variants --}}
+@if($product1->variantGroup && $product1->variantGroup->items->isNotEmpty())
+    <div class="mb-6">
+        <h3 class="font-semibold text-lg">Variants</h3>
+<span class="text-xs text-gray-500 leading-tight mb-6 block">
+    {{ __('product/product_show.shipping_cost_not_included') }}
+</span>
+        <div class="flex flex-wrap gap-3">
+
+            @php
+                $variantItems = $product1->variantGroup->items;
+
+                // Добавляем родителя, если его нет в items
+                if (!$variantItems->contains('product_id', $product1->id)) {
+                    $dummyItem = new \App\Models\ProductVariantItem([
+                        'product_id' => $product1->id,
+                        'title' => $product1->name,
+                        'media_id' => $product1->variantPreview?->id, // preview для родителя
+                    ]);
+                    $variantItems->prepend($dummyItem);
+                }
+            @endphp
+
+            @foreach($variantItems as $variantItem)
                 @php
-                $colors = $product1->colors; // Получаем коллекцию цветов
+                    $variantProduct = $variantItem->product;
+                    if (!$variantProduct) continue;
+
+                    $link = route('product.show', $variantProduct->slug);
+                    $title = $variantItem->title ?? $variantProduct->name ?? 'Variant';
+
+                    // 🔹 Берём preview из ProductVariantItem
+                    $preview = $variantItem->media;
+
+                    $isActive = $variantProduct->id == $product1->id;
+                    
+                    
                 @endphp
-                @if($colors->isNotEmpty())
-                <div class="mb-6">
-                    <h3 class="font-semibold text-lg mb-3">{{ __('product/product_show.available_colors') }}</h3>
 
-                    <div class="flex flex-wrap gap-3">
-                        @foreach($product1->colors as $material)
-                        @php
-                        // Цвет или пусто
-                        $bgStyle = $material->color ? "background-color:{$material->color}" : '';
+                <a href="{{ $link }}" class="variant-btn w-24 flex flex-col items-center gap-1">
 
-                        // Текстура
-                        $textureUrl = $material->texture_path ? asset('storage/'.$material->texture_path) : '';
+    <div class="w-24 h-24 rounded-md border border-gray-300 shadow-sm hover:border-black transition flex items-center justify-center
+        {{ $isActive ? 'border-2 border-blue-600 ring-2 ring-blue-600' : '' }}">
+        
+        <img src="{{ $variantItem->media?->url }}"
+             alt="{{ $variantItem->title ?? $variantItem->product->name }}"
+             class="w-24 h-24 object-cover rounded">
+    </div>
 
-                        // Ссылка на связанный продукт
-                        $link = $material->linked_product_id
-                        ? route('product.show', $material->linkedProduct->slug)
-                        : '#';
+    <span class="text-sm text-center">
+        {{ $title }}
+    </span>
 
-                        // Заголовок
-                        $title = $material->color ?? 'Texture';
-                        $isActive = $material->linked_product_id == $product1->id;
-                        @endphp
+</a>
 
-                        <button
-                            class="color-option w-12 h-12 rounded-md border border-gray-300 shadow-sm
-                                    hover:border-black transition
-                                    {{ $isActive 
-                        ? 'border-2 border-blue-600 ring-2 ring-blue-600' 
-                        : 'border border-gray-300 hover:border-black' }}"
-                            style="{{ $bgStyle }} 
-                                    @if($textureUrl) background-image: url('{{ $textureUrl }}'); background-size: cover; background-position: center; @endif"
-                            data-link="{{ $link }}"
-                            title="{{ $title }}">
-                        </button>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
+            @endforeach
+
+        </div>
+    </div>
+@endif
+
+
+
 
                 {{-- Description --}}
                 @if(!empty($product1->description))

@@ -28,7 +28,7 @@
                 {{-- Left: Image + Name --}}
                 <div class="flex items-start md:items-center gap-4 flex-1">
                     <div class="w-20 h-20 flex-shrink-0 rounded overflow-hidden bg-gray-100">
-                        <img src="{{ $item->product?->mainImage ? asset('storage/' . $item->product->mainImage->image_path) : asset('images/no-image.png') }}"
+                        <img src="{{ $item->image_url }}"
                              alt="{{ $item->product?->translated_name ?? 'Product unavailable' }}"
                              class="w-full h-full object-cover">
                     </div>

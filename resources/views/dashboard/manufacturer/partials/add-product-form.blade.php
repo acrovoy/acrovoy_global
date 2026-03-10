@@ -249,10 +249,19 @@
     </div>
 
     <div class="form-step hidden" data-step="3">
-        <h3 class="text-xl font-semibold mb-4">Colors & Materials</h3>
-        <div id="materials-wrapper" class="flex flex-col"></div>
-        <button type="button" id="addMaterialBtn" class="text-blue-700 mt-3">+ Add Material</button>
 
+        {{-- Product Variants --}}
+        <h3 class="text-xl font-semibold mb-4">Product Variants</h3>
+
+        @include('dashboard.manufacturer.partials.variant-editor')
+
+        
+
+
+
+
+
+        {{-- Materials Used --}}
         <h3 class="mt-6 text-xl font-semibold mb-4">Materials Used</h3>
         <div id="selected-materials" class="flex flex-wrap gap-2 mb-2"></div>
         <input type="text" id="materialSearch" placeholder="Search materials..." class="w-full mb-2">
@@ -681,3 +690,4 @@
         }
     }
 </script>
+

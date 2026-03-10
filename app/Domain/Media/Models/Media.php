@@ -60,5 +60,13 @@ public function previewPath(): string
     return $this->basePath() . '/preview/' . $this->file_name;
 }
 
+public function getUrlAttribute(): string
+{
+    if ($this->cdn_url) {
+        return $this->cdn_url;
+    }
+
+    return asset('storage/' . $this->previewPath());
+}
     
 }

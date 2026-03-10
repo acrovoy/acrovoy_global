@@ -257,101 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-   
-
-
-    /* ===========================
-     * MATERIAL COLOR / TEXTURE
-     * =========================== */
-    let materialIndex = 0;
-
-    window.initMaterial = function (index) {
-        const preview = document.getElementById(`preview-${index}`);
-        const colorInput = document.getElementById(`colorInput-${index}`);
-        const fileInput = document.getElementById(`fileInput-${index}`);
-
-        if (!preview || !colorInput || !fileInput || !window.Pickr) return;
-
-        const pickr = Pickr.create({
-            el: `#colorBtn-${index}`,
-            theme: 'classic',
-            default: '#ffffff',
-            useAsButton: true,
-            components: {
-                preview: true,
-                opacity: false,
-                hue: true,
-                interaction: { input: true, save: true }
-            }
-        });
-
-        pickr.on('save', color => {
-            const hex = color.toHEXA().toString();
-            colorInput.value = hex;
-            preview.style.backgroundColor = hex;
-            preview.style.backgroundImage = '';
-            pickr.hide();
-        });
-
-        fileInput.addEventListener('change', () => {
-            if (!fileInput.files.length) return;
-            colorInput.value = '';
-            const reader = new FileReader();
-            reader.onload = e => {
-                preview.style.backgroundImage = `url('${e.target.result}')`;
-                preview.style.backgroundSize = 'cover';
-                preview.style.backgroundPosition = 'center';
-                preview.style.backgroundColor = '#fff';
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        });
-    };
-
-    initMaterial(0);
-
-    document.getElementById('addMaterialBtn')?.addEventListener('click', () => {
-        materialIndex++;
-        const wrapper = document.getElementById('materials-wrapper');
-
-        wrapper.insertAdjacentHTML('beforeend', `
-            <div class="flex items-center gap-4 mt-2 material-item" id="material-${materialIndex}">
-                <div class="w-12 h-12 border rounded cursor-pointer"
-                     id="preview-${materialIndex}" data-link=""></div>
-
-                <input type="hidden" name="materials[${materialIndex}][color]" id="colorInput-${materialIndex}">
-                
-                <input type="file" name="materials[${materialIndex}][texture]" class="hidden" id="fileInput-${materialIndex}">
-
-                <button type="button" id="colorBtn-${materialIndex}"
-                        class="px-4 py-2 bg-blue-800 text-white rounded">Выбрать цвет</button>
-
-                <button type="button"
-        onclick="document.getElementById('fileInput-${materialIndex}').click()"
-        class="px-4 py-2 bg-blue-800 text-white rounded">
-    Выбрать файл
-</button>
-
-<span class="text-gray-500 px-2 flex items-center">🔗</span>
-
-<input type="number"
-       name="materials[${materialIndex}][linked_product_id]"
-       placeholder="Product ID"
-       class="w-32 px-2 py-1 border rounded text-sm"
-       oninput="setMaterialLink(${materialIndex}, this.value)">
-
-                <button type="button"
-                        onclick="removeMaterial(${materialIndex})"
-                        class="text-red-600 font-bold">✕</button>
-            </div>
-        `);
-
-        initMaterial(materialIndex);
-    });
-
-    window.removeMaterial = index =>
-        document.getElementById(`material-${index}`)?.remove();
-
-
     /* ===========================
      * MATERIALS FROM DB (CHIPS)
      * =========================== */
@@ -449,22 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    /* ===========================
-     * MATERIAL LINK PREVIEW
-     * =========================== */
-    window.setMaterialLink = function (index, productId) {
-        const preview = document.getElementById(`preview-${index}`);
-        if (preview) {
-            preview.dataset.link = productId ? `/product/${productId}` : '';
-        }
-    };
-
-    document.addEventListener('click', e => {
-        const preview = e.target.closest('[id^="preview-"]');
-        if (preview?.dataset.link) {
-            window.location.href = preview.dataset.link;
-        }
-    });
+    
 
     document.getElementById("productForm")?.addEventListener("submit", () => {
     syncInputFiles();

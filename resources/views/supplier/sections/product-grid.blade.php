@@ -19,7 +19,7 @@
                                     {{-- === Ваша карточка продукта === --}}
                                     <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden flex flex-col">
                                         <a href="{{ url('/product/' . $product->slug) }}" class="block overflow-hidden rounded-t-lg">
-                                            <img src="{{ $product->images->first() ? asset('storage/' . $product->images->first()->image_path) : asset('images/no-image.png') }}"
+                                            <img src="{{ $product->getMainImageAttribute()->cdn_url ?? asset('images/no-image.png') }}"
                                                 class="w-full aspect-square object-cover"
                                                 alt="{{ $product->name }}">
                                         </a>
@@ -72,6 +72,23 @@
                                                     </div>
                                                 @endforeach
                                             </div>
+
+                                            {{-- Variants preview --}}
+                                            @if($product->variantGroup?->items->isNotEmpty())
+                                                <div class="flex flex-wrap gap-2 mt-2">
+                                                    @foreach($product->variantGroup->items as $variant)
+                                                        <div class="w-8 h-8 border rounded overflow-hidden">
+                                                            <img 
+                                                                src="{{ $variant->media?->cdn_url ?? asset('images/no-image.png') }}"
+                                                                alt="{{ $variant->title }}"
+                                                                class="w-full h-full object-cover"
+                                                                title="{{ $variant->title }}">
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+
 
                                             <div class="mt-auto pt-2">
                                                 <button class="w-full border border-gray-300 py-1.5 rounded-xl
