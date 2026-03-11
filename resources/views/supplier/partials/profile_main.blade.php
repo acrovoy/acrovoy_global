@@ -244,81 +244,51 @@
                 $validUntil = $meta['valid_until'] ?? null;
             @endphp
 
-            <div class="border rounded-xl p-4 bg-white shadow-sm w-full md:w-72 space-y-3">
+    <div class="border rounded-xl p-3 bg-white shadow-sm w-full sm:w-56 space-y-2">
 
     {{-- Preview --}}
     <div class="w-full aspect-[3/4] rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
 
-        
-    
-    @if(str_contains($certificate->mime_type, 'pdf'))
+        @php
+            $thumbPath = 'storage/' . $certificate->variantPath('thumb'); 
+            $thumbUrl = asset($thumbPath);
+        @endphp
 
-    <iframe
-        src="{{ $certificate->cdn_url }}"
-        class="w-full h-full"
-        frameborder="0">
-    </iframe>
-
-
-    
-    @elseif(str_contains($certificate->mime_type, 'image'))
-
-            <img src="{{ $certificate->cdn_url }}"
-                 class="w-full h-full object-cover">
-
-        @elseif(str_contains($certificate->mime_type, 'pdf'))
-
-            <div class="text-gray-400 text-xs text-center space-y-2">
-                📄 PDF Document
-            </div>
-
-        @else
-
-            <div class="text-gray-400 text-xs">
-                Document Preview
-            </div>
-
-        @endif
-
+        <img src="{{ $thumbUrl }}" 
+             class="w-full h-full object-cover" 
+             alt="Certificate Preview">
     </div>
 
     {{-- Metadata --}}
-    <div class="space-y-1">
+    <div class="space-y-1 text-xs">
 
         <a href="{{ $certificate->cdn_url }}"
            target="_blank"
-           class="font-semibold hover:underline block text-sm">
+           class="font-semibold hover:underline block text-sm truncate">
 
             {{ $name }}
         </a>
 
-       @if($badge)
-
-            <span class="px-2 py-0.5 text-[10px] font-semibold
+        @if($badge)
+            <span class="px-2 py-0.5 text-[9px] font-semibold
                         bg-yellow-100 text-yellow-700 rounded-full">
                 {{ $badge }}
             </span>
-
         @endif
 
-        <div class="text-xs text-gray-500 space-y-1">
-
+        <div class="text-gray-500 space-y-0.5 text-[10px]">
             @if($number)
                 <div>Number: {{ $number }}</div>
             @endif
-
             @if($validFrom)
                 <div>Valid from: {{ $validFrom }}</div>
             @endif
-
             @if($validUntil)
                 <div>Valid until: {{ $validUntil }}</div>
             @endif
-
-            <div class="uppercase text-gray-400">
+            <div class="uppercase text-gray-400 text-[9px]">
                 {{ ucfirst($certificate->processing_status) }}
             </div>
-
         </div>
 
     </div>

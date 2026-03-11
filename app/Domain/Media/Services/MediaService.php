@@ -74,7 +74,7 @@ class MediaService
                 'height' => $metadata['height'] ?? null,
                 'metadata' => json_encode($metadata),
                 'is_private' => $private,
-                'processing_status' => 'uploading',
+                'processing_status' => Media::STATUS_UPLOADING,
                 'sort_order' => $dto->sortOrder,
                 'is_main' => $dto->isMain,
                 
@@ -92,7 +92,7 @@ class MediaService
 
             $media->update([
                 'cdn_url' => $cdnUrl,
-                'processing_status' => 'queued'
+                'processing_status' => Media::STATUS_QUEUED,
             ]);
 
             // Async pipeline dispatch
@@ -104,7 +104,7 @@ class MediaService
 
             if ($media) {
                 $media->update([
-                    'processing_status' => 'failed'
+                    'processing_status' => Media::STATUS_FAILED,
                 ]);
             }
 
@@ -137,7 +137,7 @@ class MediaService
     public function delete(Media $media): void
 {
     $media->update([
-        'processing_status' => 'deleting'
+        'processing_status' => Media::STATUS_DELETING,
     ]);
 
     DeleteMediaJob::dispatch($media->uuid)

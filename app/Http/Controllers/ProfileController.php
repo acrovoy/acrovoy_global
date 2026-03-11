@@ -91,7 +91,9 @@ if ($request->hasFile('avatar')) {
     collection: 'avatars',
     private: false,
     mediaRole: 'avatar',
-    originalFileName: $file?->getClientOriginalName()
+    originalFileName: $file?->getClientOriginalName(),
+    sortOrder: 0,      
+    isMain: true       
 );
 
     $mediaService->upload($dto);

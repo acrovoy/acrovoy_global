@@ -9,6 +9,8 @@ use App\Models\Language;
 
 use Illuminate\Support\ServiceProvider;
 
+use App\Domain\Media\Services\MediaProcessingService;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -16,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Регистрация в контейнере под алиасом media.processor
+        $this->app->singleton('media.processor', function ($app) {
+            return new MediaProcessingService();
+    });
     }
 
     /**

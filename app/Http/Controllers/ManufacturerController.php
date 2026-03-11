@@ -154,7 +154,9 @@ $selectedmanufacturingCapabilities =
                 collection: 'company_logos',
                 mediaRole: 'company_logo',
                 private: false,
-                originalFileName: $file?->getClientOriginalName()
+                originalFileName: $file?->getClientOriginalName(),
+                sortOrder: 0,      
+                isMain: true
             );
 
             $mediaService->upload($dto);
@@ -291,7 +293,9 @@ $selectedmanufacturingCapabilities =
         mediaRole: 'certificate',
         private: false,
         originalFileName: $request->file('certificate')->getClientOriginalName(),
-        metadata: $metadata
+        metadata: $metadata,
+        sortOrder: 0,      
+        isMain: true
     );
 
     $media = app(\App\Domain\Media\Services\MediaService::class)->upload($dto);
@@ -362,7 +366,9 @@ public function deleteCertificate($id)
                 collection: 'factory_photos',
                 mediaRole: 'factory_photo',
                 private: false,
-                originalFileName: $file->getClientOriginalName()
+                originalFileName: $file->getClientOriginalName(),
+                sortOrder: 0,      
+                isMain: true
             );
 
             $mediaService->upload($dto);
@@ -418,7 +424,9 @@ public function uploadCatalogImage(Request $request)
         collection: 'catalog_images',
         mediaRole: 'catalog_image',
         private: false,
-        originalFileName: $request->file('catalog_image')->getClientOriginalName()
+        originalFileName: $request->file('catalog_image')->getClientOriginalName(),
+        sortOrder: 0,      
+        isMain: true
     );
 
     $media = app(MediaService::class)

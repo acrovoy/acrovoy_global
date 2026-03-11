@@ -378,29 +378,16 @@
             <div class="certificate-card border rounded-xl p-4 bg-gray-50 space-y-3 w-60">
 
                 {{-- Preview --}}
-    <div class="w-full aspect-[3/4] border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-
-        @if(str_contains($certificate->mime_type, 'pdf'))
-
-            <iframe
-                src="{{ $certificate->cdn_url }}"
-                class="w-full h-full object-cover"
-            ></iframe>
-
-        @elseif(str_contains($certificate->mime_type, 'image'))
-
-            <img src="{{ $certificate->cdn_url }}"
-                 class="w-full h-full object-cover">
-
-        @else
-
-            <div class="text-gray-400 text-xs text-center p-3">
-                Document Preview
-            </div>
-
-        @endif
-
-    </div>
+                <div class="w-full aspect-[3/4] border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                    @if(file_exists(storage_path('app/public/' . $certificate->previewPath())))
+                        <img src="{{ asset('storage/' . $certificate->previewPath()) }}" 
+                            class="w-full h-full object-cover">
+                    @else
+                        <div class="text-gray-400 text-xs text-center p-3">
+                            No Preview
+                        </div>
+                    @endif
+                </div>
 
                 {{-- Content --}}
                 <div class="p-4 space-y-2">

@@ -15,7 +15,7 @@ class UploadMediaDTO
         public readonly bool $private = false,
         public readonly ?string $originalFileName = null,
         public readonly array $metadata = [],
-        public readonly ?int $sortOrder = null,
+        public readonly ?int $sortOrder = 0,
         public readonly ?bool $isMain = null,
         
     ) {}
