@@ -23,26 +23,21 @@
             {{-- Images --}}
             <div class="bg-white rounded-xl shadow p-4 mb-4">
 
-                @php
-                    $mainImage = $product1->images->firstWhere('is_main', 1)
-                        ?? $product1->images->sortBy('sort_order')->first();
-                @endphp
-
+                {{-- Главное изображение --}}
                 <img id="mainImage"
-                    src="{{ $mainImage?->cdn_url ?? '/images/no-image.png' }}"
+                    src="{{ $product1->main_image_url }}"
                     class="w-full h-auto object-contain rounded-lg cursor-pointer"
-                    alt="Product Image">
+                    alt="{{ $product1->name }}">
 
+                {{-- Миниатюры --}}
                 <div class="flex gap-4 mt-4">
-
-                    @foreach($product1->images->sortBy('sort_order') as $img)
-
-                        <img src="{{ $img->cdn_url }}"
-                            class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border hover:border-blue-900 {{ $img->is_main ? 'border-blue-700' : 'border-gray-300' }}"
-                            data-src="{{ $img->cdn_url }}">
-
+                    @foreach($product1->thumbnails as $media)
+                        <img src="{{ $media['thumb'] }}"
+                            class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border 
+                                    {{ $media['is_main'] ? 'border-blue-700' : 'border-gray-300' }}"
+                            data-src="{{ $media['large'] }}"
+                            alt="{{ $product1->name }}">
                     @endforeach
-
                 </div>
             </div>
 
@@ -237,7 +232,9 @@
                     $title = $variantItem->title ?? $variantProduct->name ?? 'Variant';
 
                     // 🔹 Берём preview из ProductVariantItem
-                    $preview = $variantItem->media;
+                    $previewUrl = $variantItem->media
+                ? asset('storage/' . $variantItem->media->variantPath('thumb'))
+                : null;
 
                     $isActive = $variantProduct->id == $product1->id;
                     
@@ -249,9 +246,15 @@
     <div class="w-24 h-24 rounded-md border border-gray-300 shadow-sm hover:border-black transition flex items-center justify-center
         {{ $isActive ? 'border-2 border-blue-600 ring-2 ring-blue-600' : '' }}">
         
-        <img src="{{ $variantItem->media?->url }}"
-             alt="{{ $variantItem->title ?? $variantItem->product->name }}"
-             class="w-24 h-24 object-cover rounded">
+        @if($previewUrl)
+            <img src="{{ $previewUrl }}"
+                 alt="{{ $variantItem->title ?? $variantItem->product->name }}"
+                 class="w-24 h-24 object-cover rounded">
+        @else
+            <div class="text-gray-400 text-xs text-center">
+                No Image
+            </div>
+        @endif
     </div>
 
     <span class="text-sm text-center">

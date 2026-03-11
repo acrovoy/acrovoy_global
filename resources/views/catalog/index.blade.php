@@ -174,13 +174,17 @@
 
                             <div class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden group">
 
-                                {{-- Основное изображение --}}
+                                {{-- Основное изображение каталога --}}
                                 @if($product->slug)
                                     <a href="{{ route('product.show', $product->slug) }}">
-                                        <img src="{{ $mainImage?->cdn_url ?? $product->image_url }}" class="w-full h-auto object-contain">
+                                        <img src="{{ $product->catalog_image_url }}"
+                                            class="w-full h-auto object-contain"
+                                            alt="{{ $product->name }}">
                                     </a>
                                 @else
-                                    <img src="{{ $mainImage?->cdn_url ?? $product->image_url }}" class="w-full h-auto object-contain">
+                                    <img src="{{ $product->catalog_image_url }}"
+                                        class="w-full h-auto object-contain"
+                                        alt="{{ $product->name }}">
                                 @endif
 
                                 <div class="p-4">

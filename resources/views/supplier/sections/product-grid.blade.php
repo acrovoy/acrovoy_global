@@ -19,10 +19,10 @@
                                     {{-- === Ваша карточка продукта === --}}
                                     <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden flex flex-col">
                                         <a href="{{ url('/product/' . $product->slug) }}" class="block overflow-hidden rounded-t-lg">
-                                            <img src="{{ $product->getMainImageAttribute()->cdn_url ?? asset('images/no-image.png') }}"
-                                                class="w-full aspect-square object-cover"
-                                                alt="{{ $product->name }}">
-                                        </a>
+    <img src="{{ $product->catalog_image_url }}"
+         class="w-full aspect-square object-cover"
+         alt="{{ $product->name }}">
+</a>
 
                                         <div class="p-3 flex flex-col h-full">
                                             <h3 class="font-semibold text-base mb-1">

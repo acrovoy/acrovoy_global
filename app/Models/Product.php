@@ -215,6 +215,39 @@ public function getMainImageAttribute()
     return $images->firstWhere('is_main', 1) ?? $images->first();
 }
 
+// Удобный accessor для URL главного изображения
+// Главное изображение
+public function getMainImageUrlAttribute(): ?string
+{
+    $media = $this->images->sortBy('sort_order')->firstWhere('is_main', 1) ?? $this->images->sortBy('sort_order')->first();
+    return $media?->url('large'); // можно 'original', 'large', 'thumb'
+}
+
+// Миниатюры для галереи
+public function getThumbnailsAttribute(): array
+{
+    $variants = config('media.collections.product_gallery.variants', []);
+
+    return $this->images->sortBy('sort_order')->map(function($media) use ($variants) {
+        $urls = [];
+
+        foreach ($variants as $variant => $size) {
+            $urls[$variant] = $media->url($variant);
+        }
+
+        $urls['is_main'] = $media->is_main;
+
+        return $urls;
+    })->toArray();
+}
+
+public function getCatalogImageUrlAttribute(): string
+{
+    $main = $this->images->sortBy('sort_order')->firstWhere('is_main', 1)
+        ?? $this->images->sortBy('sort_order')->first();
+
+    return $main?->url('small') ?? asset('images/no-image.png');
+}
 
 public function variantGroup()
 {

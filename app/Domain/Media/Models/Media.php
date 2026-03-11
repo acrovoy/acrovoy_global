@@ -62,6 +62,22 @@ class Media extends Model
     }
 
 
+    public function url(string $variant = 'original'): string
+{
+    if ($variant === 'original') {
+        return $this->cdn_url; // уже готовая ссылка на оригинал
+    }
+
+    // Берём базовый путь: папка с UUID, без original
+    // Пример cdn_url: /storage/media/product_gallery/UUID/original/UUID.jpg
+    // Нужно получить: /storage/media/product_gallery/UUID
+    $basePath = preg_replace('#/original/[^/]+$#', '', $this->cdn_url);
+
+    $fileNameWithoutExt = pathinfo($this->file_name, PATHINFO_FILENAME);
+
+    return "{$basePath}/{$variant}/{$fileNameWithoutExt}.webp";
+}
+
     public function previewPath(): string
 {
     return "media/{$this->collection}/{$this->uuid}/thumb/{$this->uuid}.webp";
@@ -75,6 +91,8 @@ class Media extends Model
     // =============================
     // Variant helpers
     // =============================
+
+   
 
     /**
      * Путь к variant (webp)
