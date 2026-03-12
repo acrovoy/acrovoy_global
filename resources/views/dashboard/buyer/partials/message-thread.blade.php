@@ -19,7 +19,7 @@ $currentUser = auth()->user();
         <span class="text-sm text-gray-600 mt-1">
             {{ $message->user->supplier->name ?? 'Supplier' }}
         </span>
-        <span class="text-xs text-gray-400 mt-1">{{ $message->created_at }}</span>
+        <span class="text-xs text-gray-400 mt-1" data-utc="{{ $message->created_at }}"></span>
     </div>
 
     @elseif ($message->role === 'admin')
@@ -28,7 +28,7 @@ $currentUser = auth()->user();
         <div class="bg-red-700 text-white rounded-lg p-3 max-w-[75%] break-words">
             <p class="text-sm m-0">{{ $message->text }}</p>
         </div>
-        <span class="text-sm text-red-400 mt-1">ACROVOY MANAGER</span><span class="text-xs text-gray-400 mt-1">{{ $message->created_at }}</span>
+        <span class="text-sm text-red-400 mt-1">ACROVOY MANAGER</span><span class="text-xs text-gray-400 mt-1" data-utc="{{ $message->created_at }}"></span>
     </div>
 
 

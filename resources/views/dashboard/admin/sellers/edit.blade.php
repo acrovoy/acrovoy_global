@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 @extends('dashboard.admin.layout')
 
 @section('dashboard-content')
@@ -23,12 +17,9 @@
 
     
 </div>
-{{-- Показываем сообщение об успешном обновлении --}}
-@if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-6" role="alert">
-        {{ session('success') }}
-    </div>
-@endif
+
+<x-alerts />
+
 <div class="bg-white rounded-xl shadow p-6">
 
 

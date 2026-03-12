@@ -3,6 +3,8 @@
 @section('settings-content')
 <h1 class="text-xl font-semibold mb-6">Add language</h1>
 
+<x-alerts />
+
 <form method="POST"
       action="{{ route('admin.settings.languages.store') }}"
       class="max-w-md space-y-5">

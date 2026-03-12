@@ -3,6 +3,8 @@
 @section('settings-content')
 <h1 class="text-2xl font-bold mb-4">Edit Help Category</h1>
 
+<x-alerts />
+
 <form action="{{ route('admin.help.categories.update', $category->id) }}" method="POST">
     @csrf
     @method('PUT')

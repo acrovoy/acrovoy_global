@@ -18,11 +18,7 @@
     </a>
 </div>
 
-@if(session('success'))
-    <div class="mb-4 p-2 bg-green-100 text-green-800 rounded shadow-sm">
-        {{ session('success') }}
-    </div>
-@endif
+<x-alerts />
 
 <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
     <table class="min-w-full divide-y divide-gray-200 text-sm">

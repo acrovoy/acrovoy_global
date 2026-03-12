@@ -8,6 +8,8 @@
     </h1>
 </div>
 
+<x-alerts />
+
 <form action="{{ route('admin.settings.manufacturing-capabilities.update', $capability) }}"
       method="POST"
       class="space-y-4 bg-white p-6 rounded shadow">

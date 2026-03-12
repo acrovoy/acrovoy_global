@@ -2,17 +2,7 @@
 
 @section('settings-content')
 
-{{-- Ошибки валидации --}}
-@if ($errors->any())
-    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-        <strong>Please fix the following errors:</strong>
-        <ul class="mt-2 list-disc list-inside">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+<x-alerts />
 
 
 <h1 class="text-2xl font-bold mb-4">Edit Article</h1>

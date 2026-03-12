@@ -50,10 +50,21 @@
 
     // ---------- UI helpers ----------
     const addMessageElem = (message, chatMessagesElem) => {
-        const date = new Date(message.created_at).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const tz = localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+         // Конвертируем UTC время в локальное
+    const date = new Date(message.created_at);
+    const options = {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: tz
+    };
+    const dateStr = date.toLocaleString([], options);
 
         const buyerMsg = `
         <div class="flex flex-col items-end">
@@ -63,7 +74,7 @@
              <span class="text-sm text-gray-600 mt-1">
                  ${message.user?.name ?? 'Unknown User' } ${message.user?.last_name ?? 'Unknown User' }
             </span>
-            <span class="text-xs text-gray-300 mt-1">${date}</span>
+            <span class="text-xs text-gray-300 mt-1">${dateStr}</span>
         </div>`;
 
         const sellerMsg = `
@@ -74,7 +85,7 @@
              <span class="text-sm text-gray-600 mt-1">
                  ${message.user?.name ?? 'Supplier' }
             </span>
-            <span class="text-xs text-gray-400 mt-1">${date}</span>
+            <span class="text-xs text-gray-400 mt-1">${dateStr}</span>
         </div>`;
 
         chatMessagesElem.insertAdjacentHTML(

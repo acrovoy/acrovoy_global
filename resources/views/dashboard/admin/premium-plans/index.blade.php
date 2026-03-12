@@ -23,12 +23,7 @@
     </div>
 </div>
 
-{{-- Уведомление об успешном действии --}}
-@if(session('success'))
-    <div class="mb-4 px-4 py-3 rounded-md bg-green-100 text-green-800">
-        {{ session('success') }}
-    </div>
-@endif
+<x-alerts />
 
 <h3 class="text-xl font-bold mb-4">Seller Plans</h3>
 

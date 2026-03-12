@@ -31,6 +31,11 @@
             <form method="POST" action="{{ route('login') }}" class="space-y-4">
                 @csrf
 
+                <input type="hidden" name="timezone" id="login-timezone">
+                <script>
+                document.getElementById('login-timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                </script>
+
                 <input type="email" name="email" placeholder="Email address" required autofocus
                     class="w-full px-4 py-3 border border-gray-300 rounded-md text-lg focus:outline-none focus:border-blue-500">
 

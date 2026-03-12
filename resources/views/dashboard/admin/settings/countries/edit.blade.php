@@ -15,6 +15,8 @@ $translations = $country->translations
     ->pluck('name','locale');
 @endphp
 
+<x-alerts />
+
 <form method="POST"
       action="{{ route('admin.settings.countries.update', $country) }}"
       class="space-y-6 max-w-md">

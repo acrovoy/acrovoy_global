@@ -17,11 +17,7 @@
     </a>
 </div>
 
-@if(session('success'))
-    <div class="mb-5 px-4 py-3 bg-green-50 border border-green-200 text-green-800 rounded-md text-sm">
-        {{ session('success') }}
-    </div>
-@endif
+<x-alerts />
 
 <div class="overflow-hidden border border-gray-200 rounded-lg">
     <table class="w-full text-sm">

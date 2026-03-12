@@ -17,17 +17,7 @@
         </p>
     </div>
 
-    @if(session('success'))
-        <div class="mb-4 px-4 py-3 rounded border border-green-200 bg-green-50 text-green-800 text-sm">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="mb-4 px-4 py-3 rounded border border-red-200 bg-red-50 text-red-800 text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
+    <x-alerts />
 
     <form action="{{ route('buyer.projects.update', $project) }}" method="POST" class="space-y-5">
         @csrf

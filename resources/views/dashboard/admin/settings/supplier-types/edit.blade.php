@@ -4,6 +4,8 @@
 
 <h1 class="text-xl font-semibold mb-6">Edit Supplier Type</h1>
 
+<x-alerts />
+
 <form method="POST"
       action="{{ route('admin.settings.supplier-types.update', $supplierType->id) }}"
       class="space-y-2 bg-gray-50 border rounded-xl shadow-sm p-6">

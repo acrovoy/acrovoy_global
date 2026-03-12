@@ -105,9 +105,86 @@
     </main>
 
     @include('layouts.footer')
+
+
+    {{-- Временная зона (для проверки скрипта) --}}
+<div id="timezone-display" class="fixed bottom-2 left-2 text-gray-600 text-xs px-2 py-1 rounded z-50">
+    <span id="timezone-value">detecting...</span>
+    <span id="current-time">--:--:--</span>
+    <p>Registered at: <span data-utc="{{ auth()->user()->created_at ?? '' }}"></span></p>
 </div>
 
 
+</div>
+
+<script>
+(function () {
+    // ----------------------
+    // 1. Определяем временную зону
+    // ----------------------
+    const tz = @json(auth()->user()->timezone ?? null) // timezone из базы для залогиненных
+              || localStorage.getItem('timezone')      // из localStorage
+              || Intl.DateTimeFormat().resolvedOptions().timeZone; // системная как fallback
+
+    const tzStored = localStorage.getItem('timezone');
+
+    // Сохраняем в localStorage, если изменилось
+    if (tzStored !== tz) {
+        localStorage.setItem('timezone', tz);
+    }
+
+    // ----------------------
+    // 2. Показываем TZ на странице
+    // ----------------------
+    const tzElement = document.getElementById('timezone-value');
+    if (tzElement) tzElement.textContent = tz;
+
+    // ----------------------
+    // 3. Функция для обновления текущего времени
+    // ----------------------
+    function updateTime() {
+        const now = new Date();
+        const options = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: tz };
+        const timeStr = now.toLocaleTimeString([], options);
+        const currentTimeElement = document.getElementById('current-time');
+        if (currentTimeElement) currentTimeElement.textContent = timeStr;
+    }
+
+    // ----------------------
+    // 4. Функция для конвертации UTC → локальное время
+    // ----------------------
+    function convertUtcToLocal(utcString) {
+        if (!utcString) return '--:--';
+        const date = new Date(utcString + 'Z'); // Z = UTC
+        return date.toLocaleString([], { 
+            timeZone: tz,
+            hour12: false,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
+    // ----------------------
+    // 5. Конвертируем все элементы с data-utc
+    // ----------------------
+    document.querySelectorAll('[data-utc]').forEach(el => {
+        const utc = el.getAttribute('data-utc');
+        el.textContent = convertUtcToLocal(utc);
+    });
+
+    // ----------------------
+    // 6. Запускаем обновление текущего времени каждую секунду
+    // ----------------------
+    updateTime();
+    setInterval(updateTime, 1000);
+
+})();
+</script>
 
 </body>
 </html>
+

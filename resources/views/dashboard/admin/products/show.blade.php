@@ -171,44 +171,7 @@
 
 
 
-                {{-- Color / Material Options --}}
-@php
-    $colors = $product1->colors; // Получаем коллекцию цветов
-@endphp
-@if($colors->isNotEmpty())
-<div class="mb-6">
-    <h3 class="font-semibold text-lg mb-3">Available Colors / Materials</h3>
-
-    <div class="flex flex-wrap gap-3">
-        @foreach($product1->colors as $material)
-            @php
-                // Цвет или пусто
-                $bgStyle = $material->color ? "background-color:{$material->color}" : '';
-                
-                // Текстура
-                $textureUrl = $material->texture_path ? asset('storage/'.$material->texture_path) : '';
-
-                // Ссылка на связанный продукт
-                $link = $material->linked_product_id 
-                        ? route('product.show', $material->linkedProduct->slug) 
-                        : '#';
-
-                // Заголовок
-                $title = $material->color ?? 'Texture';
-            @endphp
-
-            <button
-                class="color-option w-12 h-12 rounded-md border border-gray-300 shadow-sm
-                       hover:border-black transition"
-                style="{{ $bgStyle }} 
-                       @if($textureUrl) background-image: url('{{ $textureUrl }}'); background-size: cover; background-position: center; @endif"
-                data-link="{{ $link }}"
-                title="{{ $title }}">
-            </button>
-        @endforeach
-    </div>
-</div>
-@endif
+               
 
 
 

@@ -5,6 +5,8 @@
     <h1 class="text-2xl font-bold text-gray-900">Редактировать материал</h1>
 </div>
 
+<x-alerts />
+
 <form action="{{ route('admin.settings.materials.update', $material) }}" method="POST" class="space-y-4 bg-white p-6 rounded shadow">
     @csrf
     @method('PUT')

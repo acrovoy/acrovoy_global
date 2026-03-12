@@ -28,6 +28,7 @@ class User extends Authenticatable
         'role',
         'purchase_country',
         'premium_plan_id',
+        'timezone',
     ];
 
     /**

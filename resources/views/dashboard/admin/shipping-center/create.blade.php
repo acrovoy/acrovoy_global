@@ -17,29 +17,7 @@
     </div>
 
 
-    {{-- Validation errors --}}
-@if ($errors->any())
-    <div class="mb-4 px-4 py-3 rounded border border-red-200 bg-red-50 text-red-800 text-sm">
-        <ul class="list-disc list-inside space-y-1">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-
-    @if(session('success'))
-    <div class="mb-4 px-4 py-3 rounded border border-green-200 bg-green-50 text-green-800 text-sm">
-        {{ session('success') }}
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="mb-4 px-4 py-3 rounded border border-red-200 bg-red-50 text-red-800 text-sm">
-        {{ session('error') }}
-    </div>
-@endif
+    <x-alerts />
 
     {{-- Form --}}
     <form method="POST" action="{{ route('admin.shipping-center.store') }}"

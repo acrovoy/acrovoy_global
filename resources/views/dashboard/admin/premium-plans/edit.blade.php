@@ -3,6 +3,8 @@
 @section('dashboard-content')
 <h2 class="text-2xl font-bold mb-4">Edit Premium Plan</h2>
 
+<x-alerts />
+
 <form action="{{ route('admin.premium-plans.update', $plan->id) }}" method="POST" class="space-y-6 bg-white p-6 rounded shadow">
     @csrf
     @method('PUT')

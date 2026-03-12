@@ -28,6 +28,8 @@
             </div>
            
             <div class="flex items-center justify-between">
+
+            <span class="text-xs text-gray-500" data-utc="{{ $thread['updated_at'] }}"></span>
             <span class="text-xs text-gray-500">
                 {{ $thread['updated_at'] }}
             </span>

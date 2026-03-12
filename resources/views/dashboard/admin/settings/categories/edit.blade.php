@@ -6,11 +6,7 @@
     <h1 class="text-xl font-semibold text-gray-900">Edit Category</h1>
 </div>
 
-@if(session('success'))
-    <div class="mb-4 p-2 bg-green-100 text-green-800 rounded shadow-sm">
-        {{ session('success') }}
-    </div>
-@endif
+<x-alerts />
 
 <form action="{{ route('admin.settings.categories.update', $category) }}" method="POST" class="space-y-4">
     @csrf

@@ -55,8 +55,6 @@ public function show(Product $product)
             'priceTiers',
             'supplier',
             'category',
-            'colors',
-            'colors.linkedProduct',
             'user',
         ]);
 

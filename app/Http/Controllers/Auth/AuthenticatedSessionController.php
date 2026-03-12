@@ -30,6 +30,13 @@ class AuthenticatedSessionController extends Controller
 
     $user = $request->user();
 
+    // 🔹 Обновляем timezone при логине
+    $timezone = $request->input('timezone', null); // из формы
+    if ($timezone) {
+        $user->timezone = $timezone;
+        $user->save();
+    }
+
     // редирект в зависимости от роли
     if ($user->role === 'admin') {
         return redirect()->intended(route('admin.home')); // админка

@@ -5,6 +5,8 @@
     Edit language: {{ $language->code }}
 </h1>
 
+<x-alerts />
+
 <form method="POST"
       action="{{ route('admin.settings.languages.update', $language) }}"
       class="max-w-md space-y-5">

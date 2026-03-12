@@ -12,6 +12,8 @@ $languages = Language::where('is_active', true)
     ->get();
 @endphp
 
+<x-alerts />
+
 <form method="POST" action="{{ route('admin.settings.countries.store') }}"
       class="space-y-6 max-w-md">
 

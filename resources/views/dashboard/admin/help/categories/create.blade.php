@@ -3,6 +3,8 @@
 @section('settings-content')
 <h1 class="text-2xl font-bold mb-4">Add New Help Category</h1>
 
+<x-alerts />
+
 <form action="{{ route('admin.help.categories.store') }}" method="POST">
     @csrf
 

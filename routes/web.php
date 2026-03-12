@@ -60,6 +60,8 @@ use App\Http\Controllers\Admin\Settings\LocationController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 
+use App\Http\Controllers\Api\UserTimezoneController;
+
 
 
 /*
@@ -676,5 +678,7 @@ Route::prefix('help')->name('help.')->group(function () {
     Route::get('/', [HelpController::class, 'index'])->name('index');
     Route::get('/category/{slug}', [HelpController::class, 'category'])->name('category');
 });
+
+Route::post('/api/user/timezone', [UserTimezoneController::class, 'update'])->middleware('auth');
 
 require __DIR__ . '/auth.php';

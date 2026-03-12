@@ -3,6 +3,8 @@
 @section('settings-content')
 <h1 class="text-2xl font-bold mb-4">Добавить константу</h1>
 
+<x-alerts />
+
 <form action="{{ route('admin.settings.constants.store') }}" method="POST" class="space-y-4">
     @csrf
     <div>

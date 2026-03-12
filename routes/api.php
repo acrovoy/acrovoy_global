@@ -2,6 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\UserTimezoneController;
+
+Route::middleware('auth')->post('/api/user/timezone', [UserTimezoneController::class, 'update']);
 
 /*
 |--------------------------------------------------------------------------
