@@ -5,7 +5,7 @@
 <div id="selected-materials" class="flex flex-wrap gap-2 mb-2"></div>
 
 {{-- Поиск --}}
-<input type="text" id="materialSearch" placeholder="Search materials..." class="w-full mb-2">
+<input type="text" id="materialSearch" placeholder="Search materials..." class="w-full mb-2 border rounded-lg border-gray-300 px-3 py-2 text-sm text-gray-600">
 
 {{-- Список всех материалов для выбора --}}
 <div id="materials-options" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">

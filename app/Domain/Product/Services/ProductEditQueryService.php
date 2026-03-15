@@ -18,7 +18,7 @@ class ProductEditQueryService
 {
     $this->authorizeProduct($product);
 
-    // 🔹 Eager load всех нужных связей, включая варианты и их медиа
+    // 🔹 Eager load всех нужных связей
     $product->load([
         'translations',
         'category',
@@ -32,19 +32,21 @@ class ProductEditQueryService
 
     $languages = Language::where('is_active', true)->get();
 
-    // 🔹 Получаем варианты из группы
-    $variants = $product->variantGroup?->items ?? collect();
+    // 🔹 Получаем parent item
+    $parentItem = ProductVariantItem::where('product_id', $product->id)->first();
 
-    // 🔹 Добавляем родительский продукт в варианты, если его нет
-    if (!$variants->contains(fn($item) => $item->product_id === $product->id)) {
-        $variants->prepend(
-            new ProductVariantItem([
-                'product_id' => $product->id,
-                'title' => $product->name,
-                'media_id' => $product->variantPreview?->id // preview для родителя
-            ])
-        );
-    }
+    // 🔹 Получаем все остальные варианты
+    $otherVariants = $product->variantGroup?->items
+        ->where('product_id', '!=', $product->id)
+        ->values();
+
+    // 🔹 Собираем коллекцию для Blade
+    $variants = collect();
+    if ($parentItem) $variants->push($parentItem);
+    $variants = $variants->merge($otherVariants);
+
+    // 🔹 Продукты поставщика
+    $products = $this->getSupplierProducts();
 
     return [
         'product' => $product,
@@ -58,11 +60,27 @@ class ProductEditQueryService
         'selectedMaterials' => $product->materials->pluck('id')->toArray(),
         'translations' => $this->prepareTranslations($product, $languages),
         'specsTranslations' => $this->prepareSpecs($product, $languages),
-        'variants' => $variants, // уже с родителем и загруженным media
+        'variants' => $variants,
+        'products' => $products,
     ];
 }
 
-    private function authorizeProduct(Product $product): void
+
+
+public function getSupplierProducts()
+{
+    $supplierId = auth()->user()?->supplier?->id;
+
+    if (!$supplierId) {
+        return collect();
+    }
+
+    return Product::with('translations')
+        ->where('supplier_id', $supplierId)
+        ->get();
+}
+
+private function authorizeProduct(Product $product): void
     {
         abort_if(
             $product->supplier_id !== Auth::user()?->supplier?->id,

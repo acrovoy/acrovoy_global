@@ -206,6 +206,7 @@
         <h3 class="font-semibold text-lg">Variants</h3>
 <span class="text-xs text-gray-500 leading-tight mb-6 block">
     {{ __('product/product_show.shipping_cost_not_included') }}
+   
 </span>
         <div class="flex flex-wrap gap-3">
 

@@ -255,11 +255,12 @@ public function variantGroup()
     return $this->belongsTo(ProductVariantGroup::class);
 }
 
-public function variants()
-{
-    return $this->hasMany(Product::class, 'variant_group_id', 'variant_group_id');
-}
 
+
+public function variantItems()
+{
+    return $this->hasMany(ProductVariantItem::class, 'variant_group_id', 'variant_group_id');
+}
 
 public function variantPreview()
 {

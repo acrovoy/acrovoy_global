@@ -50,6 +50,21 @@ class ProductVariantItem extends Model
     }
 
     
+    public function getLinkedProductIdAttribute(): ?int
+    {
+        return $this->product_id;
+    }
+
+    public function getLinkedProductNameAttribute(): ?string
+{
+    return $this->product?->name;
+}
+
+// 🔹 Возвращает url картинки связанного продукта
+public function getLinkedProductImageUrlAttribute(): string
+{
+    return $this->product?->main_image?->cdn_url ?? '/images/no-image.png';
+}
 
    public function getImageUrlAttribute(): string
 {
@@ -66,5 +81,7 @@ class ProductVariantItem extends Model
     // 🔹 Если ничего нет — placeholder
     return '/images/no-image.png';
 }
+
+
 
 }

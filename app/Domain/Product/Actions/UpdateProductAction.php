@@ -49,45 +49,71 @@ class UpdateProductAction
             $specifications
         ) {
 
-            /* ============================
-             * Product Identity
-             * ============================ */
+           /* ============================
+ * Product Identity
+ * ============================ */
 
-            $product->update([
-                'slug' => $data->slug,
-                'name' => $data->name,
-                'supplier_id' => $data->supplierId,
-                'category_id' => $data->categoryId,
-                'moq' => $data->moq,
-                'lead_time' => $data->leadTime,
-                'customization' => $data->customization,
-                'country_id' => $data->countryId,
-            ]);
+// 🔹 Лог перед обновлением продукта
+logger()->info('==== Before Product Update ====', [
+    'product_id' => $product->id,
+    'product_exists_in_object' => $product->exists,
+    'product_in_db' => \App\Models\Product::where('id', $product->id)->exists(),
+]);
+
+$product->update([
+    'slug' => $data->slug,
+    'name' => $data->name,
+    'supplier_id' => $data->supplierId,
+    'category_id' => $data->categoryId,
+    'moq' => $data->moq,
+    'lead_time' => $data->leadTime,
+    'customization' => $data->customization,
+    'country_id' => $data->countryId,
+]);
+
+// 🔹 Лог после обновления продукта
+logger()->info('==== After Product Update ====', [
+    'product_id' => $product->id,
+    'product_exists_in_object' => $product->exists,
+    'product_in_db' => \App\Models\Product::where('id', $product->id)->exists(),
+]);
 
             /* ============================
              * Translations
              * ============================ */
 
-            if (!empty($translations)) {
+            /* ============================
+ * Translations
+ * ============================ */
 
-                foreach ($translations as $locale => $payload) {
+if (!empty($translations)) {
 
-                    if (empty($payload['name'])) {
-                        continue;
-                    }
+    foreach ($translations as $locale => $payload) {
 
-                    $product->translations()->updateOrCreate(
-                        [
-                            'locale' => $locale
-                        ],
-                        [
-                            'name' => $payload['name'] ?? null,
-                            'undername' => $payload['undername'] ?? null,
-                            'description' => $payload['description'] ?? null
-                        ]
-                    );
+                if (empty($payload['name'])) {
+                    continue;
                 }
+
+                // 🔹 Логи для диагностики
+                logger()->info('==== Translation step ====', [
+                    'product_id' => $product->id,
+                    'product_exists_in_object' => $product->exists,
+                    'product_in_db' => Product::where('id', $product->id)->exists(),
+                ]);
+
+                $product->translations()->updateOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'locale' => $locale
+                    ],
+                    [
+                        'name' => $payload['name'] ?? null,
+                        'undername' => $payload['undername'] ?? null,
+                        'description' => $payload['description'] ?? null
+                    ]
+                );
             }
+        }
 
             
 

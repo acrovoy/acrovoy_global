@@ -58,6 +58,9 @@
                 @foreach($languages as $index => $language)
                     @if($index == 0)
                         {{-- Первый язык всегда виден --}}
+                        <label class="block text-sm text-gray-600 mb-1">
+                                {{ strtoupper($language->code) }}
+                        </label>
                         <input type="text"
                             name="undername[{{ $language->code }}]"
                             class="input flex-1 mb-2"
@@ -97,6 +100,9 @@
                 @foreach($languages as $index => $language)
                     @if($index == 0)
                         {{-- Первый язык всегда виден --}}
+                        <label class="block text-sm text-gray-600 mb-1">
+                                {{ strtoupper($language->code) }}
+                        </label>
                         <textarea name="description[{{ $language->code }}]"
                                 class="input mb-2 flex-1"
                                 rows="4"
