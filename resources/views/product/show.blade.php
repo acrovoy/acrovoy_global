@@ -1,9 +1,10 @@
 @extends('layouts.app')
-
 @section('content')
 
 <section class="bg-[#F7F3EA] py-8">
     <div class="container mx-auto px-6">
+
+        
 
         {{-- Breadcrumb --}}
         <div class="text-sm text-gray-600 mb-6 flex flex-wrap gap-1">
@@ -14,22 +15,15 @@
             <span class="text-gray-900">{{ $product1->name }}</span>
         </div>
 
-
-
-
-
         <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
 
-            {{-- Images --}}
+            {{-- Галерея продукта --}}
             <div class="bg-white rounded-xl shadow p-4 mb-4">
-
-                {{-- Главное изображение --}}
                 <img id="mainImage"
                     src="{{ $product1->main_image_url }}"
                     class="w-full h-auto object-contain rounded-lg cursor-pointer"
                     alt="{{ $product1->name }}">
 
-                {{-- Миниатюры --}}
                 <div class="flex gap-4 mt-4">
                     @foreach($product1->thumbnails as $media)
                         <img src="{{ $media['thumb'] }}"
@@ -40,66 +34,139 @@
                     @endforeach
                 </div>
             </div>
-
-
-
-
+              
             {{-- Info --}}
             <div class="rounded-xl shadow p-6" x-data="{ showProjectBox: false }">
                 <div class="flex items-start mb-1">
 
-        {{-- Title --}}
-        <div>
-        <div class="flex items-center flex-wrap gap-3">
-            <h1 class="text-3xl font-extrabold text-gray-900">
-                {{ $product1->name }}
-            </h1>
+                    {{-- Title --}}
+                    <div>
+                        <div class="flex items-center flex-wrap gap-3">
+                            <h1 class="text-3xl font-extrabold text-gray-900">
+                                {{ $product1->name }}
+                            </h1>
 
-            <span class="bg-yellow-900 text-white px-2 py-0 rounded text-sm">
-                {{ $product1->id }}
-            </span>
+                            <span class="bg-yellow-900 text-white px-2 py-0 rounded text-sm">
+                                {{ $product1->id }}
+                            </span>
 
 
 
-        </div>
+                        </div>
 
-<p class="text-gray-700 mb-2 leading-relaxed">{{ $product1->undername }}</p>
+                        <p class="text-gray-700 mb-2 leading-relaxed">{{ $product1->undername }}</p>
 
-                {{-- ⭐ Рейтинг и продано --}}
-                @php
-                $reviewsCount = $product1->reviews->count();
-                $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
-                $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
-                @endphp
+                        {{-- ⭐ Рейтинг и продано --}}
+                        @php
+                        $reviewsCount = $product1->reviews->count();
+                        $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
+                        $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
+                        @endphp
 
-                <div class="flex items-center text-gray-600 text-xs mb-4">
-                    {{-- Звёзды --}}
-                    <div class="flex items-center gap-1 mr-3">
-                        @for ($i = 1; $i <= 5; $i++)
-                            @if ($i <=floor($rating))
-                            <svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 20 20">
-                            <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
-                            </svg>
-                            @elseif ($i - $rating < 1)
-                                <svg class="w-4 h-4 fill-current text-yellow-300" viewBox="0 0 20 20">
-                                <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
-                                </svg>
-                                @else
-                                <svg class="w-4 h-4 fill-current text-gray-300" viewBox="0 0 20 20">
+                        <div class="flex items-center text-gray-600 text-xs mb-4">
+                            {{-- Звёзды --}}
+                            <div class="flex items-center gap-1 mr-3">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    @if ($i <=floor($rating))
+                                    <svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 20 20">
                                     <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
-                                </svg>
-                                @endif
-                                @endfor
-                                <span>{{ number_format($rating, 1) }}</span>
+                                    </svg>
+                                    @elseif ($i - $rating < 1)
+                                        <svg class="w-4 h-4 fill-current text-yellow-300" viewBox="0 0 20 20">
+                                        <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
+                                        </svg>
+                                        @else
+                                        <svg class="w-4 h-4 fill-current text-gray-300" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
+                                        </svg>
+                                        @endif
+                                        @endfor
+                                        <span>{{ number_format($rating, 1) }}</span>
+                            </div>
+
+                            {{-- Количество отзывов --}}
+                            <span>({{ $reviewsCount }} {{ __('product/product_show.reviews') }})</span>
+
+                            @if($soldCount > 0)
+                            <span class="mx-2">•</span>
+                            <span>{{ __('product/product_show.sold') }}: {{ $soldCount }}</span>
+                            @endif
+                        </div>
+
+
+
+
+
+
+
                     </div>
 
-                    {{-- Количество отзывов --}}
-                    <span>({{ $reviewsCount }} {{ __('product/product_show.reviews') }})</span>
 
-                    @if($soldCount > 0)
-                    <span class="mx-2">•</span>
-                    <span>{{ __('product/product_show.sold') }}: {{ $soldCount }}</span>
-                    @endif
+
+
+
+
+
+                    {{-- Actions --}}
+                    <div class="ml-auto flex items-center gap-2">
+
+                        {{-- ➕ Add to project --}}
+                        <div class="inline-flex flex-col items-end w-[180px]">
+                            <!-- Button -->
+                            <button
+                                @click="showProjectBox = !showProjectBox"
+                                title="Add to project"
+                                class="inline-flex items-center gap-2
+               px-4 py-2
+               rounded-lg
+               bg-gray-500 text-white
+               text-sm font-semibold
+               shadow-sm
+               hover:bg-gray-700 hover:shadow
+               transition-colors duration-200">
+                                <!-- Icon -->
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </span>
+
+                                <!-- Text -->
+                                <span class="whitespace-nowrap">
+                                    Add to project
+                                </span>
+                            </button>
+
+                            <!-- Text below button, same width -->
+                            <p class="mt-1 text-xs text-gray-500 text-right inline-block">
+                                Organize your products into projects — create a project in your dashboard first.
+                            </p>
+                        </div>
+
+
+
+
+
+                        {{-- Edit --}}
+                        @can('update', $product1)
+                        <a href="{{ route('products.edit', $product1->id) }}"
+                            class="inline-flex items-center gap-2
+                  px-4 py-2
+                  text-sm font-medium
+                  text-blue-700
+                  border border-blue-600
+                  rounded-lg
+                  hover:bg-blue-600 hover:text-white
+                  transition">
+                            Edit
+                        </a>
+                        @endcan
+
+                    </div>
                 </div>
 
 
@@ -108,167 +175,91 @@
 
 
 
-</div>
-
-        
 
 
+                @include('product.partials.notification')
 
 
+                @include('product.partials.add-to-project', ['product1' => $product1, 'projects' => $projects])
 
-       {{-- Actions --}}
-<div class="ml-auto flex items-center gap-2">
-
-    {{-- ➕ Add to project --}}
-    <div class="inline-flex flex-col items-end w-[180px]">
-    <!-- Button -->
-    <button
-        @click="showProjectBox = !showProjectBox"
-        title="Add to project"
-        class="inline-flex items-center gap-2
-               px-4 py-2
-               rounded-lg
-               bg-gray-500 text-white
-               text-sm font-semibold
-               shadow-sm
-               hover:bg-gray-700 hover:shadow
-               transition-colors duration-200">
-        <!-- Icon -->
-        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 transition">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="h-4 w-4"
-                 fill="none"
-                 viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-        </span>
-
-        <!-- Text -->
-        <span class="whitespace-nowrap">
-            Add to project
-        </span>
-    </button>
-
-    <!-- Text below button, same width -->
-    <p class="mt-1 text-xs text-gray-500 text-right inline-block">
-        Organize your products into projects — create a project in your dashboard first.
-    </p>
-</div>
+                @include('product.partials.price-table', ['product1' => $product1])
 
 
 
 
 
-    {{-- Edit --}}
-    @can('update', $product1)
-        <a href="{{ route('products.edit', $product1->id) }}"
-           class="inline-flex items-center gap-2
-                  px-4 py-2
-                  text-sm font-medium
-                  text-blue-700
-                  border border-blue-600
-                  rounded-lg
-                  hover:bg-blue-600 hover:text-white
-                  transition">
-            Edit
-        </a>
-    @endcan
-
-</div>
-    </div>
 
 
 
+                {{-- Variants --}}
+                @if($product1->variantGroup && $product1->variantGroup->items->isNotEmpty())
+                <div class="mb-6">
+                    <h3 class="font-semibold text-lg">Variants</h3>
+                    <span class="text-xs text-gray-500 leading-tight mb-6 block">
+                        {{ __('product/product_show.shipping_cost_not_included') }}
 
-                
+                    </span>
+                    <div class="flex flex-wrap gap-3">
 
+                        @php
+                        $variantItems = $product1->variantGroup->items;
 
-
-
-@include('product.partials.notification')
-
-  
-@include('product.partials.add-to-project', ['product1' => $product1, 'projects' => $projects])
-
-@include('product.partials.price-table', ['product1' => $product1])
-
-
-                
-
-
-                
-               
-               
-               {{-- Variants --}}
-@if($product1->variantGroup && $product1->variantGroup->items->isNotEmpty())
-    <div class="mb-6">
-        <h3 class="font-semibold text-lg">Variants</h3>
-<span class="text-xs text-gray-500 leading-tight mb-6 block">
-    {{ __('product/product_show.shipping_cost_not_included') }}
-   
-</span>
-        <div class="flex flex-wrap gap-3">
-
-            @php
-                $variantItems = $product1->variantGroup->items;
-
-                // Добавляем родителя, если его нет в items
-                if (!$variantItems->contains('product_id', $product1->id)) {
-                    $dummyItem = new \App\Models\ProductVariantItem([
+                        // Добавляем родителя, если его нет в items
+                        if (!$variantItems->contains('product_id', $product1->id)) {
+                        $dummyItem = new \App\Models\ProductVariantItem([
                         'product_id' => $product1->id,
                         'title' => $product1->name,
                         'media_id' => $product1->variantPreview?->id, // preview для родителя
-                    ]);
-                    $variantItems->prepend($dummyItem);
-                }
-            @endphp
+                        ]);
+                        $variantItems->prepend($dummyItem);
+                        }
+                        @endphp
 
-            @foreach($variantItems as $variantItem)
-                @php
-                    $variantProduct = $variantItem->product;
-                    if (!$variantProduct) continue;
+                        @foreach($variantItems as $variantItem)
+                        @php
+                        $variantProduct = $variantItem->product;
+                        if (!$variantProduct) continue;
 
-                    $link = route('product.show', $variantProduct->slug);
-                    $title = $variantItem->title ?? $variantProduct->name ?? 'Variant';
+                        $link = route('product.show', $variantProduct->slug);
+                        $title = $variantItem->title ?? $variantProduct->name ?? 'Variant';
 
-                    // 🔹 Берём preview из ProductVariantItem
-                    $previewUrl = $variantItem->media
-                ? asset('storage/' . $variantItem->media->variantPath('thumb'))
-                : null;
+                        // 🔹 Берём preview из ProductVariantItem
+                        $previewUrl = $variantItem->media
+                        ? asset('storage/' . $variantItem->media->variantPath('thumb'))
+                        : null;
 
-                    $isActive = $variantProduct->id == $product1->id;
-                    
-                    
-                @endphp
+                        $isActive = $variantProduct->id == $product1->id;
 
-                <a href="{{ $link }}" class="variant-btn w-24 flex flex-col items-center gap-1">
 
-    <div class="w-24 h-24 rounded-md border border-gray-300 shadow-sm hover:border-black transition flex items-center justify-center
-        {{ $isActive ? 'border-2 border-blue-600 ring-2 ring-blue-600' : '' }}">
-        
-        @if($previewUrl)
-            <img src="{{ $previewUrl }}"
-                 alt="{{ $variantItem->title ?? $variantItem->product->name }}"
-                 class="w-24 h-24 object-cover rounded">
-        @else
-            <div class="text-gray-400 text-xs text-center">
-                No Image
-            </div>
-        @endif
-    </div>
+                        @endphp
 
-    <span class="text-sm text-center">
-        {{ $title }}
-    </span>
+                        <a href="{{ $link }}" class="variant-btn w-24 flex flex-col items-center gap-1">
 
-</a>
+                            <div class="w-24 h-24 rounded-md border border-gray-300 shadow-sm hover:border-black transition flex items-center justify-center
+                                {{ $isActive ? 'border-2 border-blue-600 ring-2 ring-blue-600' : '' }}">
 
-            @endforeach
+                                @if($previewUrl)
+                                <img src="{{ $previewUrl }}"
+                                    alt="{{ $variantItem->title ?? $variantItem->product->name }}"
+                                    class="w-24 h-24 object-cover rounded">
+                                @else
+                                <div class="text-gray-400 text-xs text-center">
+                                    No Image
+                                </div>
+                                @endif
+                            </div>
 
-        </div>
-    </div>
-@endif
+                            <span class="text-sm text-center">
+                                {{ $title }}
+                            </span>
+
+                        </a>
+
+                        @endforeach
+
+                    </div>
+                </div>
+                @endif
 
 
 
@@ -297,100 +288,100 @@
                 </div>
                 @endif
 
-@include('product.partials.materials-table', ['product1' => $product1])
+                @include('product.partials.materials-table', ['product1' => $product1])
 
-               
-                
+
+
                 {{-- Commercial Terms --}}
-<div class="bg-[#F7F3EA] border border-gray-200 rounded-lg p-6 mb-6">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">
-        <div>
-            <p class="text-gray-500">{{ __('product/product_show.MOQ') }}</p>
-            <p class="font-semibold text-gray-900">
-                {{ $product1->moq ?? 'N/A' }} {{ __('product/product_show.pcs') }}
-            </p>
-        </div>
-        <div>
-            <p class="text-gray-500">{{ __('product/product_show.lead_time') }}</p>
-            <p class="font-semibold text-gray-900">
-                {{ $product1->lead_time ?? 'N/A' }} {{ __('product/product_show.days') }}
-            </p>
-        </div>
-        <div>
-            <p class="text-gray-500">{{ __('product/product_show.customization') }}</p>
-            <p class="font-semibold text-gray-900">
-                {{ $product1->customization ? 'Available' : 'Not available' }}
-            </p>
-        </div>
-    </div>
-</div>
+                <div class="bg-[#F7F3EA] border border-gray-200 rounded-lg p-6 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">
+                        <div>
+                            <p class="text-gray-500">{{ __('product/product_show.MOQ') }}</p>
+                            <p class="font-semibold text-gray-900">
+                                {{ $product1->moq ?? 'N/A' }} {{ __('product/product_show.pcs') }}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">{{ __('product/product_show.lead_time') }}</p>
+                            <p class="font-semibold text-gray-900">
+                                {{ $product1->lead_time ?? 'N/A' }} {{ __('product/product_show.days') }}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">{{ __('product/product_show.customization') }}</p>
+                            <p class="font-semibold text-gray-900">
+                                {{ $product1->customization ? 'Available' : 'Not available' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-{{-- Заказать кастомизацию --}}
-@if($product1->customization)
+                {{-- Заказать кастомизацию --}}
+                @if($product1->customization)
 
-{{-- Customization order panel --}}
-<div class="mt-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
+                {{-- Customization order panel --}}
+                <div class="mt-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
 
-    <h4 class="text-base font-semibold text-gray-900 mb-1">
-        Request product customization
-    </h4>
+                    <h4 class="text-base font-semibold text-gray-900 mb-1">
+                        Request product customization
+                    </h4>
 
-    <p class="text-sm text-gray-500 mb-4">
-        Create a dedicated project for customized production of this product.
-    </p>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Create a dedicated project for customized production of this product.
+                    </p>
 
-    {{-- Instruction --}}
-    <div class="mb-4 rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">
-        <p class="font-medium mb-1">How it works:</p>
-        <ul class="list-disc list-inside space-y-1 text-gray-600">
-            <li>A new project will be created automatically</li>
-            <li>All product data will be copied into the project</li>
-            <li>You can edit specifications and send RFQ back to supplier</li>
-        </ul>
-    </div>
+                    {{-- Instruction --}}
+                    <div class="mb-4 rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">
+                        <p class="font-medium mb-1">How it works:</p>
+                        <ul class="list-disc list-inside space-y-1 text-gray-600">
+                            <li>A new project will be created automatically</li>
+                            <li>All product data will be copied into the project</li>
+                            <li>You can edit specifications and send RFQ back to supplier</li>
+                        </ul>
+                    </div>
 
-    @auth
-        <form action="{{ route('buyer.custom-orders.store') }}" method="POST">
-            @csrf
-            <input type="hidden" name="product_id" value="{{ $product1->id }}">
+                    @auth
+                    <form action="{{ route('buyer.custom-orders.store') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product1->id }}">
 
-            <button
-                type="submit"
-                class="w-full bg-indigo-300 hover:bg-indigo-400 text-white py-3 rounded-lg
+                        <button
+                            type="submit"
+                            class="w-full bg-indigo-300 hover:bg-indigo-400 text-white py-3 rounded-lg
                        text-sm font-semibold tracking-wide transition shadow-md">
-                Order the customization of this product
-            </button>
-        </form>
-    @endauth
+                            Order the customization of this product
+                        </button>
+                    </form>
+                    @endauth
 
-    @guest
-        <div class="text-center py-4">
-            <p class="text-sm text-gray-500 mb-2">
-                Only registered users can request product customization.
-            </p>
-            <button
-                disabled
-                class="w-full bg-gray-400 text-white py-3 rounded-lg
+                    @guest
+                    <div class="text-center py-4">
+                        <p class="text-sm text-gray-500 mb-2">
+                            Only registered users can request product customization.
+                        </p>
+                        <button
+                            disabled
+                            class="w-full bg-gray-400 text-white py-3 rounded-lg
                        text-sm font-semibold cursor-not-allowed">
-                Order the customization of this product
-            </button>
-        </div>
-    @endguest
+                            Order the customization of this product
+                        </button>
+                    </div>
+                    @endguest
 
-</div>
+                </div>
 
-@endif
-
-
+                @endif
 
 
 
-@include('product.partials.shippingtemplates-table', ['product1' => $product1])
-                
 
-                
 
-                
+                @include('product.partials.shippingtemplates-table', ['product1' => $product1])
+
+
+
+
+
 
 
                 {{-- CTA Panel --}}
@@ -421,7 +412,7 @@
                                         text-gray-800 font-medium shadow-sm
                                         hover:border-black hover:text-black hover:shadow-md
                                         transition-all transform hover:scale-105">
-                                                            {{ __('product/product_show.add_to_cart') }}
+                                {{ __('product/product_show.add_to_cart') }}
                             </button>
                         </form>
 
@@ -431,12 +422,12 @@
                     </div>
 
 
-               
 
 
 
 
-                    
+
+
 
 
 
@@ -452,7 +443,7 @@
                     <a href="{{ url('/supplier/' . $product1->supplier->slug) }}" class="font-medium text-blue-600 hover:underline">
                         {{ $product1->supplier->name }}
                     </a>
-                    
+
                 </div>
 
             </div>
@@ -688,41 +679,7 @@
 </script>
 
 
-{{-- JS для интерактивной галереи --}}
-<script>
-    const mainImage = document.getElementById('mainImage');
-    const thumbnails = document.querySelectorAll('.thumbnail');
 
-    thumbnails.forEach(thumb => {
-        thumb.addEventListener('click', () => mainImage.src = thumb.dataset.src);
-    });
-
-    mainImage.addEventListener('click', () => {
-        const lightbox = document.createElement('div');
-        lightbox.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50';
-        const img = document.createElement('img');
-        img.src = mainImage.src;
-        img.className = 'rounded-lg shadow-lg cursor-zoom-in';
-        img.style.maxHeight = '90%';
-        img.style.maxWidth = '90%';
-
-        // Масштаб при колесике мыши
-        let scale = 1;
-        img.addEventListener('wheel', e => {
-            e.preventDefault();
-            scale += e.deltaY * -0.001;
-            scale = Math.min(Math.max(.5, scale), 3);
-            img.style.transform = `scale(${scale})`;
-        });
-
-        lightbox.appendChild(img);
-        document.body.appendChild(lightbox);
-
-        lightbox.addEventListener('click', e => {
-            if (e.target === lightbox) lightbox.remove();
-        });
-    });
-</script>
 
 <script>
     const colorOptions = document.querySelectorAll('.color-option');
@@ -746,6 +703,13 @@
     });
 </script>
 
+<script>
+window.productGallery = @json($gallery);
+</script>
 
+{{-- MediaViewer компонент --}}
+<x-media-viewer id="productViewer" :images="$gallery"></x-media-viewer>
+
+@vite('resources/js/product-gallery.js')
 
 @endsection

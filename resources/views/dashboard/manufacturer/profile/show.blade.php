@@ -328,7 +328,34 @@
 
 
 
- 
+ @php
+    $certGallery = [];
+
+    foreach ($company->certificatesMedia as $certificate) {
+
+    $src = $certificate->cdn_url;
+
+    $thumb = asset('storage/' . $certificate->variantPath('thumb'));
+
+    $ext = strtolower(pathinfo($src, PATHINFO_EXTENSION));
+
+    if (in_array($ext, ['jpg','jpeg','png','gif','webp','avif'])) {
+    $type = 'image';
+    } elseif (in_array($ext, ['mp4','webm','mov'])) {
+    $type = 'video';
+    } elseif ($ext === 'pdf') {
+    $type = 'pdf';
+    } else {
+    $type = 'file';
+    }
+
+    $certGallery[] = [
+    'type' => $type,
+    'src' => $src,
+    'thumb' => $thumb,
+    ];
+    }
+    @endphp
 
 {{-- ================= CERTIFICATES BLOCK ================= --}}
 
@@ -394,10 +421,9 @@
 
                     <div class="flex justify-between items-start gap-2">
 
-                        <a href="{{ $certificate->cdn_url }}"
-                        target="_blank"
-                        class="text-sm font-semibold hover:underline line-clamp-2">
-
+                        <a href="javascript:void(0);" 
+                        class="certificate-thumb text-sm font-semibold hover:underline line-clamp-2"
+                        data-index="{{ $loop->index }}">
                             {{ $certificateName ?: $certificate->original_file_name }}
                         </a>
 
@@ -820,6 +846,12 @@ function closeModal(id){
 }
 </script>
 
+@vite('resources/js/product-gallery.js')
+<x-media-viewer id="productViewer"></x-media-viewer>
+<script>
+    window.certificatesGallery = @json($certGallery);
+    
+</script>
 
 
 @endsection

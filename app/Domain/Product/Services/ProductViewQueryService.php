@@ -36,6 +36,32 @@ class ProductViewQueryService
                 ->get();
         }
 
-        return compact('product1', 'projects');
+        $gallery = [];
+
+            foreach ($product1->thumbnails as $media) {
+
+                $src = $media['large'];
+                $thumb = $media['thumb'] ?? $src;
+
+                $ext = strtolower(pathinfo($src, PATHINFO_EXTENSION));
+
+                if (in_array($ext, ['jpg','jpeg','png','gif','webp','avif'])) {
+                    $type = 'image';
+                } elseif (in_array($ext, ['mp4','webm','ogg','mov'])) {
+                    $type = 'video';
+                } elseif ($ext === 'pdf') {
+                    $type = 'pdf';
+                } else {
+                    $type = 'file';
+                }
+
+                $gallery[] = [
+                    'type' => $type,
+                    'src' => $src,
+                    'thumb' => $thumb,
+                ];
+            }
+
+        return compact('product1', 'projects', 'gallery');
     }
 }
