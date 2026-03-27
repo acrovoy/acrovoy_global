@@ -364,6 +364,32 @@
     <div class="flex justify-between items-center">
         <h3 class="text-sm text-gray-400 uppercase tracking-wider">
             Certificates
+
+            <x-help-tooltip width="w-80">
+            <div class="space-y-2 leading-relaxed">
+                <div class="font-semibold text-white">
+                    Certificates
+                </div>
+
+                <div class="text-gray-200 text-sm normal-case">
+                    Здесь отображаются все сертификаты, подтверждающие качество и соответствие продукции.
+                    Вы можете добавлять новые сертификаты, а также просматривать и удалять существующие.
+                </div>
+
+                <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1 normal-case">
+                    <li>Каждый сертификат имеет уникальный номер (#).</li>
+                    <li>Файл сертификата должен быть в формате PDF или JPG.</li>
+                    <li>Проверяйте сроки действия: «Valid from» и «Valid until».</li>
+                </ul>
+
+                <div class="text-gray-400 text-xs border-t border-gray-700 pt-2 normal-case">
+                    Рекомендация: загружайте только официальные документы, чтобы избежать проблем при проверках.
+                </div>
+            </div>
+        </x-help-tooltip>
+
+
+
         </h3>
 
         <button

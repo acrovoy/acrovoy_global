@@ -2,7 +2,37 @@
 
         {{-- Product Name --}}
         <div class="border rounded p-4 mb-4 bg-white shadow-sm" x-data="{ open: false }">
-            <h4 class="font-semibold mb-3">Product Name</h4>
+            <h4 class="font-semibold mb-3 flex items-center gap-2">
+    Product Name
+
+    <x-help-tooltip  width="w-80">
+        <div class="space-y-2 leading-relaxed">
+
+            <div class="font-semibold text-white">
+                Product Name
+            </div>
+
+            <div class="text-gray-200 text-sm">
+                Укажите понятное и читаемое название товара, которое будет
+                отображаться покупателям в каталоге и поиске.
+            </div>
+
+            <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
+                <li>используйте общепринятые слова</li>
+                <li>не добавляйте внутренние коды поставщика</li>
+                <li>избегайте лишних символов и сокращений</li>
+            </ul>
+
+            <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+                Пример: <span class="text-gray-200">Wireless Bluetooth Headphones</span>
+            </div>
+
+        </div>
+    </x-help-tooltip>
+</h4>
+
+
+
 
             <div class="flex-col md:flex-row gap-2">
                 @foreach($languages as $index => $language)
