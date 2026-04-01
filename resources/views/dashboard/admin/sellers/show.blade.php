@@ -121,18 +121,7 @@
     {{-- Сертификаты --}}
     <div class="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 class="text-lg font-semibold">Certificates</h2>
-        @if($seller->certificates->count())
-            <div class="flex flex-wrap gap-2">
-                @foreach($seller->certificates as $certificate)
-                    <a href="{{ asset('storage/' . $certificate->file_path) }}" target="_blank"
-                       class="px-2 py-1 border rounded text-blue-600 text-sm hover:underline truncate max-w-[150px]">
-                        {{ $certificate->name }}
-                    </a>
-                @endforeach
-            </div>
-        @else
-            <p class="text-sm text-gray-400">No certificates uploaded</p>
-        @endif
+        
     </div>
 
     {{-- Список товаров с прокруткой --}}

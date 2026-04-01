@@ -85,7 +85,7 @@ select {
                             title="Upload Certificates">
 
                             <svg xmlns="http://www.w3.org/2000/svg" 
-                                 class="h-5 w-5 inline {{ $seller->certificates->count() ? 'text-blue-600' : 'text-gray-300' }}" 
+                                 class="h-5 w-5 inline {{ $seller ? 'text-blue-600' : 'text-gray-300' }}" 
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V7.414a2 2 0 00-.586-1.414l-4.414-4.414A2 2 0 0014.586 1H7a2 2 0 00-2 2v16a2 2 0 002 2z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 9h6M9 13h6M9 17h6"/>

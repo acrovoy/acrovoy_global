@@ -75,19 +75,18 @@ class RegisteredUserController extends Controller
             'role' => 'manufacturer',
         ]);
 
-        $supplier = new Supplier([
-            'name' => $request->name, // название компании
-        ]);
-
-        $supplier->user()->associate($user); // теперь Eloquent знает связь
-        $supplier->slug = Str::slug($supplier->name, '-');
-        $supplier->save();
+        $supplier = Supplier::create([
+        'user_id' => $user->id, // сразу ставим user_id
+        'name' => $request->name,
+        'slug' => Str::slug($request->name, '-'),
+        'status' => 'pending', // можно сразу добавить
+    ]);
 
         event(new Registered($user));
         Auth::login($user);
     });
 
-    return redirect(RouteServiceProvider::HOME);
+    return redirect()->route('manufacturer.home');
 }
 
     

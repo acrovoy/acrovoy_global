@@ -126,7 +126,6 @@ class ManufacturerOrderController extends Controller
 
         $order = Order::with([
             'items.product',
-            'items.product.mainImage',
             'items.shipments.originCountry',
             'items.shipments.originRegion',
             'items.shipments.originCity',

@@ -57,7 +57,7 @@ class AdminSellersController extends Controller
 
     public function show(Supplier $seller)
 {
-    $seller->load(['products.category', 'certificates', 'country', 'reviews.user']); // загружаем отзывы с пользователями
+    $seller->load(['products.category', 'country', 'reviews.user']); // загружаем отзывы с пользователями
 
     $reputation = $seller->reviews()->avg('rating') ?? 0; // средняя оценка
     $reviews = $seller->reviews()->latest()->take(5)->get(); // последние 5 отзывов
@@ -76,7 +76,7 @@ class AdminSellersController extends Controller
 
     public function edit($id)
 {
-    $seller = Supplier::with(['certificates', 'country'])->findOrFail($id);
+    $seller = Supplier::with(['country'])->findOrFail($id);
     $countries = Country::orderBy('name')->get();
 
     return view('dashboard.admin.sellers.edit', compact('seller', 'countries'));

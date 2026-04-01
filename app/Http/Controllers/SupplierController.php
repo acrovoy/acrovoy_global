@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Domain\Filters\Supplier\CountryFilter;
+use App\Domain\Filters\FilterFactory;
+
 use App\Filters\SupplierFilter;
 use App\Models\Supplier;
 use App\Models\Category;
@@ -57,7 +60,15 @@ class SupplierController extends Controller
 
         // Применяем фильтры, если есть
         if ($hasFilters) {
-            $query = (new SupplierFilter())->apply($query, $request);
+
+            // 🔹 Прямое применение FilterFactory
+            $factory = new FilterFactory(config('supplier_filters'));
+
+            $pipeline = $factory->make($request->all());
+
+            $query = $pipeline->apply($query, $request->all());
+
+            
         }
 
         // Получаем поставщиков
