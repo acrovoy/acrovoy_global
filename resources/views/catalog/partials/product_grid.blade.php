@@ -90,7 +90,56 @@
                     @if($product->moq)
                     <span class="text-xs text-gray-500 block pb-2">Min order quantity: {{ $product->moq }}</span>
                     @endif
-                    
+                    @if($product->supplier)
+                    <p class="text-xs text-gray-400 mb-0 mt-6">
+                        <span class="text-[10px]">SUPPLIER:</span>
+                        <a href="{{ route('supplier.show', $product->supplier->slug) }}" class="text-xs text-gray-500 hover:text-blue-600">
+                            {{ $product->supplier->name }}
+                        </a>
+
+                        @if($product->supplier->level === 'Platinum')
+                        <span class="px-1 py-0.5 text-[7px] font-bold uppercase  bg-gray-900 text-white rounded ml-1">
+                            PLATINUM
+                        </span>
+                        @elseif($product->supplier->level === 'Gold')
+                        <span class="px-1 py-0.5 text-[7px] font-bold uppercase  bg-amber-100 text-amber-700 border border-amber-200 rounded ml-1">
+                            GOLD
+                        </span>
+                        @elseif($product->supplier->level === 'Silver')
+                        <span class="px-1 py-0.5 text-[7px] font-bold uppercase  bg-gray-100 text-gray-700 border border-gray-200 rounded ml-1">
+                            SILVER
+                        </span>
+                        @endif
+
+                    </p>
+
+                    <div class="flex gap-1 mb-3">
+
+
+                        @if($product->supplier->is_verified)
+                        <span class="px-1 py-0.5 text-[7px] font-semibold bg-blue-100 text-blue-700 rounded">
+                            VERIFIED
+                        </span>
+                        @endif
+                        @if($product->supplier->is_trusted)
+                        <span class="px-1 py-0.5 text-[7px] font-semibold bg-green-100 text-green-700 rounded">
+                            TRUSTED
+                        </span>
+                        @endif
+                        @if($product->supplier->is_premium)
+                        <span class="px-1 py-0.5 text-[7px] font-semibold bg-purple-100 text-purple-700 rounded">
+                            PREMIUM
+                        </span>
+                        @endif
+                    </div>
+
+
+
+
+
+
+
+                    @endif
                 </div>
 
                <div class="flex justify-between items-center gap-2 mt-auto">

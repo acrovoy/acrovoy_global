@@ -55,8 +55,15 @@ class CatalogController extends Controller
 
     // создаём query товаров
     $productsQuery = Product::query()
-        ->withBaseRelations()
-        ->with(['images', 'supplier']);
+    ->withBaseRelations()
+    ->with([
+        'images',
+        'supplier',
+        'materials.translations',
+        'variantGroup.items.media'
+    ])
+    ->withAvg('reviews', 'rating')
+    ->withCount('reviews');
 
     // собираем параметры фильтра pipeline
     $params = $request->all();
@@ -94,8 +101,11 @@ class CatalogController extends Controller
     // пагинация товаров (leaf категории)
     $products = $productsQuery->paginate(24);
 
+    $materials = \App\Models\Material::all();
+    $countries = \App\Models\Country::all();
+
     // общее количество товаров
-    $totalProducts = Product::count();
+    $totalProducts = (clone $productsQuery)->count();
 
     return view('catalog.index', compact(
         'catalogCategories',
@@ -104,7 +114,9 @@ class CatalogController extends Controller
         'totalProducts',
         'selectedCategory',
         'types',
-        'activeTypes'
+        'activeTypes',
+        'materials',
+        'countries'
     ));
 }
 
