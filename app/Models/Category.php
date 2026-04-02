@@ -10,53 +10,158 @@ class Category extends Model
     use HasFactory;
 
     protected $fillable = [
-        
+
         'slug',
         'parent_id',
         'level',
+        'path',
+
         'commission_percent',
+
         'type',
+
+        'is_leaf',
+        'is_selectable',
+        'children_count',
+
+        'sort_order',
     ];
 
-    /**
-     * Подкатегории (children)
-     */
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONS
+    |--------------------------------------------------------------------------
+    */
+
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id');
+        return $this->hasMany(
+            Category::class,
+            'parent_id'
+        )->orderBy('sort_order');
     }
 
-    /**
-     * Родительская категория
-     */
+
     public function parent()
     {
-        return $this->belongsTo(Category::class, 'parent_id');
+        return $this->belongsTo(
+            Category::class,
+            'parent_id'
+        );
     }
 
-    /**
-     * Продукты, относящиеся к категории
-     */
+
     public function products()
     {
         return $this->hasMany(Product::class);
     }
+
 
     public function translations()
     {
         return $this->hasMany(CategoryTranslation::class);
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSLATION
+    |--------------------------------------------------------------------------
+    */
+
     public function translation($locale = null)
     {
         $locale = $locale ?? app()->getLocale();
 
-        return $this->translations->firstWhere('locale', $locale)
-            ?? $this->translations->firstWhere('locale', 'en');
+        return $this->translations
+            ->firstWhere('locale', $locale)
+            ?? $this->translations
+            ->firstWhere('locale', 'en');
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSORS
+    |--------------------------------------------------------------------------
+    */
 
     public function getNameAttribute()
     {
         return $this->translation()?->name;
     }
+
+
+    public function getBreadcrumbAttribute()
+    {
+        if (!$this->path) {
+            return null;
+        }
+
+        return collect(
+            explode('/', $this->path)
+        )->implode(' → ');
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SCOPES
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeSelectable($query)
+    {
+        return $query->where(
+            'is_selectable',
+            true
+        );
+    }
+
+
+    public function scopeLeaf($query)
+    {
+        return $query->where(
+            'is_leaf',
+            true
+        );
+    }
+
+
+    public function scopeRoot($query)
+    {
+        return $query->whereNull(
+            'parent_id'
+        );
+    }
+
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy(
+            'sort_order'
+        );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPERS
+    |--------------------------------------------------------------------------
+    */
+
+    public function hasChildren()
+    {
+        return $this->children_count > 0;
+    }
+
+
+    public function isRoot()
+    {
+        return is_null(
+            $this->parent_id
+        );
+    }
+
 }

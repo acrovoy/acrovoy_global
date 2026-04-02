@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Blade;
 
 use App\Models\Category;
+use App\Observers\CategoryObserver;
 use App\Models\Language;
 
 use Illuminate\Support\ServiceProvider;
@@ -30,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Blade::component('supplier.certificate-card', \App\View\Components\Supplier\CertificateCard::class);
+        Category::observe(CategoryObserver::class);
        
     }
 }

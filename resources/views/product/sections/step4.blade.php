@@ -1,34 +1,64 @@
-{{--  PRICE TIERS  --}}
-<div>
-        <h3 class="text-xl font-semibold mb-4">Price Tiers</h3>
-        <div id="price-tiers" class="space-y-3">
-            @foreach($product->priceTiers as $i => $tier)
-            <div class="grid grid-cols-3 gap-4 items-center" id="price-tier-{{ $i }}">
-                <input type="number" name="price_tiers[{{ $i }}][min_qty]" placeholder="Min Qty" class="input" value="{{ $tier->min_qty }}">
-                <input type="number" name="price_tiers[{{ $i }}][max_qty]" placeholder="Max Qty" class="input" value="{{ $tier->max_qty }}">
-                <div class="flex gap-2">
-                    <input type="number" name="price_tiers[{{ $i }}][price]" placeholder="Unit Price $" class="input flex-1" value="{{ $tier->price }}">
-                    <button type="button" onclick="removePriceTier({{ $i }})" class="text-red-600 font-bold hover:text-red-800">✕</button>
-                </div>
-            </div>
-            @endforeach
-        </div>
-        <button type="button" onclick="addPriceTier()" class="text-blue-700 mt-3">+ Add price tier</button>
+{{-- Images --}}
+<div id="productImagesUploader" class="space-y-4">
+
+    <h3 class="text-xl font-semibold">Product Images</h3>
+
+    <input
+                type="file"
+                id="productImages"
+                name="images[]"
+                multiple
+                accept="image/png,image/jpeg"
+                class="hidden"
+    />
+
+    {{-- Drop Zone --}}
+    <label
+                for="productImages"
+                id="productImagesDropZone"
+                class="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8
+                    flex flex-col items-center justify-center
+                    cursor-pointer hover:border-blue-600 hover:bg-blue-50
+                    transition text-center">
+
+                <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M7 16V4m0 0L3 8m4-4l4 4m6 4v8m0 0l4-4m-4 4l-4-4"/>
+                </svg>
+
+                <span class="text-lg font-medium text-gray-700">
+                    Upload product images
+                </span>
+
+                <p class="text-sm text-gray-500 mt-2">
+                    JPG, PNG. Max 5 MB per image.
+                </p>
+    </label>
+
+    {{-- Preview Container --}}
+    <div id="imagesPreview" class="flex flex-wrap gap-4 mt-4"></div>
+    <div id="imagesMetaInputs"></div>
+
 </div>
 
-{{--  Commercial Terms  --}}
-<div class=" mt-6 ">
-    <h3 class="text-xl font-semibold mb-4">Commercial Terms</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <input type="text" name="moq" placeholder="MOQ (e.g. 10 pcs)" class="input" value="{{ $product->moq }}">
-        <input type="text" name="lead_time" placeholder="Lead time (e.g. 25–35 days)" class="input" value="{{ $product->lead_time }}">
-        <select name="customization" class="input">
-            <option value="1" {{ old('customization', $product->customization) == 1 ? 'selected' : '' }}>
-                Customization Available
-            </option>
-            <option value="0" {{ old('customization', $product->customization) == 0 ? 'selected' : '' }}>
-                No Customization
-            </option>
-        </select>
-    </div>
-</div>
+@if($product->images->isNotEmpty())
+    <script>
+
+        window.existingImages = {!! json_encode(
+            $product->images
+                ->sortBy('sort_order')
+                ->values()
+                ->map(function ($img) {
+                    return [
+                        'id' => $img->id,
+                        'url' => $img->cdn_url,
+                        'sort_order' => $img->sort_order ?? 0,
+                    ];
+                })
+        ) !!};
+
+    </script>
+
+@endif
+
+@vite(['resources/js/product-edit-uploader.js', 'resources/js/product-edit.js', 'resources/js/product-form-steps.js'])

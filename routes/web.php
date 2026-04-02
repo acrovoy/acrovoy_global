@@ -29,6 +29,7 @@ use App\Http\Controllers\OrderReviewController;
 use App\Http\Controllers\OrderDisputeController;
 use App\Http\Controllers\SupplierReviewController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\CategorySelectorController;
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
 
@@ -129,6 +130,14 @@ Route::get('/supplier/{supplier:slug}', [SupplierController::class, 'show'])
 
 Route::get('/suppliers', [SupplierController::class, 'index'])
     ->name('suppliers.index');
+
+Route::prefix('dashboard/category-selector')->group(function () {
+
+    Route::get('/root', [CategorySelectorController::class, 'root']);
+    Route::get('/children/{parent}', [CategorySelectorController::class, 'children']);
+    Route::get('/path/{id}', [CategorySelectorController::class, 'getPath']);
+
+});
 
 Route::prefix('dashboard/manufacturer')->name('manufacturer.')->group(function () {
 

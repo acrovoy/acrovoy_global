@@ -112,4 +112,30 @@ class CategoryController extends Controller
         $category->delete();
         return redirect()->route('admin.settings.categories.index')->with('success', 'Category deleted');
     }
+
+
+    public function children($parentId)
+{
+    return Category::where('parent_id', $parentId)
+        ->orderBy('sort_order')
+        ->get([
+            'id',
+            'name',
+            'is_selectable'
+        ]);
+}
+
+
+public function root()
+{
+    return Category::whereNull('parent_id')
+        ->orderBy('sort_order')
+        ->get([
+            'id',
+            'name',
+            'is_selectable'
+        ]);
+}
+
+
 }

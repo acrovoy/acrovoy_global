@@ -106,6 +106,8 @@ class ProductController extends Controller
         ProductDTOFactory $dtoFactory,
     ) {
 
+
+   
         DB::transaction(function () use (
             $request,
             $createProduct,

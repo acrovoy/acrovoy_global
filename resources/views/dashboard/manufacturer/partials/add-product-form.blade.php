@@ -63,6 +63,18 @@
 
     </div>
 
+    <div class="form-step hidden" data-step="7">
+
+        @include('dashboard.manufacturer.sections.step7')
+
+
+
+
+
+
+
+    </div>
+
 
     {{-- Навигация между шагами --}}
     <div class="flex mt-6">

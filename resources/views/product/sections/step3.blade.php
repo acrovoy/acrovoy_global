@@ -1,64 +1,31 @@
-{{-- Images --}}
-<div id="productImagesUploader" class="space-y-4">
 
-    <h3 class="text-xl font-semibold">Product Images</h3>
 
-    <input
-                type="file"
-                id="productImages"
-                name="images[]"
-                multiple
-                accept="image/png,image/jpeg"
-                class="hidden"
-    />
 
-    {{-- Drop Zone --}}
-    <label
-                for="productImages"
-                id="productImagesDropZone"
-                class="bg-white border-2 border-dashed border-gray-300 rounded-xl p-8
-                    flex flex-col items-center justify-center
-                    cursor-pointer hover:border-blue-600 hover:bg-blue-50
-                    transition text-center">
+{{-- ================= MATERIALS ================= --}}
+<h3 class="text-xl font-semibold mb-4 mt-6">Materials Used</h3>
 
-                <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 16V4m0 0L3 8m4-4l4 4m6 4v8m0 0l4-4m-4 4l-4-4"/>
-                </svg>
+{{-- Контейнер для выбранных материалов (чипсы) --}}
+<div id="selected-materials" class="flex flex-wrap gap-2 mb-2"></div>
 
-                <span class="text-lg font-medium text-gray-700">
-                    Upload product images
-                </span>
+{{-- Поиск --}}
+<input type="text" id="materialSearch" placeholder="Search materials..." class="w-full mb-2 border rounded-lg border-gray-300 px-3 py-2 text-sm text-gray-600">
 
-                <p class="text-sm text-gray-500 mt-2">
-                    JPG, PNG. Max 5 MB per image.
-                </p>
-    </label>
-
-    {{-- Preview Container --}}
-    <div id="imagesPreview" class="flex flex-wrap gap-4 mt-4"></div>
-    <div id="imagesMetaInputs"></div>
-
+{{-- Список всех материалов для выбора --}}
+<div id="materials-options" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+    @foreach($materialsPrepared as $material)
+        <button type="button"
+            class="material-option px-1 py-1 border rounded bg-white shadow-sm"
+            data-id="{{ $material['id'] }}"
+            data-name="{{ $material['translations'][app()->getLocale()]['name'] ?? '' }}">
+            {{ $material['translations'][app()->getLocale()]['name'] ?? '' }}
+        </button>
+    @endforeach
 </div>
 
-@if($product->images->isNotEmpty())
-    <script>
 
-        window.existingImages = {!! json_encode(
-            $product->images
-                ->sortBy('sort_order')
-                ->values()
-                ->map(function ($img) {
-                    return [
-                        'id' => $img->id,
-                        'url' => $img->cdn_url,
-                        'sort_order' => $img->sort_order ?? 0,
-                    ];
-                })
-        ) !!};
+<input type="hidden"
+       name="materials_selected"
+       id="materialsSelectedInput"
+       value="{{ implode(',', $product->materials->pluck('id')->toArray()) }}">
 
-    </script>
 
-@endif
-
-@vite(['resources/js/product-edit-uploader.js', 'resources/js/product-edit.js', 'resources/js/product-form-steps.js'])

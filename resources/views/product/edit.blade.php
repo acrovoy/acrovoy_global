@@ -65,6 +65,12 @@
 
             </div>
 
+            <div class="form-step hidden" data-step="7">
+
+                @include('product.sections.step7')
+
+            </div>
+
             {{-- Навигация между шагами --}}
             <div class="flex justify-between mt-6">
                 <button type="button" id="prevBtn" class="bg-gray-300 px-6 py-2 rounded hidden">Назад</button>

@@ -190,27 +190,4 @@
 
 
 
-        {{-- Category --}}
-        <div class="mb-4">
-            <label class="block mb-1 font-medium">Category</label>
-            <select name="category" class="input w-full">
-                <option value="">Select a category</option>
-                @php
-                function renderCategoryOptions($categories, $prefix = '', $selected = null) {
-                foreach ($categories as $category) {
-                $sel = $category->id == $selected ? 'selected' : '';
-                echo '<option value="'.$category->id.'" '.$sel.'>'
-                    .$prefix.$category->name.
-                    '</option>';
-
-                if ($category->children && $category->children->count() > 0) {
-                renderCategoryOptions($category->children, $prefix.'— ', $selected);
-                }
-                }
-                }
-
-                $rootCategories = $categories->where('parent_id', null);
-                renderCategoryOptions($rootCategories, '', $product->category_id);
-                @endphp
-            </select>
-        </div>
+        
