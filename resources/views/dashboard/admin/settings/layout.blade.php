@@ -41,6 +41,12 @@
             Locations
         </a>
 
+        <a href="{{ route('admin.settings.attributes.index') }}"
+        class="px-4 py-2 rounded-t-lg transition
+        {{ request()->routeIs('admin.settings.attributes.*') ? 'bg-white font-semibold shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+            Attributes
+        </a>
+
         <a href="{{ route('admin.settings.supplier-types.index') }}"
         class="px-4 py-2 rounded-t-lg transition
         {{ request()->routeIs('admin.settings.supplier-types.*')

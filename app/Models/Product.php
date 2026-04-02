@@ -269,4 +269,19 @@ public function variantPreview()
         ->orderBy('id', 'asc');
 }
 
+public function attributeValues()
+{
+    return $this->hasMany(
+        ProductAttributeValue::class
+    );
+}
+
+public function attributes()
+{
+    return $this->belongsToMany(
+        Attribute::class,
+        'product_attribute_values'
+    );
+}
+
 }

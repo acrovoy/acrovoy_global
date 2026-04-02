@@ -58,6 +58,8 @@ use App\Http\Controllers\Admin\Settings\LanguagesController;
 use App\Http\Controllers\Admin\Settings\CountriesController;
 use App\Http\Controllers\Admin\Settings\CategoryController;
 use App\Http\Controllers\Admin\Settings\LocationController;
+use App\Http\Controllers\Admin\Settings\AttributeOptionController;
+use App\Http\Controllers\Admin\Settings\AttributeController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 
@@ -136,6 +138,7 @@ Route::prefix('dashboard/category-selector')->group(function () {
     Route::get('/root', [CategorySelectorController::class, 'root']);
     Route::get('/children/{parent}', [CategorySelectorController::class, 'children']);
     Route::get('/path/{id}', [CategorySelectorController::class, 'getPath']);
+    Route::get('/attributes/{categoryId}', [CategorySelectorController::class, 'attributes']);
 
 });
 
@@ -627,6 +630,15 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         Route::get('locations/regions', [LocationController::class, 'regionsByCountry'])->name('locations.regions');
         Route::get('locations/locations', [LocationController::class, 'regionsWithChildren'])->name('locations.locations');
         Route::resource('locations', LocationController::class);
+        
+        //ATTRIBUTES
+        Route::resource('attributes', AttributeController::class);
+        
+        //ATTRIBUTES OPTIONS (select / multiselect)
+        Route::get('attributes/{attribute}/options', [AttributeOptionController::class, 'index'])->name('attributes.options.index');
+        Route::post('attributes/{attribute}/options', [AttributeOptionController::class, 'store'])->name('attributes.options.store');
+        Route::put('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'update'])->name('attributes.options.update');
+        Route::delete('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'destroy'])->name('attributes.options.destroy');
     
         });
 

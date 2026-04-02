@@ -8,7 +8,7 @@
             <select class="input w-full" @change="selectCategory($event.target.value, index)">
                 <option value="">Select category</option>
                 <template x-for="item in level.items" :key="item.id">
-                    <option :value="item.id" x-text="item.name" :selected="item.id == selectedCategory"></option>
+                    <option :value="item.id" x-text="item.name" :selected="item.id == level.selected"></option>
                 </template>
             </select>
         </div>
@@ -45,10 +45,12 @@ function categorySelector({ initialCategory = null } = {}) {
 
         async selectCategory(categoryId, levelIndex) {
             this.selectedCategory = null;
+            
             this.breadcrumb = this.breadcrumb.slice(0, levelIndex);
             this.levels = this.levels.slice(0, levelIndex + 1);
 
             const level = this.levels[levelIndex];
+            level.selected = categoryId; 
             const selectedItem = level.items.find(i => i.id == categoryId);
 
             if (selectedItem) {
@@ -59,7 +61,7 @@ function categorySelector({ initialCategory = null } = {}) {
             const children = await res.json();
 
             if (children.length > 0) {
-                this.levels.push({ items: children });
+                this.levels.push({ items: children, selected: categoryId });
             } else {
                 this.selectedCategory = categoryId;
                 this.loadAttributes(categoryId);
@@ -74,7 +76,6 @@ function categorySelector({ initialCategory = null } = {}) {
             this.breadcrumb = path.map(p => p.name);
 
             for (let i = 0; i < path.length; i++) {
-                console.log(path[i]);
                 await this.selectCategory(path[i].id, i)
                 // const levelItems = path[i].children.map(c => ({
                 //     id: c.id,

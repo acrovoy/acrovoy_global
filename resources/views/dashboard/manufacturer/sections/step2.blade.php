@@ -20,6 +20,10 @@
         Selected category: <span class="font-medium" x-text="breadcrumb.join(' → ')"></span>
     </div>
 
+
+    <div id="category-attributes" class="mt-4"></div>
+
+
 </div>
 
 <script>
@@ -60,7 +64,63 @@ function categorySelector() {
         },
 
         async loadAttributes(categoryId) {
-            console.log('Load attributes for category:', categoryId);
+            const res = await fetch(`/dashboard/category-selector/attributes/${categoryId}`);
+            const attributes = await res.json();
+
+            console.log(attributes);
+
+            const container = document.getElementById('category-attributes');
+            container.innerHTML = '';
+
+            attributes.forEach(attr => {
+                let fieldHtml = '';
+
+                switch(attr.type) {
+                    case 'text':
+                        fieldHtml = `<input type="text" name="attributes[${attr.id}]" class="input w-full" />`;
+                        break;
+
+                    case 'number':
+                        fieldHtml = `<input type="number" name="attributes[${attr.id}]" class="input w-full" />`;
+                        break;
+
+                    case 'select':
+                        if(attr.options) {
+                            const optionsHtml = attr.options
+                                .map(o => `<option value="${o.value}">${o.label}</option>`)
+                                .join('');
+                            fieldHtml = `<select name="attributes[${attr.id}]" class="input w-full">${optionsHtml}</select>`;
+                        }
+                        break;
+
+                    case 'multiselect':
+                        if(attr.options) {
+                            const optionsHtml = attr.options
+                                .map(o => `
+                                    <label class="inline-flex items-center mr-4">
+                                        <input type="checkbox" name="attributes[${attr.id}][]" value="${o.value}" class="mr-1" />
+                                        ${o.label}
+                                    </label>
+                                `)
+                                .join('');
+                            fieldHtml = `<div class="flex flex-wrap">${optionsHtml}</div>`;
+                        }
+                        break;
+
+                    case 'boolean':
+                        fieldHtml = `<input type="checkbox" name="attributes[${attr.id}]" value="1" />`;
+                        break;
+
+                    default:
+                        fieldHtml = `<input type="text" name="attributes[${attr.id}]" class="input w-full" />`;
+                }
+
+                const div = document.createElement('div');
+                div.className = 'mb-3';
+                div.innerHTML = `<label class="block text-sm font-medium text-gray-700 mb-1">${attr.name}</label>${fieldHtml}`;
+
+                container.appendChild(div);
+            });
         }
     }
 }

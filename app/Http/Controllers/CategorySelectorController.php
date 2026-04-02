@@ -74,4 +74,30 @@ class CategorySelectorController extends Controller
     return response()->json($path);
 }
 
+public function attributes($categoryId)
+{
+    $category = Category::findOrFail($categoryId);
+
+    $attributes = $category->attributes()
+    ->with(['translations', 'options.translations'])
+    ->orderBy('category_attributes.sort_order')
+    ->get(['attributes.id', 'attributes.type']);
+
+$attributes = $attributes->map(fn($attr) => [
+    'id' => $attr->id,
+    'name' => $attr->translation()?->name ?? '—',
+    'type' => $attr->type,
+    'options' => $attr->options
+        ? collect($attr->options)->map(fn($o) => [
+            'value' => $o->id,
+            'label' => $o->translatedValue(), // <-- вот тут исправлено
+        ])->toArray()
+        : null,
+    'is_required' => $attr->pivot->is_required ?? false,
+    'multi_locale_input' => $attr->type === 'text',
+]);
+
+    return response()->json($attributes);
+}
+
 }

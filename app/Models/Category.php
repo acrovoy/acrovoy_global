@@ -164,4 +164,14 @@ class Category extends Model
         );
     }
 
+    public function attributes()
+{
+    return $this->belongsToMany(
+        Attribute::class,
+        'category_attributes'
+    )
+    ->withPivot(['is_required', 'sort_order'])
+    ->withTimestamps();
+}
+
 }

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\Category;
 use App\Models\CategoryTranslation;
+use App\Models\Attribute;
 
 class CategoryController extends Controller
 {
@@ -23,13 +24,17 @@ class CategoryController extends Controller
 
     public function create()
     {
-        $categories = Category::all(); // для выбора parent
-        return view('dashboard.admin.settings.categories.create', compact('categories'));
+        $categories = Category::all();
+    $attributes = Attribute::orderBy('sort_order')->get();
+    return view('dashboard.admin.settings.categories.create', compact('categories', 'attributes'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
+            'is_selectable' => 'nullable|boolean',
+            'is_leaf' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0',
             'slug' => 'required|string|max:255|unique:categories,slug',
             'parent_id' => 'nullable|exists:categories,id',
             'name.*' => 'required|string|max:255',
@@ -49,7 +54,12 @@ class CategoryController extends Controller
                 'level' => $level,
                 'commission_percent' => $request->commission_percent,
                 'type' => $request->type,
+                'is_selectable' => $request->has('is_selectable') ? 1 : 0,
+                'is_leaf' => $request->has('is_leaf') ? 1 : 0,
+                'sort_order' => $request->input('sort_order', 0),
             ]);
+
+            $category->attributes()->sync($request->input('attributes', []));
 
             foreach ($request->name as $locale => $name) {
                 $category->translations()->create([
@@ -64,13 +74,17 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        $categories = Category::where('id', '!=', $category->id)->get(); // нельзя выбрать себя как parent
-        return view('dashboard.admin.settings.categories.edit', compact('category', 'categories'));
+        $categories = Category::where('id', '!=', $category->id)->get();
+    $attributes = Attribute::orderBy('sort_order')->get(); // все активные атрибуты
+    return view('dashboard.admin.settings.categories.edit', compact('category', 'categories', 'attributes'));
     }
 
     public function update(Request $request, Category $category)
     {
         $request->validate([
+            'is_selectable' => 'nullable|boolean',
+            'is_leaf' => 'nullable|boolean',
+            'sort_order' => 'nullable|integer|min:0',
             'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
             'parent_id' => 'nullable|exists:categories,id',
             'name.*' => 'required|string|max:255',
@@ -90,7 +104,12 @@ class CategoryController extends Controller
                 'level' => $level,
                 'commission_percent' => $request->commission_percent,
                 'type' => $request->type,
+                'is_selectable' => $request->has('is_selectable') ? 1 : 0,
+                'is_leaf' => $request->has('is_leaf') ? 1 : 0,
+                'sort_order' => $request->input('sort_order', 0),
             ]);
+
+            $category->attributes()->sync($request->input('attributes', []));
 
             foreach ($request->name as $locale => $name) {
                 $category->translations()->updateOrCreate(
