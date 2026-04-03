@@ -174,4 +174,10 @@ class Category extends Model
     ->withTimestamps();
 }
 
+
+public function childrenRecursive()
+{
+    return $this->children()->with('childrenRecursive.translations');
+}
+
 }

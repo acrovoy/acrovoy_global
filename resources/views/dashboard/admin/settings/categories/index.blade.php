@@ -20,6 +20,37 @@
 
 <x-alerts />
 
+
+{{-- Category Tree --}}
+<div x-data="{ openMap: false }" class="mb-6">
+
+    {{-- Заголовок --}}
+    <div @click="openMap = !openMap"
+         class="flex justify-between items-center bg-gray-100 p-2 rounded cursor-pointer">
+        <h2 class="text-sm font-semibold text-gray-900">Category Tree</h2>
+        <svg :class="{'rotate-90': openMap}" class="w-4 h-4 text-gray-500 transition-transform duration-200"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5l7 7-7 7"></path>
+        </svg>
+    </div>
+
+    {{-- Древо категорий --}}
+    <div x-show="openMap" x-transition
+         class="mt-2 h-[85vh] overflow-auto text-xs p-2 bg-white border border-gray-200 rounded shadow-sm">
+
+        {{-- Цикл по корневым категориям --}}
+        @foreach($categories->where('level', 0) as $rootCategory)
+            @include('dashboard.admin.settings.categories.partials.category-tree', ['category' => $rootCategory])
+        @endforeach
+
+    </div>
+</div>
+
+
+
+
+
 <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50">

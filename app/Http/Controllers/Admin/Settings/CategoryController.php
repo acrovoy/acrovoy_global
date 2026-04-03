@@ -19,7 +19,24 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::with('translations', 'parent')->orderBy('id')->get();
-        return view('dashboard.admin.settings.categories.index', compact('categories'));
+
+        $categories_map = Category::with('translations')
+        ->orderBy('level')
+        ->orderBy('sort_order')
+        ->get()
+        ->map(function($cat) {
+            return [
+                'id' => $cat->id,
+                'name' => $cat->name,
+                'parent_id' => $cat->parent_id,
+                'level' => $cat->level,
+                'is_leaf' => $cat->is_leaf,
+                'slug' => $cat->slug,
+            ];
+        });
+
+
+        return view('dashboard.admin.settings.categories.index', compact('categories', 'categories_map'));
     }
 
     public function create()
