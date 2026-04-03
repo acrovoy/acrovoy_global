@@ -70,6 +70,63 @@
                     {{-- Контейнер с отступами между фильтрами --}}
                     <div class="space-y-6 mt-4">
 
+
+
+
+                      {{-- Dynamic Attribute Filters --}}
+@foreach($filterableAttributes as $attribute)
+
+    @php
+        // Проверка, есть ли значения для текущего атрибута
+        $hasValues = false;
+
+        if(in_array($attribute->type, ['select', 'multiselect'])) {
+            $hasValues = $attribute->options->isNotEmpty();
+        } elseif(in_array($attribute->type, ['text', 'number'])) {
+            $hasValues = !empty($textAndNumberValues[$attribute->code]);
+        }
+    @endphp
+
+    @if($hasValues)
+    <div>
+        <h4 class="text-sm font-medium text-gray-700 mb-2">{{ $attribute->name }}</h4>
+
+        <div class="max-h-48 overflow-y-auto space-y-2 pr-1">
+            {{-- Select и multiselect --}}
+            @if(in_array($attribute->type, ['select', 'multiselect']))
+                @foreach($attribute->options as $option)
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" 
+                               name="attributes[{{ $attribute->code }}][]" 
+                               value="{{ $option->id }}"
+                               @if(in_array($option->id, (array) request()->input("attributes.{$attribute->code}", []))) checked @endif
+                               class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-0">
+                        {{ $option->translatedValue() }}
+                    </label>
+                @endforeach
+
+            {{-- Текстовые и числовые атрибуты --}}
+            @elseif(in_array($attribute->type, ['text', 'number']))
+                @foreach($textAndNumberValues[$attribute->code] as $value)
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox"
+                               name="attributes[{{ $attribute->code }}][]"
+                               value="{{ $value }}"
+                               @if(in_array($value, (array) request()->input("attributes.{$attribute->code}", []))) checked @endif
+                               class="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-0">
+                        {{ $value }}@if($attribute->unit) {{ $attribute->unit }}@endif
+                    </label>
+                @endforeach
+            @endif
+        </div>
+    </div>
+    @endif
+
+@endforeach
+
+
+
+
                         {{-- Material Filter --}}
                         <div>
                             <h4 class="text-sm font-medium text-gray-700 mb-2">Materials</h4>
@@ -121,6 +178,12 @@
                             </div>
                         </div>
 
+
+                 
+
+
+
+
                         {{-- Country Filter --}}
                         <div>
                             <h4 class="text-sm font-medium text-gray-700 mb-2">Country of Origin</h4>
@@ -155,14 +218,21 @@
                 <form method="GET" action="" class="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-5">
                     {{-- Сохраняем все текущие фильтры кроме supplier_type --}}
                     @foreach(request()->except('supplier_type') as $key => $value)
-                    @if(is_array($value))
-                    @foreach($value as $v)
-                    <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
-                    @endforeach
-                    @else
-                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                    @endif
-                    @endforeach
+    @if(is_array($value))
+        @foreach($value as $v)
+            @if(is_array($v))
+                {{-- Для многомерных массивов (редко, но безопасно) --}}
+                @foreach($v as $subValue)
+                    <input type="hidden" name="{{ $key }}[]" value="{{ e($subValue) }}">
+                @endforeach
+            @else
+                <input type="hidden" name="{{ $key }}[]" value="{{ e($v) }}">
+            @endif
+        @endforeach
+    @else
+        <input type="hidden" name="{{ $key }}" value="{{ e($value) }}">
+    @endif
+@endforeach
 
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 

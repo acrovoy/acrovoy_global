@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 use App\Domain\Filters\FilterFactory;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Attribute;
+
+
+
 
 class CatalogController extends Controller
 {
@@ -104,6 +109,66 @@ class CatalogController extends Controller
     $materials = \App\Models\Material::all();
     $countries = \App\Models\Country::all();
 
+    $categoryId = $selectedCategory?->id;
+
+$filterableAttributes = Attribute::with('options.translations')
+    ->where('is_filterable', 1)
+    ->orderBy('sort_order')
+    ->get();
+
+$textAndNumberValues = [];
+
+// Получаем все товары текущей категории
+$productsInCategory = Product::where('category_id', $categoryId)->pluck('id')->toArray();
+
+foreach ($filterableAttributes as $attribute) {
+
+    // --- Select / Multiselect ---
+    if (in_array($attribute->type, ['select', 'multiselect'])) {
+
+        $attribute->options = $attribute->options->filter(function ($option) use ($productsInCategory) {
+            return \DB::table('product_attribute_value_options')
+                ->whereIn('product_attribute_value_id', function ($query) use ($option, $productsInCategory) {
+                    $query->select('id')
+                        ->from('product_attribute_values')
+                        ->where('attribute_id', $option->attribute_id)
+                        ->whereIn('product_id', $productsInCategory);
+                })
+                ->where('attribute_option_id', $option->id)
+                ->exists();
+        });
+
+   // --- Text / Number ---
+} elseif (in_array($attribute->type, ['text', 'number'])) {
+
+    // Получаем id значений атрибутов товаров в категории
+    $values = \DB::table('product_attribute_values')
+        ->join('products', 'product_attribute_values.product_id', '=', 'products.id')
+        ->where('products.category_id', $categoryId)
+        ->where('product_attribute_values.attribute_id', $attribute->id)
+        ->pluck('product_attribute_values.id') // явно указываем таблицу
+        ->toArray();
+
+    if (!empty($values)) {
+        // Получаем переводы значений
+        $textAndNumberValues[$attribute->code] = \DB::table('product_attribute_value_translations')
+            ->whereIn('product_attribute_value_id', $values)
+            ->pluck('value')
+            ->unique()
+            ->toArray();
+    }
+}
+}
+
+
+
+
+
+
+
+
+
+
     // общее количество товаров
     $totalProducts = (clone $productsQuery)->count();
 
@@ -116,7 +181,9 @@ class CatalogController extends Controller
         'types',
         'activeTypes',
         'materials',
-        'countries'
+        'countries',
+        'filterableAttributes',
+        'textAndNumberValues'
     ));
 }
 

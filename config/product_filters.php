@@ -10,4 +10,5 @@ return [
     'country'        => \App\Domain\Filters\Product\CountryFilter::class,
     'supplier_type'  => \App\Domain\Filters\Product\SupplierTypeFilter::class,
     'category' => \App\Domain\Filters\Product\CategoryFilter::class,
+    'attributes' => \App\Domain\Filters\Product\AttributeFilter::class,
 ];
