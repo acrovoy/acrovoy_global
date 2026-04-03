@@ -1,6 +1,29 @@
 <div x-data="categorySelector()" x-init="init()">
 
-    <h3 class="text-xl font-semibold mb-4">Category</h3>
+    <h3 class="text-xl font-semibold mb-4">Category
+
+    <x-help-tooltip width="w-80">
+    <div class="space-y-2 leading-relaxed">
+        <div class="font-semibold text-white">Category & Basic Specifications</div>
+        <div class="text-gray-200 text-sm">
+            Выберите подходящую категорию для товара, чтобы система автоматически подтянула
+            стандартные характеристики (например, размеры, материал, цвет и т.д.).
+            После выбора категории вы сможете заполнить значения этих характеристик.
+        </div>
+        <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
+            <li>Выбирайте максимально точную категорию для корректного отображения атрибутов</li>
+            <li>Все стандартные характеристики обязательны к заполнению, если отмечены</li>
+            <li>Для опций "select" и "multiselect" выбирайте подходящие значения из списка</li>
+            <li>Вы можете добавить дополнительные спецификации в разделе "Additional Specifications"</li>
+        </ul>
+        <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+            Пример: <span class="text-gray-200">Категория: Outdoor Chairs → Материал: Wood → Вес: 7 кг</span>
+        </div>
+    </div>
+</x-help-tooltip>
+
+
+    </h3>
 
     <!-- Levels -->
     <template x-for="(level, index) in levels" :key="index">
