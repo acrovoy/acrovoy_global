@@ -17,12 +17,13 @@ class ProductDTOFactory
         $defaultLocale = array_key_first($request->name);
 
         $name = $request->name[$defaultLocale] ?? '';
-
+        $sku = $request->sku ?: '';
         $slug = $this->slugService->generate($name);
 
         return new ProductDTO(
             slug: $slug,
             name: $name,
+            sku: $sku,
             supplierId: Auth::user()->supplier->id,
             categoryId: $request->category,
             moq: $request->moq,
@@ -37,12 +38,13 @@ class ProductDTOFactory
         $defaultLocale = array_key_first($request->name ?? []);
 
         $name = $request->name[$defaultLocale] ?? '';
-
+        $sku = $request->sku ?: '';
         $slug = $this->slugService->generate($name);
 
         return new ProductDTO(
             slug: $slug,
             name: $name,
+            sku: $sku,
             supplierId: Auth::user()->supplier->id,
             categoryId: $request->category,
             moq: $request->moq,

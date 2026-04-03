@@ -30,97 +30,92 @@ $selectedLocations = $shippingTemplate
         <h3 class="text-2xl font-bold mb-6">Basic Information</h3>
 
         {{-- TRANSLATIONS --}}
-        <div x-data="{ open: false }" class="border rounded-lg p-4 mb-6 bg-white">
+<div x-data="{ open: false }" class="border rounded-lg p-4 mb-6 bg-white">
 
-            <h4 class="font-semibold mb-4">Template Translations</h4>
+    <h4 class="font-semibold mb-4">Template Translations</h4>
 
-            @foreach($languages as $index => $language)
-                @php
-                    $title = $shippingTemplate
-                        ? $shippingTemplate->translations->firstWhere('locale', $language->code)->title ?? ''
-                        : '';
-                    $description = $shippingTemplate
-                        ? $shippingTemplate->translations->firstWhere('locale', $language->code)->description ?? ''
-                        : '';
-                @endphp
+    @foreach($languages as $index => $language)
+        @php
+            $flagPath = asset('images/flags/svg/' . strtolower($language->code) . '.svg');
+            $title = $shippingTemplate
+                ? $shippingTemplate->translations->firstWhere('locale', $language->code)->title ?? ''
+                : '';
+            $description = $shippingTemplate
+                ? $shippingTemplate->translations->firstWhere('locale', $language->code)->description ?? ''
+                : '';
+        @endphp
 
-                @if($index === 0)
-                    {{-- MAIN LANGUAGE --}}
-                    <div class="mb-4">
-                        <label class="block text-sm text-gray-600 mb-1">
-                            {{ strtoupper($language->code) }}
-                        </label>
+        @if($index === 0)
+            {{-- MAIN LANGUAGE --}}
+            <div class="mb-4 flex flex-col gap-2">
+                <label class="flex items-center gap-2 text-sm text-gray-600">
+                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                    {{ strtoupper($language->code) }}
+                </label>
 
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium text-gray-700">
-                                Template Title
-                            </label>
-                            <input type="text"
-                                   name="title[{{ $language->code }}]"
-                                   class="input"
-                                   placeholder="Title ({{ $language->code }})"
-                                   value="{{ old('title.' . $language->code, $title) }}">
-                        </div>
+                <div class="mb-3">
+                    <label class="block mb-1 font-medium text-gray-700">Template Title</label>
+                    <input type="text"
+                           name="title[{{ $language->code }}]"
+                           class="input"
+                           placeholder="Title ({{ $language->code }})"
+                           value="{{ old('title.' . $language->code, $title) }}">
+                </div>
 
-                        <div>
-                            <label class="block mb-1 font-medium text-gray-700">
-                                Description
-                            </label>
-                            <textarea name="description[{{ $language->code }}]"
-                                      class="input"
-                                      rows="3"
-                                      placeholder="Description ({{ $language->code }})">{{ old('description.' . $language->code, $description) }}</textarea>
-                        </div>
-                    </div>
-                @else
-                    {{-- OTHER LANGUAGES --}}
-                    <div x-show="open" x-collapse class="mb-4">
-                        <label class="block text-sm text-gray-600 mb-1">
-                            {{ strtoupper($language->code) }}
-                        </label>
+                <div>
+                    <label class="block mb-1 font-medium text-gray-700">Description</label>
+                    <textarea name="description[{{ $language->code }}]"
+                              class="input"
+                              rows="3"
+                              placeholder="Description ({{ $language->code }})">{{ old('description.' . $language->code, $description) }}</textarea>
+                </div>
+            </div>
+        @else
+            {{-- OTHER LANGUAGES --}}
+            <div x-show="open" x-collapse class="mb-4 flex flex-col gap-2">
+                <label class="flex items-center gap-2 text-sm text-gray-600">
+                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                    {{ strtoupper($language->code) }}
+                </label>
 
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium text-gray-700">
-                                Template Title
-                            </label>
-                            <input type="text"
-                                   name="title[{{ $language->code }}]"
-                                   class="input"
-                                   placeholder="Title ({{ $language->code }})"
-                                   value="{{ old('title.' . $language->code, $title) }}">
-                        </div>
+                <div class="mb-3">
+                    <label class="block mb-1 font-medium text-gray-700">Template Title</label>
+                    <input type="text"
+                           name="title[{{ $language->code }}]"
+                           class="input"
+                           placeholder="Title ({{ $language->code }})"
+                           value="{{ old('title.' . $language->code, $title) }}">
+                </div>
 
-                        <div>
-                            <label class="block mb-1 font-medium text-gray-700">
-                                Description
-                            </label>
-                            <textarea name="description[{{ $language->code }}]"
-                                      class="input"
-                                      rows="3"
-                                      placeholder="Description ({{ $language->code }})">{{ old('description.' . $language->code, $description) }}</textarea>
-                        </div>
-                    </div>
-                @endif
-            @endforeach
+                <div>
+                    <label class="block mb-1 font-medium text-gray-700">Description</label>
+                    <textarea name="description[{{ $language->code }}]"
+                              class="input"
+                              rows="3"
+                              placeholder="Description ({{ $language->code }})">{{ old('description.' . $language->code, $description) }}</textarea>
+                </div>
+            </div>
+        @endif
+    @endforeach
 
-            @if(count($languages) > 1)
-                <button type="button"
-                        @click="open = !open"
-                        class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
-                    Other Languages
-                    <svg :class="{ 'rotate-180': open }"
-                         class="w-4 h-4 transition-transform"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-            @endif
-        </div>
+    @if(count($languages) > 1)
+        <button type="button"
+                @click="open = !open"
+                class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
+            Other Languages
+            <svg :class="{ 'rotate-180': open }"
+                 class="w-4 h-4 transition-transform"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+    @endif
+</div>
 
         {{-- PRICE --}}
         <div class="mb-4">

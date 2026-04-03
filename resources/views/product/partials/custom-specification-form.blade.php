@@ -1,6 +1,3 @@
-
-
-
 <div class="">
     <h3 class="text-xl font-semibold mb-4">Specifications</h3>
 
@@ -32,20 +29,22 @@
                     <label class="block mb-1 font-medium">Parameter</label>
 
                     @foreach($languages as $index => $language)
+                        @php
+                            $flagPath = asset('images/flags/svg/' . strtolower($language->code) . '.svg');
+                        @endphp
+
                         @if($index === 0)
-                            <label class="block text-sm text-gray-600 mb-1">
-                                {{ strtoupper($language->code) }}
-                            </label>
-                            <input type="text"
-                                   name="specs[{{ $i }}][{{ $language->code }}][key]"
-                                   class="input mb-2 w-full"
-                                   placeholder="Parameter ({{ $language->code }})"
-                                   value="{{ $specsTranslations[$language->code][$i]['key'] ?? '' }}">
+                            <div class="flex items-center gap-2 mb-1">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                                <input type="text"
+                                       name="specs[{{ $i }}][{{ $language->code }}][key]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Parameter ({{ $language->code }})"
+                                       value="{{ $specsTranslations[$language->code][$i]['key'] ?? '' }}">
+                            </div>
                         @else
-                            <div x-show="open" x-collapse>
-                                <label class="block text-sm text-gray-600 mb-1">
-                                    {{ strtoupper($language->code) }}
-                                </label>
+                            <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                                 <input type="text"
                                        name="specs[{{ $i }}][{{ $language->code }}][key]"
                                        class="input mb-2 w-full"
@@ -61,20 +60,22 @@
                     <label class="block mb-1 font-medium">Value</label>
 
                     @foreach($languages as $index => $language)
+                        @php
+                            $flagPath = asset('images/flags/svg/' . strtolower($language->code) . '.svg');
+                        @endphp
+
                         @if($index === 0)
-                            <label class="block text-sm text-gray-600 mb-1">
-                                {{ strtoupper($language->code) }}
-                            </label>
-                            <input type="text"
-                                   name="specs[{{ $i }}][{{ $language->code }}][value]"
-                                   class="input mb-2 w-full"
-                                   placeholder="Value ({{ $language->code }})"
-                                   value="{{ $specsTranslations[$language->code][$i]['value'] ?? '' }}">
+                            <div class="flex items-center gap-2 mb-1">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                                <input type="text"
+                                       name="specs[{{ $i }}][{{ $language->code }}][value]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Value ({{ $language->code }})"
+                                       value="{{ $specsTranslations[$language->code][$i]['value'] ?? '' }}">
+                            </div>
                         @else
-                            <div x-show="open" x-collapse>
-                                <label class="block text-sm text-gray-600 mb-1">
-                                    {{ strtoupper($language->code) }}
-                                </label>
+                            <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                                 <input type="text"
                                        name="specs[{{ $i }}][{{ $language->code }}][value]"
                                        class="input mb-2 w-full"
@@ -115,13 +116,21 @@
                     <label class="block mb-1 font-medium">Parameter</label>
 
                     @foreach($languages as $index => $language)
+                        @php
+                            $flagPath = asset('images/flags/svg/' . strtolower($language->code) . '.svg');
+                        @endphp
+
                         @if($index === 0)
-                            <input type="text"
-                                   name="specs[0][{{ $language->code }}][key]"
-                                   class="input mb-2 w-full"
-                                   placeholder="Parameter ({{ $language->code }})">
+                            <div class="flex items-center gap-2 mb-1">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                                <input type="text"
+                                       name="specs[0][{{ $language->code }}][key]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Parameter ({{ $language->code }})">
+                            </div>
                         @else
-                            <div x-show="open" x-collapse>
+                            <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                                 <input type="text"
                                        name="specs[0][{{ $language->code }}][key]"
                                        class="input mb-2 w-full"
@@ -135,13 +144,21 @@
                     <label class="block mb-1 font-medium">Value</label>
 
                     @foreach($languages as $index => $language)
+                        @php
+                            $flagPath = asset('images/flags/svg/' . strtolower($language->code) . '.svg');
+                        @endphp
+
                         @if($index === 0)
-                            <input type="text"
-                                   name="specs[0][{{ $language->code }}][value]"
-                                   class="input mb-2 w-full"
-                                   placeholder="Value ({{ $language->code }})">
+                            <div class="flex items-center gap-2 mb-1">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                                <input type="text"
+                                       name="specs[0][{{ $language->code }}][value]"
+                                       class="input mb-2 w-full"
+                                       placeholder="Value ({{ $language->code }})">
+                            </div>
                         @else
-                            <div x-show="open" x-collapse>
+                            <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                                <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                                 <input type="text"
                                        name="specs[0][{{ $language->code }}][value]"
                                        class="input mb-2 w-full"
@@ -179,14 +196,11 @@
     </button>
 </div>
 
-
-       
 <script>
-            window.appLanguages = @json($languages->pluck('code'));
-            window.existingSpecs = @json(
-                collect($product->specifications ?? [])->values()
-            );
-
+    window.appLanguages = @json($languages->pluck('code'));
+    window.existingSpecs = @json(
+        collect($product->specifications ?? [])->values()
+    );
 </script>
 
 @vite(['resources/js/product-edit-specifications.js'])

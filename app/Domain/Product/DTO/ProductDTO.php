@@ -9,6 +9,7 @@ class ProductDTO
     public function __construct(
         public readonly string $slug,
         public readonly string $name,
+        public readonly ?string $sku = null,
         public readonly int $supplierId,
         public readonly int $categoryId,
         public readonly ?int $moq = null,

@@ -1,7 +1,6 @@
 let specIndex = Date.now();
 
 function addSpec(containerId) {
-
     const container = document.getElementById(containerId);
     if (!container || !window.appLanguages) return;
 
@@ -27,20 +26,22 @@ function addSpec(containerId) {
     `;
 
     window.appLanguages.forEach((lang, idx) => {
+        let flagPath = `/images/flags/svg/${lang.toLowerCase()}.svg`; // путь к флагам
 
         if (idx === 0) {
-
             html += `
-            <input type="text"
-                name="specs[${index}][${lang}][key]"
-                class="input mb-2 w-full"
-                placeholder="Parameter (${lang})">
+            <div class="flex items-center gap-2 mb-1">
+                <img src="${flagPath}" alt="${lang}" class="w-5 h-5 rounded">
+                <input type="text"
+                    name="specs[${index}][${lang}][key]"
+                    class="input mb-2 w-full"
+                    placeholder="Parameter (${lang})">
+            </div>
             `;
-
         } else {
-
             html += `
-            <div x-show="open" x-collapse>
+            <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                <img src="${flagPath}" alt="${lang}" class="w-5 h-5 rounded">
                 <input type="text"
                     name="specs[${index}][${lang}][key]"
                     class="input mb-2 w-full"
@@ -48,27 +49,29 @@ function addSpec(containerId) {
             </div>
             `;
         }
-
     });
 
     html += `</div><div>
-        <label class="block mb-1 font-medium">Value</label>`;
+        <label class="block mb-1 font-medium">Value</label>
+    `;
 
     window.appLanguages.forEach((lang, idx) => {
+        let flagPath = `/images/flags/svg/${lang.toLowerCase()}.svg`; // путь к флагам
 
         if (idx === 0) {
-
             html += `
-            <input type="text"
-                name="specs[${index}][${lang}][value]"
-                class="input mb-2 w-full"
-                placeholder="Value (${lang})">
+            <div class="flex items-center gap-2 mb-1">
+                <img src="${flagPath}" alt="${lang}" class="w-5 h-5 rounded">
+                <input type="text"
+                    name="specs[${index}][${lang}][value]"
+                    class="input mb-2 w-full"
+                    placeholder="Value (${lang})">
+            </div>
             `;
-
         } else {
-
             html += `
-            <div x-show="open" x-collapse>
+            <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                <img src="${flagPath}" alt="${lang}" class="w-5 h-5 rounded">
                 <input type="text"
                     name="specs[${index}][${lang}][value]"
                     class="input mb-2 w-full"
@@ -76,7 +79,6 @@ function addSpec(containerId) {
             </div>
             `;
         }
-
     });
 
     html += `

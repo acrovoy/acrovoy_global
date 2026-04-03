@@ -12,19 +12,20 @@
                  <label class="block mb-1 font-medium">Parameter</label>
 
                  @foreach($languages as $index => $language)
+                 @php
+                     $flagPath = "/images/flags/svg/".strtolower($language->code).".svg";
+                 @endphp
                  @if($index === 0)
-                 <label class="block text-sm text-gray-600 mb-1">
-                     {{ strtoupper($language->code) }}
-                 </label>
-                 <input type="text"
-                     name="specs[0][{{ $language->code }}][key]"
-                     placeholder="Parameter ({{ $language->code }})"
-                     class="input mb-2 w-full">
+                 <div class="flex items-center gap-2 mb-1">
+                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                     <input type="text"
+                         name="specs[0][{{ $language->code }}][key]"
+                         placeholder="Parameter ({{ $language->code }})"
+                         class="input mb-2 w-full">
+                 </div>
                  @else
-                 <div x-show="open" x-collapse>
-                     <label class="block text-sm text-gray-600 mb-1">
-                         {{ strtoupper($language->code) }}
-                     </label>
+                 <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                      <input type="text"
                          name="specs[0][{{ $language->code }}][key]"
                          placeholder="Parameter ({{ $language->code }})"
@@ -39,19 +40,20 @@
                  <label class="block mb-1 font-medium">Value</label>
 
                  @foreach($languages as $index => $language)
+                 @php
+                     $flagPath = "/images/flags/svg/".strtolower($language->code).".svg";
+                 @endphp
                  @if($index === 0)
-                 <label class="block text-sm text-gray-600 mb-1">
-                     {{ strtoupper($language->code) }}
-                 </label>
-                 <input type="text"
-                     name="specs[0][{{ $language->code }}][value]"
-                     placeholder="Value ({{ $language->code }})"
-                     class="input mb-2 w-full">
+                 <div class="flex items-center gap-2 mb-1">
+                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                     <input type="text"
+                         name="specs[0][{{ $language->code }}][value]"
+                         placeholder="Value ({{ $language->code }})"
+                         class="input mb-2 w-full">
+                 </div>
                  @else
-                 <div x-show="open" x-collapse>
-                     <label class="block text-sm text-gray-600 mb-1">
-                         {{ strtoupper($language->code) }}
-                     </label>
+                 <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                      <input type="text"
                          name="specs[0][{{ $language->code }}][value]"
                          placeholder="Value ({{ $language->code }})"
@@ -89,10 +91,9 @@
          + Add specification
      </button>
 
- </div>
+</div>
 
-
- <script>
+<script>
      /**
       * Определяем стартовый индекс спецификаций
       * Для edit-формы — берём количество уже существующих specs
@@ -123,28 +124,29 @@
         `;
 
          @foreach($languages as $index => $language)
+         @php
+             $flagPath = "/images/flags/svg/".strtolower($language->code).".svg";
+         @endphp
          @if($index === 0)
          html += `
-                    <label class="block text-sm text-gray-600 mb-1">
-                        {{ strtoupper($language->code) }}
-                    </label>
+                <div class="flex items-center gap-2 mb-1">
+                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                     <input type="text"
                            name="specs[${specIndex}][{{ $language->code }}][key]"
                            class="input mb-2 w-full"
                            placeholder="Parameter ({{ $language->code }})">
-                `;
+                </div>
+            `;
          @else
          html += `
-                    <div x-show="open" x-collapse>
-                        <label class="block text-sm text-gray-600 mb-1">
-                            {{ strtoupper($language->code) }}
-                        </label>
-                        <input type="text"
-                               name="specs[${specIndex}][{{ $language->code }}][key]"
-                               class="input mb-2 w-full"
-                               placeholder="Parameter ({{ $language->code }})">
-                    </div>
-                `;
+                <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                    <input type="text"
+                           name="specs[${specIndex}][{{ $language->code }}][key]"
+                           class="input mb-2 w-full"
+                           placeholder="Parameter ({{ $language->code }})">
+                </div>
+            `;
          @endif
          @endforeach
 
@@ -156,28 +158,29 @@
         `;
 
          @foreach($languages as $index => $language)
+         @php
+             $flagPath = "/images/flags/svg/".strtolower($language->code).".svg";
+         @endphp
          @if($index === 0)
          html += `
-                    <label class="block text-sm text-gray-600 mb-1">
-                        {{ strtoupper($language->code) }}
-                    </label>
+                <div class="flex items-center gap-2 mb-1">
+                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
                     <input type="text"
                            name="specs[${specIndex}][{{ $language->code }}][value]"
                            class="input mb-2 w-full"
                            placeholder="Value ({{ $language->code }})">
-                `;
+                </div>
+            `;
          @else
          html += `
-                    <div x-show="open" x-collapse>
-                        <label class="block text-sm text-gray-600 mb-1">
-                            {{ strtoupper($language->code) }}
-                        </label>
-                        <input type="text"
-                               name="specs[${specIndex}][{{ $language->code }}][value]"
-                               class="input mb-2 w-full"
-                               placeholder="Value ({{ $language->code }})">
-                    </div>
-                `;
+                <div x-show="open" x-collapse class="flex items-center gap-2 mb-2">
+                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+                    <input type="text"
+                           name="specs[${specIndex}][{{ $language->code }}][value]"
+                           class="input mb-2 w-full"
+                           placeholder="Value ({{ $language->code }})">
+                </div>
+            `;
          @endif
          @endforeach
 

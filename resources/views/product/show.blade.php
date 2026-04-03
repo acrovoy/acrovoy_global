@@ -46,8 +46,8 @@
                                 {{ $product1->name }}
                             </h1>
 
-                            <span class="bg-yellow-900 text-white px-2 py-0 rounded text-sm">
-                                {{ $product1->id }}
+                            <span class="bg-yellow-900 text-white px-2 py-0 rounded text-xs">
+                                {{ $product1->sku }}
                             </span>
 
 

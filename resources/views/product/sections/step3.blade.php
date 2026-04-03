@@ -1,5 +1,5 @@
 
-
+@include('product.partials.custom-specification-form')
 
 {{-- ================= MATERIALS ================= --}}
 <h3 class="text-xl font-semibold mb-4 mt-6">Materials Used</h3>

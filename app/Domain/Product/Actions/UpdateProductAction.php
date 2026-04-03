@@ -63,6 +63,7 @@ logger()->info('==== Before Product Update ====', [
 $product->update([
     'slug' => $data->slug,
     'name' => $data->name,
+    'sku' => $data->sku,
     'supplier_id' => $data->supplierId,
     'category_id' => $data->categoryId,
     'moq' => $data->moq,

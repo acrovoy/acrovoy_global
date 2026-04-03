@@ -98,6 +98,8 @@ class StoreProductRequest extends FormRequest
 
         'attributes' => ['nullable', 'array'],
 
+        'sku' => ['nullable', 'string', 'max:255'],
+
     ];
 
 
@@ -121,6 +123,7 @@ class StoreProductRequest extends FormRequest
             'price_tiers.*.max_qty' => 'Maximum Quantity',
             'price_tiers.*.price' => 'Unit Price',
             'shipping_templates.*' => 'Shipping Template',
+            'sku' => 'SKU',
         ];
     }
 
