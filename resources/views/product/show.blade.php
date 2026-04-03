@@ -4,7 +4,7 @@
 <section class="bg-[#F7F3EA] py-8">
     <div class="container mx-auto px-6">
 
-        
+
 
         {{-- Breadcrumb --}}
         <div class="text-sm text-gray-600 mb-6 flex flex-wrap gap-1">
@@ -26,15 +26,15 @@
 
                 <div class="flex gap-4 mt-4">
                     @foreach($product1->thumbnails as $media)
-                        <img src="{{ $media['thumb'] }}"
-                            class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border 
+                    <img src="{{ $media['thumb'] }}"
+                        class="thumbnail w-20 h-20 object-contain bg-gray-100 rounded cursor-pointer border 
                                     {{ $media['is_main'] ? 'border-blue-700' : 'border-gray-300' }}"
-                            data-src="{{ $media['large'] }}"
-                            alt="{{ $product1->name }}">
+                        data-src="{{ $media['large'] }}"
+                        alt="{{ $product1->name }}">
                     @endforeach
                 </div>
             </div>
-              
+
             {{-- Info --}}
             <div class="rounded-xl shadow p-6" x-data="{ showProjectBox: false }">
                 <div class="flex items-start mb-1">
@@ -269,24 +269,45 @@
                 <p class="text-gray-700 mb-6 leading-relaxed">{{ $product1->description }}</p>
                 @endif
 
-                {{-- Specifications --}}
-                @if($product1->specifications->count())
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <h3 class="font-semibold text-lg mb-2 leading-none">{{ __('product/product_show.specification') }}</h3>
-                    <p class="text-sm text-gray-500 leading-tight">
-                        {{ __('product/product_show.shipping_templates_selected_text') }}
-                    </p>
 
-                    <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
-                        @foreach($product1->specifications as $spec)
-                        <li class="flex justify-between py-2">
-                            <span class="text-gray-600">{{ $spec->key }}</span>
-                            <span class="font-medium text-gray-900">{{ $spec->value }}</span>
-                        </li>
-                        @endforeach
-                    </ul>
-                </div>
-                @endif
+                {{-- Product Attributes + Specifications --}}
+@if($product1->attributeValues->count() || $product1->specifications->count())
+<div class="bg-white rounded-xl shadow p-6 mb-6">
+    <h3 class="font-semibold text-lg mb-2 leading-none">{{ __('product/product_show.specification') }}</h3>
+    <p class="text-sm text-gray-500 leading-tight">
+        {{ __('product/product_show.shipping_cost_not_included') }}
+    </p>
+
+    <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
+        {{-- Атрибуты --}}
+        @foreach($product1->attributeValues as $attrValue)
+            <li class="flex justify-between py-2">
+                <span class="text-gray-600">{{ $attrValue->attribute->name ?? $attrValue->attribute->code }}</span>
+                <span class="font-medium text-gray-900">
+                    @php
+                        $value = in_array($attrValue->attribute->type, ['select', 'multiselect'])
+                            ? $attrValue->getOptionValues()
+                            : $attrValue->getTranslatedValue();
+
+                        $unit = $attrValue->attribute->unit ? ' ' . $attrValue->attribute->unit : '';
+                    @endphp
+                    {{ $value }}{{ $unit }}
+                </span>
+            </li>
+        @endforeach
+
+        {{-- Спецификации пользователя без отдельной разделительной линии --}}
+        @foreach($product1->specifications as $spec)
+            <li class="flex justify-between py-2">
+                <span class="text-gray-600">{{ $spec->key }}</span>
+                <span class="font-medium text-gray-900">{{ $spec->value }}</span>
+            </li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
+               
 
                 @include('product.partials.materials-table', ['product1' => $product1])
 
@@ -704,7 +725,7 @@
 </script>
 
 <script>
-window.productGallery = @json($gallery);
+    window.productGallery = @json($gallery);
 </script>
 
 {{-- MediaViewer компонент --}}

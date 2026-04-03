@@ -53,6 +53,7 @@ use App\Domain\Product\Actions\SyncProductTranslationAction;
 
 use App\Domain\Product\Actions\SyncProductPriceTierAction;
 use App\Domain\Product\Actions\SyncProductSpecificationAction;
+use App\Domain\Product\Actions\SyncProductAttributeAction;
 use App\Domain\Product\Actions\SyncProductMaterialAction;
 use App\Domain\Product\Actions\SyncShippingTemplateAction;
 
@@ -99,6 +100,7 @@ class ProductController extends Controller
         CreateProductAction $createProduct,
         SyncProductTranslationAction $translationAction,
         SyncProductPriceTierAction $priceAction,
+        SyncProductAttributeAction $attributeAction,
         SyncProductSpecificationAction $specAction,
         SyncProductMaterialAction $materialAction,
         SyncShippingTemplateAction $shippingAction,
@@ -108,6 +110,8 @@ class ProductController extends Controller
 
 
    
+
+
         DB::transaction(function () use (
             $request,
             $createProduct,
@@ -118,6 +122,7 @@ class ProductController extends Controller
             $shippingAction,
             $dtoFactory,
             $attachProductVariantAction,
+            $attributeAction,
         ) {
 
             /*
@@ -272,6 +277,13 @@ class ProductController extends Controller
                 $product,
                 $request->shipping_templates ?? []
             );
+
+            // 🔹 **Синхронизация атрибутов продукта**
+            if ($request->has('attributes')) {
+                $attributeAction->execute($product, $request->input('attributes'));
+            }
+
+
         });
 
         return redirect()->route('manufacturer.products.index')

@@ -7,24 +7,70 @@
         <div class="mb-3">
             <select class="input w-full" @change="selectCategory($event.target.value, index)">
                 <option value="">Select category</option>
+
                 <template x-for="item in level.items" :key="item.id">
                     <option :value="item.id" x-text="item.name"></option>
                 </template>
+
             </select>
         </div>
     </template>
 
+
     <input type="hidden" name="category" x-model="selectedCategory">
 
-    <div x-show="breadcrumb.length" class="text-sm text-gray-600 mt-3">
-        Selected category: <span class="font-medium" x-text="breadcrumb.join(' → ')"></span>
+
+    <div x-show="breadcrumb.length"
+         class="text-sm text-gray-600 mt-3">
+
+        Selected category:
+        <span class="font-medium"
+              x-text="breadcrumb.join(' → ')"></span>
+
     </div>
 
 
-    <div id="category-attributes" class="mt-4"></div>
+    <!-- CATEGORY ATTRIBUTES BLOCK -->
+
+    <div x-show="selectedCategory"
+         x-transition
+         class="mt-6">
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+
+            <div class="flex items-center justify-between mb-4">
+
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Category Basic Specifications
+                </h3>
+
+                <span class="text-xs text-gray-400">
+                    Auto-loaded from selected category
+                </span>
+
+            </div>
+
+
+            <div id="category-attributes"
+                 class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </div>
+
+
+            <div id="category-attributes-empty"
+                 class="hidden text-sm text-gray-400 italic">
+
+                No specifications available for this category
+
+            </div>
+
+        </div>
+
+    </div>
 
 
 </div>
+
+
 
 <script>
 function categorySelector() {
@@ -36,8 +82,7 @@ function categorySelector() {
         async init() {
             const res = await fetch('/dashboard/category-selector/root');
             const data = await res.json();
-
-            this.levels = [{ items: data }]; // <-- исправлено
+            this.levels = [{ items: data }];
         },
 
         async selectCategory(categoryId, levelIndex) {
@@ -70,12 +115,22 @@ function categorySelector() {
             console.log(attributes);
 
             const container = document.getElementById('category-attributes');
+            const emptyBlock = document.getElementById('category-attributes-empty');
+
             container.innerHTML = '';
+
+            if (!attributes.length) {
+                emptyBlock.classList.remove('hidden');
+                return;
+            }
+
+            emptyBlock.classList.add('hidden');
 
             attributes.forEach(attr => {
                 let fieldHtml = '';
 
                 switch(attr.type) {
+
                     case 'text':
                         fieldHtml = `<input type="text" name="attributes[${attr.id}]" class="input w-full" />`;
                         break;
@@ -89,26 +144,31 @@ function categorySelector() {
                             const optionsHtml = attr.options
                                 .map(o => `<option value="${o.value}">${o.label}</option>`)
                                 .join('');
-                            fieldHtml = `<select name="attributes[${attr.id}]" class="input w-full">${optionsHtml}</select>`;
+                            fieldHtml = `<select name="attributes[${attr.id}]" class="input w-full">
+                                            <option value="">Select...</option>
+                                            ${optionsHtml}
+                                         </select>`;
                         }
                         break;
 
                     case 'multiselect':
                         if(attr.options) {
                             const optionsHtml = attr.options
-                                .map(o => `
-                                    <label class="inline-flex items-center mr-4">
-                                        <input type="checkbox" name="attributes[${attr.id}][]" value="${o.value}" class="mr-1" />
-                                        ${o.label}
-                                    </label>
-                                `)
-                                .join('');
-                            fieldHtml = `<div class="flex flex-wrap">${optionsHtml}</div>`;
+                                .map(o => `<label class="flex items-center gap-2 text-sm text-gray-700">
+                                                <input type="checkbox" name="attributes[${attr.id}][]" value="${o.value}" class="rounded border-gray-300">
+                                                ${o.label}
+                                            </label>`).join('');
+                            fieldHtml = `<div class="flex flex-col gap-2">
+                                            ${optionsHtml}
+                                         </div>`;
                         }
                         break;
 
                     case 'boolean':
-                        fieldHtml = `<input type="checkbox" name="attributes[${attr.id}]" value="1" />`;
+                        fieldHtml = `<label class="flex items-center gap-2 text-sm text-gray-700">
+                                        <input type="checkbox" name="attributes[${attr.id}]" value="1" class="rounded border-gray-300">
+                                        Yes
+                                     </label>`;
                         break;
 
                     default:
@@ -116,12 +176,18 @@ function categorySelector() {
                 }
 
                 const div = document.createElement('div');
-                div.className = 'mb-3';
-                div.innerHTML = `<label class="block text-sm font-medium text-gray-700 mb-1">${attr.name}</label>${fieldHtml}`;
+                div.className = 'flex flex-col';
+                div.innerHTML = `
+                    <label class="text-sm font-medium text-gray-600 mb-1">
+                        ${attr.name}
+                    </label>
+                    ${fieldHtml}
+                `;
 
                 container.appendChild(div);
             });
         }
+
     }
 }
 </script>

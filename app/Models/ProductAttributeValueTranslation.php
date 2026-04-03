@@ -21,10 +21,10 @@ class ProductAttributeValueTranslation extends Model
         );
     }
 
-    public function getValueAttribute()
+public function valueRelation() // можно назвать valueRelation, а не value
 {
-    return $this->translations
-        ->where('locale', app()->getLocale())
-        ->first()?->value;
+    return $this->belongsTo(ProductAttributeValue::class, 'product_attribute_value_id');
 }
+
+
 }

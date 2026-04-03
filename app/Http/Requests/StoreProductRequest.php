@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+use Illuminate\Validation\Rule;
 use App\Models\Category;
 
 class StoreProductRequest extends FormRequest
@@ -23,50 +24,91 @@ class StoreProductRequest extends FormRequest
      */
     public function rules(): array
 {
-    return [
+    $rules = [
+
         'name' => ['required', 'array'],
+
         'name.*' => ['nullable', 'string', 'max:255'],
+
         'name' => function ($attribute, $value, $fail) {
-            // Проверяем, что хотя бы одно название не пустое
+
             $filled = false;
+
             foreach ($value as $locale => $name) {
+
                 if (!empty($name)) {
                     $filled = true;
                     break;
                 }
+
             }
+
             if (!$filled) {
+
                 $fail('Please enter at least one product name.');
+
             }
+
         },
 
-        'category' => ['required', 'exists:categories,id',
-                            function ($attribute, $value, $fail) {
-                                $category = Category::find($value);
 
-                                if (!$category) {
-                                    return;
-                                }
+        'category' => [
 
-                                if ($category->type !== 'product') {
-                                    $fail('This category is used for custom project requests (RFQ). Please choose a product category instead.');
-                                }
-                            }],
-            'moq' => ['nullable', 'integer', 'min:1'],
-            'lead_time' => ['nullable', 'integer', 'min:1'],
+            'required',
+            'exists:categories,id',
 
-            'images.*' => ['image', 'max:5120'],
+            function ($attribute, $value, $fail) {
 
-            'price_tiers.*.min_qty' => ['required', 'integer', 'min:1'],
-            'price_tiers.*.max_qty' => ['nullable', 'integer', 'gt:price_tiers.*.min_qty'],
-            'price_tiers.*.price' => ['required', 'numeric', 'min:0'],
+                $category = Category::find($value);
 
-            'shipping_templates.*' => ['exists:shipping_templates,id'],
-            
+                if (!$category) {
+                    return;
+                }
+
+                if ($category->type !== 'product') {
+
+                    $fail(
+                        'This category is used for custom project requests (RFQ). Please choose a product category instead.'
+                    );
+
+                }
+
+            }
+
+        ],
+
+
+        'moq' => ['nullable', 'integer', 'min:1'],
+
+        'lead_time' => ['nullable', 'integer', 'min:1'],
+
+        'images.*' => ['image', 'max:5120'],
+
+        'price_tiers.*.min_qty' => ['required', 'integer', 'min:1'],
+
+        'price_tiers.*.max_qty' => [
+            'nullable',
+            'integer',
+            'gt:price_tiers.*.min_qty'
+        ],
+
+        'price_tiers.*.price' => ['required', 'numeric', 'min:0'],
+
+        'shipping_templates.*' => ['exists:shipping_templates,id'],
+
+        'attributes' => ['nullable', 'array'],
+
     ];
-}
 
-public function attributes(): array
+
+   
+
+
+    return $rules;
+}
+   
+
+    public function attributes(): array
     {
         return [
             'name' => 'Product Name',
@@ -82,7 +124,7 @@ public function attributes(): array
         ];
     }
 
-public function messages(): array
+    public function messages(): array
     {
         return [
             'category.required' => 'Please select a category for the product.',

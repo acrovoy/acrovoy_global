@@ -22,6 +22,9 @@ class ProductViewQueryService
             'variantGroup.items.product',
             'variantGroup.items.product.images',
             'variantGroup.items.media',
+            'attributeValues.attribute',
+            'attributeValues.translations',
+            'attributeValues.options.option', // чтобы подтянуть саму Option и её переводы
     
         ])
         ->where('slug', $slug)
