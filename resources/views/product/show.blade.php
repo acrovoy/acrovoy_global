@@ -37,137 +37,151 @@
 
             {{-- Info --}}
             <div class="rounded-xl shadow p-6" x-data="{ showProjectBox: false }">
-                <div class="flex items-start mb-1">
 
-                    {{-- Title --}}
-                    <div>
+                <div class="flex flex-col lg:flex-row lg:items-start gap-4">
+
+                    {{-- LEFT BLOCK --}}
+                    <div class="flex-1">
+
+                        {{-- Title --}}
                         <div class="flex items-center flex-wrap gap-3">
-                            <h1 class="text-3xl font-extrabold text-gray-900">
+                            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">
                                 {{ $product1->name }}
                             </h1>
-
-                            <span class="bg-yellow-900 text-white px-2 py-0 rounded text-xs">
-                                {{ $product1->sku }}
-                            </span>
-
 
 
                         </div>
 
-                        <p class="text-gray-700 mb-2 leading-relaxed">{{ $product1->undername }}</p>
+                        <p class="text-gray-700 mb-2 leading-relaxed">
+                            {{ $product1->undername }}
+                        </p>
 
-                        {{-- ⭐ Рейтинг и продано --}}
+                        {{-- ⭐ Rating --}}
                         @php
                         $reviewsCount = $product1->reviews->count();
                         $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
                         $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
                         @endphp
 
-                        <div class="flex items-center text-gray-600 text-xs mb-4">
-                            {{-- Звёзды --}}
+                        <div class="flex flex-wrap items-center text-gray-600 text-xs mb-4 gap-y-1">
+
+                            {{-- Stars --}}
                             <div class="flex items-center gap-1 mr-3">
+
                                 @for ($i = 1; $i <= 5; $i++)
                                     @if ($i <=floor($rating))
                                     <svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 20 20">
                                     <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
                                     </svg>
+
                                     @elseif ($i - $rating < 1)
+
                                         <svg class="w-4 h-4 fill-current text-yellow-300" viewBox="0 0 20 20">
                                         <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
                                         </svg>
+
                                         @else
+
                                         <svg class="w-4 h-4 fill-current text-gray-300" viewBox="0 0 20 20">
                                             <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
                                         </svg>
+
                                         @endif
                                         @endfor
+
                                         <span>{{ number_format($rating, 1) }}</span>
                             </div>
 
-                            {{-- Количество отзывов --}}
-                            <span>({{ $reviewsCount }} {{ __('product/product_show.reviews') }})</span>
+                            {{-- Reviews --}}
+                            <span>
+                                ({{ $reviewsCount }} {{ __('product/product_show.reviews') }})
+                            </span>
 
+                            {{-- Sold --}}
                             @if($soldCount > 0)
-                            <span class="mx-2">•</span>
-                            <span>{{ __('product/product_show.sold') }}: {{ $soldCount }}</span>
+                            <span class="mx-2 hidden sm:inline">•</span>
+
+                            <span>
+                                {{ __('product/product_show.sold') }}:
+                                {{ $soldCount }}
+                            </span>
                             @endif
+
                         </div>
-
-
-
-
-
-
 
                     </div>
 
 
+                    {{-- RIGHT BLOCK ACTIONS --}}
+                    <div class="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-3 lg:min-w-[200px]">
 
+                        {{-- Add to project --}}
+                        <div class="w-full sm:w-auto lg:w-[180px] text-left sm:text-left lg:text-right mb-2">
 
-
-
-
-                    {{-- Actions --}}
-                    <div class="ml-auto flex items-center gap-2">
-
-                        {{-- ➕ Add to project --}}
-                        <div class="inline-flex flex-col items-end w-[180px]">
-                            <!-- Button -->
                             <button
                                 @click="showProjectBox = !showProjectBox"
                                 title="Add to project"
-                                class="inline-flex items-center gap-2
-               px-4 py-2
-               rounded-lg
-               bg-gray-500 text-white
-               text-sm font-semibold
-               shadow-sm
-               hover:bg-gray-700 hover:shadow
-               transition-colors duration-200">
-                                <!-- Icon -->
-                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 transition">
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2
+                           px-4 py-2
+                           rounded-lg
+                           bg-gray-500 text-white
+                           text-sm font-semibold
+                           shadow-sm
+                           hover:bg-gray-700 hover:shadow
+                           transition">
+
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50">
                                     <svg xmlns="http://www.w3.org/2000/svg"
                                         class="h-4 w-4"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+
+                                        <path stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 4v16m8-8H4" />
                                     </svg>
                                 </span>
 
-                                <!-- Text -->
-                                <span class="whitespace-nowrap">
-                                    Add to project
-                                </span>
+                                <span>Add to project</span>
+
                             </button>
 
-                            <!-- Text below button, same width -->
-                            <p class="mt-1 text-xs text-gray-500 text-right inline-block">
+                            <p class="mt-1 text-xs text-gray-500 leading-snug">
                                 Organize your products into projects — create a project in your dashboard first.
                             </p>
+
                         </div>
-
-
-
 
 
                         {{-- Edit --}}
                         @can('update', $product1)
                         <a href="{{ route('products.edit', $product1->id) }}"
-                            class="inline-flex items-center gap-2
-                  px-4 py-2
-                  text-sm font-medium
-                  text-blue-700
-                  border border-blue-600
-                  rounded-lg
-                  hover:bg-blue-600 hover:text-white
-                  transition">
+                            class="w-full sm:w-auto text-center
+                      inline-flex items-center justify-center gap-2
+                      px-4 py-2
+                      text-sm font-medium
+                      text-blue-700
+                      border border-blue-600
+                      rounded-lg
+                      hover:bg-blue-600 hover:text-white
+                      transition">
+
                             Edit
+
                         </a>
                         @endcan
+                        <div class="text-[10px] uppercase mb-2 ">Артикул:
+                            <span class="bg-yellow-900 text-white px-1 py-0 rounded text-[10px]">
+                                {{ $product1->sku }}
+                            </span>
+                        </div>
 
                     </div>
+
                 </div>
+
 
 
 
@@ -271,43 +285,43 @@
 
 
                 {{-- Product Attributes + Specifications --}}
-@if($product1->attributeValues->count() || $product1->specifications->count())
-<div class="bg-white rounded-xl shadow p-6 mb-6">
-    <h3 class="font-semibold text-lg mb-2 leading-none">{{ __('product/product_show.specification') }}</h3>
-    <p class="text-sm text-gray-500 leading-tight">
-        {{ __('product/product_show.shipping_cost_not_included') }}
-    </p>
+                @if($product1->attributeValues->count() || $product1->specifications->count())
+                <div class="bg-white rounded-xl shadow p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-2 leading-none">{{ __('product/product_show.specification') }}</h3>
+                    <p class="text-sm text-gray-500 leading-tight">
+                        {{ __('product/product_show.shipping_cost_not_included') }}
+                    </p>
 
-    <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
-        {{-- Атрибуты --}}
-        @foreach($product1->attributeValues as $attrValue)
-            <li class="flex justify-between py-2">
-                <span class="text-gray-600">{{ $attrValue->attribute->name ?? $attrValue->attribute->code }}</span>
-                <span class="font-medium text-gray-900">
-                    @php
-                        $value = in_array($attrValue->attribute->type, ['select', 'multiselect'])
-                            ? $attrValue->getOptionValues()
-                            : $attrValue->getTranslatedValue();
+                    <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
+                        {{-- Атрибуты --}}
+                        @foreach($product1->attributeValues as $attrValue)
+                        <li class="flex justify-between py-2">
+                            <span class="text-gray-600">{{ $attrValue->attribute->name ?? $attrValue->attribute->code }}</span>
+                            <span class="font-medium text-gray-900">
+                                @php
+                                $value = in_array($attrValue->attribute->type, ['select', 'multiselect'])
+                                ? $attrValue->getOptionValues()
+                                : $attrValue->getTranslatedValue();
 
-                        $unit = $attrValue->attribute->unit ? ' ' . $attrValue->attribute->unit : '';
-                    @endphp
-                    {{ $value }}{{ $unit }}
-                </span>
-            </li>
-        @endforeach
+                                $unit = $attrValue->attribute->unit ? ' ' . $attrValue->attribute->unit : '';
+                                @endphp
+                                {{ $value }}{{ $unit }}
+                            </span>
+                        </li>
+                        @endforeach
 
-        {{-- Спецификации пользователя без отдельной разделительной линии --}}
-        @foreach($product1->specifications as $spec)
-            <li class="flex justify-between py-2">
-                <span class="text-gray-600">{{ $spec->key }}</span>
-                <span class="font-medium text-gray-900">{{ $spec->value }}</span>
-            </li>
-        @endforeach
-    </ul>
-</div>
-@endif
+                        {{-- Спецификации пользователя без отдельной разделительной линии --}}
+                        @foreach($product1->specifications as $spec)
+                        <li class="flex justify-between py-2">
+                            <span class="text-gray-600">{{ $spec->key }}</span>
+                            <span class="font-medium text-gray-900">{{ $spec->value }}</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
 
-               
+
 
                 @include('product.partials.materials-table', ['product1' => $product1])
 

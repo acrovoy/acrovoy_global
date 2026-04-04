@@ -8,26 +8,20 @@
 
     <x-help-tooltip width="w-80">
             <div class="space-y-2 leading-relaxed">
-
-                <div class="font-semibold text-white">
-                    Product Name
-                </div>
-
+                <div class="font-semibold text-white">Название товара</div>
                 <div class="text-gray-200 text-sm">
                     Укажите понятное и читаемое название товара, которое будет
                     отображаться покупателям в каталоге и поиске.
                 </div>
-
                 <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
-                    <li>используйте общепринятые слова</li>
+                    <li>используйте общепринятые термины (стул, стол, барная табуретка)</li>
                     <li>не добавляйте внутренние коды поставщика</li>
                     <li>избегайте лишних символов и сокращений</li>
+                    <li>максимальное количество символов: <span class="font-semibold text-white">110</span></li>
                 </ul>
-
                 <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
-                    Пример: <span class="text-gray-200">Wireless Bluetooth Headphones</span>
+                    Пример: <span class="text-gray-200">Барный стул из дуба, 75 см</span> или <span class="text-gray-200">Стул для столовой, металлический каркас, черный</span>
                 </div>
-
             </div>
         </x-help-tooltip>
 
@@ -45,38 +39,62 @@
                 <div class="flex-1 flex items-center gap-2">
                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <input type="text"
-                           name="name[{{ $language->code }}]"
-                           class="input mb-2 w-full"
-                           placeholder="Product Name ({{ $language->code }})"
-                           value="{{ old('name.' . $language->code, $translations[$language->code]['name'] ?? '') }}">
+                    <x-char-counter :max="110">
+                        <div x-data="charCounter(110)" class="relative w-full">
+                            <input type="text"
+                                   name="name[{{ $language->code }}]"
+                                   class="input mb-2 w-full"
+                                   maxlength="110"
+                                   placeholder="Product Name (required)"
+                                   value="{{ old('name.' . $language->code, $translations[$language->code]['name'] ?? '') }}"
+                                   @input="update($event.target)"
+                                   x-init="update($el)"
+                                   required
+                                   style="padding-right: 4rem;">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs" :class="color">
+                                <span x-text="count"></span>/<span x-text="max"></span>
+                            </div>
+                        </div>
+                    </x-char-counter>
 
                     
                 </div>
             @else
-                {{-- Остальные языки скрыты по умолчанию --}}
-                <div x-show="open"
-                     x-collapse
-                     class="flex-1 flex items-center gap-2 mb-2">
-                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
+               {{-- Остальные языки скрыты по умолчанию --}}
+<div x-show="open" x-collapse x-cloak class="flex-1 flex items-center gap-2 mb-2">
+    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <input type="text"
-                           name="name[{{ $language->code }}]"
-                           class="input w-full"
-                           placeholder="Product Name ({{ $language->code }})"
-                           value="{{ old('name.' . $language->code, $translations[$language->code]['name'] ?? '') }}">
-
-                    
-                </div>
+    <x-char-counter :max="110">
+        <div x-data="charCounter(110)" class="relative w-full">
+            <input type="text"
+                   name="name[{{ $language->code }}]"
+                   maxlength="110"
+                   class="input w-full"
+                   placeholder="Product Name (optional)"
+                   value="{{ old('name.' . $language->code, $translations[$language->code]['name'] ?? '') }}"
+                   @input="update($event.target)"
+                   x-init="update($el)"
+                   style="padding-right: 4rem;">
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs"
+                 :class="color">
+                <span x-text="count"></span>/<span x-text="max"></span>
+            </div>
+        </div>
+    </x-char-counter>
+</div>
             @endif
         @endforeach
     </div>
 
     {{-- Кнопка для остальных языков --}}
     @if(count($languages) > 1)
+    <div class="flex justify-between">
+        <div class="mt-1 text-xs text-red-500 italic">
+            * English version required
+        </div>
         <button type="button"
                 @click="open = !open"
-                class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
+                class="mt-2 text-xs text-blue-600 hover:underline flex items-center gap-1">
             Other Languages
             <svg :class="{ 'rotate-180': open }"
                  class="w-4 h-4 transition-transform"
@@ -89,6 +107,7 @@
                       d="M19 9l-7 7-7-7" />
             </svg>
         </button>
+        </div>
     @endif
 </div>
 
