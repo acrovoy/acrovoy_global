@@ -1,5 +1,5 @@
 {{-- Product Grid --}}
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  xl:grid-cols-4 gap-8">
     @if($products->count())
     @foreach ($products as $product)
 
@@ -13,11 +13,9 @@
     $soldCount = $product->sold_count ?? 0;
     @endphp
 
-    <div class="relative group">
+    <div class="relative group sm:h-[420px]">
 
-        <div class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden min-h-[410px] flex flex-col">
-
-
+        <div class="bg-white rounded-xl shadow hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col sm:group-hover:position-absolute product-card--inner top-0 left-0 group-hover:w-full min-h-full">
 
             {{-- Основное изображение каталога --}}
             @if($product->slug)
@@ -28,7 +26,7 @@
             <img src="{{ $product->catalog_image_url }}" class="w-full h-auto object-contain" alt="{{ $product->name }}">
             @endif
 
-            <div class="p-4 flex flex-col flex-1">
+            <div class="p-4 flex flex-col flex-1 z-10 bg-white">
                 <h3 class="font-semibold text-base">
                     <a href="{{ route('product.show', $product->slug) }}" class="hover:text-blue-600">{{ $product->name }}</a>
                 </h3>
@@ -61,7 +59,7 @@
                 </p>
 
                 {{-- Всплывающий блок при наведении --}}
-                <div class="overflow-hidden max-h-0 group-hover:max-h-60 transition-[max-height] duration-300 mb-4 space-y-1">
+                <div class="overflow-hidden sm:max-h-0 sm:group-hover:max-h-60 transition-[max-height] duration-300 mb-4 space-y-1">
                     @if($product->variantGroup?->items->isNotEmpty())
                     <div class="flex flex-wrap gap-2 mb-2">
                         @foreach($product->variantGroup->items as $variant)
@@ -142,48 +140,48 @@
                     @endif
                 </div>
 
-               <div class="flex justify-between items-center gap-2 mt-auto">
-    <div class="flex justify-between items-center gap-2">
-        <!-- Кнопка Add to Cart -->
-        <button
-            class="w-full border border-gray-300 p-1.5 rounded-sm
+                <div class="flex justify-between items-center gap-2 mt-auto">
+                    <div class="flex justify-between items-center gap-2">
+                        <!-- Кнопка Add to Cart -->
+                        <button
+                            class="w-full border border-gray-300 p-1.5 rounded-sm
                    text-gray-800 font-medium shadow-sm
                    hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105 text-sm"
-            title="Add to Cart">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="h-3 w-3"
-                 fill="none"
-                 viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13L17 13M7 13H5.4" />
-            </svg>
-        </button>
+                            title="Add to Cart">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-3 w-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13L17 13M7 13H5.4" />
+                            </svg>
+                        </button>
 
-        <!-- Кнопка Add to Wishlist -->
-        <button
-            class="w-full border border-gray-300 p-1.5 rounded-sm
+                        <!-- Кнопка Add to Wishlist -->
+                        <button
+                            class="w-full border border-gray-300 p-1.5 rounded-sm
                    text-gray-800 font-medium shadow-sm
                    hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105 text-sm"
-            title="Add to Wishlist">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 class="h-3 w-3"
-                 fill="none"
-                 viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
-            </svg>
-        </button>
-    </div>
+                            title="Add to Wishlist">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-3 w-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+                            </svg>
+                        </button>
+                    </div>
 
-    <!-- Цена -->
-    <span class="font-semibold text-gray-900">{{ price($product->max_tier_price ?? $product->price) }}</span>
-</div>
+                    <!-- Цена -->
+                    <span class="font-semibold text-gray-900">{{ price($product->max_tier_price ?? $product->price) }}</span>
+                </div>
 
 
 
