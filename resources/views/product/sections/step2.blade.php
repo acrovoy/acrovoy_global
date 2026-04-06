@@ -1,6 +1,27 @@
 <div x-data="categorySelector({ initialCategory: {{ $product->category_id ?? 'null' }} })" x-init="init()">
 
-    <h3 class="text-xl font-semibold mb-4">Category</h3>
+    <h3 class="text-xl font-semibold mb-4">Category
+
+    <x-help-tooltip width="w-80">
+            <div class="space-y-2 leading-relaxed">
+                <div class="font-semibold text-white">Category & Basic Specifications</div>
+                <div class="text-gray-200 text-sm">
+                    Выберите категорию соответствующую товару и система автоматически подтянет
+                    стандартные характеристики (например, размеры, материал, цвет и т.д.).
+
+                </div>
+                <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
+
+                    <li>Вы сможете добавить дополнительные спецификации в разделе "Additional Specifications"</li>
+                    <li>Старайтесь не выбирать категории «Общее» . Если подходящего раздела нет, напишите на support@acrovoy.com</li>
+                </ul>
+                <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+                    Пример: <span class="text-gray-200">Двухместный диван для зоны ожидания» нужно добавить в «Furniture ➝ Indoor Furniture ➝ Sofas».</span>
+                </div>
+            </div>
+        </x-help-tooltip>
+
+    </h3>
 
     <!-- Levels -->
     <template x-for="(level, index) in levels" :key="index">
@@ -141,9 +162,24 @@ function categorySelector({ initialCategory = null } = {}) {
 
                 const div = document.createElement('div');
                 div.className = 'flex flex-col';
-                div.innerHTML = `<label class="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                    ${attr.name}${requiredStar}${unitBadge}
-                                </label>${fieldHtml}`;
+                div.innerHTML = `
+        <label class="text-sm font-medium text-gray-700 mb-1 flex items-center">
+            ${attr.name}
+            ${requiredStar}
+            
+            ${unitBadge}
+        </label>
+
+        ${fieldHtml}
+
+        ${
+            attr.is_required
+            ? `<span class="text-[11px] text-red-400 mt-1">
+                    This field is required for this category
+               </span>`
+            : ''
+        }
+    `;
                 container.appendChild(div);
             });
         }
