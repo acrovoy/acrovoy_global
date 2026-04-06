@@ -4,18 +4,20 @@ namespace App\Domain\Product\Actions;
 
 use App\Domain\Product\DTO\ProductDTO;
 
-use App\Domain\Product\Actions\SyncProductPriceTierAction ;
+use App\Domain\Product\Actions\SyncProductPriceTierAction;
 use App\Domain\Product\Actions\SyncProductMaterialAction;
 use App\Domain\Product\Actions\SyncProductSpecificationAction;
+use App\Domain\Product\Actions\SyncProductAttributeAction;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
 class UpdateProductAction
 {
     public function __construct(
-        
+
         private SyncProductPriceTierAction  $priceAction,
         private SyncProductMaterialAction $materialAction,
+        private SyncProductAttributeAction $attribute,
         private SyncProductSpecificationAction $specAction
     ) {}
 
@@ -31,7 +33,8 @@ class UpdateProductAction
         array $isMain = [],
         array $priceTiers = [],
         string $materialsSelected = '',
-        array $specifications = []
+        array $specifications = [],
+        array $attributes = []
     ): Product {
 
         return DB::transaction(function () use (
@@ -46,38 +49,41 @@ class UpdateProductAction
             $isMain,
             $priceTiers,
             $materialsSelected,
-            $specifications
+            $specifications,
+            $attributes,
         ) {
 
-           /* ============================
+            /* ============================
  * Product Identity
  * ============================ */
 
-// 🔹 Лог перед обновлением продукта
-logger()->info('==== Before Product Update ====', [
-    'product_id' => $product->id,
-    'product_exists_in_object' => $product->exists,
-    'product_in_db' => \App\Models\Product::where('id', $product->id)->exists(),
-]);
+            // 🔹 Лог перед обновлением продукта
+            logger()->info('==== Before Product Update ====', [
+                'product_id' => $product->id,
+                'product_exists_in_object' => $product->exists,
+                'product_in_db' => \App\Models\Product::where('id', $product->id)->exists(),
+            ]);
 
-$product->update([
-    'slug' => $data->slug,
-    'name' => $data->name,
-    'sku' => $data->sku,
-    'supplier_id' => $data->supplierId,
-    'category_id' => $data->categoryId,
-    'moq' => $data->moq,
-    'lead_time' => $data->leadTime,
-    'customization' => $data->customization,
-    'country_id' => $data->countryId,
-]);
+            $oldCategoryId = $product->category_id;
 
-// 🔹 Лог после обновления продукта
-logger()->info('==== After Product Update ====', [
-    'product_id' => $product->id,
-    'product_exists_in_object' => $product->exists,
-    'product_in_db' => \App\Models\Product::where('id', $product->id)->exists(),
-]);
+            $product->update([
+                'slug' => $data->slug,
+                'name' => $data->name,
+                'sku' => $data->sku,
+                'supplier_id' => $data->supplierId,
+                'category_id' => $data->categoryId,
+                'moq' => $data->moq,
+                'lead_time' => $data->leadTime,
+                'customization' => $data->customization,
+                'country_id' => $data->countryId,
+            ]);
+
+            // 🔹 Лог после обновления продукта
+            logger()->info('==== After Product Update ====', [
+                'product_id' => $product->id,
+                'product_exists_in_object' => $product->exists,
+                'product_in_db' => \App\Models\Product::where('id', $product->id)->exists(),
+            ]);
 
             /* ============================
              * Translations
@@ -87,36 +93,36 @@ logger()->info('==== After Product Update ====', [
  * Translations
  * ============================ */
 
-if (!empty($translations)) {
+            if (!empty($translations)) {
 
-    foreach ($translations as $locale => $payload) {
+                foreach ($translations as $locale => $payload) {
 
-                if (empty($payload['name'])) {
-                    continue;
-                }
+                    if (empty($payload['name'])) {
+                        continue;
+                    }
 
-                // 🔹 Логи для диагностики
-                logger()->info('==== Translation step ====', [
-                    'product_id' => $product->id,
-                    'product_exists_in_object' => $product->exists,
-                    'product_in_db' => Product::where('id', $product->id)->exists(),
-                ]);
-
-                $product->translations()->updateOrCreate(
-                    [
+                    // 🔹 Логи для диагностики
+                    logger()->info('==== Translation step ====', [
                         'product_id' => $product->id,
-                        'locale' => $locale
-                    ],
-                    [
-                        'name' => $payload['name'] ?? null,
-                        'undername' => $payload['undername'] ?? null,
-                        'description' => $payload['description'] ?? null
-                    ]
-                );
-            }
-        }
+                        'product_exists_in_object' => $product->exists,
+                        'product_in_db' => Product::where('id', $product->id)->exists(),
+                    ]);
 
-            
+                    $product->translations()->updateOrCreate(
+                        [
+                            'product_id' => $product->id,
+                            'locale' => $locale
+                        ],
+                        [
+                            'name' => $payload['name'] ?? null,
+                            'undername' => $payload['undername'] ?? null,
+                            'description' => $payload['description'] ?? null
+                        ]
+                    );
+                }
+            }
+
+
 
             /*
             |--------------------------------------------------------------------------
@@ -183,7 +189,7 @@ if (!empty($translations)) {
                 }
             }
 
-           
+
             /* ============================
              * Price Pipeline
              * ============================ */
@@ -213,6 +219,63 @@ if (!empty($translations)) {
                     $specifications
                 );
             }
+/* ============================
+ * Attribute Pipeline
+ * ============================ */
+if (!empty($attributes)) {
+
+    logger()->info('==== Attribute Pipeline Start ====', [
+        'product_id' => $product->id,
+        'current_category_id' => $oldCategoryId,
+        'new_category_id' => $data->categoryId,
+        'current_attributes' => $product->attributes()->with('options')->get()->map(fn($a) => [
+            'id' => $a->id,
+            'value' => $a->value,
+            'options' => $a->options->pluck('name'),
+        ]),
+        'incoming_attributes' => $attributes,
+    ]);
+
+    // Очистить старые значения атрибутов продукта, если категория поменялась
+if ($oldCategoryId !== $data->categoryId) {
+
+    // Берём все ProductAttributeValue для продукта
+    $oldValues = $product->attributeValues()->with('options', 'translations')->get();
+
+    foreach ($oldValues as $pav) {
+        // Удаляем связанные опции (для select/multiselect)
+        $pav->options()->delete();
+
+        // Удаляем переводы
+        $pav->translations()->delete();
+
+        // Удаляем саму привязку продукта к атрибуту
+        $pav->delete();
+    }
+
+    logger()->info('==== Old product attribute values deleted ====', [
+        'deleted_count' => count($oldValues),
+        'product_id' => $product->id,
+    ]);
+}
+
+    // Сохраняем новые атрибуты
+    $this->attribute->execute($product, $attributes);
+
+    // 🔹 Обновляем отношение, чтобы в логах были реальные данные из базы
+    $product->load('attributes.options');
+
+    // Лог после сохранения новых атрибутов
+    logger()->info('==== New attributes saved ====', [
+        'product_id' => $product->id,
+        'saved_attributes' => $product->attributes->map(fn($a) => [
+            'id' => $a->id,
+            'value' => $a->value,
+            'options' => $a->options->pluck('name'),
+        ]),
+    ]);
+}
+
 
             /* ============================
              * Shipping Templates

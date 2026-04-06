@@ -42,6 +42,7 @@ use App\Models\Color;
 use App\Models\ShippingTemplate;
 use App\Models\ProductVariantGroup;
 use App\Models\ProductVariantItem;
+use App\Models\Attribute;
 
 use App\Models\Country;
 use App\Models\Language;
@@ -84,10 +85,17 @@ class ProductController extends Controller
 
     public function create(ProductFormDataService $service)
     {
+
         $data = $service->getCreateFormData();
         $products = Product::with('translations') // Загружаем сразу переводы
             ->where('supplier_id', Auth::user()->supplier->id)
             ->get();
+
+
+       
+
+
+
 
         return view('dashboard.manufacturer.add-product', array_merge($data, [
             'products' => $products
@@ -304,7 +312,7 @@ class ProductController extends Controller
         );
     }
 
-    public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $action, ProductDTOFactory $dtoFactory)
+    public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $action, ProductDTOFactory $dtoFactory, SyncProductAttributeAction $attributeAction,)
     {
 
 
@@ -431,7 +439,10 @@ class ProductController extends Controller
             }
         }
 
-
+$attributes = $request->input('attributes', []); // Если атрибутов нет, массив пустой
+if ($attributes instanceof \Symfony\Component\HttpFoundation\ParameterBag) {
+    $attributes = $attributes->all();
+}
 
 
 
@@ -447,8 +458,11 @@ class ProductController extends Controller
             isMain: $request->is_main ?? [],
             priceTiers: $request->price_tiers ?? [],
             materialsSelected: $request->materials_selected ?? '',
-            specifications: $request->specs ?? []
+            specifications: $request->specs ?? [],
+            attributes:  $attributes,
         );
+
+        
 
         return redirect()
             ->route('manufacturer.products.index')

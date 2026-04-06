@@ -113,7 +113,38 @@
 
 {{-- ================= Short Description ================= --}}
 <div x-data="{ open: false }" class="border rounded p-4 mb-4 bg-white shadow-sm">
-    <h4 class="font-semibold mb-3">Short Description</h4>
+    <h4 class="font-semibold mb-3">Short Undername Description
+
+    <x-help-tooltip width="w-80">
+            <div class="space-y-2 leading-relaxed">
+
+                <div class="font-semibold text-white">
+                    Краткое описание товара
+                </div>
+
+                <div class="text-gray-200 text-sm">
+                    Используется как короткий подзаголовок товара рядом с названием
+                    в карточке товара и каталоге.
+                </div>
+
+                <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
+                    <li>укажите ключевое преимущество товара</li>
+                    <li>можно добавить материал или назначение</li>
+                    <li>должно быть коротко и понятно</li>
+                    <li>максимум: <span class="font-semibold text-white">60 символов</span></li>
+                </ul>
+
+                <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+                    Пример:
+                    <span class="text-gray-200">Металлический каркас, штабелируемый</span>
+                </div>
+
+            </div>
+        </x-help-tooltip>
+    </h4>
+
+
+    </h4>
 
     <div class="flex-col md:flex-row gap-2">
         @foreach($languages as $index => $language)
@@ -125,11 +156,31 @@
                 <div class="flex-1 flex items-center gap-2">
                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <input type="text"
-                           name="undername[{{ $language->code }}]"
-                           class="input mb-2 w-full"
-                           placeholder="Short Description ({{ $language->code }})"
-                           value="{{ old('undername.' . $language->code, $translations[$language->code]['undername'] ?? '') }}">
+                    <x-char-counter :max="60">
+
+                        <div x-data="charCounter(60)"
+                             class="relative w-full">
+
+                            <input type="text"
+                                   name="undername[{{ $language->code }}]"
+                                   maxlength="60"
+                                   class="input mb-2 w-full"
+                                   placeholder="Short Description ({{ $language->code }})"
+                                   value="{{ old('undername.' . $language->code, $translations[$language->code]['undername'] ?? '') }}"
+                                   @input="update($event.target)"
+                                   x-init="update($el)"
+                                   style="padding-right: 4rem;">
+
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs"
+                                 :class="color">
+
+                                <span x-text="count"></span>/<span x-text="max"></span>
+
+                            </div>
+
+                        </div>
+
+                    </x-char-counter>
 
                     
                 </div>
@@ -139,11 +190,31 @@
                      class="flex-1 flex items-center gap-2 mb-2">
                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <input type="text"
-                           name="undername[{{ $language->code }}]"
-                           class="input w-full"
-                           placeholder="Short Description ({{ $language->code }})"
-                           value="{{ old('undername.' . $language->code, $translations[$language->code]['undername'] ?? '') }}">
+                    <x-char-counter :max="60">
+
+                        <div x-data="charCounter(60)"
+                             class="relative w-full">
+
+                            <input type="text"
+                                   name="undername[{{ $language->code }}]"
+                                   maxlength="60"
+                                   class="input w-full"
+                                   placeholder="Short Description (optional)"
+                                   value="{{ old('undername.' . $language->code, $translations[$language->code]['undername'] ?? '') }}"
+                                   @input="update($event.target)"
+                                   x-init="update($el)"
+                                   style="padding-right: 4rem;">
+
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs"
+                                 :class="color">
+
+                                <span x-text="count"></span>/<span x-text="max"></span>
+
+                            </div>
+
+                        </div>
+
+                    </x-char-counter>
 
                     
                 </div>
@@ -152,9 +223,15 @@
     </div>
 
     @if(count($languages) > 1)
+    <div class="flex justify-between mt-1">
+
+        <div class="text-xs text-gray-500 italic">
+            * Optional, maximum 60 characters
+        </div>
+
         <button type="button"
                 @click="open = !open"
-                class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
+                class="mt-2 text-xs text-blue-600 hover:underline flex items-center gap-1">
             Other Languages
             <svg :class="{ 'rotate-180': open }"
                  class="w-4 h-4 transition-transform"
@@ -167,12 +244,55 @@
                       d="M19 9l-7 7-7-7" />
             </svg>
         </button>
+        </div>
     @endif
 </div>
 
+
+
 {{-- ================= Full Product Description ================= --}}
 <div x-data="{ open: false }" class="border rounded p-4 mb-4 bg-white shadow-sm">
-    <h4 class="font-semibold mb-3">Full Product Description</h4>
+    <h4 class="font-semibold mb-3">Full Product Description
+
+    <x-help-tooltip width="w-80">
+            <div class="space-y-2 leading-relaxed">
+
+                <div class="font-semibold text-white">
+                    Full Product Description
+                </div>
+
+                <div class="text-gray-200 text-sm">
+                    Provide a detailed description of the product.
+                    Explain materials, construction, usage, and key benefits.
+                </div>
+
+                <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
+                    <li>describe materials and build quality</li>
+                    <li>mention dimensions or compatibility if relevant</li>
+                    <li>explain where the product can be used</li>
+                    <li>highlight durability or commercial suitability</li>
+                    <li>avoid supplier codes or duplicated title text</li>
+                    <li>
+                        maximum length:
+                        <span class="font-semibold text-white">
+                            2000 characters
+                        </span>
+                    </li>
+                </ul>
+
+                <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+                    Example:
+                    <span class="text-gray-200">
+                        This commercial-grade dining chair features a reinforced steel frame,
+                        powder-coated finish, and ergonomic seat designed for intensive use
+                        in restaurants, cafés, and hospitality interiors.
+                    </span>
+                </div>
+
+            </div>
+        </x-help-tooltip>
+        
+    </h4>
 
     <div class="flex-col md:flex-row gap-2">
         @foreach($languages as $index => $language)
@@ -184,10 +304,33 @@
                 <div class="flex-1 flex items-center gap-2">
                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <textarea name="description[{{ $language->code }}]"
-                              class="input mb-2 w-full"
-                              rows="4"
-                              placeholder="Full Description ({{ $language->code }})">{{ old('description.' . $language->code, $translations[$language->code]['description'] ?? '') }}</textarea>
+                    <x-char-counter :max="2000">
+
+                        <div x-data="charCounter(2000)"
+                             class="relative w-full">
+
+                            <textarea
+                                name="description[{{ $language->code }}]"
+                                rows="5"
+                                maxlength="2000"
+                                class="input mb-2 w-full"
+                                placeholder="Full Description ({{ $language->code }})"
+                                @input="update($event.target)"
+                                x-init="update($el)"
+                                style="padding-right:4rem;"
+                            >{{ old('description.' . $language->code, $translations[$language->code]['description'] ?? '') }}</textarea>
+
+
+                            <div class="absolute bottom-2 right-3 text-xs pointer-events-none"
+                                 :class="color">
+
+                                <span x-text="count"></span>/<span x-text="max"></span>
+
+                            </div>
+
+                        </div>
+
+                    </x-char-counter>
 
                     
                 </div>
@@ -197,10 +340,33 @@
                      class="flex-1 flex items-center gap-2 mb-2">
                     <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <textarea name="description[{{ $language->code }}]"
-                              class="input w-full"
-                              rows="4"
-                              placeholder="Full Description ({{ $language->code }})">{{ old('description.' . $language->code, $translations[$language->code]['description'] ?? '') }}</textarea>
+                    <x-char-counter :max="2000">
+
+                        <div x-data="charCounter(2000)"
+                             class="relative w-full">
+
+                            <textarea
+                                name="description[{{ $language->code }}]"
+                                rows="5"
+                                maxlength="2000"
+                                class="input w-full"
+                                placeholder="Full Description (optional)"
+                                @input="update($event.target)"
+                                x-init="update($el)"
+                                style="padding-right:4rem;"
+                            >{{ old('description.' . $language->code, $translations[$language->code]['description'] ?? '') }}</textarea>
+
+
+                            <div class="absolute bottom-2 right-3 text-xs pointer-events-none"
+                                 :class="color">
+
+                                <span x-text="count"></span>/<span x-text="max"></span>
+
+                            </div>
+
+                        </div>
+
+                    </x-char-counter>
 
                     
                 </div>
@@ -209,9 +375,17 @@
     </div>
 
     @if(count($languages) > 1)
+
+    <div class="flex justify-between mt-1">
+
+        <div class="text-xs text-red-500 italic">
+            * English version required
+        </div>
+
+
         <button type="button"
                 @click="open = !open"
-                class="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1">
+                class="mt-2 text-xs text-blue-600 hover:underline flex items-center gap-1">
             Other Languages
             <svg :class="{ 'rotate-180': open }"
                  class="w-4 h-4 transition-transform"
@@ -224,35 +398,94 @@
                       d="M19 9l-7 7-7-7" />
             </svg>
         </button>
+        </div>
     @endif
 </div>
 
 
 {{-- SKU --}}
 <div class="border rounded p-4 mb-4 bg-white shadow-sm">
+
     <h4 class="font-semibold mb-3 flex items-center gap-2">
+
         SKU
+
         <x-help-tooltip width="w-80">
+
             <div class="space-y-2 leading-relaxed">
-                <div class="font-semibold text-white">SKU</div>
+
+                <div class="font-semibold text-white">
+                    SKU (Stock Keeping Unit)
+                </div>
+
                 <div class="text-gray-200 text-sm">
-                    Уникальный артикул товара, который будет использоваться для идентификации в системе и поиске.
+                    Unique product identifier used for inventory tracking,
+                    integrations, and internal product management.
                 </div>
+
                 <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
-                    <li>Используйте только буквы, цифры и дефисы</li>
-                    <li>Не используйте пробелы и специальные символы</li>
-                    <li>Каждый SKU должен быть уникальным</li>
+                    <li>use only letters, numbers, and hyphens</li>
+                    <li>do not use spaces or special characters</li>
+                    <li>each SKU must be unique</li>
+                    <li>maximum length: <span class="text-white font-semibold">64 characters</span></li>
                 </ul>
+
                 <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
-                    Пример: <span class="text-gray-200">BT-HEAD-001</span>
+                    Example:
+                    <span class="text-gray-200">
+                        CHR-OAK-75-BLK
+                    </span>
                 </div>
+
             </div>
+
         </x-help-tooltip>
+
     </h4>
 
-    <input type="text"
-        name="sku"
-        class="input w-full"
-        placeholder="Enter SKU"
-        value="{{ old('sku', $product->sku) }}">
+
+    <x-char-counter :max="64">
+
+        <div x-data="charCounter(64)"
+             class="relative w-full">
+
+            <input
+                type="text"
+                name="sku"
+                maxlength="64"
+                required
+                class="input w-full"
+                placeholder="Enter SKU"
+                value="{{ old('sku', $product->sku) }}"
+                @input="update($event.target)"
+                x-init="update($el)"
+                style="padding-right: 4rem;"
+            >
+
+
+            <div
+                class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-xs"
+                :class="color">
+
+                <span x-text="count"></span>/<span x-text="max"></span>
+
+            </div>
+
+        </div>
+
+    </x-char-counter>
+
+
+    <div class="flex justify-between">
+
+        <div class="text-xs text-red-500 italic mt-1">
+            * Required and must be unique
+        </div>
+
+        <div class="text-xs text-gray-500 mt-1">
+            Used for inventory tracking and integrations
+        </div>
+
+    </div>
+
 </div>

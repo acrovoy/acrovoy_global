@@ -20,11 +20,23 @@
         Selected category: <span class="font-medium" x-text="breadcrumb.join(' → ')"></span>
     </div>
 
+    <!-- Attributes Block -->
+    <div x-show="selectedCategory !== null" x-transition class="mt-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Category Attributes</h3>
+
+            <div id="category-attributes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+            <div id="category-attributes-empty" class="hidden text-sm text-gray-400 italic">
+                No specifications available for this category
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
 function categorySelector({ initialCategory = null } = {}) {
-    
     return {
         levels: [],
         selectedCategory: null,
@@ -34,65 +46,106 @@ function categorySelector({ initialCategory = null } = {}) {
         async init() {
             const res = await fetch('/dashboard/category-selector/root');
             const data = await res.json();
+            this.levels = [{ items: data, selected: null }];
 
-            this.levels = [{ items: data }]; // <-- исправлено
-
-            // Если есть выбранная категория (редактирование)
             if (this.initialCategory) {
                 await this.loadPath(this.initialCategory);
             }
         },
 
         async selectCategory(categoryId, levelIndex) {
-            this.selectedCategory = null;
-            
-            this.breadcrumb = this.breadcrumb.slice(0, levelIndex);
-            this.levels = this.levels.slice(0, levelIndex + 1);
-
             const level = this.levels[levelIndex];
-            level.selected = categoryId; 
+            level.selected = categoryId;
+
+            // Обновляем breadcrumb
             const selectedItem = level.items.find(i => i.id == categoryId);
+            if (selectedItem) this.breadcrumb[levelIndex] = selectedItem.name;
 
-            if (selectedItem) {
-                this.breadcrumb[levelIndex] = selectedItem.name;
-            }
+            // Убираем уровни ниже текущего
+            this.levels = this.levels.slice(0, levelIndex + 1);
+            this.breadcrumb = this.breadcrumb.slice(0, levelIndex + 1);
 
+            // Подгружаем дочерние категории
             const res = await fetch(`/dashboard/category-selector/children/${categoryId}`);
             const children = await res.json();
 
             if (children.length > 0) {
-                this.levels.push({ items: children, selected: categoryId });
-            } else {
-                this.selectedCategory = categoryId;
-                this.loadAttributes(categoryId);
+                this.levels.push({ items: children, selected: null });
             }
+
+            // Всегда сохраняем выбранную категорию и подгружаем атрибуты
+            this.selectedCategory = categoryId;
+            await this.loadAttributes(categoryId);
         },
 
         async loadPath(categoryId) {
-            // Получаем путь от корня до выбранной категории
             const res = await fetch(`/dashboard/category-selector/path/${categoryId}`);
             const path = await res.json();
-            
-            this.breadcrumb = path.map(p => p.name);
 
+            // Проходим по каждому уровню пути и создаем select
             for (let i = 0; i < path.length; i++) {
-                await this.selectCategory(path[i].id, i)
-                // const levelItems = path[i].children.map(c => ({
-                //     id: c.id,
-                //     name: c.name,
-                //     has_children: c.children_count > 0
-                // }));
-                // this.levels.push({ items: levelItems });
+                const node = path[i];
+                // Если уровень уже существует, используем его
+                if (!this.levels[i]) {
+                    this.levels.push({ items: [], selected: null });
+                }
+
+                // Загружаем детей для уровня
+                const resChildren = await fetch(`/dashboard/category-selector/children/${node.id}`);
+                const children = await resChildren.json();
+
+                this.levels[i].items = [node]; // текущий node
+                this.levels[i].selected = node.id;
+
+                if (children.length > 0 && this.levels[i + 1] === undefined) {
+                    this.levels[i + 1] = { items: children, selected: null };
+                }
+
+                // Обновляем breadcrumb
+                this.breadcrumb[i] = node.name;
             }
 
-
-            // this.selectedCategory = categoryId;
-            // this.loadAttributes(categoryId);
+            // Подгружаем атрибуты для конечной категории
+            this.selectedCategory = categoryId;
+            await this.loadAttributes(categoryId);
         },
 
         async loadAttributes(categoryId) {
             console.log('Load attributes for category:', categoryId);
-            // Можно тут подгружать характеристики для категории
+            // Здесь fetch для атрибутов и их заполнение
+            const res = await fetch(`/dashboard/category-selector/attributes/${categoryId}`);
+            const attributes = await res.json();
+
+            const container = document.getElementById('category-attributes');
+            const emptyBlock = document.getElementById('category-attributes-empty');
+
+            container.innerHTML = '';
+            if (!attributes.length) {
+                emptyBlock.classList.remove('hidden');
+                return;
+            }
+            emptyBlock.classList.add('hidden');
+
+            attributes.forEach(attr => {
+                const requiredStar = attr.is_required ? `<span class="text-red-500 ml-1">*</span>` : '';
+                const requiredAttr = attr.is_required ? 'required' : '';
+                const unitBadge = attr.unit ? `<span class="ml-2 text-[10px] text-red-400">(${attr.unit})</span>` : '';
+
+                let fieldHtml = `<input type="text" name="attributes[${attr.id}]" class="input w-full" ${requiredAttr}>`;
+                if (attr.type === 'number') {
+                    fieldHtml = `<input type="number" name="attributes[${attr.id}]" class="input w-full" ${requiredAttr}>`;
+                } else if (attr.type === 'select' && attr.options) {
+                    const optionsHtml = attr.options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+                    fieldHtml = `<select name="attributes[${attr.id}]" class="input w-full" ${requiredAttr}><option value="">Select...</option>${optionsHtml}</select>`;
+                }
+
+                const div = document.createElement('div');
+                div.className = 'flex flex-col';
+                div.innerHTML = `<label class="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                    ${attr.name}${requiredStar}${unitBadge}
+                                </label>${fieldHtml}`;
+                container.appendChild(div);
+            });
         }
     }
 }
