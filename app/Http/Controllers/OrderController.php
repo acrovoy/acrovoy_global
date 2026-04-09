@@ -60,9 +60,17 @@ class OrderController extends Controller
 
     // Собираем все шаблоны доставки товаров
     $allShippingTemplates = $cartItems
-        ->flatMap(fn($item) => $item->product->shippingTemplates)
-        ->unique('id')
-        ->values();
+    ->flatMap(function ($item) {
+        return $item->product->shippingTemplates->map(function ($template) use ($item) {
+            // Добавляем вычисленную цену доставки
+            $template->computed_price = $item->product->computeShippingPrice($template);
+            return $template;
+        });
+    })
+    ->unique('id')
+    ->values();
+
+        
 
     // Получаем все адресные шаблоны пользователя (по убыванию даты)
     $savedAddresses = $user->addresses()->orderByDesc('updated_at')->get();
@@ -199,7 +207,15 @@ if ($request->boolean('save_as_new')) {
 
     // Получаем доставку
     $shippingTemplate = \App\Models\ShippingTemplate::find($request->delivery_template_id);
-    $shippingPrice = $shippingTemplate?->price ?? 0;
+    $shippingPrice = 0;
+
+    if ($shippingTemplate) {
+        // считаем для каждого товара и суммируем
+        foreach ($cartItems as $item) {
+            $shippingPrice += $item->product->computeShippingPrice($shippingTemplate) * $item->quantity;
+        }
+    }
+
     $providerType = null;
     $providerId   = null;
 
@@ -259,6 +275,13 @@ if ($shippingTemplate?->logistic_company_id) {
 
         // 4️⃣ Добавляем позиции заказа
         foreach ($cartItems as $item) {
+
+         $product = $item->product;
+    $dimensions = $product->shippingDimensions;
+
+    $shippingPrice = $product->computeShippingPrice($shippingTemplate);
+
+
             $orderItem = OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $item->product_id,
@@ -285,14 +308,15 @@ if ($shippingTemplate?->logistic_company_id) {
         'destination_contact_name' => $formAddress['first_name'] . ' ' . $formAddress['last_name'],
         'destination_contact_phone' => $formAddress['phone'],
 
-        // админ заполнит позже
-        'weight'         => null,
-        'length'         => null,
-        'width'          => null,
-        'height'         => null,
+        
+        'weight' => $dimensions?->weight,
+        'length' => $dimensions?->length,
+        'width'  => $dimensions?->width,
+        'height' => $dimensions?->height,
 
-        'shipping_price' => 0,
-        'delivery_time'  => null,
+        'shipping_price' => $item->product->computeShippingPrice($shippingTemplate),
+        'price_unit'     => $shippingTemplate?->price_unit,
+        'delivery_time'  => $shippingTemplate->delivery_time,
         'status'         => 'pending',
     ]);
 

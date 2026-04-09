@@ -25,10 +25,10 @@ class ProductViewQueryService
             'attributeValues.attribute',
             'attributeValues.translations',
             'attributeValues.options.option', // чтобы подтянуть саму Option и её переводы
-    
+
         ])
-        ->where('slug', $slug)
-        ->firstOrFail();
+            ->where('slug', $slug)
+            ->firstOrFail();
 
         $projects = collect();
 
@@ -41,30 +41,38 @@ class ProductViewQueryService
 
         $gallery = [];
 
-            foreach ($product1->thumbnails as $media) {
+        foreach ($product1->thumbnails as $media) {
 
-                $src = $media['large'];
-                $thumb = $media['thumb'] ?? $src;
+            $src = $media['large'];
+            $thumb = $media['thumb'] ?? $src;
 
-                $ext = strtolower(pathinfo($src, PATHINFO_EXTENSION));
+            $ext = strtolower(pathinfo($src, PATHINFO_EXTENSION));
 
-                if (in_array($ext, ['jpg','jpeg','png','gif','webp','avif'])) {
-                    $type = 'image';
-                } elseif (in_array($ext, ['mp4','webm','ogg','mov'])) {
-                    $type = 'video';
-                } elseif ($ext === 'pdf') {
-                    $type = 'pdf';
-                } else {
-                    $type = 'file';
-                }
-
-                $gallery[] = [
-                    'type' => $type,
-                    'src' => $src,
-                    'thumb' => $thumb,
-                ];
+            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'])) {
+                $type = 'image';
+            } elseif (in_array($ext, ['mp4', 'webm', 'ogg', 'mov'])) {
+                $type = 'video';
+            } elseif ($ext === 'pdf') {
+                $type = 'pdf';
+            } else {
+                $type = 'file';
             }
 
-        return compact('product1', 'projects', 'gallery');
+            $gallery[] = [
+                'type' => $type,
+                'src' => $src,
+                'thumb' => $thumb,
+            ];
+        }
+
+
+        $shippingTemplates = $product1->shippingTemplates->map(function ($template) use ($product1) {
+    $template->computed_price = $product1->computeShippingPrice($template);
+    return $template;
+});
+
+
+
+        return compact('product1', 'projects', 'gallery', 'shippingTemplates');
     }
 }

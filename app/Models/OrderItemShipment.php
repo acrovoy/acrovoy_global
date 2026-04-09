@@ -19,6 +19,7 @@ class OrderItemShipment extends Model
         'width',
         'height',
         'shipping_price',
+        'price_unit',
         'delivery_time',
         'status',
         'tracking_number',
@@ -139,6 +140,17 @@ public function destinationCountry()
     {
         return $this->hasMany(OrderItemShipmentStatusHistory::class, 'shipment_id', 'id')
                     ->orderBy('created_at', 'asc'); // чтобы в хронологическом порядке
+    }
+
+    public function getPriceUnitLabelAttribute()
+    {
+        return match($this->price_unit) {
+            'per_item' => 'per item',
+            'per_kg' => 'per kg',
+            'per_cubic_meter' => 'per m³',
+            'flat' => 'flat rate',
+            default => '',
+        };
     }
     
 }

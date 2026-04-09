@@ -207,64 +207,71 @@ $cents = round(($total - $dollars) * 100);
         x-data="{ selectedShipping: {{ $shippingOptions->first()->id ?? 0 }} }"
         class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5"
     >
-        @foreach($shippingOptions as $template)
-        <label
-            class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition flex flex-col gap-2"
-            :class="{
-                'bg-gray-50 border-gray-300 shadow-md':
-                selectedShipping == {{ $template->id }}
-            }"
-            @click="
-                selectedShipping = {{ $template->id }};
-                $refs.radio{{ $template->id }}.checked = true;
-                recalcTotal();
-            "
-        >
-            <input
-                type="radio"
-                name="delivery_template_id"
-                value="{{ $template->id }}"
-                x-ref="radio{{ $template->id }}"
-                class="hidden"
-                data-price="{{ $template->price ?? 0 }}"
-                {{ $loop->first ? 'checked' : '' }}
-            >
 
-            <h4 class="font-semibold text-gray-900">
-                {{ $template->title }}
-            </h4>
+    
+       @foreach($shippingOptions as $template)
+@php
+            $totalShippingPrice = 0;
+            foreach($cartItems as $item) {
+                $pricePerItem = $item->product->computeShippingPrice($template);
+                $totalShippingPrice += $pricePerItem * $item->quantity;
+            }
+        @endphp
+       
+<label
+    class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition flex flex-col gap-2"
+    :class="{
+        'bg-gray-50 border-gray-300 shadow-md': selectedShipping == {{ $template->id }}
+    }"
+    @click="
+        selectedShipping = {{ $template->id }};
+        $refs.radio{{ $template->id }}.checked = true;
+        recalcTotal();
+    "
+>
+    <input
+        type="radio"
+        name="delivery_template_id"
+        value="{{ $template->id }}"
+        x-ref="radio{{ $template->id }}"
+        class="hidden"
+        data-price="{{ $totalShippingPrice }}"
+        {{ $loop->first ? 'checked' : '' }}
+    >
 
-            @if($template->description)
-            <p class="text-gray-700 text-sm mt-1">
-                {{ $template->description }}
-            </p>
-            @endif
+    <h4 class="font-semibold text-gray-900">{{ $template->title }}</h4>
 
-            <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
-                @if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
-                <div class="col-span-2 inline-flex items-center gap-2
-                    bg-blue-50 border border-blue-100
-                    px-3 py-1.5 rounded-lg text-blue-500 font-medium text-xs">
-                    Delivery cost and delivery time will be calculated after order placement
-                </div>
-                @else
-                {{-- PRICE --}}
-                <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
-                    <span class="text-sm text-blue-900 font-medium">Price:</span>
-                    <span class="text-base font-semibold text-blue-900">
-                        ${{ number_format($template->price, 2) }}
-                    </span>
-                </div>
+    @if($template->description)
+    <p class="text-gray-700 text-sm mt-1">{{ $template->description }}</p>
+    @endif
 
-                {{-- DELIVERY TIME --}}
-                <div>
-                    <div class="font-medium">Delivery Time:</div>
-                    <div>{{ $template->delivery_time }} days</div>
-                </div>
-                @endif
-            </div>
-        </label>
-        @endforeach
+    <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
+        
+
+        @if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
+        <div class="col-span-2 inline-flex items-center gap-2
+            bg-blue-50 border border-blue-100
+            px-3 py-1.5 rounded-lg text-blue-500 font-medium text-xs">
+            Delivery cost and delivery time will be calculated after order placement
+        </div>
+        @else
+        {{-- PRICE --}}
+        <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
+            <span class="text-sm text-blue-900 font-medium">Price:</span>
+            <span class="text-base font-semibold text-blue-900">
+                ${{ number_format($totalShippingPrice, 2) }}
+            </span>
+        </div>
+
+        {{-- DELIVERY TIME --}}
+        <div>
+            <div class="font-medium">Delivery Time:</div>
+            <div>{{ $template->delivery_time }} days</div>
+        </div>
+        @endif
+    </div>
+</label>
+@endforeach
     </div>
 </div>
 

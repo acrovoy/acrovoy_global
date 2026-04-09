@@ -22,7 +22,7 @@
             <div class="flex items-center gap-3">
                 {{-- Картинка товара --}}
                 <img
-                    src="{{ $item['image'] ? asset('storage/' . $item['image']) : asset('images/no-photo.png') }}"
+                    src="{{ $item['image'] }}"
                     alt="{{ $item['product'] }}"
                     class="w-12 h-12 rounded object-contain bg-gray-50 border"
                 />

@@ -289,4 +289,30 @@ public function shippingDimensions()
     return $this->hasOne(ProductShippingDimensions::class);
 }
 
+public function computeShippingPrice(ShippingTemplate $template): float
+{
+    $finalPrice = $template->price;
+
+    if ($this->shippingDimensions) {
+        $dimensions = $this->shippingDimensions;
+
+        switch ($template->price_unit) {
+            case 'per_kg':
+                $finalPrice = $template->price * $dimensions->weight;
+                break;
+
+            case 'per_cubic_meter':
+                $volume = ($dimensions->length / 100) * ($dimensions->width / 100) * ($dimensions->height / 100);
+                $finalPrice = $template->price * $volume;
+                break;
+
+            case 'per_item':
+            default:
+                $finalPrice = $template->price;
+        }
+    }
+
+    return round($finalPrice, 2);
+}
+
 }

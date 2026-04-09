@@ -15,7 +15,7 @@
             @forelse($order_items as $item)
     @forelse($item->shipments as $shipment)
         @php
-            $totalShipping += $shipment->shipping_price ?? 0;
+            $totalShipping += ($shipment->shipping_price ?? 0) * ($item->quantity ?? 1);
         @endphp
 
         <div class="py-6 border-b border-gray-200 last:border-0">
@@ -73,7 +73,7 @@
                     {{-- Product block --}}
                     <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
                         <div class="text-sm font-medium text-gray-900">
-                            {{ $item->product_name ?? 'Product unavailable' }}
+                            {{ $item->product_name ?? 'Product name unavailable' }}
                         </div>
                         <div class="mt-1 text-xs text-gray-500 uppercase tracking-wide">
                             Quantity:
@@ -120,7 +120,7 @@
                                 Shipping Price
                             </div>
                             <div class="text-sm font-semibold text-gray-900">
-                                {{ number_format($shipment->shipping_price, 2) }} $
+                                {{ number_format($shipment->shipping_price, 2) * $item->quantity }}$ <span class="text-[10px] text-gray-300">({{ number_format($shipment->shipping_price, 2)}}$ per unit)</span>
                             </div>
                         </div>
 

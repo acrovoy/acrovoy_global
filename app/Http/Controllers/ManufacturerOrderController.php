@@ -204,9 +204,7 @@ class ManufacturerOrderController extends Controller
                                         ?? $order->rfqOffer?->rfq?->title
                                         ?? 'RFQ item',
                     'product_object' => $item->product,
-                    'image'          => $item->product && $item->product->mainImage
-                                        ? $item->product->mainImage->image_path
-                                        : null, // <-- здесь добавляем ключ 'image'
+                    'image' => $item->thumbnail_url,
                     'qty'            => $item->quantity,
                     'price'          => $item->price,
                     'total'          => $item->quantity * $item->price,
