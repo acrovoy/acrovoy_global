@@ -32,7 +32,7 @@
 
     </div>
 
-    {{-- SPECIFICATIONS --}}
+    
     <div class="form-step hidden" data-step="4">
 
         @include('dashboard.manufacturer.sections.step4')

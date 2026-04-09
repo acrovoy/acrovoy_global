@@ -88,7 +88,7 @@ function categorySelector({ initialCategory = null } = {}) {
 
             // Подгружаем дочерние категории
             const res = await fetch(`/dashboard/category-selector/children/${categoryId}`);
-            const children = await res.json();
+            const children = await res.json();            
 
             if (children.length > 0) {
                 this.levels.push({ items: children, selected: null });
@@ -114,8 +114,9 @@ function categorySelector({ initialCategory = null } = {}) {
                 // Загружаем детей для уровня
                 const resChildren = await fetch(`/dashboard/category-selector/children/${node.id}`);
                 const children = await resChildren.json();
+    
 
-                this.levels[i].items = [node]; // текущий node
+                // this.levels[i].items = children; // текущий node
                 this.levels[i].selected = node.id;
 
                 if (children.length > 0 && this.levels[i + 1] === undefined) {

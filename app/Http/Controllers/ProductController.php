@@ -292,6 +292,24 @@ class ProductController extends Controller
             }
 
 
+            // 🔹 Сохраняем Shipping Dimensions (габариты и вес упаковки)
+$shippingData = $request->input('shipping', []);
+
+if (!empty($shippingData)) {
+    $product->shippingDimensions()->updateOrCreate(
+        [], // Laravel автоматически подставит product_id
+        [
+            'length' => $shippingData['length'] ?? 0,
+            'width'  => $shippingData['width'] ?? 0,
+            'height' => $shippingData['height'] ?? 0,
+            'weight' => $shippingData['weight'] ?? 0,
+            'package_type' => $shippingData['package_type'] ?? 'box',
+        ]
+    );
+}
+
+
+
         });
 
         return redirect()->route('manufacturer.products.index')
@@ -302,7 +320,7 @@ class ProductController extends Controller
     public function edit(Product $product, ProductEditQueryService $service)
     {
 
-        $products = Product::with('translations') // Загружаем сразу переводы
+        $products = Product::with('translations', 'shippingDimensions') // Загружаем сразу переводы
             ->where('supplier_id', Auth::user()->supplier->id)
             ->get();
 
@@ -438,6 +456,25 @@ class ProductController extends Controller
                 }
             }
         }
+
+
+        // 🔹 Сохраняем/обновляем Shipping Dimensions (габариты и вес упаковки)
+$shippingData = $request->input('shipping', []);
+
+if (!empty($shippingData)) {
+    $product->shippingDimensions()->updateOrCreate(
+        [], // Laravel автоматически подставит product_id
+        [
+            'length'       => $shippingData['length'] ?? 0,
+            'width'        => $shippingData['width'] ?? 0,
+            'height'       => $shippingData['height'] ?? 0,
+            'weight'       => $shippingData['weight'] ?? 0,
+            'package_type' => $shippingData['package_type'] ?? 'box',
+        ]
+    );
+}
+
+
 
 $attributes = $request->input('attributes', []); // Если атрибутов нет, массив пустой
 if ($attributes instanceof \Symfony\Component\HttpFoundation\ParameterBag) {

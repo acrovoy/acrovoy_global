@@ -11,12 +11,11 @@
     {{-- List --}}
     <div class="border-t border-gray-200 pt-4">
         @foreach($order->items as $item)
+     
             <div class="py-1 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <img
-                        src="{{ $item->product && $item->product->mainImage
-                            ? asset('storage/' . $item->product->mainImage->image_path)
-                            : asset('images/no-photo.png') }}"
+                        src="{{ $item->thumbnail_url }}"
                         class="w-12 h-12 rounded object-contain bg-gray-50 border"
                     >
                     <div>

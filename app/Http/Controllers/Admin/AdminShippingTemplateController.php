@@ -76,6 +76,7 @@ class AdminShippingTemplateController extends Controller
         'title' => 'required|array',
         'description' => 'nullable|array',
         'price' => 'required|numeric|min:0',
+        'price_unit' => 'required|string|in:per_item,per_kg,per_cubic_meter,flat',
         'delivery_time' => 'nullable|string|max:255',
         'locations' => 'nullable|array',
         'locations.*' => 'exists:locations,id',
@@ -89,6 +90,7 @@ class AdminShippingTemplateController extends Controller
             'manufacturer_id' => null,
             'logistic_company_id' => 1,
             'price' => $data['price'],
+            'price_unit' => $data['price_unit'],
             'delivery_time' => $data['delivery_time'] ?? null,
         ]);
 
@@ -177,6 +179,7 @@ $logistic_company = LogisticCompany::where('user_id', auth()->id())->first();
         'title' => 'required|array',
         'description' => 'nullable|array',
         'price' => 'required|numeric|min:0',
+        'price_unit' => 'required|string|in:per_item,per_kg,per_cubic_meter,flat',
         'delivery_time' => 'nullable|string|max:255',
         'locations' => 'nullable|array',
         'locations.*' => 'exists:locations,id',
@@ -187,6 +190,7 @@ $logistic_company = LogisticCompany::where('user_id', auth()->id())->first();
         // 1️⃣ Обновляем базовые поля шаблона
         $shippingTemplate->update([
             'price' => $data['price'],
+            'price_unit' => $data['price_unit'],
             'delivery_time' => $data['delivery_time'] ?? null,
         ]);
 

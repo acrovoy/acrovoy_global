@@ -31,5 +31,13 @@ public function shipment()
     return $this->morphOne(OrderItemShipment::class, 'shippable');
 }
 
+public function getThumbnailUrlAttribute(): ?string
+{
+    $media = $this->product->images->sortBy('sort_order')->firstWhere('is_main', 1)
+             ?? $this->product->images->sortBy('sort_order')->first();
+
+    return $media?->url('thumb'); // <-- вариант thumb
+}
+
 
 }

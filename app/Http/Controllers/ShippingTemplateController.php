@@ -80,6 +80,7 @@ class ShippingTemplateController extends Controller
         'delivery_time' => 'nullable|string|max:255',
         'locations' => 'nullable|array',
         'locations.*' => 'exists:locations,id',
+        'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
     ]);
 
     DB::transaction(function () use ($data) {
@@ -89,6 +90,7 @@ class ShippingTemplateController extends Controller
         $template = ShippingTemplate::create([
             'manufacturer_id' => $supplier->id,
             'price' => $data['price'],
+            'price_unit' => $data['price_unit'],
             'delivery_time' => $data['delivery_time'] ?? null,
         ]);
 
@@ -181,6 +183,8 @@ if ($shippingTemplate->manufacturer_id !== $supplier->id) {
         'delivery_time' => 'nullable|string|max:255',
         'locations' => 'nullable|array',
         'locations.*' => 'exists:locations,id',
+        'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
+        
     ]);
 
     DB::transaction(function () use ($shippingTemplate, $data) {
@@ -188,6 +192,7 @@ if ($shippingTemplate->manufacturer_id !== $supplier->id) {
         // 1️⃣ Обновляем базовые поля шаблона
         $shippingTemplate->update([
             'price' => $data['price'],
+            'price_unit' => $data['price_unit'],
             'delivery_time' => $data['delivery_time'] ?? null,
         ]);
 

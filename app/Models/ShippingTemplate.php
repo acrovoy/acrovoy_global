@@ -18,6 +18,7 @@ class ShippingTemplate extends Model
         'title',
         'description',
         'price',
+        'price_unit',
         'delivery_time',
     ];
 
@@ -57,6 +58,16 @@ public function getDescriptionAttribute()
 public function products()
 {
     return $this->belongsToMany(Product::class, 'product_shipping_template');
+}
+
+public function getPriceUnitLabelAttribute()
+{
+    return match($this->price_unit) {
+        'per_item' => 'per item',
+        'per_kg' => 'per kg',
+        'per_cubic_meter' => 'per m³',
+        'flat' => 'flat rate',
+    };
 }
 
 }

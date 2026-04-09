@@ -127,6 +127,31 @@ $selectedLocations = $shippingTemplate
             </p>
         </div>
 
+        {{-- PRICE UNIT --}}
+<div class="mb-4">
+    <label class="block mb-1 font-medium text-gray-700">Price Unit</label>
+    <select name="price_unit" class="input">
+        @php
+            $units = [
+                'per_item' => 'Per Item',
+                'per_kg' => 'Per Kilogram',
+                'per_cubic_meter' => 'Per Cubic Meter',
+                'flat' => 'Flat Rate',
+            ];
+            $selectedUnit = old('price_unit', $shippingTemplate->price_unit ?? 'per_item');
+        @endphp
+
+        @foreach($units as $key => $label)
+            <option value="{{ $key }}" {{ $selectedUnit === $key ? 'selected' : '' }}>
+                {{ $label }}
+            </option>
+        @endforeach
+    </select>
+    <p class="text-sm text-gray-500 mt-1">
+        Choose how the price should be applied.
+    </p>
+</div>
+
         {{-- DELIVERY TIME --}}
         <div class="mb-4">
             <label class="block mb-1 font-medium text-gray-700">Delivery Time</label>

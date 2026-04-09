@@ -17,58 +17,106 @@
 </div>
 
 @if($cartItems->isEmpty())
-    <div class="text-gray-500 text-center py-10">
-        Your cart is empty
+    <div class="flex flex-col items-center justify-center text-center py-20">
+
+        {{-- Icon --}}
+        <div class="w-20 h-20 flex items-center justify-center rounded-full bg-gray-100 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="w-10 h-10 text-gray-400"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 6h14m-9-6v6m4-6v6"/>
+            </svg>
+        </div>
+
+        {{-- Title --}}
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">
+            Your cart is empty
+        </h2>
+
+        {{-- Subtitle --}}
+        <p class="text-gray-500 max-w-md mb-6">
+            Looks like you haven’t added any products yet.
+            Start exploring our catalog to find something you like.
+        </p>
+
+        {{-- Button --}}
+        <a href="{{ route('catalog.index') }}"
+           class="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+            Browse Products
+        </a>
+
     </div>
 @else
     <div class="space-y-4">
         @foreach($cartItems as $item)
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col md:flex-row justify-between items-start md:items-center hover:shadow-md transition">
 
-                {{-- Left: Image + Name --}}
+                {{-- Left --}}
                 <div class="flex items-start md:items-center gap-4 flex-1">
+                    <div>
+                        {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}.
+                    </div>
+
                     <div class="w-20 h-20 flex-shrink-0 rounded overflow-hidden bg-gray-100">
                         <img src="{{ $item->image_url }}"
-                             alt="{{ $item->product?->translated_name ?? 'Product unavailable' }}"
+                             alt="{{ $item->product?->name }}"
                              class="w-full h-full object-cover">
                     </div>
 
                     <div>
                         <p class="font-semibold text-gray-900">
-                            {{ $item->product?->translated_name ?? 'Product unavailable' }}
+                            {{ $item->product?->name }}
                         </p>
+
                         <p class="text-sm text-gray-500">
-                            Price: ${{ number_format($item->price, 2) }}
+                            Price:
+                            <span class="item-price">
+                                ${{ number_format($item->price, 2) }}
+                            </span>
                         </p>
                     </div>
                 </div>
 
-                {{-- Right: Quantity & Total --}}
+                {{-- Right --}}
                 <div class="flex items-center gap-4 mt-4 md:mt-0">
 
-                    {{-- Quantity control --}}
+                    {{-- Quantity --}}
                     <form action="{{ route('buyer.cart.update', $item->id) }}"
-                          method="POST"
-                          class="flex items-center gap-2 bg-gray-50 border rounded-lg px-2 py-1">
-                        @csrf
-                        @method('PATCH')
+      method="POST"
+      class="cart-update-form flex items-center gap-2 bg-gray-50 border rounded-lg px-2 py-1">
 
-                        <button name="action" value="decrease" class="px-2 py-1 text-gray-700 hover:bg-gray-100 rounded">
-                            −
-                        </button>
+    @csrf
+    @method('PATCH')
 
-                        <span class="min-w-[32px] text-center font-semibold">
-                            {{ $item->quantity }}
-                        </span>
+    <button type="submit"
+            name="action"
+            value="decrease"
+            class="px-2 py-1 text-gray-700 hover:bg-gray-100 rounded">
+        −
+    </button>
 
-                        <button name="action" value="increase" class="px-2 py-1 text-gray-700 hover:bg-gray-100 rounded">
-                            +
-                        </button>
-                    </form>
+    <span class="min-w-[32px] text-center font-semibold quantity-value">
+        {{ $item->quantity }}
+    </span>
 
-                    {{-- Item total + remove --}}
+    <button type="submit"
+            name="action"
+            value="increase"
+            class="px-2 py-1 text-gray-700 hover:bg-gray-100 rounded">
+        +
+    </button>
+
+</form>
+
+                    {{-- Item total --}}
                     <div class="text-right flex flex-col items-end gap-1 min-w-[90px]">
-                        <p class="font-semibold text-gray-900">
+
+                        <p class="font-semibold text-gray-900 item-total">
                             ${{ number_format($item->price * $item->quantity, 2) }}
                         </p>
 
@@ -80,23 +128,143 @@
                                 Remove
                             </button>
                         </form>
+
                     </div>
 
                 </div>
+
             </div>
         @endforeach
     </div>
 
-    {{-- Cart Total --}}
+    {{-- Cart total --}}
     <div class="flex flex-col md:flex-row justify-between items-center mt-6 border-t border-gray-200 pt-4 gap-4">
-        <span class="text-lg font-semibold text-gray-900">Total</span>
-        <span class="text-lg font-bold text-gray-900">${{ number_format($total, 2) }}</span>
 
-        {{-- Checkout --}}
+        <span class="text-lg font-semibold text-gray-900">
+            Total
+        </span>
+
+        <span id="cart-total"
+              class="text-lg font-bold text-gray-900">
+            ${{ number_format($total, 2) }}
+        </span>
+
         <a href="{{ route('buyer.orders.checkout') }}"
            class="px-6 py-3 bg-[#1877f2] text-white rounded-lg font-semibold hover:bg-blue-700 transition">
             Checkout
         </a>
+
     </div>
 @endif
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const forms = document.querySelectorAll('form[action*="cart/update"]');
+
+    forms.forEach(function(form) {
+
+        form.addEventListener('submit', async function(e) {
+
+            e.preventDefault();
+
+            const button = e.submitter;
+
+            if (!button) return;
+
+            const action = button.value;
+
+            try {
+
+                const response = await fetch(form.getAttribute('action'), {
+
+                    method: 'POST',
+
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+
+                    body: new URLSearchParams({
+                        _method: 'PATCH',
+                        action: action
+                    })
+
+                });
+
+
+                if (!response.ok) {
+
+                    console.error('Server error', response.status);
+
+                    return;
+
+                }
+
+
+                const data = await response.json();
+
+
+                if (!data.quantity) {
+
+                    console.error('Invalid JSON', data);
+
+                    return;
+
+                }
+
+
+                form.querySelector('.quantity-value').textContent = data.quantity;
+
+
+                form.closest('.bg-white')
+                    .querySelector('.item-total')
+                    .textContent = '$' + data.itemTotal;
+
+                const itemPrice = form.closest('.bg-white').querySelector('.item-price');
+
+                if (itemPrice) {
+                    // если цена изменилась
+                    if (itemPrice.textContent !== '$' + data.price) {
+                        itemPrice.textContent = '$' + data.price;
+
+                        // добавляем класс для подсветки
+                        itemPrice.classList.add('price-flash');
+
+                        // убираем класс через 0.5 секунды
+                        setTimeout(() => {
+                            itemPrice.classList.remove('price-flash');
+                        }, 500);
+                    }
+                }
+
+
+                document.querySelector('#cart-total')
+                    .textContent = '$' + data.cartTotal;
+
+
+            } catch(error) {
+
+                console.error('Fetch failed:', error);
+
+            }
+
+        });
+
+    });
+
+});
+
+</script>
+
+<style>
+.price-flash {
+    color: #ff0000 !important;  /* ярко-красный */
+    font-weight: 700;            /* жирный */
+    transition: color 0.5s ease;
+}
+</style>
+
 @endsection

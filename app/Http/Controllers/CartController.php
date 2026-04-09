@@ -64,34 +64,68 @@ class CartController extends Controller
 
     public function update(Request $request, CartItem $cartItem)
 {
+    abort_if($cartItem->user_id !== auth()->id(), 403);
+
     $action = $request->input('action');
 
-    // Изменяем количество
+    /** меняем количество */
+
     if ($action === 'increase') {
-        $cartItem->quantity += 1;
-    } elseif ($action === 'decrease' && $cartItem->quantity > 1) {
-        $cartItem->quantity -= 1;
+        $cartItem->quantity++;
     }
 
-    // Подбираем цену по новой количественной ступени
-    $priceTier = $cartItem->product->priceTiers()
-                       ->where('min_qty', '<=', $cartItem->quantity)
-                       ->where(function($q) use ($cartItem) {
-                           $q->where('max_qty', '>=', $cartItem->quantity)
-                             ->orWhereNull('max_qty');
-                       })
-                       ->orderBy('min_qty', 'asc')
-                       ->first();
+    if ($action === 'decrease' && $cartItem->quantity > 1) {
+        $cartItem->quantity--;
+    }
 
-    // Если цена для ступени не найдена, берём ближайшую доступную
-    $cartItem->price = $priceTier->price
-                        ?? $cartItem->product->priceTiers()->whereNotNull('price')->max('price')
-                        ?? $cartItem->product->price
-                        ?? 0;
+
+    /** ищем цену по диапазону */
+
+    $priceTier = PriceTier::where('product_id', $cartItem->product_id)
+        ->where('min_qty', '<=', $cartItem->quantity)
+        ->where(function ($q) use ($cartItem) {
+
+            $q->where('max_qty', '>=', $cartItem->quantity)
+              ->orWhereNull('max_qty');
+
+        })
+        ->orderByDesc('min_qty') // ← ключевой момент
+        ->first();
+
+
+    /** применяем цену */
+
+    if ($priceTier) {
+
+        $cartItem->price = $priceTier->price;
+
+    }
+
 
     $cartItem->save();
 
-    return redirect()->back()->with('success', 'Cart updated successfully');
+
+    /** считаем суммы */
+
+    $itemTotal = $cartItem->price * $cartItem->quantity;
+
+
+    $cartTotal = CartItem::where('user_id', auth()->id())
+        ->get()
+        ->sum(fn ($item) => $item->price * $item->quantity);
+
+
+    return response()->json([
+
+        'quantity' => $cartItem->quantity,
+
+        'price' => number_format($cartItem->price, 2),
+
+        'itemTotal' => number_format($itemTotal, 2),
+
+        'cartTotal' => number_format($cartTotal, 2),
+
+    ]);
 }
 
 

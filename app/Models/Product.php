@@ -284,4 +284,9 @@ public function attributes()
     );
 }
 
+public function shippingDimensions()
+{
+    return $this->hasOne(ProductShippingDimensions::class);
+}
+
 }

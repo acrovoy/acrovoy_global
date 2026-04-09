@@ -37,6 +37,12 @@ class UpdateProductRequest extends FormRequest
 
             'materials' => ['array'],
             'images.*' => 'image|mimes:jpeg,png,webp|max:5120',
+ 
+            'shipping.length' => ['nullable', 'numeric', 'min:0'],
+            'shipping.width' => ['nullable', 'numeric', 'min:0'],
+            'shipping.height' => ['nullable', 'numeric', 'min:0'],
+            'shipping.weight' => ['nullable', 'numeric', 'min:0'],
+            'shipping.package_type' => ['nullable', 'string', 'max:50'],
         ];
     }
 
@@ -47,5 +53,26 @@ class UpdateProductRequest extends FormRequest
             'price_tiers.required' => 'Add at least one price tier',
             'price_tiers.*.price.required' => 'Price is required',
         ];
+    }
+
+
+    protected function prepareForValidation()
+    {
+        if ($this->shipping) {
+
+            $shipping = $this->shipping;
+
+            foreach (['length','width','height','weight'] as $field) {
+
+                if (isset($shipping[$field])) {
+                    // заменяем запятую на точку для правильного сохранения
+                    $shipping[$field] = str_replace(',', '.', $shipping[$field]);
+                }
+            }
+
+            $this->merge([
+                'shipping' => $shipping
+            ]);
+        }
     }
 }

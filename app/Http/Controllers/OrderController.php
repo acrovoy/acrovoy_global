@@ -322,7 +322,7 @@ public function show(Order $order)
     }
 
     $order->load([
-        'items.product',
+        'items.product.images',
         'items.shipments',
         'statusHistory',
         'user.addresses',

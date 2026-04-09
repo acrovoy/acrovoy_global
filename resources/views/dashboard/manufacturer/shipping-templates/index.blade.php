@@ -40,7 +40,9 @@
                 @forelse($templates as $template)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-5 py-3 font-medium text-gray-900">{{ $template->title }}</td>
-                        <td class="px-5 py-3 text-gray-700">${{ number_format($template->price, 2) }}</td>
+                        <td class="px-5 py-3 text-gray-700">
+                            ${{ number_format($template->price, 2) }}{{ $template->price_unit_label ? ' / ' . $template->price_unit_label : '' }}
+                        </td>
                         <td class="px-5 py-3 text-gray-700">{{ $template->delivery_time }}</td>
                         <td class="px-5 py-3">
                             <div class="flex flex-wrap gap-1">
