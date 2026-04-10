@@ -76,6 +76,16 @@
             @if(auth()->user()->role === 'manufacturer')
             <ul class="space-y-2">
 
+
+
+            <li>
+                    <a href="{{ route('manufacturer.home') }}"
+                        class="block px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
+                        Home
+                    </a>
+                </li>
+
+
                 <li>
                     <a href="{{ route('supplier.rfqs.index') }}"
                         class="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
@@ -147,6 +157,15 @@
             {{-- Buyer Menu --}}
             <ul class="space-y-2">
 
+
+            <li>
+                    <a href="{{ route('buyer.home') }}"
+                        class="block px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
+                        Home
+                    </a>
+                </li>
+
+
                 <li>
                     <a href="{{ route('buyer.rfqs.index') }}"
                         class="flex items-center justify-between px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
@@ -171,6 +190,13 @@
                     <a href="{{ route('buyer.cart.index') }}"
                         class="block px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
                         Cart
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ route('buyer.wishlist.index') }}"
+                        class="block px-4 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition font-medium">
+                        Wishlist
                     </a>
                 </li>
 

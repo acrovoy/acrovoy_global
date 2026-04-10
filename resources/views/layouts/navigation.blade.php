@@ -497,19 +497,17 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
 
                             <x-slot name="content">
                                 <div class="bg-[#F7F3EA]">
-                                    <x-dropdown-link href="{{ 
-    auth()->user()->role === 'manufacturer'
-        ? route('manufacturer.home')
-        : route('buyer.home')
+                                    <x-dropdown-link href="{{
+    auth()->user()->role === 'admin'
+        ? route('admin.home')
+        : (auth()->user()->role === 'manufacturer'
+            ? route('manufacturer.home')
+            : route('buyer.home'))
 }}">
     {{ __('layouts/navigation.dashboard') }}
 </x-dropdown-link>
 
-                                    @if(Auth::user()->role === 'admin')
-                                        <x-dropdown-link href="{{ route('admin.home') }}">
-                                            {{ __('layouts/navigation.admin_dashboard') }}
-                                        </x-dropdown-link>
-                                    @endif
+                                   
 
                                     <x-dropdown-link href="{{ route('profile.edit') }}">{{ __('layouts/navigation.profile') }}</x-dropdown-link>
 

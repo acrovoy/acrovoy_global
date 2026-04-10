@@ -524,11 +524,8 @@ Route::get('/faq', function () {
 Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group(function () {
 
     Route::get('/', function () {
-        return view('dashboard.admin.layout', [
-            'title' => 'Admin Dashboard',
-            'content' => 'Добро пожаловать в админку! Здесь можно управлять контентом и модерацией товаров.'
-        ]);
-    })->name('home');
+    return view('dashboard.admin.home');
+})->name('home');
 
     Route::get('orders/{order}/shipments', [AdminOrdersController::class, 'shipments'])->name('orders.shipments');
     Route::put('orders/{order}/shipments/{orderItemShipment}', [AdminOrdersController::class, 'updateShipment'])
