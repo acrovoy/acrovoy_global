@@ -14,7 +14,7 @@ class ProductListQueryService
                 'category',
                 'images',
                 'priceTiers',
-                'images',
+                
             ])
             ->where('supplier_id', $supplierId);
 
@@ -34,6 +34,6 @@ class ProductListQueryService
             default => $query->orderBy('created_at', 'desc'),
         };
 
-        return $query->get();
+        return $query->paginate(10)->withQueryString();
     }
 }

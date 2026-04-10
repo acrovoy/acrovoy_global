@@ -421,11 +421,17 @@
 
                 {{-- CTA Panel --}}
                 <div class="mt-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
-                    <button
-                        class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
-                               text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
-                        {{ __('product/product_show.checkout') }}
-                    </button>
+                    
+                    <form method="POST" action="{{ route('buyer.cart.add.redirect', $product1->id) }}">
+    @csrf
+
+    <button
+        type="submit"
+        class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
+               text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
+        {{ __('product/product_show.checkout') }}
+    </button>
+</form>
 
                     <div class="grid grid-cols-2 gap-4">
                         <button id="contactSupplierBtn"

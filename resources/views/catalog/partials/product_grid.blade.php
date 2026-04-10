@@ -143,22 +143,27 @@
                 <div class="flex justify-between items-center gap-2 mt-auto">
                     <div class="flex justify-between items-center gap-2">
                         <!-- Кнопка Add to Cart -->
-                        <button
-                            class="w-full border border-gray-300 p-1.5 rounded-sm
-                   text-gray-800 font-medium shadow-sm
-                   hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105 text-sm"
-                            title="Add to Cart">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                class="h-3 w-3"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13L17 13M7 13H5.4" />
-                            </svg>
-                        </button>
+                        <form method="POST" action="{{ route('buyer.cart.add', $product->id) }}">
+                            @csrf
+                            <button
+                                type="submit"
+                                class="w-full border border-gray-300 p-1.5 rounded-sm
+                                    text-gray-800 font-medium shadow-sm
+                                    hover:border-black hover:text-black hover:shadow-md
+                                    transition-all transform hover:scale-105 text-sm"
+                                title="Add to Cart">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-3 w-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13L17 13M7 13H5.4" />
+                                </svg>
+                            </button>
+                        </form>
 
                         <!-- Кнопка Add to Wishlist -->
                         <button

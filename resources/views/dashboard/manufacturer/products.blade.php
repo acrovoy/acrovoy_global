@@ -23,6 +23,10 @@
     {{-- Product Table --}}
     @include('dashboard.manufacturer.partials.product-list-table')
 
+    <div class="mt-6">
+    {{ $products->links() }}
+</div>
+
 </div>
 @endsection
 

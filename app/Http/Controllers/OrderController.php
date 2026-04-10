@@ -92,6 +92,9 @@ if ($lastAddress && $lastAddress->country) {
         ->get();
 }
 
+
+
+
     return view('dashboard.buyer.orders.checkout', [
         'cartItems'        => $cartItems,
         'total'            => $total,

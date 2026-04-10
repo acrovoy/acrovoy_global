@@ -3,7 +3,7 @@
     <table class="w-full text-sm border-collapse">
         <thead class="bg-gray-50 border-b">
             <tr>
-                <th class="px-4 py-2 text-left font-medium">#</th>
+                
                 <th class="px-4 py-2 text-left font-medium">Product</th>
                 <th class="px-4 py-2 text-left font-medium">Category</th>
                 <th class="px-4 py-2 text-left font-medium">Price</th>
@@ -22,7 +22,7 @@
             @endphp
 
                 <tr class="hover:bg-gray-50 transition">
-                    <td class="px-4 py-2 font-mono text-gray-800">{{ $product->id }}</td>
+                   
 
                     <td class="px-4 py-2 flex items-center gap-2">
                         @if(isset($product->images) && count($product->images) > 0)

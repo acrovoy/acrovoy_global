@@ -128,7 +128,7 @@ $cents = round(($total - $dollars) * 100);
 <h2 class="text-2xl font-bold">Checkout</h2>
 <a href="{{ route('buyer.cart.index') }}"
            class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-            ← Back to cart
+            ← Сart
         </a>
 
         </div>
@@ -167,9 +167,11 @@ $cents = round(($total - $dollars) * 100);
 
         <div>
 
-            <p class="font-medium text-gray-900">
-                {{ $item->product?->name }}
-            </p>
+            <a href="{{ route('product.show', $item->product?->slug) }}"
+   target="_blank"
+   class="font-semibold text-gray-900 hover:text-gray-700 transition-colors">
+    {{ $item->product?->name }}
+</a>
 
             <p class="text-sm text-gray-500 mt-1">
                 {{ number_format($item->price, 2) }} $ per unit

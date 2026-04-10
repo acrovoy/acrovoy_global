@@ -23,6 +23,8 @@ class CartController extends Controller
 
     public function add(Request $request, Product $product)
     {
+
+    
         $user = auth()->user();
 
         /** 1. MOQ продукта */
@@ -130,6 +132,7 @@ class CartController extends Controller
 
 
 
+
     public function remove(CartItem $cartItem)
     {
         abort_if($cartItem->user_id !== auth()->id(), 403);
@@ -138,4 +141,46 @@ class CartController extends Controller
 
         return back();
     }
+
+    public function addAndRedirect(Request $request, Product $product)
+{
+    
+     $user = auth()->user();
+
+        /** 1. MOQ продукта */
+        $moq = $product->moq; // например поле moq в products
+
+        /** 2. Ищем подходящий ценовой диапазон */
+        $priceTier = PriceTier::where('product_id', $product->id)
+            ->where('min_qty', '<=', $moq)
+            ->where(function ($q) use ($moq) {
+                $q->where('max_qty', '>=', $moq)
+                  ->orWhereNull('max_qty');
+            })
+            ->orderBy('min_qty')
+            ->first();
+
+        if (! $priceTier) {
+            return back()->withErrors('Price not found for MOQ');
+        }
+
+        /** 3. Если товар уже есть в корзине — не дублируем */
+        $cartItem = CartItem::where('user_id', $user->id)
+            ->where('product_id', $product->id)
+            ->first();
+
+        if ($cartItem) {
+            return back()->with('info', 'Product already in cart');
+        }
+
+        /** 4. Записываем в корзину */
+        CartItem::create([
+            'user_id'    => $user->id,
+            'product_id' => $product->id,
+            'quantity'   => $moq,
+            'price'      => $priceTier->price,
+        ]);
+
+    return redirect()->route('buyer.cart.index');
+}
 }

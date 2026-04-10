@@ -396,9 +396,12 @@ Route::post(
 Route::middleware(['auth', 'role:buyer'])->prefix('buyer/cart')->name('buyer.cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
     Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
+    Route::post('/add-and-redirect/{product}', [CartController::class, 'addAndRedirect'])->name('add.redirect');
     Route::patch('/update/{cartItem}', [CartController::class, 'update'])->name('update');
     Route::delete('/remove/{cartItem}', [CartController::class, 'remove'])->name('remove');
 });
+
+
 
 Route::middleware(['auth', 'role:buyer'])->prefix('buyer/orders')->name('buyer.orders.')->group(function () {
     Route::get('/', [OrderController::class, 'index'])->name('index'); // Список заказов

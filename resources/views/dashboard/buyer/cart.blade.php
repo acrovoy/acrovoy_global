@@ -69,9 +69,11 @@
                     </div>
 
                     <div>
-                        <p class="font-semibold text-gray-900">
-                            {{ $item->product?->name }}
-                        </p>
+                        <a href="{{ route('product.show', $item->product?->slug) }}"
+   target="_blank"
+   class="font-semibold text-gray-900 hover:text-gray-700 transition-colors">
+    {{ $item->product?->name }}
+</a>
 
                         <p class="text-sm text-gray-500">
                             Price:
@@ -88,7 +90,8 @@
                     {{-- Quantity --}}
                     <form action="{{ route('buyer.cart.update', $item->id) }}"
       method="POST"
-      class="cart-update-form flex items-center gap-2 bg-gray-50 border rounded-lg px-2 py-1">
+      class="cart-update-form flex items-center gap-2 bg-gray-50 border rounded-lg px-2 py-1"
+      data-moq="{{ $item->product->moq ?? 1 }}">
 
     @csrf
     @method('PATCH')
@@ -160,21 +163,47 @@
 
 <script>
 
+function getMoq(form) {
+    return parseInt(form.dataset.moq || 1);
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 
     const forms = document.querySelectorAll('form[action*="cart/update"]');
 
     forms.forEach(function(form) {
 
+        const quantityEl = form.querySelector('.quantity-value');
+        const minusBtn = form.querySelector('button[value="decrease"]');
+        const moq = getMoq(form);
+
+        function updateState() {
+
+            const qty = parseInt(quantityEl.textContent);
+
+            minusBtn.disabled = qty <= moq;
+            minusBtn.classList.toggle('opacity-40', qty <= moq);
+            minusBtn.classList.toggle('cursor-not-allowed', qty <= moq);
+
+        }
+
+        updateState();
+
         form.addEventListener('submit', async function(e) {
 
             e.preventDefault();
 
             const button = e.submitter;
-
             if (!button) return;
 
             const action = button.value;
+
+            const currentQty = parseInt(quantityEl.textContent);
+
+            // 🔥 MOQ защита (оставляем серверную тоже)
+            if (action === 'decrease' && currentQty <= moq) {
+                return;
+            }
 
             try {
 
@@ -216,34 +245,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
 
-                form.querySelector('.quantity-value').textContent = data.quantity;
+                // 🔥 обновляем quantity (span)
+                quantityEl.textContent = data.quantity;
 
 
                 form.closest('.bg-white')
                     .querySelector('.item-total')
                     .textContent = '$' + data.itemTotal;
 
+
                 const itemPrice = form.closest('.bg-white').querySelector('.item-price');
 
                 if (itemPrice) {
-                    // если цена изменилась
+
                     if (itemPrice.textContent !== '$' + data.price) {
+
                         itemPrice.textContent = '$' + data.price;
 
-                        // добавляем класс для подсветки
                         itemPrice.classList.add('price-flash');
 
-                        // убираем класс через 0.5 секунды
                         setTimeout(() => {
                             itemPrice.classList.remove('price-flash');
                         }, 500);
+
                     }
+
                 }
 
 
                 document.querySelector('#cart-total')
                     .textContent = '$' + data.cartTotal;
 
+
+                // 🔥 обновляем состояние MOQ после ответа
+                updateState();
 
             } catch(error) {
 
