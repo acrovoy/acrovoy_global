@@ -11,6 +11,7 @@
     $rating = number_format((float)$product->reviews_avg_rating ?? 0, 1, '.', '');
     $reviewsProductsCount = $product->reviews_count ?? 0;
     $soldCount = $product->sold_count ?? 0;
+    $inWishlist = in_array($product->id, $wishlistIds ?? []);
     @endphp
 
     <div class="relative group sm:h-[420px]">
@@ -166,22 +167,34 @@
                         </form>
 
                         <!-- Кнопка Add to Wishlist -->
-                        <button
-                            class="w-full border border-gray-300 p-1.5 rounded-sm
-                   text-gray-800 font-medium shadow-sm
-                   hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105 text-sm"
-                            title="Add to Wishlist">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                class="h-3 w-3"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
-                            </svg>
-                        </button>
+                       <button
+    class="wishlist-toggle w-full border border-gray-300 p-1.5 rounded-sm
+           text-gray-800 font-medium shadow-sm
+           hover:border-black hover:text-black hover:shadow-md
+           transition-all transform hover:scale-105 text-sm"
+
+    data-product-id="{{ $product->id }}"
+
+    title="Add to Wishlist">
+
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-3 w-3 wishlist-icon {{ $inWishlist ? 'text-red-500' : '' }}"
+         fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
+         viewBox="0 0 24 24"
+         stroke="currentColor">
+
+        <path stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
+                 l1.318-1.318a4.5 4.5 0
+                 116.364 6.364L12 21.682
+                 l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+    </svg>
+
+</button>
+
+
                     </div>
 
                     <!-- Цена -->
@@ -208,3 +221,118 @@
     </div>
     @endif
 </div>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.wishlist-toggle').forEach(button => {
+
+        button.addEventListener('click', async function () {
+
+            const productId = this.dataset.productId;
+
+            try {
+
+                const response = await fetch(
+                    `/buyer/wishlist/toggle/${productId}`,
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'X-CSRF-TOKEN':
+                            document.querySelector(
+                                'meta[name="csrf-token"]'
+                            ).content,
+
+                            'Accept': 'application/json'
+                        }
+                    }
+                );
+
+                const data = await response.json();
+
+
+                if (!data.status) return;
+
+
+                const icon = this.querySelector('.wishlist-icon');
+
+
+                if (data.status === 'added') {
+
+    icon.setAttribute('fill', 'currentColor');
+    icon.classList.add('text-red-500');
+
+} else {
+
+    icon.setAttribute('fill', 'none');
+    icon.classList.remove('text-red-500');
+}
+
+
+
+                // обновляем badge
+                updateWishlistBadge();
+
+            }
+
+            catch (error) {
+
+                console.error(error);
+
+            }
+
+        });
+
+    });
+
+});
+
+</script>
+<script>
+
+async function updateWishlistBadge() {
+
+    try {
+
+        const response =
+            await fetch('/buyer/wishlist/count');
+
+        const data =
+            await response.json();
+
+
+        const badge =
+            document.querySelector('#wishlist-count');
+
+
+        if (!badge) return;
+
+
+        if (data.count > 0) {
+
+            badge.textContent =
+                data.count;
+
+            badge.classList.remove('hidden');
+
+        }
+
+        else {
+
+            badge.classList.add('hidden');
+
+        }
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+    }
+
+}
+
+</script>

@@ -11,6 +11,10 @@ class ProductViewQueryService
     public function getProductViewData(string $slug): array
     {
         $user = Auth::user();
+        
+    $wishlistIds = auth()->user()
+    ? auth()->user()->wishlist()->pluck('product_id')->toArray()
+    : [];
 
         // Загружаем продукт с необходимыми связями, включая варианты
         $product1 = Product::with([
@@ -73,6 +77,6 @@ class ProductViewQueryService
 
 
 
-        return compact('product1', 'projects', 'gallery', 'shippingTemplates');
+        return compact('product1', 'projects', 'gallery', 'shippingTemplates', 'wishlistIds');
     }
 }

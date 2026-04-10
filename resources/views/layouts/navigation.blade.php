@@ -384,7 +384,59 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
     </a>
 @endif
 
- <!-- Cart Dropdown -->@auth
+
+
+ <!-- Wishlist  Dropdown -->
+  @auth
+@if(auth()->user()->role === 'buyer')
+
+<a href="{{ route('buyer.wishlist.index') }}"
+   class="relative mr-6 text-gray-700 hover:text-black">
+
+    {{-- Heart Icon --}}
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-6 w-6"
+         fill="none"
+         viewBox="0 0 24 24"
+         stroke="currentColor">
+
+        <path stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4.318 6.318a4.5 4.5 0 016.364 0L12
+                 7.636l1.318-1.318a4.5 4.5 0
+                 116.364 6.364L12 21.364 4.318
+                 12.682a4.5 4.5 0 010-6.364z"/>
+    </svg>
+
+
+    {{-- Badge --}}
+    @php
+        $wishlistCount = \App\Models\Wishlist::where(
+            'user_id',
+            auth()->id()
+        )->count();
+    @endphp
+
+
+    @if($wishlistCount > 0)
+        <span id="wishlist-count"
+      class="absolute -top-2 -right-2 bg-red-600 text-white
+                             text-xs rounded-full px-2 py-0.5">
+
+            {{ $wishlistCount }}
+
+        </span>
+    @endif
+
+</a>
+
+@endif
+@endauth
+
+
+ <!-- Cart Dropdown -->
+  @auth
     @if(auth()->user()->role === 'buyer')
         <a href="{{ route('buyer.cart.index') }}"
            class="relative mr-6 text-gray-700 hover:text-black">
@@ -717,4 +769,68 @@ if (auth()->check() && auth()->user()->role === 'buyer') {
         @endguest
 
     </div>
+
+    <script>
+
+document.querySelectorAll('.wishlist-toggle')
+.forEach(button => {
+
+    button.addEventListener('click', async () => {
+
+        const productId = button.dataset.id;
+
+        const response = await fetch(
+
+            `/buyer/wishlist/toggle/${productId}`,
+
+            {
+                method: 'POST',
+
+                headers: {
+
+                    'X-CSRF-TOKEN':
+                    document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+
+                    'Accept': 'application/json'
+                }
+
+            }
+        );
+
+        const data = await response.json();
+
+
+        /** обновляем navbar badge */
+
+        const badge = document.getElementById('wishlist-count');
+
+        if (badge) {
+
+            badge.textContent = data.count;
+
+            if (data.count == 0)
+                badge.style.display = 'none';
+
+            else
+                badge.style.display = 'inline-block';
+
+        }
+
+
+        /** меняем цвет сердечка */
+
+        if (data.status === 'added')
+            button.classList.add('text-red-500');
+
+        else
+            button.classList.remove('text-red-500');
+
+    });
+
+});
+
+</script>
 </nav>
+

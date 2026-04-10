@@ -20,6 +20,10 @@ class CatalogController extends Controller
 {
     $locale = app()->getLocale();
 
+    $wishlistIds = auth()->user()
+    ? auth()->user()->wishlist()->pluck('products.id')->toArray()
+    : [];
+
     // Mega Menu (верхний каталог)
     $catalogCategories = Category::with('children')
         ->whereNull('parent_id')
@@ -183,7 +187,8 @@ foreach ($filterableAttributes as $attribute) {
         'materials',
         'countries',
         'filterableAttributes',
-        'textAndNumberValues'
+        'textAndNumberValues',
+        'wishlistIds'
     ));
 }
 

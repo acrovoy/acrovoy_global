@@ -35,6 +35,15 @@
                 </div>
             </div>
 
+
+             @php
+                        $reviewsCount = $product1->reviews->count();
+                        $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
+                        $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
+                        $inWishlist = in_array($product1->id, $wishlistIds);
+                        @endphp
+
+
             {{-- Info --}}
             <div class="rounded-xl shadow p-6" x-data="{ showProjectBox: false }">
 
@@ -44,10 +53,37 @@
                     <div class="flex-1">
 
                         {{-- Title --}}
-                        <div class="flex items-center flex-wrap gap-3">
-                            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">
-                                {{ $product1->name }}
-                            </h1>
+                        <div class="flex items-center gap-3">
+                           <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight inline-flex items-center gap-2">
+    
+    {{ $product1->name }}
+
+    {{-- Wishlist --}}
+    <button
+        class="wishlist-toggle text-gray-400 hover:text-red-500 transition"
+        data-product-id="{{ $product1->id }}"
+        title="Wishlist">
+
+        <svg xmlns="http://www.w3.org/2000/svg"
+     class="w-6 h-6 wishlist-icon transition {{ $inWishlist ? 'text-red-500' : 'text-gray-500' }}"
+     viewBox="0 0 24 24"
+     fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
+     stroke="currentColor"
+     stroke-width="2">
+
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
+                     l1.318-1.318a4.5 4.5 0 016.364 6.364
+                     L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z"/>
+        </svg>
+
+    </button>
+
+</h1>
+
+
+                   
 
 
                         </div>
@@ -57,11 +93,7 @@
                         </p>
 
                         {{-- ⭐ Rating --}}
-                        @php
-                        $reviewsCount = $product1->reviews->count();
-                        $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
-                        $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
-                        @endphp
+                       
 
                         <div class="flex flex-wrap items-center text-gray-600 text-xs mb-4 gap-y-1">
 
@@ -748,6 +780,108 @@
     window.productGallery = @json($gallery);
 </script>
 
+<script>
+
+document.addEventListener('click', async function (e) {
+
+    const btn = e.target.closest('.wishlist-toggle');
+    if (!btn) return;
+
+    const productId = btn.dataset.productId;
+
+    try {
+
+        const response = await fetch(`/buyer/wishlist/toggle/${productId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        const icon = btn.querySelector('.wishlist-icon');
+
+        if (data.status === 'added') {
+
+    icon.classList.add('text-red-500');
+    icon.classList.remove('text-gray-500');
+
+    icon.setAttribute('fill', 'currentColor');
+
+} else {
+
+    icon.classList.add('text-gray-500');
+    icon.classList.remove('text-red-500');
+
+    icon.setAttribute('fill', 'none');
+}
+
+        updateWishlistBadge();
+
+    } catch (error) {
+        console.error(error);
+    }
+
+});
+
+</script>
+
+<script>
+
+async function updateWishlistBadge() {
+
+    try {
+
+        const response = await fetch('/buyer/wishlist/count');
+        const data = await response.json();
+
+        const badge = document.querySelector('#wishlist-count');
+
+        if (!badge) return;
+
+        if (data.count > 0) {
+
+            badge.textContent = data.count;
+            badge.classList.remove('hidden');
+
+        } else {
+
+            badge.classList.add('hidden');
+        }
+
+    } catch (error) {
+        console.error(error);
+    }
+
+}
+
+/**
+ * 🔥 ВАЖНО: инициализация состояния при загрузке страницы
+ * (вот чего тебе не хватало — из-за этого после refresh не подсвечивалось)
+ */
+document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.wishlist-toggle').forEach(btn => {
+
+        const icon = btn.querySelector('.wishlist-icon');
+
+        const isActive =
+            icon.classList.contains('text-red-500');
+
+        // если уже активен — оставляем красным
+        if (isActive) {
+            icon.classList.add('text-red-500');
+            icon.classList.remove('text-gray-400');
+        }
+
+    });
+
+    updateWishlistBadge();
+});
+
+</script>
 {{-- MediaViewer компонент --}}
 <x-media-viewer id="productViewer" :images="$gallery"></x-media-viewer>
 

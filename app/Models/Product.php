@@ -315,4 +315,12 @@ public function computeShippingPrice(ShippingTemplate $template): float
     return round($finalPrice, 2);
 }
 
+public function wishlistedBy()
+{
+    return $this->belongsToMany(
+        User::class,
+        'wishlists'
+    )->withTimestamps();
+}
+
 }

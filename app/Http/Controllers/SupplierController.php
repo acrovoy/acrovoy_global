@@ -309,6 +309,10 @@ class SupplierController extends Controller
 
         $supplierRating = round($supplier->supplierReviews->avg('rating'), 1);
         $count = $supplier->supplierReviews->count();
+
+         $wishlistIds = auth()->user()
+    ? auth()->user()->wishlist()->pluck('products.id')->toArray()
+    : [];
         
 
         return view('supplier.show', compact(
@@ -326,7 +330,8 @@ class SupplierController extends Controller
             'tabs',
             'activeTab',
             'supplierRating',
-            'count'
+            'count',
+            'wishlistIds'
         ));
     }
 }

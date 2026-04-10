@@ -133,4 +133,12 @@ public function avatar()
         ->first();
 }
 
+public function wishlist()
+{
+    return $this->belongsToMany(
+        \App\Models\Product::class,
+        'wishlists'
+    )->withTimestamps();
+}
+
 }

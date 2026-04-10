@@ -30,6 +30,7 @@ use App\Http\Controllers\OrderDisputeController;
 use App\Http\Controllers\SupplierReviewController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\CategorySelectorController;
+use App\Http\Controllers\WishlistController;
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
 
@@ -399,6 +400,13 @@ Route::middleware(['auth', 'role:buyer'])->prefix('buyer/cart')->name('buyer.car
     Route::post('/add-and-redirect/{product}', [CartController::class, 'addAndRedirect'])->name('add.redirect');
     Route::patch('/update/{cartItem}', [CartController::class, 'update'])->name('update');
     Route::delete('/remove/{cartItem}', [CartController::class, 'remove'])->name('remove');
+});
+
+Route::middleware(['auth','role:buyer'])->prefix('buyer/wishlist')->name('buyer.wishlist.')->group(function () {
+        Route::get('/', [WishlistController::class,'index'])->name('index');
+        Route::post('/toggle/{product}', [WishlistController::class,'toggle'])->name('toggle');
+        Route::get('/count', [WishlistController::class, 'count'])->name('count');
+
 });
 
 
