@@ -17,6 +17,8 @@ use App\Domain\Media\Services\MediaService;
 use App\Domain\Media\DTO\UploadMediaDTO;
 use App\Domain\Media\Jobs\DeleteMediaJob;
 
+use App\Services\Company\ActiveContextService;
+
 class ManufacturerController extends Controller
 {
 
@@ -24,16 +26,15 @@ class ManufacturerController extends Controller
     /**
  * Show company profile (read-only page)
  */
-public function showCompanyProfile()
+public function showCompanyProfile(ActiveContextService $context)
 {
-    $user = auth()->user();
+    abort_if(!$context->isCompany(), 403);
 
-    
-    $company = optional($user)->supplier;
+    $company = $context->company();
 
     if (!$company) {
         return redirect()
-            ->route('manufacturer.company.profile')
+            ->route('supplier.company.profile')
             ->withErrors('Company profile not found.');
     }
 
@@ -48,7 +49,7 @@ public function showCompanyProfile()
     $catalogMedia = $company->catalogImageMedia()->first();
 
     return view(
-        'dashboard.manufacturer.profile.show',
+        'dashboard.supplier.profile.show',
         compact('company', 'catalogMedia')
     );
 }
@@ -58,11 +59,11 @@ public function showCompanyProfile()
     /**
      * Показ страницы профиля компании
      */
-    public function companyProfile()
+    public function companyProfile(ActiveContextService $context)
     {
-        $user = auth()->user();
+        abort_if(!$context->isCompany(), 403);
 
-        $company = optional($user)->supplier;
+    $company = $context->company();
 
         if ($company) {
             $company->load([
@@ -98,7 +99,7 @@ public function showCompanyProfile()
 $selectedmanufacturingCapabilities =
     $profile?->manufacturingCapabilities?->pluck('id')->toArray() ?? [];
 
-        return view('dashboard.manufacturer.company-profile', compact(
+        return view('dashboard.supplier.company-profile', compact(
             'company',
             'countries',
             'exportMarkets',
@@ -113,9 +114,11 @@ $selectedmanufacturingCapabilities =
     /**
      * Обновление профиля компании
      */
-    public function updateCompany(Request $request, MediaService $mediaService)
+    public function updateCompany(Request $request, MediaService $mediaService, ActiveContextService $context)
     {
-        $company = auth()->user()->supplier;
+         abort_if(!$context->isCompany(), 403);
+
+    $company = $context->company();
 
         if (!$company) {
             return back()->withErrors('Supplier not found');
@@ -253,7 +256,7 @@ $selectedmanufacturingCapabilities =
         }
 
         return redirect()
-            ->route('manufacturer.company.profile')
+            ->route('supplier.company.profile')
             ->with('success', 'Company profile updated successfully.');
     }
 
@@ -344,9 +347,12 @@ public function deleteCertificate($id)
 }
 
     
-    public function uploadFactoryPhotos(Request $request, MediaService $mediaService)
+    public function uploadFactoryPhotos(Request $request, MediaService $mediaService,
+    ActiveContextService $context)
 {
-    $supplier = auth()->user()->supplier;
+    abort_if(!$context->isCompany(), 403);
+
+    $supplier = $context->company();
 
     if (!$supplier) {
         return response()->json(['error' => 'Supplier not found'], 404);
@@ -387,9 +393,12 @@ public function deleteCertificate($id)
 }
 
 
-public function deleteFactoryPhoto($id)
+public function deleteFactoryPhoto($id,
+    ActiveContextService $context)
 {
-    $supplier = auth()->user()->supplier;
+     abort_if(!$context->isCompany(), 403);
+
+    $supplier = $context->company();
 
     $media = $supplier->media()
         ->where('collection', 'factory_photos')
@@ -403,13 +412,16 @@ public function deleteFactoryPhoto($id)
     ]);
 }
 
-public function uploadCatalogImage(Request $request)
+public function uploadCatalogImage(Request $request,
+    ActiveContextService $context)
 {
     $request->validate([
         'catalog_image' => 'required|image|max:10240',
     ]);
 
-    $company = auth()->user()?->supplier;
+    abort_if(!$context->isCompany(), 403);
+
+    $company = $context->company();
 
     if (!$company) {
         return response()->json(['message' => 'Company not found'], 404);

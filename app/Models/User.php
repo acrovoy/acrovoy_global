@@ -141,4 +141,11 @@ public function wishlist()
     )->withTimestamps();
 }
 
+public function companyMemberships()
+{
+    return $this->hasMany(CompanyUser::class);
+}
+
+
+
 }

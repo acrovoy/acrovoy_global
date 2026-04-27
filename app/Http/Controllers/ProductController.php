@@ -58,18 +58,25 @@ use App\Domain\Product\Actions\SyncProductAttributeAction;
 use App\Domain\Product\Actions\SyncProductMaterialAction;
 use App\Domain\Product\Actions\SyncShippingTemplateAction;
 
+use App\Services\Company\ActiveContextService;
+
 
 class ProductController extends Controller
 {
 
     public function index(Request $request, ProductListQueryService $service)
     {
+        $context = app(ActiveContextService::class);
+
+
+        
+
         $products = $service->getSupplierProducts(
-            Auth::user()->supplier->id,
+            $context->id(),
             $request->only(['sort', 'status', 'user'])
         );
 
-        return view('dashboard.manufacturer.products', [
+        return view('dashboard.supplier.products', [
             'products' => $products,
             'sort' => $request->sort,
             'status' => $request->status,
@@ -83,21 +90,32 @@ class ProductController extends Controller
         return view('product.show', $service->getProductViewData($slug));
     }
 
-    public function create(ProductFormDataService $service)
+    public function create(ProductFormDataService $service, ActiveContextService $context)
     {
 
+
+        abort_if(!$context->isCompany(), 403);
+        abort_if($context->type() !== Supplier::class, 403);
+
+
         $data = $service->getCreateFormData();
+        $supplierId = $context->id();
+
+        abort_if(!$supplierId, 403);
+
+
+
         $products = Product::with('translations') // Загружаем сразу переводы
-            ->where('supplier_id', Auth::user()->supplier->id)
+            ->where('supplier_id', $supplierId)
             ->get();
 
 
-       
 
 
 
 
-        return view('dashboard.manufacturer.add-product', array_merge($data, [
+
+        return view('dashboard.supplier.add-product', array_merge($data, [
             'products' => $products
         ]));
     }
@@ -114,10 +132,15 @@ class ProductController extends Controller
         SyncShippingTemplateAction $shippingAction,
         AttachProductVariantAction $attachProductVariantAction,
         ProductDTOFactory $dtoFactory,
+        ActiveContextService $context,
     ) {
 
 
-   
+
+        abort_if(!$context->isCompany(), 403);
+        abort_if($context->type() !== Supplier::class, 403);
+
+        $supplierId = $context->id();
 
 
         DB::transaction(function () use (
@@ -131,6 +154,7 @@ class ProductController extends Controller
             $dtoFactory,
             $attachProductVariantAction,
             $attributeAction,
+            $supplierId,
         ) {
 
             /*
@@ -138,7 +162,7 @@ class ProductController extends Controller
         | Create Product
         |-------------------------------------------------------------------------- 
         */
-            $productDTO = $dtoFactory->fromRequest($request);
+            $productDTO = $dtoFactory->fromRequest($request, $supplierId);
             $product = $createProduct->execute($productDTO);
 
             /*
@@ -214,7 +238,7 @@ class ProductController extends Controller
                     if (empty($variantProductId)) continue;
 
                     $variantProduct = Product::find($variantProductId);
-                    if (!$variantProduct || $variantProduct->supplier_id !== $product->supplier_id) continue;
+                    if (!$variantProduct || $variantProduct->supplier_id !== $supplierId) continue;
 
                     $group = $attachProductVariantAction->execute($product, $variantProduct);
 
@@ -293,23 +317,20 @@ class ProductController extends Controller
 
 
             // 🔹 Сохраняем Shipping Dimensions (габариты и вес упаковки)
-$shippingData = $request->input('shipping', []);
+            $shippingData = $request->input('shipping', []);
 
-if (!empty($shippingData)) {
-    $product->shippingDimensions()->updateOrCreate(
-        [], // Laravel автоматически подставит product_id
-        [
-            'length' => $shippingData['length'] ?? 0,
-            'width'  => $shippingData['width'] ?? 0,
-            'height' => $shippingData['height'] ?? 0,
-            'weight' => $shippingData['weight'] ?? 0,
-            'package_type' => $shippingData['package_type'] ?? 'box',
-        ]
-    );
-}
-
-
-
+            if (!empty($shippingData)) {
+                $product->shippingDimensions()->updateOrCreate(
+                    [], // Laravel автоматически подставит product_id
+                    [
+                        'length' => $shippingData['length'] ?? 0,
+                        'width'  => $shippingData['width'] ?? 0,
+                        'height' => $shippingData['height'] ?? 0,
+                        'weight' => $shippingData['weight'] ?? 0,
+                        'package_type' => $shippingData['package_type'] ?? 'box',
+                    ]
+                );
+            }
         });
 
         return redirect()->route('manufacturer.products.index')
@@ -317,12 +338,18 @@ if (!empty($shippingData)) {
     }
 
 
-    public function edit(Product $product, ProductEditQueryService $service)
-    {
+    public function edit(
+        Product $product,
+        ProductEditQueryService $service,
+        ActiveContextService $context
+    ) {
 
-        $products = Product::with('translations', 'shippingDimensions') // Загружаем сразу переводы
-            ->where('supplier_id', Auth::user()->supplier->id)
-            ->get();
+    
+
+        abort_if(!$context->isCompany(), 403);
+        abort_if($context->type() !== Supplier::class, 403);
+        abort_if($product->supplier_id !== $context->id(), 403);
+
 
         return view(
             'product.edit',
@@ -330,17 +357,26 @@ if (!empty($shippingData)) {
         );
     }
 
-    public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $action, ProductDTOFactory $dtoFactory, SyncProductAttributeAction $attributeAction,)
-    {
+    public function update(
+        UpdateProductRequest $request,
+        Product $product,
+        UpdateProductAction $action,
+        ProductDTOFactory $dtoFactory,
+        SyncProductAttributeAction $attributeAction,
+        ActiveContextService $context,
+    ) {
 
 
 
-        abort_if(
-            $product->supplier_id !== auth()->user()->supplier->id,
-            403
-        );
+     $context = app(\App\Services\Company\ActiveContextService::class);
 
-        $dto = $dtoFactory->fromUpdateRequest($request);
+    
+
+        $this->authorize('update', $product);
+
+        $supplierId = $context->id();
+
+        $dto = $dtoFactory->fromUpdateRequest($request, $supplierId);
 
         $translations = [];
 
@@ -387,7 +423,7 @@ if (!empty($shippingData)) {
             });
 
 
-            
+
 
 
 
@@ -397,7 +433,15 @@ if (!empty($shippingData)) {
 
                 if (!empty($variantData['id'])) {
                     // 🔹 Существующий вариант
+
                     $variant = \App\Models\ProductVariantItem::find($variantData['id']);
+
+
+                    //БЕЗОПАСНІЙ ВАРИАНТ. ПОТОМ ПОМЕНЯТЬ И ПРОВЕРИТЬ
+                    // $variant = ProductVariantItem::where('variant_group_id', $product->variant_group_id)->find($variantData['id']);
+
+
+
                     if (!$variant) continue;
 
                     $variant->title = $variantData['title'];
@@ -459,27 +503,27 @@ if (!empty($shippingData)) {
 
 
         // 🔹 Сохраняем/обновляем Shipping Dimensions (габариты и вес упаковки)
-$shippingData = $request->input('shipping', []);
+        $shippingData = $request->input('shipping', []);
 
-if (!empty($shippingData)) {
-    $product->shippingDimensions()->updateOrCreate(
-        [], // Laravel автоматически подставит product_id
-        [
-            'length'       => $shippingData['length'] ?? 0,
-            'width'        => $shippingData['width'] ?? 0,
-            'height'       => $shippingData['height'] ?? 0,
-            'weight'       => $shippingData['weight'] ?? 0,
-            'package_type' => $shippingData['package_type'] ?? 'box',
-        ]
-    );
-}
+        if (!empty($shippingData)) {
+            $product->shippingDimensions()->updateOrCreate(
+                [], // Laravel автоматически подставит product_id
+                [
+                    'length'       => $shippingData['length'] ?? 0,
+                    'width'        => $shippingData['width'] ?? 0,
+                    'height'       => $shippingData['height'] ?? 0,
+                    'weight'       => $shippingData['weight'] ?? 0,
+                    'package_type' => $shippingData['package_type'] ?? 'box',
+                ]
+            );
+        }
 
 
 
-$attributes = $request->input('attributes', []); // Если атрибутов нет, массив пустой
-if ($attributes instanceof \Symfony\Component\HttpFoundation\ParameterBag) {
-    $attributes = $attributes->all();
-}
+        $attributes = $request->input('attributes', []); // Если атрибутов нет, массив пустой
+        if ($attributes instanceof \Symfony\Component\HttpFoundation\ParameterBag) {
+            $attributes = $attributes->all();
+        }
 
 
 
@@ -496,26 +540,30 @@ if ($attributes instanceof \Symfony\Component\HttpFoundation\ParameterBag) {
             priceTiers: $request->price_tiers ?? [],
             materialsSelected: $request->materials_selected ?? '',
             specifications: $request->specs ?? [],
-            attributes:  $attributes,
+            attributes: $attributes,
         );
 
-        
+
 
         return redirect()
             ->route('manufacturer.products.index')
             ->with('success', 'Product updated successfully');
     }
 
-    public function updateStock(Request $request, Product $product)
-    {
+    public function updateStock(
+        Request $request,
+        Product $product,
+        ActiveContextService $context
+    ) {
+
         $request->validate([
             'stock' => ['required', 'integer', 'min:0'],
         ]);
 
-        // Проверка, что товар принадлежит supplier'у
-        if ($product->supplier_id !== auth()->user()->supplier->id) {
-            abort(403);
-        }
+        abort_if(!$context->isCompany(), 403);
+        abort_if($context->type() !== Supplier::class, 403);
+
+        abort_if($product->supplier_id !== $context->id(), 403);
 
         $product->stock()->update([
             'quantity' => $request->stock

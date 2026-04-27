@@ -1,4 +1,4 @@
-<div x-data="categorySelector({ initialCategory: {{ $product->category_id ?? 'null' }} })" x-init="init()">
+<div x-data="categorySelector({ initialCategory: {{ $product->category_id ?? 'null' }}, initialProductId: {{ $product->id ?? 'null' }} })" x-init="init()">
 
     <h3 class="text-xl font-semibold mb-4">Category
 
@@ -53,16 +53,16 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <script>
-function categorySelector({ initialCategory = null } = {}) {
+function categorySelector({ initialCategory = null, initialProductId = null } = {}) {
     return {
         levels: [],
         selectedCategory: null,
         breadcrumb: [],
         initialCategory,
+        initialProductId,
 
         async init() {
             const res = await fetch('/dashboard/category-selector/root');
@@ -134,8 +134,8 @@ function categorySelector({ initialCategory = null } = {}) {
 
         async loadAttributes(categoryId) {
             console.log('Load attributes for category:', categoryId);
-            // Здесь fetch для атрибутов и их заполнение
-            const res = await fetch(`/dashboard/category-selector/attributes/${categoryId}`);
+            const query = this.initialProductId ? `?product_id=${this.initialProductId}` : '';
+            const res = await fetch(`/dashboard/category-selector/attributes/${categoryId}${query}`);
             const attributes = await res.json();
 
             const container = document.getElementById('category-attributes');
@@ -153,12 +153,44 @@ function categorySelector({ initialCategory = null } = {}) {
                 const requiredAttr = attr.is_required ? 'required' : '';
                 const unitBadge = attr.unit ? `<span class="ml-2 text-[10px] text-red-400">(${attr.unit})</span>` : '';
 
-                let fieldHtml = `<input type="text" name="attributes[${attr.id}]" class="input w-full" ${requiredAttr}>`;
+                let fieldHtml = `<input type="text" name="attributes[${attr.id}]" class="input w-full" value="${attr.value ?? ''}" ${requiredAttr}>`;
+
                 if (attr.type === 'number') {
-                    fieldHtml = `<input type="number" name="attributes[${attr.id}]" class="input w-full" ${requiredAttr}>`;
+                    fieldHtml = `<input type="number" name="attributes[${attr.id}]" class="input w-full" value="${attr.value ?? ''}" ${requiredAttr}>`;
                 } else if (attr.type === 'select' && attr.options) {
-                    const optionsHtml = attr.options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+                    const optionsHtml = attr.options.map(o => `<option value="${o.value}" ${attr.value == o.value ? 'selected' : ''}>${o.label}</option>`).join('');
                     fieldHtml = `<select name="attributes[${attr.id}]" class="input w-full" ${requiredAttr}><option value="">Select...</option>${optionsHtml}</select>`;
+                } else if (attr.type === 'multiselect' && attr.options) {
+                    const selectedValues = Array.isArray(attr.value) ? attr.value.map(String) : [];
+                    const optionsHtml = attr.options
+                        .map(o => `
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox"
+                                       name="attributes[${attr.id}][]"
+                                       value="${o.value}"
+                                       class="rounded border-gray-300"
+                                       ${selectedValues.includes(String(o.value)) ? 'checked' : ''}>
+                                ${o.label}
+                            </label>
+                        `)
+                        .join('');
+                    fieldHtml = `
+                        <div class="flex flex-col gap-2">
+                            ${optionsHtml}
+                        </div>
+                    `;
+                } else if (attr.type === 'boolean') {
+                    const checked = attr.value ? 'checked' : '';
+                    fieldHtml = `
+                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox"
+                                   name="attributes[${attr.id}]"
+                                   value="1"
+                                   class="rounded border-gray-300"
+                                   ${checked}>
+                            Yes
+                        </label>
+                    `;
                 }
 
                 const div = document.createElement('div');

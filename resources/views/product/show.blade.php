@@ -5,6 +5,7 @@
     <div class="container mx-auto px-6">
 
 
+    
 
         {{-- Breadcrumb --}}
         <div class="text-sm text-gray-600 mb-6 flex flex-wrap gap-1">
@@ -54,6 +55,8 @@
 
                         {{-- Title --}}
                         <div class="flex items-center gap-3">
+
+                        
                            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight inline-flex items-center gap-2">
     
     {{ $product1->name }}

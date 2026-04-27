@@ -25,4 +25,9 @@ class LogisticCompany extends Model
     {
         return $this->hasMany(ShippingTemplate::class, 'logistic_company_id');
     }
+
+    public function users()
+{
+    return $this->morphMany(CompanyUser::class, 'company');
+}
 }

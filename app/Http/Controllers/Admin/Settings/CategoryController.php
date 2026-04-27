@@ -18,7 +18,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::with('translations', 'parent')->orderBy('id')->get();
+        $categories = Category::with('types', 'translations', 'parent')->orderBy('id')->get();
 
         $categories_map = Category::with('translations')
         ->orderBy('level')
@@ -47,97 +47,141 @@ class CategoryController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'is_selectable' => 'nullable|boolean',
-            'is_leaf' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0',
-            'slug' => 'required|string|max:255|unique:categories,slug',
-            'parent_id' => 'nullable|exists:categories,id',
-            'name.*' => 'required|string|max:255',
+{
+    $request->validate([
+        'is_selectable' => 'nullable|boolean',
+        'is_leaf' => 'nullable|boolean',
+        'sort_order' => 'nullable|integer|min:0',
+        'slug' => 'required|string|max:255|unique:categories,slug',
+        'parent_id' => 'nullable|exists:categories,id',
+        'name.*' => 'required|string|max:255',
+
+        // NEW
+        'types' => 'nullable|array',
+        'types.*' => 'in:product,rfq,project',
+    ]);
+
+    DB::transaction(function () use ($request) {
+
+        $level = 0;
+        if ($request->parent_id) {
+            $parent = Category::find($request->parent_id);
+            $level = $parent->level + 1;
+        }
+
+        $category = Category::create([
+            'slug' => $request->slug,
+            'parent_id' => $request->parent_id,
+            'level' => $level,
+            'commission_percent' => $request->commission_percent,
+
+            // ❌ OLD: 'type' => $request->type,
+
+            'is_selectable' => $request->has('is_selectable') ? 1 : 0,
+            'is_leaf' => $request->has('is_leaf') ? 1 : 0,
+            'sort_order' => $request->input('sort_order', 0),
         ]);
 
-        DB::transaction(function () use ($request) {
+        $category->attributes()->sync($request->input('attributes', []));
 
-            $level = 0;
-            if ($request->parent_id) {
-                $parent = Category::find($request->parent_id);
-                $level = $parent->level + 1;
-            }
-
-            $category = Category::create([
-                'slug' => $request->slug,
-                'parent_id' => $request->parent_id,
-                'level' => $level,
-                'commission_percent' => $request->commission_percent,
-                'type' => $request->type,
-                'is_selectable' => $request->has('is_selectable') ? 1 : 0,
-                'is_leaf' => $request->has('is_leaf') ? 1 : 0,
-                'sort_order' => $request->input('sort_order', 0),
-            ]);
-
-            $category->attributes()->sync($request->input('attributes', []));
-
-            foreach ($request->name as $locale => $name) {
-                $category->translations()->create([
-                    'locale' => $locale,
-                    'name' => $name,
+        // NEW: types save
+        if ($request->filled('types')) {
+            foreach ($request->types as $type) {
+                $category->types()->create([
+                    'type' => $type
                 ]);
             }
-        });
+        }
 
-        return redirect()->route('admin.settings.categories.index')->with('success', 'Category created');
-    }
+        foreach ($request->name as $locale => $name) {
+            $category->translations()->create([
+                'locale' => $locale,
+                'name' => $name,
+            ]);
+        }
+    });
+
+    return redirect()
+        ->route('admin.settings.categories.index')
+        ->with('success', 'Category created');
+}
 
     public function edit(Category $category)
-    {
-        $categories = Category::where('id', '!=', $category->id)->get();
-    $attributes = Attribute::orderBy('sort_order')->get(); // все активные атрибуты
-    return view('dashboard.admin.settings.categories.edit', compact('category', 'categories', 'attributes'));
-    }
+{
+    $categories = Category::where('id', '!=', $category->id)->get();
+
+    $attributes = Attribute::orderBy('sort_order')->get();
+
+    // NEW: подгружаем типы категории
+    $category->load('types');
+
+    return view(
+        'dashboard.admin.settings.categories.edit',
+        compact('category', 'categories', 'attributes')
+    );
+}
 
     public function update(Request $request, Category $category)
-    {
-        $request->validate([
-            'is_selectable' => 'nullable|boolean',
-            'is_leaf' => 'nullable|boolean',
-            'sort_order' => 'nullable|integer|min:0',
-            'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
-            'parent_id' => 'nullable|exists:categories,id',
-            'name.*' => 'required|string|max:255',
+{
+    $request->validate([
+        'is_selectable' => 'nullable|boolean',
+        'is_leaf' => 'nullable|boolean',
+        'sort_order' => 'nullable|integer|min:0',
+        'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
+        'parent_id' => 'nullable|exists:categories,id',
+        'name.*' => 'required|string|max:255',
+
+        // NEW
+        'types' => 'nullable|array',
+        'types.*' => 'in:product,rfq,project',
+    ]);
+
+    DB::transaction(function () use ($request, $category) {
+
+        $level = 0;
+        if ($request->parent_id) {
+            $parent = Category::find($request->parent_id);
+            $level = $parent->level + 1;
+        }
+
+        $category->update([
+            'slug' => $request->slug,
+            'parent_id' => $request->parent_id,
+            'level' => $level,
+            'commission_percent' => $request->commission_percent,
+
+            // ❌ OLD: 'type' => $request->type,
+
+            'is_selectable' => $request->has('is_selectable') ? 1 : 0,
+            'is_leaf' => $request->has('is_leaf') ? 1 : 0,
+            'sort_order' => $request->input('sort_order', 0),
         ]);
 
-        DB::transaction(function () use ($request, $category) {
+        $category->attributes()->sync($request->input('attributes', []));
 
-            $level = 0;
-            if ($request->parent_id) {
-                $parent = Category::find($request->parent_id);
-                $level = $parent->level + 1;
+        // NEW: replace all types
+        $category->types()->delete();
+
+        if ($request->filled('types')) {
+            foreach ($request->types as $type) {
+                $category->types()->create([
+                    'type' => $type
+                ]);
             }
+        }
 
-            $category->update([
-                'slug' => $request->slug,
-                'parent_id' => $request->parent_id,
-                'level' => $level,
-                'commission_percent' => $request->commission_percent,
-                'type' => $request->type,
-                'is_selectable' => $request->has('is_selectable') ? 1 : 0,
-                'is_leaf' => $request->has('is_leaf') ? 1 : 0,
-                'sort_order' => $request->input('sort_order', 0),
-            ]);
+        foreach ($request->name as $locale => $name) {
+            $category->translations()->updateOrCreate(
+                ['locale' => $locale],
+                ['name' => $name]
+            );
+        }
+    });
 
-            $category->attributes()->sync($request->input('attributes', []));
-
-            foreach ($request->name as $locale => $name) {
-                $category->translations()->updateOrCreate(
-                    ['locale' => $locale],
-                    ['name' => $name]
-                );
-            }
-        });
-
-        return redirect()->route('admin.settings.categories.index')->with('success', 'Category updated');
-    }
+    return redirect()
+        ->route('admin.settings.categories.index')
+        ->with('success', 'Category updated');
+}
 
     public function destroy(Category $category)
     {

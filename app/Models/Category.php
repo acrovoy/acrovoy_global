@@ -180,4 +180,33 @@ public function childrenRecursive()
     return $this->children()->with('childrenRecursive.translations');
 }
 
+public function types()
+{
+    return $this->hasMany(CategoryType::class);
+}
+
+public function scopeForType($query, $type)
+{
+    return $query->whereHas(
+        'types',
+        fn($q) => $q->where('type', $type)
+    );
+}
+
+
+public function isRfq()
+{
+    return $this->types->contains('type', 'rfq');
+}
+
+public function isProject()
+{
+    return $this->types->contains('type', 'project');
+}
+
+public function isProduct()
+{
+    return $this->types->contains('type', 'product');
+}
+
 }

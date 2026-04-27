@@ -199,6 +199,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\MediaServiceProvider::class,
+        App\Providers\ActiveContextServiceProvider::class,
 
     ],
 
@@ -215,6 +216,7 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         
+        'ActiveContext' => App\Facades\ActiveContext::class,
       
 
     ])->toArray(),

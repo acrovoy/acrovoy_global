@@ -33,10 +33,18 @@ public function shipment()
 
 public function getThumbnailUrlAttribute(): ?string
 {
-    $media = $this->product->images->sortBy('sort_order')->firstWhere('is_main', 1)
-             ?? $this->product->images->sortBy('sort_order')->first();
+    if (!$this->product) {
+        return null;
+    }
 
-    return $media?->url('thumb'); // <-- вариант thumb
+    $media = $this->product->images
+        ->sortBy('sort_order')
+        ->firstWhere('is_main', 1)
+        ?? $this->product->images
+        ->sortBy('sort_order')
+        ->first();
+
+    return $media?->url('thumb');
 }
 
 

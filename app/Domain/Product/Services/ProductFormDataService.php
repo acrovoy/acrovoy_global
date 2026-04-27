@@ -8,13 +8,19 @@ use App\Models\Country;
 use App\Models\Supplier;
 use App\Models\ShippingTemplate;
 
+use App\Services\Company\ActiveContextService;
+
 class ProductFormDataService
 {
     public function getCreateFormData(): array
     {
         $locale = app()->getLocale();
 
-        $supplier = Supplier::where('user_id', auth()->id())->firstOrFail();
+        $context = app(ActiveContextService::class);
+
+        abort_if(!$context->isCompany(), 403);
+
+        $supplierId = $context->id();
 
         return [
             'categories' => Category::all(),
@@ -27,7 +33,7 @@ class ProductFormDataService
                 ->where('is_active', true)
                 ->get(),
 
-            'shippingTemplates' => ShippingTemplate::where('manufacturer_id', $supplier->id)
+            'shippingTemplates' => ShippingTemplate::where('manufacturer_id', $supplierId)
                 ->with('translations')
                 ->get(),
 

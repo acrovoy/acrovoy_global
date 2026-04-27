@@ -146,6 +146,35 @@ function removeNotifications() {
     container.innerHTML = '';
 }
 
+function updateTierChain(startIndex) {
+    const tiers = document.querySelectorAll('#price-tiers .grid');
+    for (let i = startIndex; i < tiers.length; i++) {
+        const prevTier = tiers[i - 1];
+        const prevMaxInput = prevTier.querySelector('input[name$="[max_qty]"]');
+        const currentTier = tiers[i];
+        const currentMinInput = currentTier.querySelector('input[name$="[min_qty]"]');
+        const currentMaxInput = currentTier.querySelector('input[name$="[max_qty]"]');
+
+        if (prevMaxInput && currentMinInput) {
+            const prevMaxValue = prevMaxInput.value.trim();
+            const prevMax = parseInt(prevMaxValue, 10);
+            if (prevMaxValue !== '' && !isNaN(prevMax)) {
+                currentMinInput.value = prevMax + 1;
+            }
+        }
+
+        if (currentMinInput && currentMaxInput) {
+            const minValue = currentMinInput.value.trim();
+            const maxValue = currentMaxInput.value.trim();
+            const min = parseInt(minValue, 10);
+            const max = parseInt(maxValue, 10);
+            if (maxValue !== '' && !isNaN(max) && !isNaN(min) && max <= min) {
+                currentMaxInput.value = min + 1;
+            }
+        }
+    }
+}
+
 function checkMaxMinValidation() {
     const priceTiers = document.querySelectorAll('#price-tiers .grid');
     let isError = false;
@@ -154,8 +183,13 @@ function checkMaxMinValidation() {
         const minInput = tier.querySelector('input[name$="[min_qty]"]');
         const maxInput = tier.querySelector('input[name$="[max_qty]"]');
         if (minInput && maxInput) {
-            if (parseInt(maxInput.value) < parseInt(minInput.value)) {
+            const minValue = minInput.value.trim();
+            const maxValue = maxInput.value.trim();
+            const min = parseInt(minValue, 10);
+            const max = parseInt(maxValue, 10);
+            if (minValue !== '' && maxValue !== '' && !isNaN(min) && !isNaN(max) && max < min) {
                 isError = true;
+                break;
             }
         }
     }
@@ -164,6 +198,7 @@ function checkMaxMinValidation() {
     if (isError) {
         showNotification("Max Quantity не может быть меньше Min Quantity!", "error");
     }
+    return !isError;
 }
 
 function updatePriceTierRemoveButtons() {
@@ -197,25 +232,31 @@ if (moqInput) {
 
     if (firstMinInput) {
 
-        // применяем сразу при загрузке страницы
-        if (moqInput.value) {
+        if (moqInput.value.trim() === '') {
+            firstMinInput.readOnly = false;
+        } else {
             firstMinInput.value = moqInput.value;
             firstMinInput.readOnly = true;
         }
 
-        // применяем при изменении MOQ
         moqInput.addEventListener('input', () => {
+            if (moqInput.value.trim() === '') {
+                firstMinInput.readOnly = false;
+            } else {
+                firstMinInput.value = moqInput.value;
+                firstMinInput.readOnly = true;
+            }
+        });
 
-            firstMinInput.value = moqInput.value;
-            firstMinInput.readOnly = true;
-
+        moqInput.addEventListener('change', () => {
             if (
                 firstMaxInput &&
-                parseInt(firstMaxInput.value) < parseInt(firstMinInput.value)
+                firstMaxInput.value.trim() !== '' &&
+                parseInt(firstMaxInput.value, 10) < parseInt(firstMinInput.value, 10)
             ) {
                 showNotification("Max Qty не может быть меньше Min Qty!", "error");
             }
-
+            checkMaxMinValidation();
         });
 
     }
@@ -233,7 +274,10 @@ document.querySelectorAll('[id^="price-tier-"]').forEach((row, index) => {
 
     if (!minInput || !maxInput) return;
 
-    maxInput.addEventListener('change', checkMaxMinValidation);
+    maxInput.addEventListener('change', () => {
+        updateTierChain(index + 1);
+        checkMaxMinValidation();
+    });
     minInput.addEventListener('change', checkMaxMinValidation);
 
 });
@@ -249,24 +293,27 @@ window.addPriceTier = function () {
     const container = document.getElementById('price-tiers');
     if (!container) return;
 
+    let prevMaxValue = '';
+    if (priceTierIndex > 0) {
+        const tiers = document.querySelectorAll('#price-tiers .grid');
+        const lastTier = tiers[tiers.length - 1];
+        const prevMaxInput = lastTier?.querySelector('.input-max-qtty');
+        prevMaxValue = prevMaxInput?.value.trim() ?? '';
+    }
 
-    let prevMax = 0;
-        if (priceTierIndex > 0) {
-            const tiers = document.querySelectorAll('#price-tiers .grid');
-            const lastTier = tiers[tiers.length - 1];
-            const prevMaxInput = lastTier?.querySelector('.input-max-qtty');
-            prevMax = prevMaxInput && prevMaxInput.value ? parseInt(prevMaxInput.value) : 0;
-        }
+    if (priceTierIndex > 0 && (prevMaxValue === '' || isNaN(parseInt(prevMaxValue, 10)))) {
+        return;
+    }
 
-
+    const prevMax = priceTierIndex > 0 ? parseInt(prevMaxValue, 10) : 0;
     const html = `
     <div class="grid grid-cols-3 gap-4 items-center" id="price-tier-${priceTierIndex}">
         <input type="number"
                name="price_tiers[${priceTierIndex}][min_qty]"
                placeholder="Min Qty"
                class="input"
-               value="${prevMax + 1}"
-               readonly>
+               value="${priceTierIndex > 0 ? prevMax + 1 : ''}"
+               ${priceTierIndex > 0 ? 'readonly' : ''}>
 
         <input type="number"
                name="price_tiers[${priceTierIndex}][max_qty]"
@@ -290,17 +337,19 @@ window.addPriceTier = function () {
 
     container.insertAdjacentHTML('beforeend', html);
 
-
+    const rowIndex = priceTierIndex;
     const maxInput = document.querySelector(
-        `input[name="price_tiers[${priceTierIndex}][max_qty]"]`
+        `input[name="price_tiers[${rowIndex}][max_qty]"]`
     );
 
     const minInput = document.querySelector(
-        `input[name="price_tiers[${priceTierIndex}][min_qty]"]`
+        `input[name="price_tiers[${rowIndex}][min_qty]"]`
     );
 
-
-    maxInput.addEventListener('change', checkMaxMinValidation);
+    maxInput.addEventListener('change', () => {
+        updateTierChain(rowIndex + 1);
+        checkMaxMinValidation();
+    });
     minInput.addEventListener('change', checkMaxMinValidation);
 
     priceTierIndex++;

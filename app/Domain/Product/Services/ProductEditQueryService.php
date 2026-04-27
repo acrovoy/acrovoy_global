@@ -7,10 +7,13 @@ use App\Models\Category;
 use App\Models\Language;
 use App\Models\Country;
 use App\Models\Material;
+use App\Models\Supplier;
 use App\Models\ShippingTemplate;
 use Illuminate\Support\Facades\Auth;
 
 use App\Models\ProductVariantItem;
+
+use App\Services\Company\ActiveContextService;
 
 class ProductEditQueryService
 {
@@ -81,18 +84,23 @@ public function getSupplierProducts()
 }
 
 private function authorizeProduct(Product $product): void
-    {
-        abort_if(
-            $product->supplier_id !== Auth::user()?->supplier?->id,
-            403
-        );
-    }
+{
+    $context = app(ActiveContextService::class);
+
+    abort_if(!$context->isCompany(), 403);
+    abort_if($context->type() !== Supplier::class, 403);
+    abort_if($product->supplier_id !== $context->id(), 403);
+}
 
     private function getShippingTemplates()
     {
-        $supplier = Auth::user()->supplier;
+        $context = app(ActiveContextService::class);
 
-        return ShippingTemplate::where('manufacturer_id', $supplier->id)
+    abort_if(!$context->isCompany(), 403);
+
+    $supplierId = $context->id();
+
+        return ShippingTemplate::where('manufacturer_id', $supplierId)
             ->with('translations')
             ->get();
     }

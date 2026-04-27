@@ -220,6 +220,9 @@ public function manufacturingCapabilities()
 }
 
 
-
+public function users()
+{
+    return $this->morphMany(CompanyUser::class, 'company');
+}
 
 }

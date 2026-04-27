@@ -4,66 +4,104 @@ namespace App\Policies;
 
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\Supplier;
+use App\Services\Company\ActiveContextService;
 
 class ProductPolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * View list of products
      */
     public function viewAny(User $user): bool
     {
-        //
+        $context = app(ActiveContextService::class);
+
+        return $context->isCompany()
+            && $context->type() === Supplier::class;
     }
 
+
     /**
-     * Determine whether the user can view the model.
+     * View single product
      */
     public function view(User $user, Product $product): bool
     {
-        //
+        $context = app(ActiveContextService::class);
+
+        return $context->isCompany()
+            && $context->type() === Supplier::class
+            && $product->supplier_id === $context->id();
     }
 
+
     /**
-     * Determine whether the user can create models.
+     * Create product
      */
     public function create(User $user): bool
     {
-        //
+        $context = app(ActiveContextService::class);
+
+        return $context->isCompany()
+            && $context->type() === Supplier::class
+            && in_array($context->role(), [
+                'owner',
+                'administrator',
+                'sales'
+            ]);
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Product $product)
-{
-    return $product->supplier->user_id === $user->id;
-}
 
     /**
-     * Determine whether the user can delete the model.
+     * Update product
      */
-     /**
-     * Determine whether the user can delete the product.
-     */
-    public function delete(User $user, Product $product)
+    public function update(User $user, Product $product): bool
     {
-        return $product->supplier->user_id === $user->id;
+
+    
+        $context = app(ActiveContextService::class);
+
+        return $context->isCompany()
+            && $context->type() === Supplier::class
+            && $product->supplier_id === $context->id()
+            && in_array($context->role(), [
+                'owner',
+                'administrator',
+                'sales'
+            ]);
     }
 
+
     /**
-     * Determine whether the user can restore the model.
+     * Delete product
+     */
+    public function delete(User $user, Product $product): bool
+    {
+        $context = app(ActiveContextService::class);
+
+        return $context->isCompany()
+            && $context->type() === Supplier::class
+            && $product->supplier_id === $context->id()
+            && in_array($context->role(), [
+                'owner',
+                'administrator'
+            ]);
+    }
+
+
+    /**
+     * Restore product
      */
     public function restore(User $user, Product $product): bool
     {
-        //
+        return false;
     }
 
+
     /**
-     * Determine whether the user can permanently delete the model.
+     * Force delete product permanently
      */
     public function forceDelete(User $user, Product $product): bool
     {
-        //
+        return false;
     }
 }

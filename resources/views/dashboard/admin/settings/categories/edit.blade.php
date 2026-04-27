@@ -75,14 +75,43 @@
         @endforeach
     </div>
 
-    <div>
-        <label class="block text-gray-700">Category Type</label>
-        <select name="type" class="mt-1 block w-full border-gray-300 rounded">
-            <option value="product" @selected(old('type', $category->type) == 'product')>Product</option>
-            <option value="rfq" @selected(old('type', $category->type) == 'rfq')>RFQ/Project</option>
-        </select>
-        @error('type') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+
+    @php
+    $types = [
+        'product' => 'Product',
+        'rfq' => 'RFQ',
+        'project' => 'Project',
+    ];
+
+    $selectedTypes = $category->types->pluck('type')->toArray();
+@endphp
+
+<div class="border rounded-xl p-4 space-y-4">
+    <h3 class="font-medium text-gray-700 text-sm">Category Contexts</h3>
+
+    @foreach($types as $key => $label)
+        <div class="flex items-center gap-2">
+            <input type="checkbox"
+                   name="types[]"
+                   value="{{ $key }}"
+                   id="type-{{ $key }}"
+                   {{ in_array($key, old('types', $selectedTypes)) ? 'checked' : '' }}>
+            <label for="type-{{ $key }}" class="text-gray-700">
+                {{ $label }}
+            </label>
+        </div>
+    @endforeach
+</div>
+
+
+
+   <div>
+    <label class="block text-gray-700">OLD Category Type</label>
+
+    <div class="mt-1 w-full border border-gray-200 bg-gray-50 rounded px-3 py-2 text-gray-700">
+        {{ $category->type ?? '—' }}
     </div>
+</div>
 
     <div class="flex gap-4">
         <div>

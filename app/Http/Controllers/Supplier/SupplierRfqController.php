@@ -1,153 +1,58 @@
 <?php
 
 namespace App\Http\Controllers\Supplier;
-use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
-use App\Models\Rfq;
-use App\Models\RfqOffer;
-use App\Models\ShippingTemplate;
-use App\Models\Supplier;
-
-
+use App\Domain\RFQ\Models\Rfq;
+use App\Domain\RFQ\Services\RfqAccessService;
+use App\Services\Company\ActiveContextService;
 
 class SupplierRfqController extends Controller
 {
-     /**
-     * Список доступных RFQ для производителя
-     */
-    public function index()
-{
-    $user = auth()->user();
-    $supplier = $user->supplier;
-    $supplierId = $supplier->id ?? null;
-
-    // 🔹 Дебаг
-    info('User info', ['user_id' => $user->id, 'role' => $user->role]);
-    info('Supplier info', ['supplier' => $supplier, 'supplier_id' => $supplierId]);
-
-    $rfqs = Rfq::with(['category', 'offers'])
-        ->latest()
-        ->get();
-
-    // 🔹 Посмотреть какие RFQ вообще грузятся
-    info('Loaded RFQs', ['count' => $rfqs->count(), 'ids' => $rfqs->pluck('id')]);
-
-    // Фильтруем RFQ
-    $rfqs = Rfq::with([
-        'category',
-        'offers' => function ($query) use ($supplierId) {
-            $query->where('supplier_id', $supplierId);
-        }
-    ])
-    ->latest()
-    ->get()
-    ->filter(function ($rfq) use ($user, $supplierId) {
-        if ($rfq->status === 'active') {
-            return $user->can('view', $rfq);
-        }
-
-        if ($rfq->status === 'closed') {
-            return $rfq->offers
-                ->where('status', 'accepted')
-                ->isNotEmpty();
-        }
-
-        return false;
-    });
-
-// 🔔 Добавляем счётчик непрочитанных статусов
-$rfqs->each(function ($rfq) use ($supplierId) {
-    // Берём оффер текущего supplier
-    $offer = $rfq->offers
-        ->where('supplier_id', $supplierId)
-        ->first();
-
-    if ($offer) {
-        // Если оффер ещё не просмотрен
-        if (in_array($offer->status, ['accepted', 'rejected']) && $offer->supplier_viewed_at === null) {
-            $rfq->offer_status_badge = $offer->status; // 'accepted' или 'rejected'
-        } else {
-            $rfq->offer_status_badge = null; // бейдж не показываем
-        }
-    } else {
-        $rfq->offer_status_badge = null;
-    }
-});
-
-    return view('dashboard.manufacturer.rfqs.index', compact('rfqs'));
-}
-
-
-
-    
     /**
-     * Просмотр конкретного RFQ
+     * RFQ LIST (incoming RFQs for supplier)
      */
-    /**
- * Просмотр конкретного RFQ для производителя
- */
-public function show(Rfq $rfq)
+    public function index(
+    ActiveContextService $context,
+    RfqAccessService $access
+)
 {
-    // Проверка доступа через полиси
-    $this->authorize('view', $rfq);
+    $rfqs = $access->getAvailableRfqsForSupplier(
+        [
+            'mode' => $context->mode(),
+            'company_id' => $context->id(),
+            'company_type' => $context->type(),
+            'role' => $context->role(),
+        ],
+        auth()->id()
+    );
 
-    // текущий supplier
-    $supplierId = auth()->user()->supplier->id;
-
-    // Помечаем офферы как просмотренные supplier'ом
-    $rfq->offers()
-        ->where('supplier_id', $supplierId)
-        ->whereNull('supplier_viewed_at')
-        ->whereIn('status', ['accepted', 'rejected'])
-        ->update(['supplier_viewed_at' => now()]);
-
-    // Подгружаем офферы, категорию и автора RFQ (покупателя)
-    $rfq->load(['offers.supplier', 'category', 'buyer']);
-
-
-    $shippingTemplates = ShippingTemplate::where(function ($query) {
-        $supplier = Supplier::where('user_id', auth()->id())->first();
-        $query->where('manufacturer_id', $supplier->id)
-              ->orWhere('id', 1);
-    })
-    ->with('translations')
-    ->get();
-
-
-     // Шаблоны доставки по умолчанию (Acrovoy Delivery)
-    $defaultShippingTemplate = ShippingTemplate::with('translations')->where('logistic_company_id', 1)->get();
-
-
-    return view('dashboard.manufacturer.rfqs.show', compact('rfq', 'shippingTemplates', 'defaultShippingTemplate'));
+    return view('rfq.supplier.index', compact('rfqs'));
 }
 
     /**
-     * Отправка предложения
+     * RFQ WORKSPACE (supplier side)
      */
-    public function storeOffer(Request $request, Rfq $rfq)
+    public function show(
+    Rfq $rfq,
+    RfqAccessService $access,
+    ActiveContextService $context
+)
 {
-    // Полиси проверяет: может ли текущий пользователь сделать оффер
-    $this->authorize('sendOffer', $rfq);
+    abort_unless(
+        $access->canViewRfq(
+            $rfq,
+            [
+                'mode' => $context->mode(),
+                'company_id' => $context->id(),
+                'company_type' => $context->type(),
+                'role' => $context->role(),
+            ],
+            auth()->id()
+        ),
+        403
+    );
 
-    $data = $request->validate([
-        'price'         => 'required|numeric|min:0',
-        'delivery_days' => 'nullable|integer|min:1',
-        'comment'       => 'nullable|string|max:2000',
-        'shipping_template_id' => 'nullable|exists:shipping_templates,id',
-    ]);
-
-    // Проверяем, чтобы производитель не сделал оффер дважды
-    if ($rfq->offers()->where('supplier_id', auth()->id())->exists()) {
-        return back()->with('error', 'You have already made an offer for this RFQ.');
-    }
-
-    $data['rfq_id'] = $rfq->id;
-    $data['supplier_id'] = auth()->user()->supplier->id;
-    $data['status'] = 'pending';
-
-    RfqOffer::create($data);
-
-    return back()->with('success', 'Your offer has been submitted.');
+    return view('rfq.supplier.show', compact('rfq'));
 }
 }

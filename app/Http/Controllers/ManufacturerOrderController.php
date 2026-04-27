@@ -6,10 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+use App\Facades\ActiveContext;
+
 use App\Enums\ShipmentStatus;
 use App\Services\ShipmentStatusService;
 use App\Services\SupplierOrderAccessService;
 use App\Services\OrderStatusService;
+use App\Services\Company\ActiveContextService;
 
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -30,89 +33,88 @@ class ManufacturerOrderController extends Controller
      * Orders list
      */
     public function index()
-    {
-        $supplierId = auth()->user()->supplier->id;
+{
+    $supplierId = ActiveContext::id();
 
-        $ordersQuery = OrderItem::query()
-            ->where(function ($q) use ($supplierId) {
+    $ordersQuery = OrderItem::query()
+        ->where(function ($q) use ($supplierId) {
 
-                // 🟢 Заказы из каталога
-                $q->whereHas('product', function ($q) use ($supplierId) {
-                    $q->where('supplier_id', $supplierId);
-                })
-
-                // 🟣 Заказы из RFQ
-                ->orWhereHas('order.rfqOffer', function ($q) use ($supplierId) {
-                    $q->where('supplier_id', $supplierId);
-                });
-
-            })
-            ->with([
-                'order.user',
-                'product',
-                'order.rfqOffer.rfq'
-            ])
-            ->orderByDesc('created_at');
-
-        // 🔹 Фильтр по статусу
-        if ($status = request('status')) {
-            $ordersQuery->whereHas('order', fn ($q) => $q->where('status', $status));
-        }
-
-        $orders = $ordersQuery->get()
-    ->groupBy(fn ($item) => $item->order->id)
-    ->map(function ($items) {
-
-        $first = $items->first();
-        $order = $first->order;
-
-        return [
-            'id'       => $order->id,
-            'customer' => $order->first_name . ' ' . $order->last_name,
-
-            'items' => $items->map(function ($item) {
-                return [
-                    'product' => $item->product->name
-                        ?? $item->order->rfqOffer?->rfq?->title
-                        ?? 'Custom RFQ',
-                    'qty'     => $item->quantity,
-                    'price'   => $item->price,
-                    'total'   => $item->quantity * $item->price,
-                ];
-            }),
-
-            'total'  => $items->sum(fn ($i) => $i->quantity * $i->price),
-            'type' => $order->type,
-            'delivery_price' => $order->delivery_price,
-            'status' => $order->status,
-            'date'   => $order->created_at->format('d M Y'),
-        ];
-    })
-    ->values();
-
-        // ID заказов со спором
-        $disputedOrderIds = OrderDispute::whereHas('order.items.product', function ($q) use ($supplierId) {
+            // 🟢 Заказы из каталога
+            $q->whereHas('product', function ($q) use ($supplierId) {
                 $q->where('supplier_id', $supplierId);
             })
+
+            // 🟣 Заказы из RFQ
             ->orWhereHas('order.rfqOffer', function ($q) use ($supplierId) {
                 $q->where('supplier_id', $supplierId);
-            })
-            ->whereIn('status', [
-                'pending',
-                'supplier_offer',
-                'rejected',
-                'admin_review'
-            ])
-            ->pluck('order_id')
-            ->unique()
-            ->toArray();
+            });
 
-        return view('dashboard.manufacturer.orders', compact(
-            'orders',
-            'disputedOrderIds'
-        ));
+        })
+        ->with([
+            'order.user',
+            'product',
+            'order.rfqOffer.rfq'
+        ])
+        ->orderByDesc('created_at');
+
+    // 🔹 Фильтр по статусу
+    if ($status = request('status')) {
+        $ordersQuery->whereHas('order', fn ($q) => $q->where('status', $status));
     }
 
+    $orders = $ordersQuery->get()
+        ->groupBy(fn ($item) => $item->order->id)
+        ->map(function ($items) {
+
+            $first = $items->first();
+            $order = $first->order;
+
+            return [
+                'id'       => $order->id,
+                'customer' => $order->first_name . ' ' . $order->last_name,
+
+                'items' => $items->map(function ($item) {
+                    return [
+                        'product' => $item->product->name
+                            ?? $item->order->rfqOffer?->rfq?->title
+                            ?? 'Custom RFQ',
+                        'qty'     => $item->quantity,
+                        'price'   => $item->price,
+                        'total'   => $item->quantity * $item->price,
+                    ];
+                }),
+
+                'total'  => $items->sum(fn ($i) => $i->quantity * $i->price),
+                'type' => $order->type,
+                'delivery_price' => $order->delivery_price,
+                'status' => $order->status,
+                'date'   => $order->created_at->format('d M Y'),
+            ];
+        })
+        ->values();
+
+    // ID заказов со спором
+    $disputedOrderIds = OrderDispute::whereHas('order.items.product', function ($q) use ($supplierId) {
+            $q->where('supplier_id', $supplierId);
+        })
+        ->orWhereHas('order.rfqOffer', function ($q) use ($supplierId) {
+            $q->where('supplier_id', $supplierId);
+        })
+        ->whereIn('status', [
+            'pending',
+            'supplier_offer',
+            'rejected',
+            'admin_review'
+        ])
+        ->pluck('order_id')
+        ->unique()
+        ->toArray();
+
+    return view('dashboard.supplier.orders', compact(
+        'orders',
+        'disputedOrderIds'
+    ));
+}
     /**
      * View single order
      */
@@ -120,7 +122,7 @@ class ManufacturerOrderController extends Controller
     {
 
     
-     $supplierId = auth()->user()->supplier->id;
+     $supplierId = ActiveContext::id();
 
      
 
@@ -139,7 +141,12 @@ class ManufacturerOrderController extends Controller
         ])->findOrFail($id);
 
         // ✅ ЕДИНАЯ ПРОВЕРКА ДОСТУПА (каталог + RFQ)
-        abort_if(! $access->canAccess($order, auth()->user()->supplier), 404);
+        $supplier = ActiveContext::company();
+
+abort_if(
+    ! $supplier || ! $access->canAccess($order, $supplier),
+    404
+);
 
 
 
@@ -170,7 +177,7 @@ class ManufacturerOrderController extends Controller
         $lastAddress = OrderItemShipment::where('order_id', $order->id)->first();
     
 
-        return view('dashboard.manufacturer.order-show', [
+        return view('dashboard.supplier.order-show', [
             'order' => [
                 'id'       => $order->id,
                 'status'   => $order->status,
@@ -234,7 +241,12 @@ class ManufacturerOrderController extends Controller
         Order $order,
         SupplierOrderAccessService $access
     ) {
-        abort_if(! $access->canAccess($order, auth()->user()->supplier), 403);
+        $supplier = ActiveContext::company();
+
+abort_if(
+    ! $supplier || ! $access->canAccess($order, $supplier),
+    404
+);
 
         $data = $request->validate([
             'status'  => 'required|string',
@@ -260,7 +272,12 @@ class ManufacturerOrderController extends Controller
     ) {
         $order = Order::findOrFail($id);
 
-        abort_if(! $access->canAccess($order, auth()->user()->supplier), 403);
+        $supplier = ActiveContext::company();
+
+abort_if(
+    ! $supplier || ! $access->canAccess($order, $supplier),
+    404
+);
 
         if (in_array($order->status, ['completed', 'cancelled'])) {
             return back()->with('error', 'Cannot update a completed or cancelled order.');
@@ -283,9 +300,18 @@ class ManufacturerOrderController extends Controller
     }
 
 
-    public function storeOrigin(Request $request, OrderItem $item)
+    public function storeOrigin(Request $request, OrderItem $item, ActiveContextService $context)
 {
-    $user = auth()->user();
+    $user = $context->user();
+
+    if (!$context->isCompany()) {
+    abort(403);
+}
+
+if ($context->role() !== 'supplier') {
+    abort(403);
+}
+
 
     $request->validate([
     // Адрес погрузки

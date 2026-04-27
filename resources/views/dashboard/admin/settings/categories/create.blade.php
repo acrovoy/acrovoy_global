@@ -73,8 +73,33 @@
         @endforeach
     </div>
 
+
+@php
+    $types = [
+        'product' => 'Product',
+        'rfq' => 'RFQ',
+        'project' => 'Project',
+    ];
+@endphp
+
+<div class="border rounded-xl p-4 space-y-4">
+    <h3 class="font-medium text-gray-700 text-sm">Category Contexts</h3>
+
+    @foreach($types as $key => $label)
+        <div class="flex items-center gap-2">
+            <input type="checkbox"
+                   name="types[]"
+                   value="{{ $key }}"
+                   id="type-{{ $key }}">
+            <label for="type-{{ $key }}" class="text-gray-700">
+                {{ $label }}
+            </label>
+        </div>
+    @endforeach
+</div>
+
     <div>
-        <label class="block text-gray-700">Category Type</label>
+        <label class="block text-gray-700">OLD Category Type</label>
         <select name="type" class="mt-1 block w-full border-gray-300 rounded">
             <option value="product" @selected(old('type') == 'product')>Product</option>
             <option value="rfq" @selected(old('type') == 'rfq')>RFQ/Project</option>

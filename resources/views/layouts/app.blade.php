@@ -103,6 +103,12 @@
         @yield('content')
     </main>
 
+
+                                                        {{-- ДЕБАГ БАР --}}
+                                                    <x-debug.active-context-panel />
+
+
+    
     @include('layouts.footer')
 
 

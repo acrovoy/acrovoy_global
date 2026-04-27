@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Product;
 
 class CategorySelectorController extends Controller
 {
@@ -78,24 +79,57 @@ public function attributes($categoryId)
 {
     $category = Category::findOrFail($categoryId);
 
-    $attributes = $category->attributes()
-    ->with(['translations', 'options.translations'])
-    ->orderBy('category_attributes.sort_order')
-    ->get(['attributes.id', 'attributes.type']);
+    $productId = request()->query('product_id');
+    $product = null;
 
-$attributes = $attributes->map(fn($attr) => [
-    'id' => $attr->id,
-    'name' => $attr->translation()?->name ?? '—',
-    'type' => $attr->type,
-    'options' => $attr->options
-        ? collect($attr->options)->map(fn($o) => [
-            'value' => $o->id,
-            'label' => $o->translatedValue(), // <-- вот тут исправлено
-        ])->toArray()
-        : null,
-    'is_required' => $attr->pivot->is_required ?? false,
-    'multi_locale_input' => $attr->type === 'text',
-]);
+    if ($productId) {
+        $product = Product::with([
+            'attributeValues.translations',
+            'attributeValues.options.option.translations',
+        ])->find($productId);
+    }
+
+    $attributes = $category->attributes()
+        ->with(['translations', 'options.translations'])
+        ->orderBy('category_attributes.sort_order')
+        ->get(['attributes.id', 'attributes.type', 'attributes.unit']);
+
+    $attributes = $attributes->map(function ($attr) use ($product) {
+        $value = null;
+
+        if ($product) {
+            $pav = $product->attributeValues->firstWhere('attribute_id', $attr->id);
+
+            if ($pav) {
+                if ($attr->type === 'multiselect') {
+                    $value = $pav->options->map(fn($option) => $option->attribute_option_id)->toArray();
+                } elseif ($attr->type === 'select') {
+                    $value = $pav->options->first()?->attribute_option_id;
+                } elseif ($attr->type === 'boolean') {
+                    $value = (int) ($pav->translations->firstWhere('locale', app()->getLocale())?->value ?? $pav->translations->first()?->value);
+                } else {
+                    $value = $pav->translations->firstWhere('locale', app()->getLocale())?->value
+                        ?? $pav->translations->first()?->value;
+                }
+            }
+        }
+
+        return [
+            'id' => $attr->id,
+            'name' => $attr->translation()?->name ?? '—',
+            'type' => $attr->type,
+            'unit' => $attr->unit,
+            'options' => $attr->options
+                ? collect($attr->options)->map(fn($o) => [
+                    'value' => $o->id,
+                    'label' => $o->translatedValue(),
+                ])->toArray()
+                : null,
+            'is_required' => $attr->pivot->is_required ?? false,
+            'multi_locale_input' => $attr->type === 'text',
+            'value' => $value,
+        ];
+    });
 
     return response()->json($attributes);
 }
