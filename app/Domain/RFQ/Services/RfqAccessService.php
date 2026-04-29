@@ -5,98 +5,99 @@ namespace App\Domain\RFQ\Services;
 use App\Domain\RFQ\Models\Rfq;
 use App\Domain\RFQ\Models\RfqParticipant;
 use App\Services\Company\ActiveContextService;
+use App\Models\Supplier;
 
 class RfqAccessService
 {
+    public function __construct(
+        private ActiveContextService $context
+    ) {}
+
     /**
      * VIEW ACCESS (WORKSPACE)
      */
-    public function canViewRfq(
-        Rfq $rfq,
-        array $context,
-        int $userId
-    ): bool
-    {
-        /**
-         * 1. BUYER OWNER (personal or company)
-         */
-        if ($rfq->created_by === $userId) {
-            return true;
-        }
+    public function canViewRfq(Rfq $rfq, int $userId): bool
+{
+    $context = $this->context;
 
-        if ($this->isBuyerCompanyOwner($rfq, $context)) {
-            return true;
-        }
+    // 1. owner
+    if ($rfq->created_by === $userId) {
+        return true;
+    }
 
-        /**
-         * 2. PUBLIC RFQ (future-ready)
-         */
-        if ($rfq->visibility_type === 'public') {
-            return true;
-        }
+    // 2. buyer company owner
+    if ($this->isBuyerCompanyOwner($rfq)) {
+        return true;
+    }
 
-        /**
-         * 3. SUPPLIER ACCESS VIA PARTICIPATION
-         */
-        if ($this->isSupplierParticipant($rfq, $context)) {
-            return true;
-        }
+    // 3. public
+    if ($rfq->visibility_type === 'public') {
+        return true;
+    }
 
+    // 4. supplier participant
+    if ($this->isSupplierParticipant($rfq)) {
+        return true;
+    }
+
+    return false;
+}
+
+    /**
+     * SUPPLIER FEED
+     */
+   public function getAvailableRfqsForSupplier()
+{
+    if (!$this->context->isCompany()) {
+        return collect();
+    }
+
+    $supplierId = $this->context->supplierId();
+
+    if (!$supplierId) {
+        return collect();
+    }
+
+    return Rfq::query()
+        ->where('visibility_type', 'public')
+        ->orWhereHas('participants', function ($q) use ($supplierId) {
+
+            $q->where('participant_type', Supplier::class)
+              ->where('participant_id', $supplierId)
+              ->whereIn('status', ['invited', 'accepted']);
+        })
+        ->latest()
+        ->get();
+}
+    /**
+     * CHECK PARTICIPATION
+     */
+    private function isSupplierParticipant(Rfq $rfq): bool
+{
+    $supplierId = $this->context->supplierId();
+
+    if (!$supplierId) {
         return false;
     }
 
-    /**
-     * SUPPLIER LIST ACCESS (FEED)
-     */
-    public function getAvailableRfqsForSupplier(
-        array $context,
-        int $userId
-    )
-    {
-        return Rfq::query()
-            ->where(function ($q) use ($context, $userId) {
-
-                $q->where('visibility_type', 'public')
-
-                  ->orWhereHas('participants', function ($p) use ($context) {
-                      $p->where('supplier_id', $context['company_id'] ?? null)
-                        ->where('status', 'invited');
-                  })
-
-                  ->orWhereHas('participants', function ($p) use ($userId) {
-                      $p->where('supplier_id', $userId);
-                  });
-            })
-            ->latest()
-            ->get();
-    }
+    return RfqParticipant::query()
+        ->where('rfq_id', $rfq->id)
+        ->where('participant_type', Supplier::class)
+        ->where('participant_id', $supplierId)
+        ->whereIn('status', ['invited', 'accepted'])
+        ->exists();
+}
 
     /**
-     * CHECK SUPPLIER PARTICIPATION
+     * BUYER OWNER CHECK
      */
-    private function isSupplierParticipant(Rfq $rfq, array $context): bool
-    {
-        if (!isset($context['company_id'])) {
-            return false;
-        }
-
-        return RfqParticipant::query()
-            ->where('rfq_id', $rfq->id)
-            ->where('supplier_id', $context['company_id'])
-            ->whereIn('status', ['invited', 'accepted'])
-            ->exists();
+    private function isBuyerCompanyOwner(Rfq $rfq): bool
+{
+    if (!$this->context->isCompany()) {
+        return false;
     }
 
-    /**
-     * BUYER COMPANY OWNERSHIP
-     */
-    private function isBuyerCompanyOwner(Rfq $rfq, array $context): bool
-    {
-        if (($context['mode'] ?? null) !== 'company') {
-            return false;
-        }
-
-        return $rfq->buyer_id === ($context['company_id'] ?? null)
-            && $rfq->buyer_type === ($context['company_type'] ?? null);
-    }
+    return $rfq->buyer_id === $this->context->id()
+        && $rfq->buyer_type === $this->context->type();
+}
 }

@@ -1,6 +1,6 @@
-{{-- TABS --}}
-<div class="mb-5 border-b border-gray-200">
+{{-- BUYER TABS --}}
 
+<div class="mb-5 border-b border-gray-200">
     <div class="flex gap-6 text-sm">
 
         @php
@@ -21,7 +21,7 @@
             Requirements
         </a>
 
-        <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants', 'suppliers' => $suppliers, 'categories' => $categories]) }}"
+        <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants']) }}"
            class="pb-2 border-b-2 {{ tabClass($activeTab === 'participants') }}">
             Participants
         </a>
@@ -37,5 +37,4 @@
         </a>
 
     </div>
-
 </div>

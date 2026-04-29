@@ -10,23 +10,48 @@ class RfqOffer extends Model
 
     protected $fillable = [
         'rfq_id',
-        'supplier_id',
+
+        // ✅ polymorphic
+        'participant_type',
+        'participant_id',
+
         'status',
         'total_amount',
     ];
+
+    /*
+    |----------------------------------------------------------
+    | RELATIONS
+    |----------------------------------------------------------
+    */
 
     public function rfq()
     {
         return $this->belongsTo(\App\Domain\RFQ\Models\Rfq::class);
     }
 
-    public function items()
+    /**
+     * Polymorphic participant (Supplier / etc)
+     */
+    public function participant()
     {
-        return $this->hasMany(RfqOfferItem::class, 'offer_id');
+        return $this->morphTo();
     }
 
-    public function participants()
+    /**
+     * Offer versions
+     */
+    public function versions()
     {
-        return $this->hasMany(RfqOfferParticipant::class, 'offer_id');
+        return $this->hasMany(RfqOfferVersion::class, 'rfq_offer_id');
+    }
+
+    /**
+     * Latest version (очень важно для UI)
+     */
+    public function latestVersion()
+    {
+        return $this->hasOne(RfqOfferVersion::class, 'rfq_offer_id')
+            ->latestOfMany('version_number');
     }
 }

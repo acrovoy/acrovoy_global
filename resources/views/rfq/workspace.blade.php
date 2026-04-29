@@ -2,14 +2,29 @@
 
 @section('dashboard-content')
 
+@php
+    $context = app(\App\Services\Company\ActiveContextService::class);
+    $mode = $context->role(); // buyer / supplier
+@endphp
+
 @include('rfq.partials.header', ['rfq' => $rfq])
 
-@include('rfq.partials.tabs', ['rfq' => $rfq, 'activeTab' => $activeTab])
+{{-- 🔥 ROLE-AWARE TABS --}}
+@if($mode === 'buyer')
+    @include('rfq.partials.tabs.buyer', [
+        'rfq' => $rfq,
+        'activeTab' => $activeTab
+    ])
+@else
+    @include('rfq.partials.tabs.supplier', [
+        'rfq' => $rfq,
+        'activeTab' => $activeTab
+    ])
+@endif
 
 <div class="space-y-6">
 
-
-
+    {{-- 🔥 ROLE-AWARE CONTENT --}}
     @switch($activeTab)
 
         @case('overview')

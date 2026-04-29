@@ -11,17 +11,11 @@ class RfqOfferVersion extends Model
     protected $fillable = [
 
         'rfq_offer_id',
-
         'version_number',
-
         'total_price',
-
         'comment',
-
         'is_counter',
-
         'created_by',
-
         'accepted_at'
     ];
 

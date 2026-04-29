@@ -49,9 +49,10 @@ class MenuContext
                 ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
                 ->count();
 
-                $data['acceptedOfferCount'] = RfqOffer::where('supplier_id', $companyId)
-                    ->where('status', 'accepted')
-                    ->count();
+                $data['acceptedOfferCount'] = RfqOffer::where('participant_type', \App\Models\Supplier::class)
+    ->where('participant_id', $companyId)
+    ->where('status', 'accepted')
+    ->count();
             }
 
             // 🔹 LOGISTICS COMPANY LOGIC (готово под будущее)

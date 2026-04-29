@@ -23,7 +23,7 @@
                     </div>
 
                     <div class="text-sm text-gray-500">
-                        {{ ucfirst($rfq->status) }}
+                        {{ $rfq->status->label() }}
                     </div>
                 </div>
 
