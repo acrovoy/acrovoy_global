@@ -55,7 +55,7 @@
 
                 {{-- ID --}}
                 <td class="px-4 py-2 font-mono text-gray-800">
-                    {{ $rfq->id }}
+                    {{ $rfq->public_id }}
                 </td>
 
                 {{-- TITLE --}}

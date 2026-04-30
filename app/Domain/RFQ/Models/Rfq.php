@@ -108,5 +108,20 @@ public function visibilityCategories()
     );
 }
 
+/**
+ * Get human-readable public RFQ identifier.
+ *
+ * Example:
+ * ID: 12 → RFQ-00012
+ *
+ * This is used only for UI/display purposes.
+ * DO NOT use for database relations or logic.
+ *
+ * @return string
+ */
+public function getPublicIdAttribute()
+{
+    return 'RFQ-' . str_pad($this->id, 5, '0', STR_PAD_LEFT);
+}
 
 }

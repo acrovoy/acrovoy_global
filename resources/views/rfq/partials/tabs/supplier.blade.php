@@ -6,7 +6,7 @@
 @php
         function tabClass($active) {
         return $active
-        ? 'bg-black/5'
+        ? 'bg-gray-50'
         : 'bg-white';
         }
         @endphp
@@ -14,13 +14,13 @@
     {{-- OVERVIEW --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
         class="group relative flex justify-between items-center py-3 px-2 rounded-md
-              hover:bg-black/5 transition-all duration-200 {{ tabClass($activeTab === 'overview') }}">
+              hover:bg-gray-50 transition-all duration-200 {{ tabClass($activeTab === 'overview') }}">
 
         <span class="absolute left-0 top-1/2 -translate-y-1/2 h-0 w-0.5 bg-black
                      group-hover:h-5 transition-all duration-200"></span>
 
         <span class="uppercase group-hover:text-black transition">
-            Overview
+            Overview1
         </span>
 
         <span class="group-hover:translate-x-1 transition">
@@ -48,7 +48,7 @@
     {{-- PARTICIPANTS --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants']) }}"
         class="group relative flex justify-between items-center py-3 px-2 rounded-md
-              hover:bg-black/5 transition-all duration-200 {{ tabClass($activeTab === 'participants') }}">
+              hover:bg-gray-50 transition-all duration-200 {{ tabClass($activeTab === 'participants') }}">
 
         <span class="absolute left-0 top-1/2 -translate-y-1/2 h-0 w-0.5 bg-black
                      group-hover:h-5 transition-all duration-200"></span>

@@ -11,7 +11,7 @@
     @forelse($rfqs as $rfq)
 
         <a
-            href="{{ route('supplier.rfq.show', $rfq) }}"
+            href="{{ route('rfqs.workspace', $rfq->id) }}"
             class="block border rounded-lg p-4 mb-3 hover:bg-gray-50 transition"
         >
 

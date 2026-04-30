@@ -2,6 +2,8 @@
 
 @section('dashboard-sidebar')
 
+<aside class="w-full lg:w-1/4 max-w-[320px] flex-shrink-0">
+
 <div class="bg-[#182544] text-white p-6 rounded-xl shadow-lg sticky top-6 font-mono">
 
 
@@ -116,6 +118,8 @@ $cents = round(($total - $dollars) * 100);
 </div>
 
 </div>
+
+</aside>
 
 @endsection
 

@@ -14,59 +14,23 @@
     </a>
 
     {{-- HEADER BAR --}}
-    <div class="mt-3 border border-gray-200 rounded-lg px-5 py-4 shadow-lg bg-gradient-to-b from-white via-gray-50 to-gray-100">
+    <div class="mt-3 border border-gray-200 rounded-lg px-5 py-4 ">
 
         <div class="flex items-start justify-between gap-6">
 
             {{-- LEFT --}}
             <div class="min-w-0 flex-1">
 
-                {{-- TITLE --}}
-                <div class="flex items-center gap-3 flex-wrap">
+               
 
-                    <h1 class="text-lg font-semibold text-gray-900">
-                        RFQ #{{ $rfq->id }}
-                    </h1>
-
-                    <span class="text-xs px-2 py-0.5 rounded-full {{ $rfq->status->badgeClasses() }}">
-                        {{ $rfq->status->label() }}
-                    </span>
-
-                </div>
-
-                {{-- SUBTITLE --}}
-                <div class="text-sm text-gray-600 mt-1">
-                    {{ $rfq->title }}
-                </div>
+                
 
                 {{-- META --}}
                 <div class="flex flex-wrap gap-5 text-xs text-gray-500 mt-2">
 
-                    <div class="flex gap-2">
-                        <span class="text-gray-400">Visibility</span>
-                        <span class="text-gray-800 font-medium">
-                            {{ $rfq->visibility_type->label() }}
-                        </span>
-                    </div>
+                    
 
-                    @if($rfq->closed_at)
-
-                        <div class="flex gap-2">
-                            <span class="text-gray-400">Deadline</span>
-
-                            @if($rfq->closed_at->isFuture())
-                                <span class="text-red-600 font-medium">
-                                    {{ $rfq->closed_at->diffForHumans(null, true) }} left
-                                </span>
-                            @else
-                                <span class="text-gray-500 font-medium">
-                                    Closed
-                                </span>
-                            @endif
-
-                        </div>
-
-                    @endif
+                    
 
                 </div>
 
@@ -90,7 +54,7 @@
                         </summary>
 
                         <div class="text-sm text-gray-600 leading-relaxed mt-2 max-w-2xl">
-                            {{ $rfq->description }}
+                            {!! nl2br(e($rfq->description)) !!}
                         </div>
 
                     </details>

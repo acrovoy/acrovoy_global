@@ -1,5 +1,18 @@
 
+ {{-- BACK --}}
+    <a href="
+        @if($isBuyer ?? false)
+           {{ route('buyer.rfqs.index') }} 
+        @else
+            {{ route('supplier.rfqs.index') }}
+        @endif
+    "
+    class="text-sm text-gray-500 hover:text-gray-900 transition">
+    
+        ← Back to RFQs
+    </a>
 
+    
 <x-alerts />
 
 

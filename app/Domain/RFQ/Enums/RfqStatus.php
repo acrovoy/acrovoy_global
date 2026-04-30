@@ -50,10 +50,10 @@ enum RfqStatus: string
     public function badgeClasses(): string
 {
     return match($this) {
-        self::DRAFT => 'bg-gray-100 text-gray-700',
-        self::PUBLISHED => 'bg-blue-100 text-blue-700',
-        self::IN_NEGOTIATION => 'bg-amber-100 text-amber-700',
-        self::CLOSED => 'bg-zinc-100 text-zinc-700',
+        self::DRAFT => 'uppercase text-gray-700',
+        self::PUBLISHED => ' uppercase text-blue-500',
+        self::IN_NEGOTIATION => 'uppercase text-amber-700',
+        self::CLOSED => 'uppercase text-zinc-700',
     };
 }
 
