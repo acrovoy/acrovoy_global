@@ -24,10 +24,10 @@ class RfqController extends Controller
 
 
         $buyerSnapshotMap = $rfq->attributeValues
-    ->keyBy('attribute_id');
+            ->keyBy('attribute_id');
 
 
-    
+
         $allowedTabs = [
             'overview',
             'requirements',
@@ -70,6 +70,8 @@ class RfqController extends Controller
                 'attributeValues.attribute.options.translations',
                 'attributeValues.options',
             ]);
+
+            
 
             /*
             |--------------------------------------------------------------------------
@@ -157,71 +159,71 @@ class RfqController extends Controller
 
         if ($activeTab === 's-requirements') {
 
-    $rfq->loadMissing([
-        'attributeValues.attribute.options',
-        'attributeValues.options',
-        'customAttributes',
-    ]);
+            $rfq->loadMissing([
+                'attributeValues.attribute.options',
+                'attributeValues.options',
+                
+            ]);
 
-    $supplier = $this->context->supplier();
+            $supplier = $this->context->supplier();
 
-    if (!$supplier) {
-        abort(403);
-    }
+            if (!$supplier) {
+                abort(403);
+            }
 
-    $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
-        ->firstOrCreate([
-            'rfq_id' => $rfq->id,
-            'participant_type' => get_class($supplier),
-            'participant_id' => $supplier->id,
-        ]);
+            $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
+                ->firstOrCreate([
+                    'rfq_id' => $rfq->id,
+                    'participant_type' => get_class($supplier),
+                    'participant_id' => $supplier->id,
+                ]);
 
-    /**
-     * =========================
-     * GET OR CREATE DRAFT VERSION
-     * =========================
-     */
-    $offerVersion = $offer->versions()
-        ->where('status', 'draft')
-        ->orderByDesc('version_number')
-        ->first();
+            /**
+             * =========================
+             * GET OR CREATE DRAFT VERSION
+             * =========================
+             */
+            $offerVersion = $offer->versions()
+                ->where('status', 'draft')
+                ->orderByDesc('version_number')
+                ->first();
 
-    if (!$offerVersion) {
+            if (!$offerVersion) {
 
-        $offerVersion = $offer->versions()->create([
-            'version_number' => ($offer->versions()->max('version_number') ?? 0) + 1,
-            'status' => 'draft',
-            'created_by' => $this->context->user()->id,
-        ]);
+                $offerVersion = $offer->versions()->create([
+                    'version_number' => ($offer->versions()->max('version_number') ?? 0) + 1,
+                    'status' => 'draft',
+                    'created_by' => $this->context->user()->id,
+                ]);
 
-        // важно: сразу загрузить отношения для нового
-        $offerVersion->load(['items.options.translations']);
-    } else {
+                // важно: сразу загрузить отношения для нового
+                $offerVersion->load(['items.options.translations']);
+            } else {
 
-        // важно: reload чтобы не было stale data
-        $offerVersion->load(['items.options.translations']);
-    }
-
-  
+                // важно: reload чтобы не было stale data
+                $offerVersion->load(['items.options.translations']);
+            }
 
 
 
 
 
 
-    /**
-     * =========================
-     * BUILD MAPS (ВАЖНО ДЛЯ BLADE)
-     * =========================
-     */
-    $itemsByRequirement = $offerVersion->items
-        ->whereNotNull('requirement_id')
-        ->keyBy('requirement_id');
 
-    $itemsByAttribute = $offerVersion->items
-        ->whereNotNull('attribute_id')
-        ->keyBy('attribute_id');
-}
+
+            /**
+             * =========================
+             * BUILD MAPS (ВАЖНО ДЛЯ BLADE)
+             * =========================
+             */
+            $itemsByRequirement = $offerVersion->items
+                ->whereNotNull('requirement_id')
+                ->keyBy('requirement_id');
+
+            $itemsByAttribute = $offerVersion->items
+                ->whereNotNull('attribute_id')
+                ->keyBy('attribute_id');
+        }
 
 
         if ($activeTab === 'offers') {
@@ -288,16 +290,16 @@ class RfqController extends Controller
             'selectedCategoryIds' => $selectedCategoryIds,
             'offerVersion' => $offerVersion,
 
-             // 🔥 ВАЖНО: ДОБАВИТЬ MAPS
-    'itemsByRequirement' => $offerVersion?->items
-        ?->whereNotNull('requirement_id')
-        ?->keyBy('requirement_id') ?? collect(),
+            // 🔥 ВАЖНО: ДОБАВИТЬ MAPS
+            'itemsByRequirement' => $offerVersion?->items
+                ?->whereNotNull('requirement_id')
+                ?->keyBy('requirement_id') ?? collect(),
 
-    'itemsByAttribute' => $offerVersion?->items
-        ?->whereNotNull('attribute_id')
-        ?->keyBy('attribute_id') ?? collect(),
+            'itemsByAttribute' => $offerVersion?->items
+                ?->whereNotNull('attribute_id')
+                ?->keyBy('attribute_id') ?? collect(),
 
-        'buyerSnapshotMap' => $buyerSnapshotMap,
+            'buyerSnapshotMap' => $buyerSnapshotMap,
 
 
             'context_mode' => $this->context->mode(),

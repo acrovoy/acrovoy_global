@@ -153,6 +153,9 @@ Route::prefix('supplier')->group(function () {
 
 });
 
+Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])
+    ->name('rfqs.custom-attributes.store');
+
 Route::prefix('dashboard/buyer')
     ->name('buyer.')
     ->group(function () {
@@ -204,6 +207,8 @@ Route::prefix('dashboard/buyer')
 
         Route::post('/', [RfqRequirementController::class, 'store'])
             ->name('rfqs.requirements.store');
+
+            
     });
 
     // =========================

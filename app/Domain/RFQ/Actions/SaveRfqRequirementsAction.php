@@ -17,7 +17,7 @@ class SaveRfqRequirementsAction
     ): void {
 
 
-   
+
         $rfq = Rfq::findOrFail($rfqId);
 
         /*
@@ -56,7 +56,7 @@ class SaveRfqRequirementsAction
         */
 
         $attributes = $attributes ?? [];
-        
+
         foreach ($attributes as $attributeId => $value) {
 
             $attribute = Attribute::find($attributeId);
@@ -114,85 +114,111 @@ class SaveRfqRequirementsAction
 
         /*
 |--------------------------------------------------------------------------
-| CUSTOM ATTRIBUTES (FIXED SYNC LOGIC)
+| CUSTOM ATTRIBUTES
 |--------------------------------------------------------------------------
 */
 
+        $incomingAttributeIds = [];
 
-$existing = $rfq->customAttributes()->get()->keyBy('id');
+        foreach ($customAttributes as $item) {
 
-$incomingIds = [];
-
-foreach ($customAttributes as $item) {
-
-    $id = $item['id'] ?? null;
-
-    /*
-    |--------------------------------
+            /*
+    |--------------------------------------------------------------------------
     | DELETE
-    |--------------------------------
+    |--------------------------------------------------------------------------
     */
-    if (!empty($item['_delete']) && $id) {
+            if (!empty($item['_delete']) && !empty($item['id'])) {
 
- 
+                $attributeId = $item['id'];
 
-        RfqCustomAttribute::where('id', $id)
-            ->where('rfq_id', $rfqId)
-            ->delete();
+                // удалить связь RFQ ↔ value
+                RfqAttributeValue::where('rfq_id', $rfqId)
+                    ->where('attribute_id', $attributeId)
+                    ->delete();
 
-        continue;
-    }
+                // удалить сам custom attribute
+                Attribute::where('id', $attributeId)
+                    ->where('context', 'rfq')
+                    ->where('is_custom', 1)
+                    ->delete();
 
-    $key = $item['key'] ?? null;
-    $val = $item['value'] ?? null;
+                continue;
+            }
 
-    if (!$key || $val === null) {
-        continue;
-    }
+            $key  = $item['key'] ?? null;
+            $type = $item['type'] ?? 'text';
 
-    /*
-    |--------------------------------
-    | UPDATE EXISTING
-    |--------------------------------
+            if (!$key) {
+                continue;
+            }
+
+            /*
+    |--------------------------------------------------------------------------
+    | ATTRIBUTE (RFQ SCOPED)
+    |--------------------------------------------------------------------------
     */
-    if ($id && isset($existing[$id])) {
 
-        $attr = $existing[$id];
+            $attribute = Attribute::updateOrCreate(
+                [
+                    'code' => $key,
+                    'context' => 'rfq',
+                ],
+                [
+                    'type' => $type,
+                    'is_custom' => 1,
+                    'is_system' => 0,
+                ]
+            );
 
-        $attr->update([
-            'key' => $key,
-            'value' => is_array($val) ? json_encode($val) : $val,
-            'type' => $item['type'] ?? 'text',
-        ]);
-
-        $incomingIds[] = $id;
-
-        continue;
-    }
-
-    /*
-    |--------------------------------
-    | CREATE NEW
-    |--------------------------------
+            /*
+    |--------------------------------------------------------------------------
+    | VALUE NORMALIZATION
+    |--------------------------------------------------------------------------
     */
-    $new = RfqCustomAttribute::create([
-        'rfq_id' => $rfqId,
-        'key' => $key,
-        'value' => is_array($val) ? json_encode($val) : $val,
-        'type' => $item['type'] ?? 'text',
-    ]);
 
-    $incomingIds[] = $new->id;
-}
+            $value = $item['value'] ?? null;
 
-/*
-|--------------------------------
-| OPTIONAL CLEANUP SAFETY NET
-|--------------------------------
-*/
-$rfq->customAttributes()
-    ->whereNotIn('id', $incomingIds)
-    ->delete();
+            if (is_array($value)) {
+                $value = json_encode(array_values($value));
+            }
+
+            RfqAttributeValue::updateOrCreate(
+                [
+                    'rfq_id' => $rfqId,
+                    'attribute_id' => $attribute->id,
+                ],
+                [
+                    'value_text' => $type === 'text' ? $value : null,
+                    'value_number' => $type === 'number' ? $value : null,
+                ]
+            );
+
+            /*
+    |--------------------------------------------------------------------------
+    | OPTIONS (SAFE)
+    |--------------------------------------------------------------------------
+    */
+
+            if (in_array($type, ['select', 'multiselect'])) {
+
+                // лучше soft replace, а не delete (если потом понадобится история)
+                $attribute->options()->delete();
+
+                foreach (($item['options'] ?? []) as $opt) {
+
+                    if (!$opt) continue;
+
+                    $attribute->options()->create([
+                        'code' => \Str::slug($opt),
+                    ])->translations()->create([
+                        'locale' => app()->getLocale(),
+                        'value' => $opt,
+                    ]);
+                }
+            }
+
+            $incomingAttributeIds[] = $attribute->id;
+        }
     }
 
     /*

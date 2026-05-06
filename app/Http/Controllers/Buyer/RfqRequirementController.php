@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Buyer;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 use App\Domain\RFQ\Models\Rfq;
 use App\Models\Category;
+use App\Models\Attribute;
+
 
 use App\Domain\RFQ\Actions\SaveRfqRequirementsAction;
 
@@ -175,4 +178,113 @@ class RfqRequirementController extends Controller
 
         return back()->with('success', 'Requirement deleted');
     }
+
+    public function storeCustomAttribute(Request $request, Rfq $rfq)
+{
+    $data = $request->validate([
+        'id' => ['nullable', 'exists:attributes,id'],
+        'key' => ['required', 'string'],
+        'type' => ['required', 'string'],
+        'value' => ['nullable'],
+        'options' => ['nullable', 'array'],
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | SYSTEM CODE (EN SAFE)
+    |--------------------------------------------------------------------------
+    */
+
+    $code = Str::slug(
+        $data['key'],
+        '_'
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATTRIBUTE
+    |--------------------------------------------------------------------------
+    */
+
+    $attribute = Attribute::updateOrCreate(
+        [
+            'id' => $data['id'] ?? null,
+            'context' => 'rfq',
+        ],
+        [
+            'code' => $code,   // 👈 ВАЖНО
+            'type' => $data['type'],
+            'is_custom' => 1,
+            'is_system' => 0,
+        ]
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSLATION (NAME)
+    |--------------------------------------------------------------------------
+    */
+
+    $attribute->translations()->updateOrCreate(
+        [
+            'locale' => app()->getLocale(),
+        ],
+        [
+            'name' => $data['key'],
+        ]
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALUE
+    |--------------------------------------------------------------------------
+    */
+
+    $value = $data['value'];
+
+    if (is_array($value)) {
+        $value = json_encode(array_values($value));
+    }
+
+    RfqAttributeValue::updateOrCreate(
+        [
+            'rfq_id' => $rfq->id,
+            'attribute_id' => $attribute->id,
+        ],
+        [
+            'value_text' => in_array($data['type'], ['text', 'select', 'multiselect'])
+                ? $value
+                : null,
+
+            'value_number' => $data['type'] === 'number'
+                ? $value
+                : null,
+        ]
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | OPTIONS
+    |--------------------------------------------------------------------------
+    */
+
+    if (in_array($data['type'], ['select', 'multiselect'])) {
+
+        $attribute->options()->delete();
+
+        foreach ($data['options'] ?? [] as $opt) {
+
+            if (!$opt) continue;
+
+            $option = $attribute->options()->create();
+
+            $option->translations()->create([
+                'locale' => app()->getLocale(),
+                'value' => $opt,
+            ]);
+        }
+    }
+
+    return back()->with('success', 'Attribute saved');
+}
 }

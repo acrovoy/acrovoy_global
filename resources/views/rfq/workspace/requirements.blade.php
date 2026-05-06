@@ -129,3 +129,83 @@
     @endif
 
 </div>
+
+{{-- DRAWER --}}
+<div id="attribute-drawer"
+    class="fixed right-0 top-0 h-full w-[420px] bg-white shadow-xl z-50
+            transform translate-x-full transition-transform duration-300 p-6">
+
+    <h3 class="text-lg font-semibold mb-4" id="attribute-title">
+        Create attribute
+    </h3>
+
+    <form method="POST" action="{{ route('rfqs.custom-attributes.store', $rfq->id) }}">
+        @csrf
+
+        <input type="hidden" name="id" id="attr-id">
+
+        {{-- TYPE --}}
+        <div class="mb-3">
+            <label class="text-xs text-gray-500">Type</label>
+            <select id="attr-type" name="type"
+                onchange="toggleDrawerOptions()"
+                class="w-full border rounded-lg px-3 py-2 text-sm">
+
+                <option value="text">Text</option>
+                <option value="number">Number</option>
+                <option value="select">Select</option>
+                <option value="multiselect">Multi Select</option>
+
+            </select>
+        </div>
+
+
+        {{-- KEY --}}
+        <div class="mb-3">
+            <label class="text-xs text-gray-500">Code</label>
+            <input type="text" id="attr-key" name="key"
+                class="w-full border rounded-lg px-3 py-2 text-sm">
+        </div>
+
+
+
+        {{-- VALUE --}}
+        <div id="drawer-value" class="mb-3">
+            <label class="text-xs text-gray-500">Value</label>
+            <input type="text" id="attr-value" name="value"
+                class="w-full border rounded-lg px-3 py-2 text-sm">
+        </div>
+
+        {{-- OPTIONS --}}
+        <div id="drawer-options" class="hidden">
+
+            <label class="text-xs text-gray-500">Options</label>
+
+            <div id="options-container" class="space-y-2 mt-1"></div>
+
+            <button type="button"
+                onclick="addDrawerOption()"
+                class="text-xs text-gray-500 mt-2">
+                + Add option
+            </button>
+
+        </div>
+
+        {{-- ACTIONS --}}
+        <div class="flex justify-end gap-2 mt-6">
+
+            <button type="button"
+                onclick="closeAttributeDrawer()"
+                class="px-4 py-2 bg-gray-200 rounded-lg">
+                Cancel
+            </button>
+
+            <button type="submit"
+                class="px-4 py-2 bg-gray-900 text-white rounded-lg">
+                Save
+            </button>
+
+        </div>
+
+    </form>
+</div>

@@ -1,7 +1,7 @@
 {{-- CUSTOM ATTRIBUTES WORKSPACE COMPONENT --}}
 
 @php
-    $existing = $rfq->customAttributes ?? collect();
+$existing = $rfq->attributeValues ?? collect();
 @endphp
 
 <div class="mt-8 pt-6 border-t border-gray-200">
@@ -15,190 +15,211 @@
             </div>
 
             <div class="text-xs text-gray-500">
-                Key / Value pairs for additional RFQ specifications
+                Advanced RFQ attributes (type, options, rules)
             </div>
         </div>
 
         <button type="button"
-                onclick="addCustomAttributeRow()"
-                class="text-sm text-gray-600 hover:text-gray-900">
+            onclick="openAttributeDrawer()"
+            class="text-sm text-gray-600 hover:text-gray-900">
             + Add attribute
         </button>
 
     </div>
 
-    {{-- CONTAINER --}}
-    <div id="custom-attributes-container" class="space-y-3">
+    {{-- LIST --}}
+    <div class="space-y-2">
 
-        {{-- EXISTING FROM DB --}}
-        @foreach($existing as $i => $attr)
+ @foreach($existing as $value)
 
-            <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition flex items-start gap-2 custom-row">
+            @php
+                $attribute = $value->attribute;
+            @endphp
 
-            <input type="hidden"
-                name="custom_attributes[{{ $i }}][id]"
-                value="{{ $attr->id }}">
+            <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 flex items-center justify-between">
 
-                <div class="flex-1 grid grid-cols-2 gap-2">
+                {{-- NAME --}}
+                <div class="text-sm font-medium text-gray-800">
+                    {{ $attribute?->name }}
+                </div>
 
-                    <input type="text"
-                           name="custom_attributes[{{ $i }}][key]"
-                           value="{{ $attr->key }}"
-                           placeholder="Key"
-                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                                  focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+                {{-- VALUE --}}
+                <div class="text-xs text-gray-500">
 
-                    <input type="text"
-                           name="custom_attributes[{{ $i }}][value]"
-                           value="{{ $attr->value }}"
-                           placeholder="Value"
-                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                                  focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+                    @if($attribute->type === 'text' || $attribute->type === 'number')
+                        {{ $value->value_text ?? $value->value_number ?? '—' }}
+
+                    @elseif($attribute->type === 'select')
+
+    {{ $attribute->options
+        ->firstWhere('id', $value->attribute_option_id)
+        ?->translations
+        ->firstWhere('locale', app()->getLocale())
+        ?->value
+        ?? '—'
+    }}
+
+                    @elseif($attribute->type === 'multiselect')
+
+    {{ $value->options
+        ->map(function($opt) {
+            return $opt?->translations
+                ->firstWhere('locale', app()->getLocale())
+                ?->value;
+        })
+        ->filter()
+        ->implode(', ')
+    }}
+                    @else
+                        —
+                    @endif
 
                 </div>
 
-                {{-- DELETE --}}
+                {{-- EDIT --}}
                 <button type="button"
-                        onclick="markCustomAttributeDeleted(this)"
-                        class="text-gray-400 hover:text-red-600 transition text-sm px-2 mt-2">
-                    ✕
+                        onclick="openAttributeDrawer({{ $attribute->id }}, this)"
+                        class="text-xs text-gray-500 hover:text-gray-800">
+                    Edit
                 </button>
-
-                <input type="hidden"
-                       name="custom_attributes[{{ $i }}][_delete]"
-                       value="0">
 
             </div>
 
         @endforeach
 
-
-        {{-- OLD INPUTS (validation errors) --}}
-        @if(old('custom_attributes'))
-
-            @foreach(old('custom_attributes') as $i => $item)
-
-                <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition flex items-start gap-2 custom-row">
-
-                    <div class="flex-1 grid grid-cols-2 gap-2">
-
-                        <input type="text"
-                               name="custom_attributes[{{ $i }}][key]"
-                               value="{{ $item['key'] ?? '' }}"
-                               placeholder="Key"
-                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                                      focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
-
-                        <input type="text"
-                               name="custom_attributes[{{ $i }}][value]"
-                               value="{{ $item['value'] ?? '' }}"
-                               placeholder="Value"
-                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                                      focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
-
-                    </div>
-
-                    <button type="button"
-                            onclick="markCustomAttributeDeleted(this)"
-                            class="text-gray-400 hover:text-red-600 transition text-sm px-2 mt-2">
-                        ✕
-                    </button>
-
-                    <input type="hidden"
-                           name="custom_attributes[{{ $i }}][_delete]"
-                           value="0">
-
-                </div>
-
-            @endforeach
-
-        @endif
-
-    </div>
+</div>
 </div>
 
-{{-- JS --}}
-@once
+
+{{-- OVERLAY --}}
+<div id="attribute-overlay"
+    class="fixed inset-0 bg-black/40 hidden z-40"></div>
+
+
+
+
 <script>
+    let optionIndex = 0;
 
-let customIndex = 1000;
+    /*
+    |--------------------------------------------------------------------------
+    | OPEN DRAWER (CREATE / EDIT)
+    |--------------------------------------------------------------------------
+    */
+    function openAttributeDrawer(id = null, btn = null) {
 
-/*
-|--------------------------------------------------------------------------
-| ADD NEW ROW
-|--------------------------------------------------------------------------
-*/
-function addCustomAttributeRow() {
+        document.getElementById('attribute-overlay').classList.remove('hidden');
+        document.getElementById('attribute-drawer').classList.remove('translate-x-full');
 
-    const container = document.getElementById('custom-attributes-container');
+        const title = document.getElementById('attribute-title');
 
-    const row = document.createElement('div');
-    row.className = "p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition flex items-start gap-2 custom-row";
+        // reset form
+        document.getElementById('attr-id').value = '';
+        document.getElementById('attr-key').value = '';
+        document.getElementById('attr-value').value = '';
+        document.getElementById('attr-type').value = 'text';
 
-    row.innerHTML = `
-        <div class="flex-1 grid grid-cols-2 gap-2">
+        document.getElementById('options-container').innerHTML = '';
 
-            <input type="text"
-                   name="custom_attributes[${customIndex}][key]"
-                   placeholder="Key"
-                   class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                          focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+        optionIndex = 0;
 
-            <input type="text"
-                   name="custom_attributes[${customIndex}][value]"
-                   placeholder="Value"
-                   class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                          focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+        /*
+        |--------------------------------------------------------------------------
+        | EDIT MODE (READ FROM ROW)
+        |--------------------------------------------------------------------------
+        */
+        if (btn) {
 
-        </div>
+            const row = btn.closest('.custom-row');
 
-        <button type="button"
-                onclick="removeCustomRow(this)"
-                class="text-gray-400 hover:text-red-600 transition text-sm px-2 mt-2">
-            ✕
-        </button>
+            const key = row.querySelector('input[name*="[key]"]')?.value ?? '';
+            const type = row.querySelector('select[name*="[type]"]')?.value ?? 'text';
+            const value = row.querySelector('input[name*="[value]"]')?.value ?? '';
 
-        <input type="hidden"
-               name="custom_attributes[${customIndex}][_delete]"
-               value="0">
-    `;
+            document.getElementById('attr-key').value = key;
+            document.getElementById('attr-type').value = type;
+            document.getElementById('attr-value').value = value;
 
-    container.appendChild(row);
+            // options
+            const optionInputs = row.querySelectorAll('input[name*="[options]"]');
 
-    customIndex++;
-}
+            optionInputs.forEach(opt => {
+                if (opt.value.trim() !== '') {
+                    addDrawerOption(opt.value);
+                }
+            });
 
-/*
-|--------------------------------------------------------------------------
-| SOFT DELETE (DB rows)
-|--------------------------------------------------------------------------
-*/
-function markCustomAttributeDeleted(btn) {
+            title.innerText = 'Edit attribute';
 
+        } else {
 
+            title.innerText = 'Create attribute';
+        }
 
-    const row = btn.closest('.custom-row');
-
-    const deleteInput = row.querySelector('input[name*="_delete"]');
-
-    if (deleteInput) {
-        deleteInput.value = "1";
+        toggleDrawerOptions();
     }
 
-    // НЕ блокируем pointerEvents
-    // НЕ делаем disabled UI
+    /*
+    |--------------------------------------------------------------------------
+    | CLOSE DRAWER
+    |--------------------------------------------------------------------------
+    */
+    function closeAttributeDrawer() {
+        document.getElementById('attribute-overlay').classList.add('hidden');
+        document.getElementById('attribute-drawer').classList.add('translate-x-full');
+    }
 
-    row.classList.add('opacity-40');
-}
+    /*
+    |--------------------------------------------------------------------------
+    | TOGGLE UI
+    |--------------------------------------------------------------------------
+    */
+    function toggleDrawerOptions() {
 
-/*
-|--------------------------------------------------------------------------
-| REMOVE NEW ROW (not saved yet)
-|--------------------------------------------------------------------------
-*/
-function removeCustomRow(btn) {
-    btn.closest('.custom-row').remove();
-}
+        const type = document.getElementById('attr-type').value;
 
+        const options = document.getElementById('drawer-options');
+        const value = document.getElementById('drawer-value');
+
+        const isSelect = (type === 'select' || type === 'multiselect');
+
+        if (options) options.classList.toggle('hidden', !isSelect);
+        if (value) value.classList.toggle('hidden', isSelect);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADD OPTION
+    |--------------------------------------------------------------------------
+    */
+    function addDrawerOption(val = '') {
+
+        const container = document.getElementById('options-container');
+
+        const row = document.createElement('div');
+        row.className = "flex items-center gap-2";
+
+        row.innerHTML = `
+        <input type="text"
+               name="options[]"
+               value="${val}"
+               class="w-full border rounded px-2 py-1 text-xs">
+
+        <button type="button"
+                onclick="this.parentElement.remove()"
+                class="text-red-500 text-xs">
+            ✕
+        </button>
+    `;
+
+        container.appendChild(row);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | OVERLAY CLOSE
+    |--------------------------------------------------------------------------
+    */
+    document.getElementById('attribute-overlay')
+        .addEventListener('click', closeAttributeDrawer);
 </script>
-@endonce
