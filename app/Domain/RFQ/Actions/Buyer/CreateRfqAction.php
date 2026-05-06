@@ -12,6 +12,8 @@ class CreateRfqAction
 {
     public function execute(CreateRfqData $data, $buyer, $buyerType, int $createdBy): Rfq
 {
+
+
     return Rfq::create([
         'buyer_type' => $buyerType,
         'buyer_id'   => $buyer->id,
@@ -21,6 +23,7 @@ class CreateRfqAction
         'description' => $data->description,
         'type' => $data->type,
         'status' => RfqStatus::DRAFT,
+        'closed_at' => $data->closed_at,
     ]);
 }
 }

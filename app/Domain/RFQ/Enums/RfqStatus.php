@@ -57,5 +57,20 @@ enum RfqStatus: string
     };
 }
 
+public function isDraft(): bool
+{
+    return $this === self::DRAFT;
+}
+
+public function isPublished(): bool
+{
+    return $this === self::PUBLISHED;
+}
+
+public function isClosed(): bool
+{
+    return $this === self::CLOSED;
+}
+
 
 }

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
 use App\Models\Supplier;
+use App\Domain\Negotiation\Models\RfqOffer;
 
 
 class RfqController extends Controller
@@ -21,9 +22,16 @@ class RfqController extends Controller
     {
         $this->authorize('view', $rfq);
 
+
+        $buyerSnapshotMap = $rfq->attributeValues
+    ->keyBy('attribute_id');
+
+
+    
         $allowedTabs = [
             'overview',
             'requirements',
+            's-requirements',
             'participants',
             'offers',
             'audit',
@@ -41,9 +49,10 @@ class RfqController extends Controller
         |--------------------------------------------------------------------------
         */
 
-       $rfq->loadMissing([
-    'participants.participant', 'visibilityCategories',
-]);
+        $rfq->loadMissing([
+            'participants.participant',
+            'visibilityCategories',
+        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -144,6 +153,77 @@ class RfqController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        $offerVersion = null;
+
+        if ($activeTab === 's-requirements') {
+
+    $rfq->loadMissing([
+        'attributeValues.attribute.options',
+        'attributeValues.options',
+        'customAttributes',
+    ]);
+
+    $supplier = $this->context->supplier();
+
+    if (!$supplier) {
+        abort(403);
+    }
+
+    $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
+        ->firstOrCreate([
+            'rfq_id' => $rfq->id,
+            'participant_type' => get_class($supplier),
+            'participant_id' => $supplier->id,
+        ]);
+
+    /**
+     * =========================
+     * GET OR CREATE DRAFT VERSION
+     * =========================
+     */
+    $offerVersion = $offer->versions()
+        ->where('status', 'draft')
+        ->orderByDesc('version_number')
+        ->first();
+
+    if (!$offerVersion) {
+
+        $offerVersion = $offer->versions()->create([
+            'version_number' => ($offer->versions()->max('version_number') ?? 0) + 1,
+            'status' => 'draft',
+            'created_by' => $this->context->user()->id,
+        ]);
+
+        // важно: сразу загрузить отношения для нового
+        $offerVersion->load(['items.options.translations']);
+    } else {
+
+        // важно: reload чтобы не было stale data
+        $offerVersion->load(['items.options.translations']);
+    }
+
+  
+
+
+
+
+
+
+    /**
+     * =========================
+     * BUILD MAPS (ВАЖНО ДЛЯ BLADE)
+     * =========================
+     */
+    $itemsByRequirement = $offerVersion->items
+        ->whereNotNull('requirement_id')
+        ->keyBy('requirement_id');
+
+    $itemsByAttribute = $offerVersion->items
+        ->whereNotNull('attribute_id')
+        ->keyBy('attribute_id');
+}
+
+
         if ($activeTab === 'offers') {
 
             $rfq->loadMissing([
@@ -172,27 +252,27 @@ class RfqController extends Controller
         |--------------------------------------------------------------------------
         */
 
-$suppliers = Supplier::query()
-    ->orderBy('name')
-    ->limit(50)
-    ->get();
+        $suppliers = Supplier::query()
+            ->orderBy('name')
+            ->limit(50)
+            ->get();
 
-    $allCategories = Category::query()
-    ->where('is_selectable', 1)
-    ->where('is_leaf', 1)
-    ->orderBy('name')
-    ->get();
+        $allCategories = Category::query()
+            ->where('is_selectable', 1)
+            ->where('is_leaf', 1)
+            ->orderBy('name')
+            ->get();
 
 
-    $participants = $rfq->participants()
-    ->active()
-    ->with('participant')
-    ->latest('invited_at')
-    ->get();
+        $participants = $rfq->participants()
+            ->active()
+            ->with('participant')
+            ->latest('invited_at')
+            ->get();
 
-  $selectedCategoryIds = $rfq->visibilityCategories
-    ->pluck('id')
-    ->toArray();
+        $selectedCategoryIds = $rfq->visibilityCategories
+            ->pluck('id')
+            ->toArray();
 
         return view('rfq.workspace', [
 
@@ -206,7 +286,19 @@ $suppliers = Supplier::query()
             'allCategories' => $allCategories,
             'participants' => $participants,
             'selectedCategoryIds' => $selectedCategoryIds,
-            
+            'offerVersion' => $offerVersion,
+
+             // 🔥 ВАЖНО: ДОБАВИТЬ MAPS
+    'itemsByRequirement' => $offerVersion?->items
+        ?->whereNotNull('requirement_id')
+        ?->keyBy('requirement_id') ?? collect(),
+
+    'itemsByAttribute' => $offerVersion?->items
+        ?->whereNotNull('attribute_id')
+        ?->keyBy('attribute_id') ?? collect(),
+
+        'buyerSnapshotMap' => $buyerSnapshotMap,
+
 
             'context_mode' => $this->context->mode(),
             'context_role' => $this->context->role(),

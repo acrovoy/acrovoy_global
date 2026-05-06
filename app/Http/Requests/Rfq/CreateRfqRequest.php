@@ -17,6 +17,7 @@ class CreateRfqRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'type' => ['required', 'string'],
+            'closed_at' => ['nullable', 'date'],
         ];
     }
 }

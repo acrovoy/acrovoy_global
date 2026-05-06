@@ -50,6 +50,7 @@ use App\Http\Controllers\Buyer\ProjectItemController;
 use App\Http\Controllers\Rfq\RfqController;
 use App\Http\Controllers\Rfq\RfqOfferController;
 
+
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminSellersController;
@@ -175,6 +176,14 @@ Route::prefix('dashboard/buyer')
     Route::put('/rfqs/{rfq}', [BuyerRfqController::class, 'update'])
         ->name('rfqs.update');
 
+
+         // =========================
+    // WORKSPACE / DRAWER UPDATE
+    // =========================
+    
+    Route::patch('/rfqs/{rfq}/field', [BuyerRfqController::class, 'updateField'])
+    ->name('rfqs.update.field');
+
     // =========================
     // WORKSPACE ENTRY (SHELL)
     // =========================
@@ -268,6 +277,29 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
     Route::post('/company-profile', [ManufacturerController::class, 'updateCompany'])
         ->name('company.update');
+
+
+
+           /*
+    |--------------------------------------------------------------------------
+    | RFQ SUPPLIER WORKSPACE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('rfqs')->name('rfqs.')->group(function () {
+
+       
+      
+       Route::post('/{rfq}/offer/autosave', [RfqOfferController::class, 'autosave'])
+    ->name('offer.autosave');
+
+    Route::post(
+    '/{rfq}/custom-autosave',
+    [RfqOfferController::class, 'customAutosave']
+);
+
+
+    });
 
 
 });

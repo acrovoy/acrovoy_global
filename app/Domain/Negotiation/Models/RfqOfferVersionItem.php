@@ -14,6 +14,7 @@ class RfqOfferVersionItem extends Model
         'offer_item_id',
 
         'requirement_id',
+        'attribute_id',
 
         'unit_price',
         'quantity',
@@ -42,12 +43,15 @@ class RfqOfferVersionItem extends Model
         return $this->belongsTo(RfqOfferItem::class, 'offer_item_id');
     }
 
-
-    public function requirement()
+ public function options()
     {
-        return $this->belongsTo(
-            \App\Domain\RFQ\Models\RfqRequirement::class,
-            'requirement_id'
+        return $this->belongsToMany(
+            \App\Models\AttributeOption::class,
+            'rfq_offer_version_item_options',
+            'offer_version_item_id',
+            'option_id'
         );
     }
+    
+   
 }

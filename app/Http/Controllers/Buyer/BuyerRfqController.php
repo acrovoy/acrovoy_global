@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Buyer;
 use App\Http\Controllers\Controller;
 use App\Domain\RFQ\Models\Rfq;
 
+use Illuminate\Http\Request;
+
 use App\Domain\RFQ\DTO\CreateRfqData;
 use App\Domain\RFQ\DTO\UpdateRfqData;
 
@@ -76,6 +78,8 @@ class BuyerRfqController extends Controller
     ActiveContextService $context
 )
 {
+
+
     /**
      * RESOLVE BUYER OWNER FROM CONTEXT
      */
@@ -183,4 +187,30 @@ class BuyerRfqController extends Controller
         403
     );
 }
+
+public function updateField(Request $request, Rfq $rfq)
+{
+    $field = $request->input('field');
+
+    match ($field) {
+        'title' => $rfq->update([
+            'title' => $request->title
+        ]),
+
+        'description' => $rfq->update([
+            'description' => $request->description
+        ]),
+
+        'deadline' => $rfq->update([
+            'closed_at' => $request->closed_at
+        ]),
+
+        default => null,
+    };
+
+    return back();
+}
+
+
+
 }

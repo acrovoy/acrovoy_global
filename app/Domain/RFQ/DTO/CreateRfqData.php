@@ -8,14 +8,18 @@ class CreateRfqData
         public readonly string $title,
         public readonly ?string $description,
         public readonly string $type,
+        public readonly ?string $closed_at,
     ) {}
 
     public static function fromArray(array $data): self
     {
+
+ 
         return new self(
             title: $data['title'],
             description: $data['description'] ?? null,
             type: $data['type'],
+            closed_at: $data['closed_at'] ?? null,
         );
     }
 }

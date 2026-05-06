@@ -72,13 +72,13 @@
                     </div>
 
                     <div class="text-sm text-gray-600 mt-2">
-                        Новая модель стола для производства модель модель.
+                        {{ $rfq->title }}
                     </div>
 
                     <div class="text-gray-800/50 text-xs mt-3 flex justify-between pb-1">
                         <div></div>
                         <div>
-                            <span class="text-gray-600/50">Visibility</span>
+                            <span class="text-gray-600/50">Visibility:</span>
 
                             <span class="font-medium">
                                 {{ $rfq->visibility_type->label() }}
@@ -109,40 +109,14 @@
             ])
             @endif
 
-            {{-- PRODUCTS --}}
-            <div class="mt-4">
 
-                <div class="text-xs text-gray-400 uppercase tracking-wide mb-3">
-                    Products in project
-                </div>
 
-                {{-- ITEM --}}
-                @for($i = 1; $i <= 3; $i++)
-                    <div class="flex items-center gap-3 mb-3">
 
-                    <div class="text-sm text-gray-500 w-4">
-                        {{ $i }}
-                    </div>
+        
 
-                    <img src="https://via.placeholder.com/40"
-                        class="w-10 h-10 rounded object-cover">
 
-                    <div>
-                        <div class="text-sm text-gray-800">
-                            Новая модель стола... {{ $i }}
-                        </div>
-                        <div class="text-xs text-gray-400">
-                            Draft
-                        </div>
-                    </div>
 
-            </div>
-            @endfor
-
-            {{-- BUTTON --}}
-            <button class="w-full mt-3 border border-gray-300 rounded-lg py-2 text-sm text-gray-600 hover:bg-gray-50">
-                + Add from catalog
-            </button>
+          
 
         </div>
     </div>
