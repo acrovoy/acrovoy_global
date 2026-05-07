@@ -64,7 +64,7 @@
                     </th>
 
                     <th class="px-5 py-3 text-left font-medium text-gray-600">
-                        Code
+                        Entity Type
                     </th>
 
                     <th class="px-5 py-3 text-left font-medium text-gray-600">
@@ -72,7 +72,7 @@
                     </th>
 
                     <th class="px-5 py-3 text-left font-medium text-gray-600">
-                        Filterable
+                        Custom/System
                     </th>
 
                     <th class="px-5 py-3 text-left font-medium text-gray-600">
@@ -109,7 +109,7 @@
                         {{-- Code --}}
                         <td class="px-5 py-3 text-gray-700">
 
-                            {{ $attribute->code }}
+                            {{ $attribute->entity_type }}
 
                         </td>
 
@@ -124,10 +124,10 @@
 
 
 
-                        {{-- Filterable --}}
-                        <td class="px-5 py-3 text-gray-700">
+                        {{-- Custom/System --}}
+                        <td class="px-5 py-3 {{ $attribute->is_custom ? 'text-blue-700' : 'text-red-700' }}">
 
-                            {{ $attribute->is_filterable ? 'Yes' : 'No' }}
+                            {{ $attribute->is_custom ? 'Custom' : 'System' }}
 
                         </td>
 

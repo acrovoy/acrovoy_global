@@ -12,6 +12,7 @@ use App\Models\Attribute;
 
 
 use App\Domain\RFQ\Actions\SaveRfqRequirementsAction;
+use App\Services\Company\ActiveContextService;
 
 
 use App\Domain\RFQ\Models\RfqAttributeValue;
@@ -87,24 +88,28 @@ class RfqRequirementController extends Controller
     */
     public function store(
         Request $request,
-        SaveRfqRequirementsAction $action
+        SaveRfqRequirementsAction $action,
+        ActiveContextService $context
     ) {
 
-   
+        $buyerType = $context->isPersonal() ? 'App\Models\User' : 'App\Models\Buyer';
+        $buyer = $context->isPersonal()
+            ? auth()->user()
+            : $context->company();
 
         $validated = $request->validate([
-    'rfq_id' => ['required', 'exists:rfqs,id'],
-    'category_id' => ['required', 'exists:categories,id'],
+            'rfq_id' => ['required', 'exists:rfqs,id'],
+            'category_id' => ['required', 'exists:categories,id'],
 
-    'attributes' => ['nullable', 'array'],
+            'attributes' => ['nullable', 'array'],
 
-    'custom_attributes' => ['nullable', 'array'],
-'custom_attributes.*.id' => ['nullable'],
-'custom_attributes.*._delete' => ['nullable'],
-'custom_attributes.*.key' => ['nullable', 'string'],
-'custom_attributes.*.value' => ['nullable'],
-'custom_attributes.*.type' => ['nullable', 'string'],
-]);
+            'custom_attributes' => ['nullable', 'array'],
+            'custom_attributes.*.id' => ['nullable'],
+            'custom_attributes.*._delete' => ['nullable'],
+            'custom_attributes.*.key' => ['nullable', 'string'],
+            'custom_attributes.*.value' => ['nullable'],
+            'custom_attributes.*.type' => ['nullable', 'string'],
+        ]);
 
         $action->execute(
             $validated['rfq_id'],
@@ -179,112 +184,124 @@ class RfqRequirementController extends Controller
         return back()->with('success', 'Requirement deleted');
     }
 
-    public function storeCustomAttribute(Request $request, Rfq $rfq)
-{
-    $data = $request->validate([
-        'id' => ['nullable', 'exists:attributes,id'],
-        'key' => ['required', 'string'],
-        'type' => ['required', 'string'],
-        'value' => ['nullable'],
-        'options' => ['nullable', 'array'],
-    ]);
+    public function storeCustomAttribute(Request $request, Rfq $rfq,
+        ActiveContextService $context)
+    {
 
-    /*
+    $buyerType = $context->isPersonal() ? 'App\Models\User' : 'App\Models\Buyer';
+        $buyer = $context->isPersonal()
+            ? auth()->user()
+            : $context->company();
+
+
+        $data = $request->validate([
+            'id' => ['nullable', 'exists:attributes,id'],
+            'key' => ['required', 'string'],
+            'type' => ['required', 'string'],
+            'value' => ['nullable'],
+            'options' => ['nullable', 'array'],
+        ]);
+
+        /*
     |--------------------------------------------------------------------------
     | SYSTEM CODE (EN SAFE)
     |--------------------------------------------------------------------------
     */
 
-    $code = Str::slug(
-        $data['key'],
-        '_'
-    );
+        $code = Str::slug(
+            $data['key'],
+            '_'
+        );
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | ATTRIBUTE
     |--------------------------------------------------------------------------
     */
 
-    $attribute = Attribute::updateOrCreate(
-        [
-            'id' => $data['id'] ?? null,
-            'context' => 'rfq',
-        ],
-        [
-            'code' => $code,   // 👈 ВАЖНО
-            'type' => $data['type'],
-            'is_custom' => 1,
-            'is_system' => 0,
-        ]
-    );
+        $attribute = Attribute::updateOrCreate(
+            [
+                'id' => $data['id'] ?? null,
+                'entity_type' => 'rfq',
+                'context' => 'requirement',
+            ],
+            [
+                'code' => $code,   // 👈 ВАЖНО
+                'type' => $data['type'],
+                'is_custom' => 1,
+                'is_system' => 0,
+                'owner_type' =>$buyerType,
+                'owner_id' => $buyer->id,
+                'created_by' => auth()->id(),
+            ]
+        );
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | TRANSLATION (NAME)
     |--------------------------------------------------------------------------
     */
 
-    $attribute->translations()->updateOrCreate(
-        [
-            'locale' => app()->getLocale(),
-        ],
-        [
-            'name' => $data['key'],
-        ]
-    );
+        $attribute->translations()->updateOrCreate(
+            [
+                'locale' => app()->getLocale(),
+            ],
+            [
+                'name' => $data['key'],
+            ]
+        );
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | VALUE
     |--------------------------------------------------------------------------
     */
 
-    $value = $data['value'];
+        $value = $data['value'];
 
-    if (is_array($value)) {
-        $value = json_encode(array_values($value));
-    }
+        if (is_array($value)) {
+            $value = json_encode(array_values($value));
+        }
 
-    RfqAttributeValue::updateOrCreate(
-        [
-            'rfq_id' => $rfq->id,
-            'attribute_id' => $attribute->id,
-        ],
-        [
-            'value_text' => in_array($data['type'], ['text', 'select', 'multiselect'])
-                ? $value
-                : null,
+        RfqAttributeValue::updateOrCreate(
+            [
+                'rfq_id' => $rfq->id,
+                'attribute_id' => $attribute->id,
+            ],
+            [
+                'value_text' => in_array($data['type'], ['text', 'select', 'multiselect'])
+                    ? $value
+                    : null,
 
-            'value_number' => $data['type'] === 'number'
-                ? $value
-                : null,
-        ]
-    );
+                'value_number' => $data['type'] === 'number'
+                    ? $value
+                    : null,
+            ]
+        );
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | OPTIONS
     |--------------------------------------------------------------------------
     */
 
-    if (in_array($data['type'], ['select', 'multiselect'])) {
+        if (in_array($data['type'], ['select', 'multiselect'])) {
 
-        $attribute->options()->delete();
+            $attribute->options()->delete();
 
-        foreach ($data['options'] ?? [] as $opt) {
+            foreach ($data['options'] ?? [] as $opt) {
 
-            if (!$opt) continue;
+                if (!$opt) continue;
 
-            $option = $attribute->options()->create();
+                $option = $attribute->options()->create();
 
-            $option->translations()->create([
-                'locale' => app()->getLocale(),
-                'value' => $opt,
-            ]);
+                $option->translations()->create([
+                    'locale' => app()->getLocale(),
+                    'value' => $opt,
+                ]);
+            }
         }
-    }
 
-    return back()->with('success', 'Attribute saved');
-}
+        return back()->with('success', 'Attribute saved');
+    }
 }

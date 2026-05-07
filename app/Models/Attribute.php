@@ -9,11 +9,20 @@ class Attribute extends Model
 {
     protected $fillable = [
         'code',
+        'entity_type',
+        'context',
+        'group_name',
         'type',
         'unit',
         'is_required',
         'is_filterable',
+        'is_offerable',
+        'is_custom',
+        'owner_type',
+        'owner_id',
+        'created_by',
         'sort_order',
+        'meta',
     ];
 
     protected $casts = [

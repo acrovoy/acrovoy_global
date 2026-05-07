@@ -44,10 +44,18 @@ class AttributeController extends Controller
         $attribute = Attribute::create([
             'code' => $request->code,
             'type' => $request->type,
+            'entity_type' => $request->entity_type,
+            'context' => $request->context,
+            'group_name' => $request->group_name,
             'unit' => $request->unit,
             'is_required' => $request->boolean('is_required'),
             'is_filterable' => $request->boolean('is_filterable'),
+            'is_offerable' => $request->boolean('is_offerable'),
+            'is_custom' => $request->boolean('is_custom'),
+            'owner_type' => NULL,
+            'owner_id' => NULL,
             'sort_order' => $request->sort_order ?? 0,
+            'created_by' => auth()->id(),
         ]);
 
 
@@ -92,10 +100,18 @@ class AttributeController extends Controller
         $attribute->update([
             'code' => $request->code,
             'type' => $request->type,
+            'entity_type' => $request->entity_type,
+            'context' => $request->context,
+            'group_name' => $request->group_name,
             'unit' => $request->unit,
             'is_required' => $request->boolean('is_required'),
             'is_filterable' => $request->boolean('is_filterable'),
+            'is_offerable' => $request->boolean('is_offerable'),
+            'is_custom' => $request->boolean('is_custom'),
+            'owner_type' => $request->owner_type,
+            'owner_id' => $request->owner_id,
             'sort_order' => $request->sort_order ?? 0,
+            
         ]);
 
 

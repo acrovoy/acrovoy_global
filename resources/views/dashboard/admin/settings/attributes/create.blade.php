@@ -42,6 +42,64 @@ $languages = Language::where('is_active', true)
 
 @endphp
 
+{{-- Entity Type --}}
+
+<div>
+
+    <label class="block font-medium mb-1">
+        Entity Type
+    </label>
+
+    <select
+        name="entity_type"
+        class="w-full border border-gray-300 rounded px-3 py-2"
+    >
+        <option value="">Select entity type</option>
+
+        <option value="rfq">
+            RFQ
+        </option>
+
+        <option value="offer">
+            Offer
+        </option>
+
+        <option value="contract">
+            Contract
+        </option>
+
+        <option value="company">
+            Company
+        </option>
+
+        <option value="user">
+            User
+        </option>
+
+    </select>
+
+</div>
+
+
+{{-- Context --}}
+
+<div>
+
+    <label class="block font-medium mb-1">
+        Context
+    </label>
+
+    <input
+        type="text"
+        name="context"
+        value="{{ old('context', $attribute->context ?? '') }}"
+        class="w-full border border-gray-300 rounded px-3 py-2"
+        required
+    >
+
+</div>
+
+
 
 {{-- Translations --}}
 
@@ -182,6 +240,36 @@ value="1"
 Filterable
 
 </label>
+
+
+<label class="flex items-center gap-2">
+
+    <input
+        type="checkbox"
+        name="is_custom"
+        value="1"
+        {{ old('is_custom', $attribute->is_custom ?? false) ? 'checked' : '' }}
+    >
+
+    Custom
+
+</label>
+
+
+<label class="flex items-center gap-2">
+
+    <input
+        type="checkbox"
+        name="is_offerable"
+        value="1"
+        {{ old('is_offerable', $attribute->is_offerable ?? false) ? 'checked' : '' }}
+    >
+
+    Offerable
+
+</label>
+
+
 
 </div>
 

@@ -4,259 +4,402 @@
 
 <div class="flex flex-col gap-6 max-w-3xl">
 
-<x-alerts />
+    <x-alerts />
 
 
-{{-- Header --}}
+    {{-- Header --}}
 
-<div>
+    <div>
 
-<h2 class="text-2xl font-semibold text-gray-900">
-Редактировать Attribute
-</h2>
+        <h2 class="text-2xl font-semibold text-gray-900">
+            Редактировать атрибут: {{ $attribute->code }}
+            <span class="px-5 py-3 text-sm {{ $attribute->is_custom ? 'text-blue-700' : 'text-red-700' }}">
 
-<p class="text-sm text-gray-500 mt-1">
-Изменение характеристики товара
-</p>
+                {{ $attribute->is_custom ? 'Custom' : 'System' }}
 
-</div>
+            </span>
+        </h2>
 
+        <p class="text-sm text-gray-500 mt-1">
+            Изменение характеристики товара
+        </p>
 
-
-{{-- Form Card --}}
-
-<div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-
-<form
-action="{{ route('admin.settings.attributes.update',$attribute->id) }}"
-method="POST"
-class="p-6 flex flex-col gap-6"
->
-
-@csrf
-@method('PUT')
-
-
-@php
-
-use App\Models\Language;
-
-$languages = Language::where('is_active', true)
-->orderBy('sort_order')
-->get();
-
-$translations = $attribute
-->translations
-->pluck('name','locale');
-
-@endphp
+    </div>
 
 
 
-{{-- Translations --}}
+    {{-- Form Card --}}
 
-<div class="border rounded-xl p-4 space-y-4">
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
 
-<h3 class="font-medium text-gray-700 text-sm">
-Translations
-</h3>
+        <form
+            action="{{ route('admin.settings.attributes.update',$attribute->id) }}"
+            method="POST"
+            class="p-6 flex flex-col gap-6">
+
+            @csrf
+            @method('PUT')
 
 
-@foreach($languages as $lang)
+            @php
+
+            use App\Models\Language;
+
+            $languages = Language::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
+            $translations = $attribute
+            ->translations
+            ->pluck('name','locale');
+
+            @endphp
+
+
+            {{-- Entity Type --}}
 
 <div>
 
-<label class="block text-sm text-gray-600 mb-1">
-Name ({{ strtoupper($lang->code) }})
-</label>
+    <label class="block font-medium mb-1">
+        Entity Type
+    </label>
 
-<input
-type="text"
-name="translations[{{ $lang->code }}]"
-value="{{ old('translations.' . $lang->code,
-$translations[$lang->code] ?? '') }}"
-class="w-full border border-gray-300 rounded px-3 py-2"
->
+    <select
+        name="entity_type"
+        class="w-full border border-gray-300 rounded px-3 py-2"
+    >
 
-</div>
+        <option value="">
+            Select entity type
+        </option>
 
-@endforeach
+        <option
+            value="rfq"
+            @selected(old('entity_type', $attribute->entity_type ?? '') === 'rfq')
+        >
+            RFQ
+        </option>
 
-</div>
+        <option
+            value="offer"
+            @selected(old('entity_type', $attribute->entity_type ?? '') === 'offer')
+        >
+            Offer
+        </option>
 
+        <option
+            value="contract"
+            @selected(old('entity_type', $attribute->entity_type ?? '') === 'contract')
+        >
+            Contract
+        </option>
 
+        <option
+            value="company"
+            @selected(old('entity_type', $attribute->entity_type ?? '') === 'company')
+        >
+            Company
+        </option>
 
-{{-- Code --}}
+        <option
+            value="user"
+            @selected(old('entity_type', $attribute->entity_type ?? '') === 'user')
+        >
+            User
+        </option>
 
-<div>
-
-<label class="block font-medium mb-1">
-Code
-</label>
-
-<input
-type="text"
-name="code"
-value="{{ old('code',$attribute->code) }}"
-class="w-full border border-gray-300 rounded px-3 py-2"
-required
->
-
-</div>
-
-
-
-{{-- Type --}}
-
-<div>
-
-<label class="block font-medium mb-1">
-Type
-</label>
-
-<select
-name="type"
-class="w-full border border-gray-300 rounded px-3 py-2"
-required
->
-
-<option value="text"
-@if($attribute->type=='text') selected @endif>
-Text
-</option>
-
-
-<option value="number"
-@if($attribute->type=='number') selected @endif>
-Number
-</option>
-
-
-<option value="select"
-@if($attribute->type=='select') selected @endif>
-Select
-</option>
-
-
-<option value="multiselect"
-@if($attribute->type=='multiselect') selected @endif>
-Multiselect
-</option>
-
-
-<option value="boolean"
-@if($attribute->type=='boolean') selected @endif>
-Boolean
-</option>
-
-</select>
+    </select>
 
 </div>
 
+            {{-- Context --}}
 
+            <div>
 
-{{-- Unit --}}
+                <label class="block font-medium mb-1">
+                    Context
+                </label>
 
-<div>
+                <input
+                    type="text"
+                    name="context"
+                    value="{{ old('context',$attribute->context) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    required>
 
-<label class="block font-medium mb-1">
-Unit
-</label>
-
-<input
-type="text"
-name="unit"
-value="{{ old('unit',$attribute->unit) }}"
-class="w-full border border-gray-300 rounded px-3 py-2"
->
-
-</div>
-
-
-
-{{-- Flags --}}
-
-<div class="flex gap-6">
-
-<label class="flex items-center gap-2">
-
-<input
-type="checkbox"
-name="is_required"
-value="1"
-{{ old('is_required',$attribute->is_required) ? 'checked' : '' }}
->
-
-Required
-
-</label>
-
-
-<label class="flex items-center gap-2">
-
-<input
-type="checkbox"
-name="is_filterable"
-value="1"
-{{ old('is_filterable',$attribute->is_filterable) ? 'checked' : '' }}
->
-
-Filterable
-
-</label>
-
-</div>
+            </div>
 
 
 
-{{-- Sort Order --}}
+            {{-- Translations --}}
 
-<div>
+            <div class="border rounded-xl p-4 space-y-4">
 
-<label class="block font-medium mb-1">
-Sort order
-</label>
-
-<input
-type="number"
-name="sort_order"
-value="{{ old('sort_order',$attribute->sort_order) }}"
-class="w-full border border-gray-300 rounded px-3 py-2"
->
-
-</div>
+                <h3 class="font-medium text-gray-700 text-sm">
+                    Translations
+                </h3>
 
 
+                @foreach($languages as $lang)
 
-{{-- Actions --}}
+                <div>
 
-<div class="flex justify-end gap-3 pt-4 border-t">
+                    <label class="block text-sm text-gray-600 mb-1">
+                        Name ({{ strtoupper($lang->code) }})
+                    </label>
 
-<a
-href="{{ route('admin.settings.attributes.index') }}"
-class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition"
->
+                    <input
+                        type="text"
+                        name="translations[{{ $lang->code }}]"
+                        value="{{ old('translations.' . $lang->code,
+                                $translations[$lang->code] ?? '') }}"
+                        class="w-full border border-gray-300 rounded px-3 py-2">
 
-Отмена
+                </div>
 
-</a>
+                @endforeach
 
-
-<button
-type="submit"
-class="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
->
-
-Обновить
-
-</button>
-
-</div>
+            </div>
 
 
-</form>
 
-</div>
+            {{-- Code --}}
+
+            <div>
+
+                <label class="block font-medium mb-1">
+                    Code
+                </label>
+
+                <input
+                    type="text"
+                    name="code"
+                    value="{{ old('code',$attribute->code) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    required>
+
+            </div>
+
+
+
+            {{-- Type --}}
+
+            <div>
+
+                <label class="block font-medium mb-1">
+                    Type
+                </label>
+
+                <select
+                    name="type"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    required>
+
+                    <option value="text"
+                        @if($attribute->type=='text') selected @endif>
+                        Text
+                    </option>
+
+
+                    <option value="number"
+                        @if($attribute->type=='number') selected @endif>
+                        Number
+                    </option>
+
+
+                    <option value="select"
+                        @if($attribute->type=='select') selected @endif>
+                        Select
+                    </option>
+
+
+                    <option value="multiselect"
+                        @if($attribute->type=='multiselect') selected @endif>
+                        Multiselect
+                    </option>
+
+
+                    <option value="boolean"
+                        @if($attribute->type=='boolean') selected @endif>
+                        Boolean
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            {{-- Unit --}}
+
+            <div>
+
+                <label class="block font-medium mb-1">
+                    Unit
+                </label>
+
+                <input
+                    type="text"
+                    name="unit"
+                    value="{{ old('unit',$attribute->unit) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2">
+
+            </div>
+
+
+
+            {{-- Flags --}}
+
+            <div class="flex gap-6">
+
+                <label class="flex items-center gap-2">
+
+                    <input
+                        type="checkbox"
+                        name="is_required"
+                        value="1"
+                        {{ old('is_required',$attribute->is_required) ? 'checked' : '' }}>
+
+                    Required
+
+                </label>
+
+
+                <label class="flex items-center gap-2">
+
+                    <input
+                        type="checkbox"
+                        name="is_filterable"
+                        value="1"
+                        {{ old('is_filterable',$attribute->is_filterable) ? 'checked' : '' }}>
+
+                    Filterable
+
+                </label>
+
+                <label class="flex items-center gap-2">
+
+                    <input
+                        type="checkbox"
+                        name="is_custom"
+                        value="1"
+                        {{ old('is_custom',$attribute->is_custom) ? 'checked' : '' }}>
+
+                    Custom
+
+                </label>
+
+
+                <label class="flex items-center gap-2">
+
+                    <input
+                        type="checkbox"
+                        name="is_offerable"
+                        value="1"
+                        {{ old('is_offerable',$attribute->is_offerable) ? 'checked' : '' }}>
+
+                    Offerable
+
+                </label>
+
+            </div>
+
+
+
+            {{-- Sort Order --}}
+
+            <div>
+
+                <label class="block font-medium mb-1">
+                    Sort order
+                </label>
+
+                <input
+                    type="number"
+                    name="sort_order"
+                    value="{{ old('sort_order',$attribute->sort_order) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2">
+
+            </div>
+
+            {{-- OwnerType --}}
+
+            <div>
+
+                <label class="block font-medium mb-1">
+                    Owner Type
+                </label>
+
+                <input
+                    type="text"
+                    name="owner_type"
+                    value="{{ old('owner_type',$attribute->owner_type) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    >
+
+            </div>
+
+            {{-- OwnerId --}}
+
+            <div>
+
+                <label class="block font-medium mb-1">
+                    OwnerId
+                </label>
+
+                <input
+                    type="text"
+                    name="owner_id"
+                    value="{{ old('owner_id',$attribute->owner_id) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    >
+
+            </div>
+
+            {{-- Created by User --}}
+
+            <div>
+
+                <label class="block font-medium mb-1">
+                    Created by User
+                </label>
+
+                <input
+                    type="text"
+                    name="created_by"
+                    value="{{ old('created_by',$attribute->created_by) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    disabled>
+
+            </div>
+
+            {{-- Actions --}}
+
+            <div class="flex justify-end gap-3 pt-4 border-t">
+
+                <a
+                    href="{{ route('admin.settings.attributes.index') }}"
+                    class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+
+                    Отмена
+
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
+
+                    Обновить
+
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
 
 </div>
 
