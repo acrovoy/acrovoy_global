@@ -153,8 +153,9 @@ Route::prefix('supplier')->group(function () {
 
 });
 
-Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])
-    ->name('rfqs.custom-attributes.store');
+Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])->name('rfqs.custom-attributes.store');
+
+Route::post('/custom-attributes', [ProductController::class, 'storeCustomAttribute'])->name('custom-attributes.store');
 
 Route::prefix('dashboard/buyer')
     ->name('buyer.')
@@ -285,26 +286,34 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
 
 
-           /*
-    |--------------------------------------------------------------------------
-    | RFQ SUPPLIER WORKSPACE
-    |--------------------------------------------------------------------------
-    */
 
-    Route::prefix('rfqs')->name('rfqs.')->group(function () {
+
+
+
+
+
+
+
+//            /*
+//     |--------------------------------------------------------------------------
+//     | RFQ SUPPLIER WORKSPACE
+//     |--------------------------------------------------------------------------
+//     */
+
+//     Route::prefix('rfqs')->name('rfqs.')->group(function () {
 
        
       
-       Route::post('/{rfq}/offer/autosave', [RfqOfferController::class, 'autosave'])
-    ->name('offer.autosave');
+//        Route::post('/{rfq}/offer/autosave', [RfqOfferController::class, 'autosave'])
+//     ->name('offer.autosave');
 
-    Route::post(
-    '/{rfq}/custom-autosave',
-    [RfqOfferController::class, 'customAutosave']
-);
+//     Route::post(
+//     '/{rfq}/custom-autosave',
+//     [RfqOfferController::class, 'customAutosave']
+// );
 
 
-    });
+//     });
 
 
 });

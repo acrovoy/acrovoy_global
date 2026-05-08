@@ -7,6 +7,7 @@ use App\Models\Material;
 use App\Models\Country;
 use App\Models\Supplier;
 use App\Models\ShippingTemplate;
+use App\Models\Attribute;
 
 use App\Services\Company\ActiveContextService;
 
@@ -40,8 +41,17 @@ class ProductFormDataService
             'defaultShippingTemplate' => ShippingTemplate::with('translations')
                 ->where('logistic_company_id', 1)
                 ->first(),
+
+            'customAttributes' => Attribute::query()
+                ->where('entity_type', 'product')
+                ->where('is_custom', 1)
+                ->where('owner_type', 'App\Models\Supplier')
+                ->where('owner_id', $supplierId)
+                ->with([
+                    'translations',
+                    'options.translations'
+                ])
+                ->get(),
         ];
     }
-
-    
 }

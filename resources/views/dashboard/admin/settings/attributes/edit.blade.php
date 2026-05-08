@@ -108,6 +108,13 @@
             User
         </option>
 
+        <option
+            value="product"
+            @selected(old('entity_type', $attribute->entity_type ?? '') === 'product')
+        >
+            Product
+        </option>
+
     </select>
 
 </div>

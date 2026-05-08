@@ -43,6 +43,8 @@ use App\Models\ShippingTemplate;
 use App\Models\ProductVariantGroup;
 use App\Models\ProductVariantItem;
 use App\Models\Attribute;
+use App\Models\AttributeGroup;
+use App\Models\ProductAttributeValue;
 
 use App\Models\Country;
 use App\Models\Language;
@@ -57,6 +59,7 @@ use App\Domain\Product\Actions\SyncProductSpecificationAction;
 use App\Domain\Product\Actions\SyncProductAttributeAction;
 use App\Domain\Product\Actions\SyncProductMaterialAction;
 use App\Domain\Product\Actions\SyncShippingTemplateAction;
+use App\Domain\Product\Actions\SyncProductCustomAttributeAction;
 
 use App\Services\Company\ActiveContextService;
 
@@ -110,13 +113,21 @@ class ProductController extends Controller
             ->get();
 
 
+$ownerType = $context->isPersonal()
+    ? \App\Models\User::class
+    : \App\Models\Supplier::class;
 
+$ownerId = $context->id();
+
+$groups = AttributeGroup::where('owner_type', $ownerType)
+    ->where('owner_id', $ownerId)
+    ->get();
 
 
 
 
         return view('dashboard.supplier.add-product', array_merge($data, [
-            'products' => $products
+            'products' => $products, 'groups' => $groups,
         ]));
     }
 
@@ -127,6 +138,7 @@ class ProductController extends Controller
         SyncProductTranslationAction $translationAction,
         SyncProductPriceTierAction $priceAction,
         SyncProductAttributeAction $attributeAction,
+        SyncProductCustomAttributeAction $customAttributeAction,
         SyncProductSpecificationAction $specAction,
         SyncProductMaterialAction $materialAction,
         SyncShippingTemplateAction $shippingAction,
@@ -154,6 +166,7 @@ class ProductController extends Controller
             $dtoFactory,
             $attachProductVariantAction,
             $attributeAction,
+            $customAttributeAction,
             $supplierId,
         ) {
 
@@ -177,6 +190,7 @@ class ProductController extends Controller
                 $request->description
             );
 
+          
             /*
         |-------------------------------------------------------------------------- 
         | Variant Group Guarantee
@@ -309,6 +323,23 @@ class ProductController extends Controller
                 $product,
                 $request->shipping_templates ?? []
             );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | CUSTOM ATTRIBUTES
+            |--------------------------------------------------------------------------
+            */
+            if ($request->has('attributes')) {
+                $customAttributeAction->execute(
+                    $product,
+                    $request->input('attributes')
+                );
+            }
+
+
+
+
 
             // 🔹 **Синхронизация атрибутов продукта**
             if ($request->has('attributes')) {
@@ -584,4 +615,115 @@ class ProductController extends Controller
             'message' => 'Product deleted successfully.'
         ]);
     }
+
+public function storeCustomAttribute(
+    Request $request,
+    
+    ActiveContextService $context
+) {
+    $ownerType = $context->isPersonal()
+        ? 'App\Models\User'
+        : 'App\Models\Supplier';
+
+    $owner = $context->isPersonal()
+        ? auth()->user()
+        : $context->company();
+
+    $data = $request->validate([
+        'id' => ['nullable', 'exists:attributes,id'],
+        'key' => ['required', 'string'],
+        'type' => ['required', 'string'],
+        'options' => ['nullable', 'array'],
+    ]);
+
+    if ($request->filled('group_name')) {
+
+    $group = AttributeGroup::firstOrCreate([
+        'name' => $request->group_name,
+        'owner_id' => $owner->id,
+        'owner_type' => $ownerType,
+        'created_by' => auth()->id(),
+    ]);
+
+    $groupId = $group->id;
+
+} else {
+    $groupId = $request->group_id;
+}
+
+    /*
+    |--------------------------------------------------------------------------
+    | CODE
+    |--------------------------------------------------------------------------
+    */
+    $code = Str::slug($data['key'], '_');
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATTRIBUTE (ONLY DEFINITION)
+    |--------------------------------------------------------------------------
+    */
+    $attribute = Attribute::updateOrCreate(
+        [
+            'id' => $data['id'] ?? null,
+            'entity_type' => 'product',
+            'context' => 'product',
+        ],
+        [
+            'code' => $code,
+            'group_id' => $groupId ?? null,
+            'type' => $data['type'],
+            'is_custom' => 1,
+            'is_system' => 0,
+            'owner_type' => $ownerType,
+            'owner_id' => $owner->id,
+            'created_by' => auth()->id(),
+        ]
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSLATION
+    |--------------------------------------------------------------------------
+    */
+    $attribute->translations()->updateOrCreate(
+        [
+            'locale' => app()->getLocale(),
+        ],
+        [
+            'name' => $data['key'],
+        ]
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | OPTIONS (ONLY FOR SELECT TYPES)
+    |--------------------------------------------------------------------------
+    */
+    if (in_array($data['type'], ['select', 'multiselect'])) {
+
+        // очищаем старые опции при редактировании
+        $attribute->options()->delete();
+
+        foreach ($data['options'] ?? [] as $opt) {
+
+            if (!$opt) continue;
+
+            $attribute->options()->create([
+                // если у тебя переводная система — тут можно расширить
+            ]);
+
+            $attribute->options()->latest()->first()
+                ?->translations()
+                ->create([
+                    'locale' => app()->getLocale(),
+                    'value' => $opt,
+                ]);
+        }
+    }
+
+    return back()->with('success', 'Attribute created');
+}
+
+    
 }

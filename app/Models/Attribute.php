@@ -11,7 +11,7 @@ class Attribute extends Model
         'code',
         'entity_type',
         'context',
-        'group_name',
+        'group_id',
         'type',
         'unit',
         'is_required',
@@ -75,6 +75,13 @@ class Attribute extends Model
             ?? $this->translations
                 ->firstWhere('locale', 'en');
     }
+
+
+
+    public function group()
+{
+    return $this->belongsTo(AttributeGroup::class);
+}
 
 
 }

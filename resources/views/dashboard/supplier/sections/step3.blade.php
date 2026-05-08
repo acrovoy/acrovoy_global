@@ -1,4 +1,6 @@
-@include('dashboard.supplier.partials.custom-specification-form')
+
+
+@include('dashboard.supplier.partials.custom-attribute-form')
 
 
 {{-- Materials Used --}}
