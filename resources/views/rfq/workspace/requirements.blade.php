@@ -257,21 +257,21 @@
      class="fixed right-0 top-0 h-full w-[420px]
             bg-white shadow-xl z-50
             transform translate-x-full transition-transform duration-300 p-6">
-<div  class="flex justify-between items-center">
-     <h3 class="text-lg font-semibold mb-4">
-         Add attributes
-     </h3>
-      <div class="flex items-center gap-2">
+     <div class="flex justify-between items-center">
+         <h3 class="text-lg font-semibold mb-4">
+             Add attributes
+         </h3>
+         <div class="flex items-center gap-2">
 
-        <button type="button"
-            onclick="openAttributeDrawer()"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition mb-4">
+             <button type="button"
+                 onclick="openAttributeDrawer()"
+                 class="px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition mb-4">
 
-            + Create attribute
-        </button>
+                 + Create attribute
+             </button>
 
-    </div>
-    </div>
+         </div>
+     </div>
 
      <form method="POST" action="{{ route('rfqs.custom-attributes.attach', $rfq->id) }}">
          @csrf
@@ -316,7 +316,7 @@
                  <div class="{{ $isGeneral ? '' : 'hidden' }} p-2 space-y-2 bg-white">
 
                      @foreach($attrs as $attr)
-                     <label class="flex items-center gap-2 p-2 border rounded hover:bg-gray-50">
+                     <label class="flex items-center gap-2 p-2 rounded hover:bg-gray-50">
 
                          <input class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                              type="checkbox"
@@ -328,9 +328,35 @@
                                  {{ $attr->name }}
                              </div>
 
-                             <div class="text-xs text-gray-400">
-                                 {{ $attr->type }}
-                             </div>
+                             <div class="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
+
+    @if(in_array($attr->type, ['select', 'multiselect']))
+
+        @foreach($attr->options->take(5) as $option)
+
+            <span class="px-1.5 py-[1px] rounded bg-gray-100 border border-gray-200">
+                {{ $option->translatedValue() }}
+            </span>
+
+        @endforeach
+
+        @if($attr->options->count() > 5)
+
+            <span class="text-gray-300">
+                +{{ $attr->options->count() - 5 }}
+            </span>
+
+        @endif
+
+    @else
+
+        <span class="italic text-gray-300">
+            {{ ucfirst($attr->type) }}
+        </span>
+
+    @endif
+
+</div>
                          </div>
 
                      </label>
@@ -344,46 +370,46 @@
 
          </div>
 
-        <div class="mt-5 pt-4 flex items-center justify-between">
+         <div class="mt-5 pt-4 flex items-center justify-between">
 
-    {{-- LEFT ACTIONS --}}
-    <div class="flex items-center gap-2">
+             {{-- LEFT ACTIONS --}}
+             <div class="flex items-center gap-2">
 
-        
 
-    </div>
 
-    {{-- RIGHT ACTIONS --}}
-    <div class="flex items-center gap-2">
+             </div>
 
-    {{-- archive --}}
-   <button
-    type="submit"
-    formaction="{{ route('rfqs.custom-attributes.bulk-archive', $rfq) }}"
-    formmethod="POST"
-    onclick="return confirm('Archive selected attributes?')"
-    class="px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-500 hover:text-white transition">
+             {{-- RIGHT ACTIONS --}}
+             <div class="flex items-center gap-2">
 
-    Delete selected
-</button>
+                 {{-- archive --}}
+                 <button
+                     type="submit"
+                     formaction="{{ route('rfqs.custom-attributes.bulk-archive', $rfq) }}"
+                     formmethod="POST"
+                     onclick="return confirm('Archive selected attributes?')"
+                     class="px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-500 hover:text-white transition">
 
-        <button type="button"
-            onclick="closeAllDrawers()"
-            class="text-sm  px-4 py-2 bg-gray-200 rounded-lg hover:text-gray-700 transition">
+                     Delete selected
+                 </button>
 
-            Cancel
-        </button>
+                 <button type="button"
+                     onclick="closeAllDrawers()"
+                     class="text-sm  px-4 py-2 bg-gray-200 rounded-lg hover:text-gray-700 transition">
 
-        <button class="px-4 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition">
+                     Cancel
+                 </button>
 
-            Attach selected
-        </button>
+                 <button class="px-4 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition">
 
-    </div>
+                     Attach selected
+                 </button>
 
-</div>
+             </div>
 
-        
+         </div>
+
+
 
      </form>
  </div>

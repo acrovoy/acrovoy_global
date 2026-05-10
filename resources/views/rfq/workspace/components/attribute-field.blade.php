@@ -163,6 +163,11 @@ $old = $savedValue;
 @endif
 
 
+ 
+
+
+
+
 {{-- MULTISELECT --}}
 @elseif($type === 'multiselect')
 
@@ -243,6 +248,12 @@ $oldValues = is_array($oldValues) ? $oldValues : [];
 </div>
 
 @endif
+
+
+<div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400 mt-4 cursor-pointer">
+            +
+        </div>
+
 
 </div>
 
