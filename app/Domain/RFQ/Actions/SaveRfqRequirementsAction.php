@@ -46,7 +46,7 @@ class SaveRfqRequirementsAction
             |--------------------------------------------------------------------------
             */
 
-            $rfq->customAttributes()->delete();
+            
         }
 
         /*

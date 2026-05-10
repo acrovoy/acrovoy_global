@@ -32,7 +32,7 @@ $itemsByAttribute = $offerVersion?->items
 
 
 
-<div class="space-y-6">
+<div class="">
 
     {{-- 🔥 ROLE-AWARE CONTENT --}}
     @switch($activeTab)
@@ -71,5 +71,28 @@ $itemsByAttribute = $offerVersion?->items
     @endswitch
 
 </div>
+
+<script>
+document.addEventListener('click', function (e) {
+
+    const btn = e.target.closest('.remove-attr');
+    if (!btn) return;
+
+    const url = btn.dataset.url;
+
+    console.log('CLICK DELETE', url);
+
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(r => r.json())
+    .then(() => location.reload());
+});
+</script>
 
 @endsection

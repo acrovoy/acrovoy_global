@@ -155,6 +155,12 @@ Route::prefix('supplier')->group(function () {
 
 Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])->name('rfqs.custom-attributes.store');
 
+Route::post('/rfqs/{rfq}/custom-attributes/attach', [RfqRequirementController::class, 'attach'])->name('rfqs.custom-attributes.attach');
+
+Route::delete('/rfqs/{rfq}/custom-attributes/{attribute}', [RfqRequirementController::class, 'dettach'])->name('rfqs.custom-attributes.dettach');
+
+Route::post('/rfqs/{rfq}/custom-attributes/bulk-archive', [RfqRequirementController::class, 'bulkArchive'])->name('rfqs.custom-attributes.bulk-archive');
+
 Route::post('/custom-attributes', [ProductController::class, 'storeCustomAttribute'])->name('custom-attributes.store');
 
 Route::prefix('dashboard/buyer')

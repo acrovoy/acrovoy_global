@@ -2,9 +2,9 @@
 $type = $attribute->type;
 
 $isRequired =
-    $attribute->pivot->is_required
-    ?? $attribute->is_required
-    ?? false;
+$attribute->pivot->is_required
+?? $attribute->is_required
+?? false;
 
 $name = "attributes[{$attribute->id}]";
 
@@ -23,15 +23,17 @@ $savedValue = $attribute->saved_value ?? null;
 $savedOptions = $attribute->saved_options ?? [];
 
 if ($old === null) {
-    $old = $savedValue;
+$old = $savedValue;
 }
 @endphp
 
 
+
 <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition">
 
-    {{-- LABEL --}}
-    <label class="block text-sm font-medium text-gray-800 mb-2">
+    <div class="flex items-start justify-between mb-3 gap-3">
+
+    <label class="block text-sm font-medium text-gray-800">
 
         {{ $attribute->name }}
 
@@ -41,201 +43,207 @@ if ($old === null) {
 
     </label>
 
+    
+
+       <button type="button"
+        data-url="{{ route('rfqs.custom-attributes.dettach', [$rfq, $attribute]) }}"
+        class="remove-attr inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-red-100 text-xs font-medium text-red-600 transition">
+    ✕
+</button>
+
+ 
+
+</div>
+
 
     {{-- TEXT --}}
     @if($type === 'text')
 
-        <input
-            type="text"
-            name="{{ $name }}"
-            value="{{ old($name, $savedValue) }}"
-            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
+    <input
+        type="text"
+        name="{{ $name }}"
+        value="{{ old($name, $savedValue) }}"
+        class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
                    focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-            {{ $isRequired ? 'required' : '' }}
-        >
+        {{ $isRequired ? 'required' : '' }}>
 
 
     {{-- NUMBER --}}
     @elseif($type === 'number')
 
-        <input
-            type="number"
-            name="{{ $name }}"
-            value="{{ old($name, $savedValue) }}"
-            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
+    <input
+        type="number"
+        name="{{ $name }}"
+        value="{{ old($name, $savedValue) }}"
+        class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
                    focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-            {{ $isRequired ? 'required' : '' }}
-        >
+        {{ $isRequired ? 'required' : '' }}>
 
 
     {{-- DECIMAL --}}
     @elseif($type === 'decimal')
 
-        <input
-            type="number"
-            step="0.01"
-            name="{{ $name }}"
-            value="{{ old($name, $savedValue) }}"
-            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
+    <input
+        type="number"
+        step="0.01"
+        name="{{ $name }}"
+        value="{{ old($name, $savedValue) }}"
+        class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
                    focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-            {{ $isRequired ? 'required' : '' }}
-        >
+        {{ $isRequired ? 'required' : '' }}>
 
 
     {{-- BOOLEAN --}}
     @elseif($type === 'boolean')
 
-        <label class="flex items-center gap-2 text-sm text-gray-700">
+    <label class="flex items-center gap-2 text-sm text-gray-700">
 
-            <input
-                type="checkbox"
-                name="{{ $name }}"
-                value="1"
-                @checked(old($name, $savedValue))
-                class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-            >
+        <input
+            type="checkbox"
+            name="{{ $name }}"
+            value="1"
+            @checked(old($name, $savedValue))
+            class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
 
-            Yes / No
+        Yes / No
 
-        </label>
+    </label>
 
 
     {{-- SELECT --}}
     @elseif($type === 'select')
 
-        @if($attribute->options->count() <= 6)
+    @if($attribute->options->count() <= 6)
 
-            <div class="space-y-2">
-
-                @foreach($attribute->options as $option)
-
-                    <label class="flex items-center gap-2 text-sm text-gray-700">
-
-                        <input
-                            type="radio"
-                            name="{{ $name }}"
-                            value="{{ $option->id }}"
-                            @checked(old($name, $savedValue) == $option->id)
-                            class="text-gray-900 focus:ring-gray-900"
-                            {{ $isRequired ? 'required' : '' }}
-                        >
-
-                        <span>{{ $option->translatedValue() }}</span>
-
-                    </label>
-
-                @endforeach
-
-            </div>
-
-        @else
-
-            <select
-                name="{{ $name }}"
-                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-                {{ $isRequired ? 'required' : '' }}
-            >
-
-                <option value="">Select option</option>
-
-                @foreach($attribute->options as $option)
-
-                    <option value="{{ $option->id }}"
-                        @selected(old($name, $savedValue) == $option->id)
-                    >
-                        {{ $option->translatedValue() }}
-                    </option>
-
-                @endforeach
-
-            </select>
-
-        @endif
-
-
-    {{-- MULTISELECT --}}
-   @elseif($type === 'multiselect')
-
-    @php
-        $oldValues = old($name);
-
-        if ($oldValues === null) {
-            $oldValues = $savedOptions;
-        }
-
-        $oldValues = is_array($oldValues) ? $oldValues : [];
-    @endphp
-
-    {{-- 🔥 ВАЖНО: fallback чтобы Laravel получил ключ даже если ничего не выбрано --}}
-    <input type="hidden" name="{{ $name }}" value="">
-
-    <div class="space-y-2">
+        <div class="space-y-2">
 
         @foreach($attribute->options as $option)
 
-            <label class="flex items-center gap-2 text-sm text-gray-700">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
 
-                <input
-                    type="checkbox"
-                    name="{{ $name }}[]"
-                    value="{{ $option->id }}"
-                    @checked(in_array($option->id, $oldValues))
-                    class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                >
+            <input
+                type="radio"
+                name="{{ $name }}"
+                value="{{ $option->id }}"
+                @checked(old($name, $savedValue)==$option->id)
+            class="text-gray-900 focus:ring-gray-900"
+            {{ $isRequired ? 'required' : '' }}
+            >
 
-                <span>{{ $option->translatedValue() }}</span>
+            <span>{{ $option->translatedValue() }}</span>
 
-            </label>
+        </label>
 
         @endforeach
 
-    </div>
+</div>
+
+@else
+
+<select
+    name="{{ $name }}"
+    class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+    {{ $isRequired ? 'required' : '' }}>
+
+    <option value="">Select option</option>
+
+    @foreach($attribute->options as $option)
+
+    <option value="{{ $option->id }}"
+        @selected(old($name, $savedValue)==$option->id)
+        >
+        {{ $option->translatedValue() }}
+    </option>
+
+    @endforeach
+
+</select>
+
+@endif
 
 
-    {{-- DATE --}}
-    @elseif($type === 'date')
+{{-- MULTISELECT --}}
+@elseif($type === 'multiselect')
+
+@php
+$oldValues = old($name);
+
+if ($oldValues === null) {
+$oldValues = $savedOptions;
+}
+
+$oldValues = is_array($oldValues) ? $oldValues : [];
+@endphp
+
+{{-- 🔥 ВАЖНО: fallback чтобы Laravel получил ключ даже если ничего не выбрано --}}
+<input type="hidden" name="{{ $name }}" value="">
+
+<div class="space-y-2">
+
+    @foreach($attribute->options as $option)
+
+    <label class="flex items-center gap-2 text-sm text-gray-700">
 
         <input
-            type="date"
-            name="{{ $name }}"
-            value="{{ old($name, $savedValue) }}"
-            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+            type="checkbox"
+            name="{{ $name }}[]"
+            value="{{ $option->id }}"
+            @checked(in_array($option->id, $oldValues))
+        class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
         >
 
+        <span>{{ $option->translatedValue() }}</span>
 
-    {{-- FILE --}}
-    @elseif($type === 'file')
+    </label>
 
-        <input
-            type="file"
-            name="{{ $name }}"
-            class="w-full text-sm text-gray-700"
-        >
-
-
-    {{-- FALLBACK --}}
-    @else
-
-        <input
-            type="text"
-            name="{{ $name }}"
-            value="{{ old($name, $savedValue) }}"
-            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-        >
-
-    @endif
-
-
-    {{-- UNIT --}}
-    @if($attribute->unit)
-
-        <div class="text-xs text-gray-400 mt-1">
-            Unit: {{ $attribute->unit }}
-        </div>
-
-    @endif
+    @endforeach
 
 </div>
+
+
+{{-- DATE --}}
+@elseif($type === 'date')
+
+<input
+    type="date"
+    name="{{ $name }}"
+    value="{{ old($name, $savedValue) }}"
+    class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
+                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+
+
+{{-- FILE --}}
+@elseif($type === 'file')
+
+<input
+    type="file"
+    name="{{ $name }}"
+    class="w-full text-sm text-gray-700">
+
+
+{{-- FALLBACK --}}
+@else
+
+<input
+    type="text"
+    name="{{ $name }}"
+    value="{{ old($name, $savedValue) }}"
+    class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
+                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900">
+
+@endif
+
+
+{{-- UNIT --}}
+@if($attribute->unit)
+
+<div class="text-xs text-gray-400 mt-1">
+    Unit: {{ $attribute->unit }}
+</div>
+
+@endif
+
+</div>
+
+

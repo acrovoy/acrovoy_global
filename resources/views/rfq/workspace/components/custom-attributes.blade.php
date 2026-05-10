@@ -1,8 +1,12 @@
 {{-- CUSTOM ATTRIBUTES WORKSPACE COMPONENT --}}
 
 @php
-$existing = $rfq->attributeValues ?? collect();
+$existing = $rfq->customAttributeValues ?? collect();
+
+
 @endphp
+
+
 
 <div class="mt-8 pt-6 border-t border-gray-200">
 
@@ -20,82 +24,94 @@ $existing = $rfq->attributeValues ?? collect();
         </div>
 
         <button type="button"
-            onclick="openAttributeDrawer()"
-            class="text-sm text-gray-600 hover:text-gray-900">
-            + Add attribute
-        </button>
+        onclick="openPickerDrawer()"
+        class="text-sm text-gray-600 hover:text-gray-900">
+    + Attach attribute
+</button>
+
+      
 
     </div>
 
     {{-- LIST --}}
     <div class="space-y-2">
 
- @foreach($existing as $value)
+    
 
-            @php
-                $attribute = $value->attribute;
-            @endphp
+<div class="space-y-5">
 
-            <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 flex items-center justify-between">
+@foreach($attachedAttributes as $group => $attributes)
 
-                {{-- NAME --}}
-                <div class="text-sm font-medium text-gray-800">
-                    {{ $attribute?->name }}
-                </div>
+    <div class="mb-4">
 
-                {{-- VALUE --}}
-                <div class="text-xs text-gray-500">
+       
 
-                    @if($attribute->type === 'text' || $attribute->type === 'number')
-                        {{ $value->value_text ?? $value->value_number ?? '—' }}
+        <div class="space-y-3">
 
-                    @elseif($attribute->type === 'select')
+            @foreach($attributes as $attribute)
 
-    {{ $attribute->options
-        ->firstWhere('id', $value->attribute_option_id)
-        ?->translations
-        ->firstWhere('locale', app()->getLocale())
-        ?->value
-        ?? '—'
-    }}
+                @include('rfq.workspace.components.attribute-field', [
+                    'attribute' => $attribute,
+                    'type' => $attribute->type,
+                    'name' => "attributes[{$attribute->id}]",
+                    'savedValue' => $attribute->saved_value,
+                    'savedOptions' => $attribute->saved_options ?? [],
+                    'isRequired' => $attribute->is_required,
+                ])
 
-                    @elseif($attribute->type === 'multiselect')
+            @endforeach
 
-    {{ $value->options
-        ->map(function($opt) {
-            return $opt?->translations
-                ->firstWhere('locale', app()->getLocale())
-                ?->value;
-        })
-        ->filter()
-        ->implode(', ')
-    }}
-                    @else
-                        —
-                    @endif
+        </div>
 
-                </div>
+    </div>
 
-                {{-- EDIT --}}
-                <button type="button"
-                        onclick="openAttributeDrawer({{ $attribute->id }}, this)"
-                        class="text-xs text-gray-500 hover:text-gray-800">
-                    Edit
-                </button>
-
-            </div>
-
-        @endforeach
+@endforeach
 
 </div>
+
+
+
+      
+
+    </div>
 </div>
 
 
 {{-- OVERLAY --}}
-<div id="attribute-overlay"
-    class="fixed inset-0 bg-black/40 hidden z-40"></div>
+<div id="global-overlay"
+     class="fixed inset-0 bg-black/40 hidden z-40"></div>
 
 
+
+<script>
+
+  function openPickerDrawer() {
+    closeAttributeDrawer();
+
+    document.getElementById('attribute-picker-drawer')
+        .classList.remove('translate-x-full');
+
+    document.getElementById('global-overlay')
+        .classList.remove('hidden');
+  }
+
+  function closePickerDrawer() {
+    document.getElementById('attribute-picker-drawer')
+        .classList.add('translate-x-full');
+
+    document.getElementById('global-overlay')
+        .classList.add('hidden');
+  }
+
+  /*
+  |----------------------------------------------------------------------
+  | OVERLAY CLICK (FIXED - ONLY ONCE, NOT INSIDE FUNCTION)
+  |----------------------------------------------------------------------
+  */
+  document.getElementById('global-overlay')
+      .addEventListener('click', closeAllDrawers);
+
+</script>
 
 
 <script>
@@ -108,7 +124,9 @@ $existing = $rfq->attributeValues ?? collect();
     */
     function openAttributeDrawer(id = null, btn = null) {
 
-        document.getElementById('attribute-overlay').classList.remove('hidden');
+        closePickerDrawer(); // 👈 ВАЖНО
+
+        document.getElementById('global-overlay').classList.remove('hidden');
         document.getElementById('attribute-drawer').classList.remove('translate-x-full');
 
         const title = document.getElementById('attribute-title');
@@ -124,9 +142,9 @@ $existing = $rfq->attributeValues ?? collect();
         optionIndex = 0;
 
         /*
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
         | EDIT MODE (READ FROM ROW)
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------------------
         */
         if (btn) {
 
@@ -165,9 +183,33 @@ $existing = $rfq->attributeValues ?? collect();
     |--------------------------------------------------------------------------
     */
     function closeAttributeDrawer() {
-        document.getElementById('attribute-overlay').classList.add('hidden');
-        document.getElementById('attribute-drawer').classList.add('translate-x-full');
+        document.getElementById('attribute-drawer')
+            .classList.add('translate-x-full');
     }
+
+    function closePickerDrawer() {
+        document.getElementById('attribute-picker-drawer')
+            .classList.add('translate-x-full');
+
+        document.getElementById('global-overlay')
+            .classList.add('hidden');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLOSE ALL DRAWERS (FIXED - NO EVENT LISTENER INSIDE)
+    |--------------------------------------------------------------------------
+    */
+    function closeAllDrawers() {
+    document.getElementById('attribute-drawer')
+        ?.classList.add('translate-x-full');
+
+    document.getElementById('attribute-picker-drawer')
+        ?.classList.add('translate-x-full');
+
+    document.getElementById('global-overlay')
+        .classList.add('hidden');
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -217,9 +259,10 @@ $existing = $rfq->attributeValues ?? collect();
 
     /*
     |--------------------------------------------------------------------------
-    | OVERLAY CLOSE
+    | OVERLAY CLOSE (attribute drawer support if needed)
     |--------------------------------------------------------------------------
     */
     document.getElementById('attribute-overlay')
-        .addEventListener('click', closeAttributeDrawer);
+        ?.addEventListener('click', closeAttributeDrawer);
+
 </script>

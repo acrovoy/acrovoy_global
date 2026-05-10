@@ -88,8 +88,7 @@
 
                 <div class="flex items-center gap-3">
 
-                    <img src="https://via.placeholder.com/60"
-                        class="w-14 h-14 rounded">
+                    
 
                     <input type="file"
                         multiple

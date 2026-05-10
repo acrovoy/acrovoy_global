@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
 use App\Models\Supplier;
+use App\Models\Attribute;
+use App\Models\AttributeGroup;
+use App\Domain\RFQ\Models\RfqAttributeValue;
 use App\Domain\Negotiation\Models\RfqOffer;
 
 
@@ -67,11 +70,30 @@ class RfqController extends Controller
         if ($activeTab === 'requirements') {
 
             $rfq->loadMissing([
-                'attributeValues.attribute.options.translations',
-                'attributeValues.options',
+
+                /*
+        |--------------------------------------------------------------------------
+        | SYSTEM ATTRIBUTES
+        |--------------------------------------------------------------------------
+        */
+                'systemAttributeValues.attribute.translations',
+                'systemAttributeValues.attribute.options.translations',
+                'systemAttributeValues.options',
+
+                /*
+        |--------------------------------------------------------------------------
+        | CUSTOM ATTRIBUTES
+        |--------------------------------------------------------------------------
+        */
+                'customAttributeValues.attribute.translations',
+                'customAttributeValues.attribute.options.translations',
+
+                'customAttributeValues.options.translations',
             ]);
 
-            
+
+
+
 
             /*
             |--------------------------------------------------------------------------
@@ -162,7 +184,7 @@ class RfqController extends Controller
             $rfq->loadMissing([
                 'attributeValues.attribute.options',
                 'attributeValues.options',
-                
+
             ]);
 
             $supplier = $this->context->supplier();
@@ -204,26 +226,111 @@ class RfqController extends Controller
                 $offerVersion->load(['items.options.translations']);
             }
 
-
-
-
-
-
-
-
-            /**
-             * =========================
-             * BUILD MAPS (ВАЖНО ДЛЯ BLADE)
-             * =========================
-             */
-            $itemsByRequirement = $offerVersion->items
-                ->whereNotNull('requirement_id')
-                ->keyBy('requirement_id');
-
-            $itemsByAttribute = $offerVersion->items
-                ->whereNotNull('attribute_id')
-                ->keyBy('attribute_id');
+            $customRequirementIds = $rfq->customAttributeValues
+                ->pluck('attribute_id')
+                ->unique();
         }
+
+
+        $ownerType = $this->context->isPersonal()
+            ? \App\Models\User::class
+            : \App\Models\Supplier::class;
+
+        $ownerId = $this->context->isPersonal()
+            ? auth()->user()->id
+            : $this->context->company()->id;
+
+
+
+        $customRequirementIds = $rfq->customAttributeValues
+        ->pluck('attribute_id')
+        ->unique();
+
+    $availableAttributes = Attribute::query()
+        ->where('entity_type', 'rfq')
+        ->where('context', 'requirement')
+        ->where('is_custom', 1)
+        ->where('is_active', true)
+        ->where('owner_type', $ownerType)
+        ->where('owner_id', $ownerId)
+        ->whereNotIn('id', $customRequirementIds) // 💥 важно
+        ->get();
+
+        $availableAttributesGrouped = $availableAttributes
+            ->load('group')
+            ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
+            ->sortBy(function ($attrs, $groupName) {
+                return strtolower($groupName) === 'general' ? 0 : 1;
+            });
+
+
+
+
+        $attachedAttributes = $rfq->customAttributeValues()
+            ->with([
+                'attribute.group',
+                'attribute.options.translations',
+                'options.translations',
+            ])
+            ->get()
+            ->map(function ($value) {
+
+                $attribute = $value->attribute;
+
+                /*
+        |--------------------------------------------------------------
+        | SAVED VALUE BY ATTRIBUTE TYPE
+        |--------------------------------------------------------------
+        */
+
+                $attribute->saved_value = match ($attribute->type) {
+
+                    'select' => $value->attribute_option_id,
+
+                    'number',
+                    'decimal' => $value->value_number,
+
+                    'boolean' => $value->value_boolean,
+
+                    'date' => $value->value_date,
+
+                    default => $value->value_text,
+                };
+
+                /*
+        |--------------------------------------------------------------
+        | MULTISELECT OPTIONS
+        |--------------------------------------------------------------
+        */
+
+                $attribute->saved_options =
+                    $value->options?->pluck('id')->toArray() ?? [];
+
+                return $attribute;
+            })
+            ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
+            ->sortBy(
+                fn($_, $group) =>
+                strtolower($group) === 'general' ? 0 : 1
+            );
+
+
+
+
+
+
+        $ownerType = $this->context->isPersonal()
+            ? \App\Models\User::class
+            : \App\Models\Supplier::class;
+
+        $ownerId = $this->context->isPersonal()
+            ? auth()->user()->id
+            : $this->context->company()->id;
+
+        $groups = AttributeGroup::where('owner_type', $ownerType)
+            ->where('owner_id', $ownerId)
+            ->get();
+
 
 
         if ($activeTab === 'offers') {
@@ -298,8 +405,14 @@ class RfqController extends Controller
             'itemsByAttribute' => $offerVersion?->items
                 ?->whereNotNull('attribute_id')
                 ?->keyBy('attribute_id') ?? collect(),
+            'customRequirementIds' => $customRequirementIds ?? collect(),
 
             'buyerSnapshotMap' => $buyerSnapshotMap,
+            'availableAttributes' => $availableAttributes,
+            'availableAttributesGrouped' => $availableAttributesGrouped,
+            'attachedAttributes' => $attachedAttributes,
+
+            'groups' => $groups,
 
 
             'context_mode' => $this->context->mode(),

@@ -179,8 +179,7 @@ $price = $item?->unit_price ?? '';
     {{-- PRICE + FILE --}}
     <div class="flex items-center gap-3">
 
-        <img src="https://via.placeholder.com/50"
-             class="w-12 h-12 rounded">
+        
 
         <div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400">
             +

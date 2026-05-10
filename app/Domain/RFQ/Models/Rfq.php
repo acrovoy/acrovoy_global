@@ -70,12 +70,39 @@ class Rfq extends Model
 
 public function attributeValues()
 {
-    return $this->hasMany(RfqAttributeValue::class);
+    return $this->hasMany(RfqAttributeValue::class)
+        ->with([
+            'attribute.translations',
+            'attribute.options.translations',
+        ]);
 }
 
-public function customAttributes()
+/*
+|--------------------------------------------------------------------------
+| CUSTOM ATTRIBUTE VALUES
+|--------------------------------------------------------------------------
+*/
+
+public function customAttributeValues()
 {
-    return $this->hasMany(RfqCustomAttribute::class);
+    return $this->attributeValues()
+        ->whereHas('attribute', function ($q) {
+            $q->where('is_custom', true);
+        });
+}
+
+/*
+|--------------------------------------------------------------------------
+| SYSTEM ATTRIBUTE VALUES
+|--------------------------------------------------------------------------
+*/
+
+public function systemAttributeValues()
+{
+    return $this->attributeValues()
+        ->whereHas('attribute', function ($q) {
+            $q->where('is_custom', false);
+        });
 }
 
 

@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use App\Domain\RFQ\Models\Rfq;
 use App\Models\Category;
 use App\Models\Attribute;
+use App\Models\AttributeGroup;
 
 
 use App\Domain\RFQ\Actions\SaveRfqRequirementsAction;
@@ -219,6 +220,21 @@ class RfqRequirementController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    if ($request->filled('group_name')) {
+
+    $group = AttributeGroup::firstOrCreate([
+        'name' => $request->group_name,
+        'owner_id' => $buyer->id,
+        'owner_type' => $buyerType,
+        'created_by' => auth()->id(),
+    ]);
+
+    $groupId = $group->id;
+
+} else {
+    $groupId = $request->group_id;
+}
+
         $attribute = Attribute::updateOrCreate(
             [
                 'id' => $data['id'] ?? null,
@@ -226,6 +242,7 @@ class RfqRequirementController extends Controller
                 'context' => 'requirement',
             ],
             [
+                'group_id' => $groupId ?? null,
                 'code' => $code,   // 👈 ВАЖНО
                 'type' => $data['type'],
                 'is_custom' => 1,
@@ -257,27 +274,27 @@ class RfqRequirementController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $value = $data['value'];
+        // $value = $data['value'];
 
-        if (is_array($value)) {
-            $value = json_encode(array_values($value));
-        }
+        // if (is_array($value)) {
+        //     $value = json_encode(array_values($value));
+        // }
 
-        RfqAttributeValue::updateOrCreate(
-            [
-                'rfq_id' => $rfq->id,
-                'attribute_id' => $attribute->id,
-            ],
-            [
-                'value_text' => in_array($data['type'], ['text', 'select', 'multiselect'])
-                    ? $value
-                    : null,
+        // RfqAttributeValue::updateOrCreate(
+        //     [
+        //         'rfq_id' => $rfq->id,
+        //         'attribute_id' => $attribute->id,
+        //     ],
+        //     [
+        //         'value_text' => in_array($data['type'], ['text', 'select', 'multiselect'])
+        //             ? $value
+        //             : null,
 
-                'value_number' => $data['type'] === 'number'
-                    ? $value
-                    : null,
-            ]
-        );
+        //         'value_number' => $data['type'] === 'number'
+        //             ? $value
+        //             : null,
+        //     ]
+        // );
 
         /*
     |--------------------------------------------------------------------------
@@ -304,4 +321,48 @@ class RfqRequirementController extends Controller
 
         return back()->with('success', 'Attribute saved');
     }
+
+
+    public function attach(Request $request, Rfq $rfq)
+{
+    $ids = $request->input('attributes', []);
+
+    foreach ($ids as $attributeId) {
+
+        RfqAttributeValue::firstOrCreate([
+            'rfq_id' => $rfq->id,
+            'attribute_id' => $attributeId,
+        ]);
+    }
+
+    return back()->with('success', 'Attributes attached');
+}
+
+public function dettach(Rfq $rfq, Attribute $attribute)
+{
+    RfqAttributeValue::query()
+        ->where('rfq_id', $rfq->id)
+        ->where('attribute_id', $attribute->id)
+        ->delete();
+
+    return response()->json([
+        'success' => true
+    ]);
+}
+
+public function bulkArchive(Request $request, Rfq $rfq)
+{
+    $ids = $request->input('attributes', []);
+
+    Attribute::query()
+        ->whereIn('id', $ids)
+        ->where('is_custom', true)
+        ->update([
+            'is_active' => false
+        ]);
+
+    return back()->with('success', 'Attributes archived');
+}
+
+
 }

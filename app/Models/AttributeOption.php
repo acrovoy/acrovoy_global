@@ -21,10 +21,10 @@ class AttributeOption extends Model
 
     public function getValueAttribute()
 {
-    return $this->translations
-        ->where('locale', app()->getLocale())
-        ->first()?->value;
+    return $this->translation()?->value;
 }
+
+
 
 public function translations()
     {
@@ -32,16 +32,14 @@ public function translations()
     }
 
     public function translation($locale = null)
-    {
-        $locale = $locale ?? app()->getLocale();
+{
+    $locale = $locale ?? app()->getLocale();
 
-        $translation = $this->translations
-            ->firstWhere('locale', $locale)
-            ?? $this->translations
-            ->firstWhere('locale', 'en');
-
-        return $translation;
-    }
+    return $this->translations
+        ->firstWhere('locale', $locale)
+        ?? $this->translations->firstWhere('locale', 'en')
+        ?? $this->translations->first();
+}
 
     // Получаем значение локализованного названия
     public function translatedValue($locale = null)
