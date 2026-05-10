@@ -111,6 +111,34 @@
 
          @include('rfq.workspace.components.custom-attributes')
 
+
+
+          {{-- ATTACHMENTS --}}
+            <div class="border rounded-lg p-4 mb-6">
+
+                <div class="font-medium mb-2">Attachments</div>
+
+                <div class="text-xs text-gray-500 mb-3">
+                    Upload relevant files including technical drawings...
+                </div>
+
+                <div class="flex items-center gap-3">
+
+                    
+
+                    <div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400">
+                        +
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+
+            
+
          {{-- ACTIONS --}}
          <div class="mt-6 pt-4 border-t border-gray-100 flex justify-between items-center">
 
@@ -127,6 +155,10 @@
      </form>
 
      @endif
+
+
+    
+
 
  </div>
 

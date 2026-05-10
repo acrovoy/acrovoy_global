@@ -103,76 +103,72 @@ public function index(Rfq $rfq)
 
     $payload = [];
 
-    $field = $request->input('field');
-    $value = $request->input('value');
+    /*
+    |--------------------------------------------------------------------------
+    | NOTES
+    |--------------------------------------------------------------------------
+    */
 
-    /**
-     * =========================
-     * PRICE DETECTION (ROBUST)
-     * =========================
-     */
-    if (
-        str_contains($field, 'price') ||
-        $request->has('unit_price')
-    ) {
-        $payload['unit_price'] = is_numeric($value)
-            ? $value
-            : $request->input('unit_price');
+    if ($request->has('notes')) {
+
+        $payload['notes'] = $request->notes;
     }
 
-    /**
-     * =========================
-     * NOTES DETECTION
-     * =========================
-     */
-    if (
-        str_contains($field, 'notes') ||
-        $request->has('notes')
-    ) {
-        $payload['notes'] = $value;
+    /*
+    |--------------------------------------------------------------------------
+    | PRICE
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->has('unit_price')) {
+
+        $payload['unit_price'] = $request->unit_price;
     }
 
-    /**
-     * =========================
-     * SELECT
-     * =========================
-     */
-    if ($request->filled('option_id')) {
-        $payload['option_id'] = $request->input('option_id');
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->has('option_id')) {
+
+        $payload['option_id'] = $request->option_id;
     }
 
-    /**
-     * =========================
-     * MULTISELECT
-     * =========================
-     */
-    if ($request->filled('option_ids')) {
-        $payload['option_ids'] = $request->input('option_ids');
+    /*
+    |--------------------------------------------------------------------------
+    | MULTISELECT
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->has('option_ids')) {
+
+        $payload['option_ids'] = $request->option_ids;
     }
 
-    /**
-     * DEBUG (ВАЖНО)
-     */
     logger()->info('AUTOSAVE', [
         'request' => $request->all(),
         'payload' => $payload,
     ]);
 
     if (empty($payload)) {
+
         return response()->json([
             'ok' => false,
-            'debug' => 'payload empty',
-            'request' => $request->all(),
+            'debug' => 'payload empty'
         ]);
     }
 
     $builder->updateItem(
         version: $version,
-        attributeId: $request->input('requirement_id'),
+        attributeId: $request->requirement_id,
         payload: $payload
     );
 
-    return response()->json(['ok' => true]);
+    return response()->json([
+        'ok' => true
+    ]);
 }
 
 

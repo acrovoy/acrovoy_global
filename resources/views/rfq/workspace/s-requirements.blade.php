@@ -70,10 +70,7 @@
 
     @endforeach
 
-    @include('rfq.workspace.components.specifications-custom', [
-        'rfq' => $rfq,
-        'itemsByRequirement' => $itemsByRequirement
-    ])
+   
 
 </div>
 
@@ -90,10 +87,9 @@
 
                     
 
-                    <input type="file"
-                        multiple
-                        data-autosave-file
-                        class="w-14 h-14 border-dashed border rounded flex items-center justify-center">
+                    <div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400">
+                        +
+                    </div>
 
                 </div>
 

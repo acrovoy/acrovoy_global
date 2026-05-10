@@ -186,16 +186,145 @@ $price = $item?->unit_price ?? '';
         </div>
 
         <input
-            type="text"
-            name="offer[{{ $attribute->id }}][price]"
-            value="{{ $price }}"
-            data-autosave
-            data-requirement-id="{{ $attribute->id }}"
-            data-field="price"
-            class="ml-auto border rounded px-3 py-1 w-32 text-sm focus:outline-none focus:ring-0 focus:border-gray-900"
-            placeholder="Price"
-        >
+    type="number"
+    step="0.01"
+    min="0"
+    name="offer[{{ $attribute->id }}][price]"
+    value="{{ $price ? number_format((float)$price, 2, '.', '') : '' }}"
+    data-autosave
+    data-requirement-id="{{ $attribute->id }}"
+    data-field="price"
+    class="ml-auto border rounded px-3 py-1 w-24 text-sm focus:outline-none focus:ring-0 focus:border-gray-900"
+    placeholder="0.00"
+>
 
     </div>
 
 </div>
+
+<script>
+let customTimers = {};
+
+function getRfqId() {
+    return document.querySelector('[data-rfq-id]').dataset.rfqId;
+}
+
+function customAutosave(requirementId, payload) {
+
+    clearTimeout(customTimers[requirementId]);
+
+    customTimers[requirementId] = setTimeout(() => {
+
+        fetch(`/dashboard/supplier/rfqs/${getRfqId()}/offer/autosave`, {
+
+            method: 'POST',
+
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+
+            body: JSON.stringify({
+                requirement_id: requirementId,
+                ...payload
+            })
+
+        });
+
+    }, 500);
+}
+
+/*
+|--------------------------------------------------------------------------
+| INPUTS / TEXTAREA
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('input', (e) => {
+
+    const el = e.target;
+
+    if (!el.hasAttribute('data-autosave')) {
+        return;
+    }
+
+    const field = el.dataset.field;
+    const requirementId = el.dataset.requirementId;
+
+    /*
+    |--------------------------------------------------------------------------
+    | NOTES
+    |--------------------------------------------------------------------------
+    */
+
+    if (field === 'notes') {
+
+        customAutosave(requirementId, {
+            notes: el.value
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRICE
+    |--------------------------------------------------------------------------
+    */
+
+    if (field === 'price') {
+
+        customAutosave(requirementId, {
+            unit_price: el.value
+        });
+    }
+});
+
+/*
+|--------------------------------------------------------------------------
+| SELECT / MULTISELECT
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('change', (e) => {
+
+    const el = e.target;
+
+    if (!el.hasAttribute('data-autosave')) {
+        return;
+    }
+
+    const field = el.dataset.field;
+    const requirementId = el.dataset.requirementId;
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT
+    |--------------------------------------------------------------------------
+    */
+
+    if (field === 'select') {
+
+        customAutosave(requirementId, {
+            option_id: el.value
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MULTISELECT
+    |--------------------------------------------------------------------------
+    */
+
+    if (field === 'multiselect') {
+
+        const checked = document.querySelectorAll(
+            `[data-requirement-id="${requirementId}"][data-field="multiselect"]:checked`
+        );
+
+        const optionIds = [...checked].map(x => x.value);
+
+        customAutosave(requirementId, {
+            option_ids: optionIds
+        });
+    }
+});
+</script>

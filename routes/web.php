@@ -291,7 +291,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
         ->name('company.update');
 
 
-
+    Route::post('/rfqs/{rfq}/offer/autosave', [RfqOfferController::class, 'autosave'])->name('offer.autosave');
 
 
 
