@@ -57,9 +57,16 @@ $itemsByAttribute = $offerVersion?->items
     @include('rfq.workspace.participants')
     @break
 
-    @case('offers')
-    @include('rfq.workspace.offers')
-    @break
+   @case('offers')
+@include('rfq.workspace.offers', [
+    'offer' => $offer ?? null,
+    'offerVersion' => $offerVersion ?? null,
+    'itemsByRequirement' => $itemsByRequirement ?? collect(),
+    'itemsByAttribute' => $itemsByAttribute ?? collect(),
+])
+@break
+
+
 
     @case('audit')
     @include('rfq.workspace.audit')

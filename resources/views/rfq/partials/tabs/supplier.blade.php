@@ -53,4 +53,5 @@
     'supplier' => $rfq->buyer ?? null
 ])
 
+
 </div>

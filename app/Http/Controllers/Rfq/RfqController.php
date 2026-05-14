@@ -171,65 +171,154 @@ class RfqController extends Controller
             }
         }
 
+        $canCreateRevision = false;
+        $versions = collect();
+        $currentDraft = null;
+$offerVersion = null;
+$offer = null;
+$offers = null;
+$isReadonly = true;
+
+if ($activeTab === 's-requirements') {
+
+    $rfq->loadMissing([
+        'attributeValues.attribute.options',
+        'attributeValues.options',
+    ]);
+
+    $supplier = $this->context->supplier();
+
+    if (!$supplier) {
+        abort(403);
+    }
+
+    $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
+        ->firstOrCreate([
+            'rfq_id' => $rfq->id,
+            'participant_type' => get_class($supplier),
+            'participant_id' => $supplier->id,
+        ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT VERSION FROM REQUEST
+    |--------------------------------------------------------------------------
+    */
+    $requestedVersionId = request('version');
+
+    if ($requestedVersionId) {
+
+        $offerVersion = $offer->versions()
+            ->with(['items.options.translations'])
+            ->where('id', $requestedVersionId)
+            ->first();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEFAULT BEHAVIOUR
+    |--------------------------------------------------------------------------
+    */
+    if (!$offerVersion) {
+
+        $offerVersion = $offer->versions()
+            ->where('status', 'draft')
+            ->orderByDesc('version_number')
+            ->first();
+
         /*
         |--------------------------------------------------------------------------
-        | LOAD OFFERS ONLY WHEN NEEDED
+        | IF NO DRAFT EXISTS
         |--------------------------------------------------------------------------
         */
+        if (!$offerVersion) {
 
-        $offerVersion = null;
-
-        if ($activeTab === 's-requirements') {
-
-            $rfq->loadMissing([
-                'attributeValues.attribute.options',
-                'attributeValues.options',
-
-            ]);
-
-            $supplier = $this->context->supplier();
-
-            if (!$supplier) {
-                abort(403);
-            }
-
-            $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
-                ->firstOrCreate([
-                    'rfq_id' => $rfq->id,
-                    'participant_type' => get_class($supplier),
-                    'participant_id' => $supplier->id,
-                ]);
-
-            /**
-             * =========================
-             * GET OR CREATE DRAFT VERSION
-             * =========================
-             */
-            $offerVersion = $offer->versions()
-                ->where('status', 'draft')
-                ->orderByDesc('version_number')
-                ->first();
-
-            if (!$offerVersion) {
+            if ($offer->versions()->count() === 0) {
 
                 $offerVersion = $offer->versions()->create([
-                    'version_number' => ($offer->versions()->max('version_number') ?? 0) + 1,
+                    'version_number' => 1,
                     'status' => 'draft',
                     'created_by' => $this->context->user()->id,
                 ]);
 
-                // важно: сразу загрузить отношения для нового
-                $offerVersion->load(['items.options.translations']);
             } else {
 
-                // важно: reload чтобы не было stale data
-                $offerVersion->load(['items.options.translations']);
+                $offerVersion = $offer->versions()
+                    ->orderByDesc('version_number')
+                    ->first();
             }
-
-            $customRequirementIds = $rfq->customAttributeValues
-                ->pluck('attribute_id')
-                ->unique();
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD RELATIONS (SAFE)
+    |--------------------------------------------------------------------------
+    */
+    if ($offerVersion) {
+        $offerVersion->load([
+            'items.options.translations'
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CURRENT DRAFT (FOR HISTORY PANEL)
+    |--------------------------------------------------------------------------
+    */
+    $currentDraft = $offer->versions()
+        ->where('status', 'draft')
+        ->orderByDesc('version_number')
+        ->first();
+
+    /*
+    |--------------------------------------------------------------------------
+    | READONLY LOGIC (SAFE)
+    |--------------------------------------------------------------------------
+    */
+    $isReadonly = $offerVersion
+        ? $offerVersion->status !== 'draft'
+        : true;
+
+    $customRequirementIds = $rfq->customAttributeValues
+        ->pluck('attribute_id')
+        ->unique();
+
+
+        $versions = $offer->versions()
+    ->orderByDesc('version_number')
+    ->with(['items.options.translations'])
+    ->get();
+
+
+
+    $latestSubmittedVersion = $offer->versions()
+    ->where('status', 'submitted')
+    ->orderByDesc('version_number')
+    ->first();
+
+$isLatestSubmitted = $offerVersion
+    && $latestSubmittedVersion
+    && $offerVersion->id === $latestSubmittedVersion->id;
+
+$hasDraft = $offer->versions()
+    ->where('status', 'draft')
+    ->exists();
+
+$canCreateRevision = $isLatestSubmitted && !$hasDraft;
+
+$isReadonly = $offerVersion->status !== 'draft';
+
+
+}
+
+
+
+
+
+
+
+
 
 
         $ownerType = $this->context->isPersonal()
@@ -331,15 +420,73 @@ class RfqController extends Controller
             ->where('owner_id', $ownerId)
             ->get();
 
+ $counterOffers = collect();
+
+   if ($activeTab === 'offers') {
+
+    $rfq->loadMissing([
+        'offers.participant',
+        'offers.latestVersion',
+        'offers.versions', // все версии
+    ]);
+
+    // =========================
+    // ALL OFFERS (LEFT LIST)
+    // =========================
+    $offers = $rfq->offers;
+
+    // =========================
+    // SELECTED OFFER
+    // =========================
+    $offerId = request('offer');
+
+    $offer = null;
+    $offerVersion = null;
+
+    // =========================
+    // ALL VERSIONS (TIMELINE)
+    // =========================
+    $versions = collect();
+
+    if ($offerId) {
+
+        $offer = $offers->firstWhere('id', (int) $offerId);
+
+        $offerVersion = $offer?->latestVersion;
+
+        $versions = $offer
+    ? $offer->versions
+        ->sortByDesc('created_at')
+        ->values()
+    : collect();
+    }
+
+    // =========================
+    // AUTO SELECT FIRST OFFER
+    // =========================
+    if (!$offer && $offers->isNotEmpty()) {
+
+        $offer = $offers->first();
+
+        $offerVersion = $offer?->latestVersion;
+
+        $versions = $offer?->versions?->sortBy('version_number') ?? collect();
+    }
+
+    // =========================
+    // REMOVE OLD LOGIC (IMPORTANT)
+    // =========================
+    // ❌ больше НЕ используем:
+    // $counterOffers = ...
+
+}
 
 
-        if ($activeTab === 'offers') {
 
-            $rfq->loadMissing([
-                'offers.supplier',
-                'offers.latestVersion',
-            ]);
-        }
+
+
+
+
 
         /*
         |--------------------------------------------------------------------------
@@ -383,6 +530,11 @@ class RfqController extends Controller
             ->pluck('id')
             ->toArray();
 
+
+        
+
+
+
         return view('rfq.workspace', [
 
             'rfq' => $rfq,
@@ -396,6 +548,13 @@ class RfqController extends Controller
             'participants' => $participants,
             'selectedCategoryIds' => $selectedCategoryIds,
             'offerVersion' => $offerVersion,
+            'isReadonly' => $isReadonly,
+            'currentDraft' => $currentDraft,
+            'versions' => $versions,
+            'canCreateRevision' => $canCreateRevision,
+            'offer' => $offer,
+            'offers' => $offers,
+            'counterOffers' => $counterOffers,
 
             // 🔥 ВАЖНО: ДОБАВИТЬ MAPS
             'itemsByRequirement' => $offerVersion?->items

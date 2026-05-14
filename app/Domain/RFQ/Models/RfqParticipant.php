@@ -45,4 +45,28 @@ public function scopeActive($query)
 {
     return $query->where('status', '!=', 'removed');
 }
+
+
+public function getParticipantNameAttribute(): ?string
+{
+    $participant = $this->participant;
+
+    if (!$participant) {
+        return null;
+    }
+
+    // Supplier / Company
+    if ($participant instanceof \App\Models\Supplier) {
+        return $participant->name ?? $participant->title ?? 'Supplier';
+    }
+
+    // fallback если потом появятся другие типы
+    if (isset($participant->name)) {
+        return $participant->name;
+    }
+
+    return class_basename($participant);
+}
+
+
 }

@@ -6,11 +6,13 @@ use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\Negotiation\Models\RfqOfferItem;
 use App\Domain\RFQ\DTO\CreateRfqOfferData;
 use App\Domain\Negotiation\Services\NegotiationAuditService;
+use App\Services\Company\ActiveContextService;
 
 class CreateRfqOfferAction
 {
     public function __construct(
-        private NegotiationAuditService $audit
+        private NegotiationAuditService $audit,
+        ActiveContextService $context
     ) {}
 
     public function execute(

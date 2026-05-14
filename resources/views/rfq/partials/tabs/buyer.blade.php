@@ -38,8 +38,13 @@
         <span>↓</span>
     </div>
 
-    <div class="mt-3 mx-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
+    @php
+    $offers = $rfq->offers ?? collect();
+@endphp
 
+@if($offers->isEmpty())
+
+    <div class="mt-3 mx-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
         <div class="text-xs text-gray-500 leading-relaxed">
             No offers yet
         </div>
@@ -47,8 +52,68 @@
         <div class="text-[11px] text-gray-400 mt-1">
             Suppliers will appear here once they submit proposals
         </div>
-
     </div>
+
+@else
+
+  <div class="mt-3 space-y-2">
+
+    @foreach($offers as $offer)
+
+        @php
+            $supplier = $offer->participant;
+            $version = $offer->latestVersion;
+        @endphp
+
+        <a href="{{ route('rfqs.workspace', [
+            'rfq' => $rfq->id,
+            'tab' => 'offers',
+            'offer' => $offer->id
+        ]) }}"
+           class="group flex items-center justify-between gap-3 px-3 py-2.5
+                  rounded-lg border border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 shadow-sm
+                  transition-all duration-200
+                  hover:bg-black/5 hover:border-gray-300 hover:shadow">
+
+            {{-- LEFT --}}
+            <div class="flex items-center gap-3 min-w-0">
+
+                {{-- DOT --}}
+                <div class="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-gray-600"></div>
+
+                {{-- TEXT --}}
+                <div class="min-w-0">
+
+                    <div class="text-sm text-gray-800 truncate">
+                        {{ $supplier?->name ?? 'Unknown supplier' }}
+                    </div>
+
+                    <div class="text-[11px] text-gray-400 mt-0.5">
+                        Version {{ $version?->version_number ?? '-' }}
+                    </div>
+
+                </div>
+
+            </div>
+
+            {{-- ARROW --}}
+        <div class="text-gray-300 group-hover:text-gray-500 transition">
+            →
+        </div>
+
+        </a>
+
+    @endforeach
+
+</div>
+
+@endif
+
+
+
+
+
+
 
 
      {{-- REQUIREMENTS --}}

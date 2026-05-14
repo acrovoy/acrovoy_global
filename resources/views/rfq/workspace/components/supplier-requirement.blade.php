@@ -5,6 +5,7 @@ $type = $attribute->type;
 $item = $itemsByAttribute[$attribute->id] ?? null;
 
 
+
 /**
  * =========================
  * BUYER SNAPSHOT LOGIC
@@ -48,36 +49,41 @@ $price = $item?->unit_price ?? '';
 
 <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition mb-3">
 
+   
+
 
 
     {{-- LABEL --}}
     <label class="block text-sm font-medium text-gray-800 mb-2">
-       {{ $attribute->name }}: 
+       {{ $attribute->name }}:
 
         {{-- BUYER SNAPSHOT --}}
-    @if($buyerText)
-        
+        @if($buyerText)
+
             {{ $buyerText }}
-      
-    @endif
 
-    {{-- SELECT / MULTISELECT SNAPSHOT --}}
-    @if($type === 'select' && $buyerSelectedOptionId)
+        @endif
 
-    <span class="text-xs text-gray-500 mt-1">
-        
-        {{ $attribute->options->firstWhere('id', $buyerSelectedOptionId)?->translatedValue() }}
-    </span>
+        {{-- SELECT / MULTISELECT SNAPSHOT --}}
+        @if($type === 'select' && $buyerSelectedOptionId)
 
-@endif
+            <span class="text-xs text-gray-500 mt-1">
 
-    @if($type === 'multiselect' && $buyerOptions->isNotEmpty())
-        <span class="text-xs text-gray-500 mt-1">
-           
-            {{ $buyerOptions->map(fn ($o) => $o->translatedValue())->implode(', ') }}
-        </span>
-    @endif
+                {{ $attribute->options->firstWhere('id', $buyerSelectedOptionId)?->translatedValue() }}
 
+            </span>
+
+        @endif
+
+        @if($type === 'multiselect' && $buyerOptions->isNotEmpty())
+
+            <span class="text-xs text-gray-500 mt-1">
+
+                {{ $buyerOptions->map(fn ($o) => $o->translatedValue())->implode(', ') }}
+
+            </span>
+
+        @endif
 
     </label>
 
@@ -102,16 +108,22 @@ $price = $item?->unit_price ?? '';
     {{-- SUPPLIER --}}
     <div class="text-xs text-gray-500 mb-1">
         Your offer
+        
     </div>
 
     <textarea
-        name="offer[{{ $attribute->id }}][notes]"
-        data-autosave
-        data-requirement-id="{{ $attribute->id }}"
-        data-field="notes"
-        class="w-full border rounded p-2 mb-3 text-sm focus:outline-none focus:ring-0 focus:border-gray-900"
-        placeholder="Notes"
-    >{{ $notes }}</textarea>
+    name="offer[{{ $attribute->id }}][notes]"
+    data-autosave
+    data-requirement-id="{{ $attribute->id }}"
+    data-field="notes"
+    placeholder="Notes"
+    @if($isReadonly) readonly @endif
+    class="w-full border rounded p-2 mb-3 text-sm
+        {{ $isReadonly
+            ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
+            : 'focus:outline-none focus:ring-0 focus:border-gray-900'
+        }}"
+>{{ $notes }}</textarea>
 
 
     {{-- SELECT --}}
@@ -131,6 +143,7 @@ $price = $item?->unit_price ?? '';
                         data-requirement-id="{{ $attribute->id }}"
                         data-field="select"
                         @checked((int)$selectedOptionId === (int)$option->id)
+                        @disabled($isReadonly)
                         class="text-gray-900 focus:ring-gray-900"
                     >
 
@@ -162,6 +175,7 @@ $price = $item?->unit_price ?? '';
                         data-requirement-id="{{ $attribute->id }}"
                         data-field="multiselect"
                         @checked(in_array($option->id, $selectedOptions))
+                        @disabled($isReadonly)
                         class="text-gray-900 rounded focus:ring-gray-900"
                     >
 
@@ -179,13 +193,21 @@ $price = $item?->unit_price ?? '';
     {{-- PRICE + FILE --}}
     <div class="flex items-center gap-3">
 
-        
+        @if(!$isReadonly)
 
-        <div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400">
-            +
-        </div>
+            <div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400">
+                +
+            </div>
 
-        <input
+        @else
+
+            <div class="text-xs text-gray-500">
+                Attachments submitted
+            </div>
+
+        @endif
+
+       <input
     type="number"
     step="0.01"
     min="0"
@@ -194,13 +216,20 @@ $price = $item?->unit_price ?? '';
     data-autosave
     data-requirement-id="{{ $attribute->id }}"
     data-field="price"
-    class="ml-auto border rounded px-3 py-1 w-24 text-sm focus:outline-none focus:ring-0 focus:border-gray-900"
     placeholder="0.00"
+    @if($isReadonly) readonly @endif
+    class="ml-auto border rounded px-3 py-1 w-24 text-sm
+        {{ $isReadonly
+            ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
+            : 'focus:outline-none focus:ring-0 focus:border-gray-900'
+        }}"
 >
 
     </div>
 
 </div>
+
+@if(!$isReadonly)
 
 <script>
 let customTimers = {};
@@ -328,3 +357,5 @@ document.addEventListener('change', (e) => {
     }
 });
 </script>
+
+@endif

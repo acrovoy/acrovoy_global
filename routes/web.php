@@ -163,6 +163,8 @@ Route::post('/rfqs/{rfq}/custom-attributes/bulk-archive', [RfqRequirementControl
 
 Route::post('/custom-attributes', [ProductController::class, 'storeCustomAttribute'])->name('custom-attributes.store');
 
+Route::post('/dashboard/supplier/rfqs/{rfq}/offer/create-revision', [RfqOfferController::class, 'createRevision'])->name('supplier.rfq.offer.create-revision');
+
 Route::prefix('dashboard/buyer')
     ->name('buyer.')
     ->group(function () {

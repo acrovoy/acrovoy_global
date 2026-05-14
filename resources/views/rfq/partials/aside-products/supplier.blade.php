@@ -6,7 +6,7 @@
      {{-- ITEM --}}
 
      <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 's-requirements']) }}"
-   class="group flex items-center gap-3 px-3 py-2.5 rounded-md
+   class="group flex items-center gap-3 px-3 py-2.5 rounded-md border border-gray-200
           transition-all duration-200
           hover:bg-black/5
           {{ $activeTab === 's-requirements' ? 'bg-black/5' : '' }}">

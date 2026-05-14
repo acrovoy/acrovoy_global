@@ -39,14 +39,14 @@ public function index(Rfq $rfq)
         CreateRfqOfferAction $action,
         ActiveContextService $context
     ) {
-        $supplier = $context->company();
+       $supplier = $context->supplier();
 
         abort_if(!$supplier, 403);
-        abort_if($context->role() !== 'supplier', 403);
+        
 
         $offer = $action->execute(
             CreateRfqOfferData::fromArray($request->all()),
-            $supplier->id
+            $supplier->id,
         );
 
         return response()->json($offer);
@@ -60,11 +60,19 @@ public function index(Rfq $rfq)
         OfferDecisionService $service,
         ActiveContextService $context
     ) {
-        abort_if($context->role() !== 'buyer', 403);
+        
+
+    $buyerType = $context->isPersonal()
+            ? \App\Models\User::class
+            : \App\Models\Buyer::class;
+
+        $buyer = $context->isPersonal()
+            ? auth()->user()->id
+            : $context->company()->id;
 
         $service->accept(
             $version,
-            $context->user()->id
+            $buyer
         );
 
         return back()->with('success', 'Offer version accepted');
@@ -206,6 +214,100 @@ public function customAutosave(
     );
 
     return response()->json(['ok' => true]);
+}
+ 
+
+public function createRevision(Rfq $rfq, ActiveContextService $context)
+{
+    $supplier = $context->supplier();
+
+    if (!$supplier) {
+        abort(403);
+    }
+
+    /**
+     * =========================================
+     * GET OFFER
+     * =========================================
+     */
+    $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
+        ->where('rfq_id', $rfq->id)
+        ->where('participant_type', get_class($supplier))
+        ->where('participant_id', $supplier->id)
+        ->firstOrFail();
+
+    /**
+     * =========================================
+     * GET LATEST VERSION (submitted or draft fallback)
+     * =========================================
+     */
+    $lastVersion = $offer->versions()
+        ->orderByDesc('version_number')
+        ->first();
+
+    if (!$lastVersion) {
+        abort(404, 'No version to revise');
+    }
+
+    /**
+     * =========================================
+     * CREATE NEW DRAFT VERSION
+     * =========================================
+     */
+    $newVersion = $offer->versions()->create([
+        'version_number' => $lastVersion->version_number + 1,
+        'status' => 'draft',
+        'created_by' => $context->user()->id,
+    ]);
+
+    /**
+     * =========================================
+     * CLONE ITEMS
+     * =========================================
+     */
+    foreach ($lastVersion->items as $item) {
+
+        $newItem = $newVersion->items()->create([
+            'requirement_id' => $item->requirement_id,
+            'attribute_id' => $item->attribute_id,
+            'unit_price' => $item->unit_price,
+            'quantity' => $item->quantity,
+            'currency' => $item->currency,
+            'lead_time_days' => $item->lead_time_days,
+            'moq' => $item->moq,
+            'notes' => $item->notes,
+        ]);
+
+        /**
+         * =========================================
+         * CLONE OPTIONS
+         * =========================================
+         */
+        if ($item->options && $item->options->count()) {
+
+            $newItem->options()->sync(
+                $item->options->pluck('id')->toArray()
+            );
+        }
+    }
+
+    /**
+     * =========================================
+     * EVENT (optional but recommended)
+     * =========================================
+     */
+    // RfqOfferEvent::create([...]);
+
+    /**
+     * =========================================
+     * REDIRECT TO EDITOR
+     * =========================================
+     */
+    return redirect()->route('rfqs.workspace', [
+        'rfq' => $rfq->id,
+        'tab' => 's-requirements',
+        'version' => $newVersion->id,
+    ]);
 }
 
 
