@@ -63,6 +63,16 @@ class OfferVersionBuilder
     array $payload
 ): RfqOfferVersionItem {
 
+logger()->info('DEBUG VERSION', [
+    'version_id' => $version->id,
+    'rfq_offer_id' => $version->rfq_offer_id,
+    'status' => $version->status,
+    'is_counter' => $version->is_counter,
+    'created_by' => $version->created_by,
+    'auth_id' => auth()->id(),
+    'payload' => $payload,
+]);
+
     $item = RfqOfferVersionItem::firstOrCreate([
         'offer_version_id' => $version->id,
         'attribute_id' => $attributeId,

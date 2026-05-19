@@ -27,6 +27,8 @@ $itemsByAttribute = $offerVersion?->items
     ?->whereNotNull('attribute_id')
     ?->keyBy('attribute_id') ?? collect();
     
+
+    
 @endphp
 
 
@@ -61,7 +63,7 @@ $itemsByAttribute = $offerVersion?->items
 @include('rfq.workspace.offers', [
     'offer' => $offer ?? null,
     'offerVersion' => $offerVersion ?? null,
-    'itemsByRequirement' => $itemsByRequirement ?? collect(),
+    'counterItemsByAttribute' => $counterItemsByAttribute ?? collect(),
     'itemsByAttribute' => $itemsByAttribute ?? collect(),
 ])
 @break

@@ -79,12 +79,12 @@
             <div class="flex items-center gap-3 min-w-0">
 
                 {{-- DOT --}}
-                <div class="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-gray-600"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-green-400 group-hover:bg-green-600"></div>
 
                 {{-- TEXT --}}
                 <div class="min-w-0">
 
-                    <div class="text-sm text-gray-800 truncate">
+                    <div class="text-sm text-blue-800 truncate">
                         {{ $supplier?->name ?? 'Unknown supplier' }}
                     </div>
 

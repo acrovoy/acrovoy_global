@@ -45,10 +45,7 @@ class RfqOfferVersion extends Model
 
     public function items()
 {
-    return $this->hasMany(
-        RfqOfferVersionItem::class,
-        'offer_version_id'
-    );
+    return $this->hasMany(RfqOfferVersionItem::class, 'offer_version_id');
 }
 
 

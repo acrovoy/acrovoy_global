@@ -180,6 +180,84 @@ public function index(Rfq $rfq)
 }
 
 
+public function buyerCounterAutosave(
+    Rfq $rfq,
+    RfqOffer $offer,
+    RfqOfferVersion $version,
+    Request $request,
+    OfferVersionBuilder $builder,
+    ActiveContextService $context
+) {
+    
+
+    /*
+    |----------------------------------------------------------------------
+    | ACCESS CHECK
+    |----------------------------------------------------------------------
+    */
+
+    
+
+    abort_unless($version->rfq_offer_id === $offer->id, 403);
+    abort_unless($version->status === 'draft', 403);
+    abort_unless($version->is_counter, 403);
+
+    logger()->info('AUTOSAVE', $request->all());
+
+    /*
+    |----------------------------------------------------------------------
+    | BUILD PAYLOAD (FLAT REQUEST)
+    |----------------------------------------------------------------------
+    */
+
+    $payload = [];
+
+    if ($request->has('notes')) {
+        $payload['notes'] = $request->input('notes');
+    }
+
+    if ($request->has('unit_price')) {
+        $payload['unit_price'] = $request->input('unit_price');
+    }
+
+    if ($request->has('option_id')) {
+        $payload['option_id'] = $request->input('option_id');
+    }
+
+    if ($request->has('option_ids')) {
+        $payload['option_ids'] = $request->input('option_ids', []);
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | EMPTY CHECK
+    |----------------------------------------------------------------------
+    */
+
+    if (empty($payload)) {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Payload empty',
+        ]);
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | SAVE VIA BUILDER
+    |----------------------------------------------------------------------
+    */
+
+    $builder->updateItem(
+        version: $version,
+        attributeId: (int) $request->input('attribute_id'),
+        payload: $payload
+    );
+
+    return response()->json([
+        'ok' => true,
+    ]);
+}
+
 
 
 public function customAutosave(
@@ -310,5 +388,170 @@ public function createRevision(Rfq $rfq, ActiveContextService $context)
     ]);
 }
 
+
+public function createCounterOffer(
+    Rfq $rfq,
+    RfqOffer $offer,
+    ActiveContextService $context
+) {
+    /*
+    |--------------------------------------------------------------------------
+    | BUYER
+    |--------------------------------------------------------------------------
+    */
+
+    $buyer = $context->isPersonal()
+        ? auth()->user()
+        : $context->company();
+
+    if (!$buyer) {
+        abort(403);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD OFFER
+    |--------------------------------------------------------------------------
+    */
+
+    $offer->loadMissing([
+        'versions.items.options',
+        'participant',
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | LAST VERSION
+    |--------------------------------------------------------------------------
+    */
+
+    $lastVersion = $offer->versions()
+        ->with(['items.options'])
+        ->where(['is_counter' => 0])
+        ->orderByDesc('version_number')
+        ->first();
+
+    if (!$lastVersion) {
+        abort(404, 'No version found');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PREVENT DUPLICATE DRAFT COUNTER VERSION
+    |--------------------------------------------------------------------------
+    */
+
+    $existingDraft = $offer->versions()
+        ->where('is_counter', 1)
+        ->where('status', 'draft')
+        ->where('created_by', $context->user()->id)
+        ->latest()
+        ->first();
+
+    if ($existingDraft) {
+
+    $existingDraftCounter = $offer->versions()
+                    ->where('is_counter', 1)
+                    ->where('status', 'draft')
+                    ->where('created_by', auth()->id())
+                    ->orderByDesc('version_number')
+                    ->first();
+
+    $versions = $offer->versions()
+    ->with(['items'])
+    ->orderByDesc('version_number')
+    ->get();
+
+    $counterItemsByAttribute = $existingDraftCounter
+                        ? $existingDraftCounter->items()
+                        ->with('options')
+                        ->get()
+                        ->keyBy('attribute_id')
+                        : collect();
+
+    
+
+        // ❗ ВАЖНО: просто показываем view, НЕ redirect
+        return view('rfq.workspace.create-counter-offer', [
+            'rfq' => $rfq,
+            'offer' => $offer,
+            'offerVersion' => $lastVersion,
+            'counterVersion' => $existingDraft,
+            'itemsByAttribute' => $lastVersion->items->keyBy('attribute_id'),
+            'versions' => $versions, 
+            'counterItemsByAttribute' => $counterItemsByAttribute ?? collect(),
+
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE COUNTER VERSION
+    |--------------------------------------------------------------------------
+    */
+
+    $newVersion = $offer->versions()->create([
+        'version_number' => $lastVersion->version_number + 1,
+        'status' => 'draft',
+        'is_counter' => 1,
+        'created_by' => $context->user()->id,
+        'comment' => null,
+        'total_price' => $lastVersion->total_price,
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLONE ITEMS
+    |--------------------------------------------------------------------------
+    */
+
+    foreach ($lastVersion->items as $item) {
+
+        $newItem = $newVersion->items()->create([
+            'requirement_id' => $item->requirement_id,
+            'attribute_id' => $item->attribute_id,
+            'unit_price' => $item->unit_price,
+            'quantity' => $item->quantity,
+            'currency' => $item->currency,
+            'lead_time_days' => $item->lead_time_days,
+            'moq' => $item->moq,
+            'notes' => $item->notes,
+        ]);
+
+        if ($item->options->count()) {
+            $newItem->options()->sync($item->options->pluck('id'));
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOAD ITEMS MAP
+    |--------------------------------------------------------------------------
+    */
+
+    $itemsByAttribute = $newVersion
+        ->items
+        ->keyBy('attribute_id');
+
+    $versions = $offer->versions()
+    ->with(['items'])
+    ->orderByDesc('version_number')
+    ->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | VIEW
+    |--------------------------------------------------------------------------
+    */
+
+    return view('rfq.workspace.create-counter-offer', [
+        'rfq' => $rfq,
+        'offer' => $offer,
+        'offerVersion' => $lastVersion,
+        'counterVersion' => $newVersion,
+        'itemsByAttribute' => $itemsByAttribute,
+        'versions' => $versions, 
+    ]);
+}
 
 }

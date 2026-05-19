@@ -7,16 +7,28 @@
     {{-- LEFT BIG BLOCK --}}
     <div class="col-span-8">
 
-       
-
         @php
             $supplier = $offer->participant;
             $isReadonly = true;
+
+            /*
+            |---------------------------------------------
+            | ACTIVE VERSION FIX
+            |---------------------------------------------
+            */
+
+            $activeVersion = null;
+
+            if (isset($counterVersion) && $counterVersion) {
+                $activeVersion = $counterVersion;
+            } else {
+                $activeVersion = $offerVersion ?? null;
+            }
         @endphp
 
         <div class="max-w-5xl mx-auto"
             data-rfq-id="{{ $rfq->id }}"
-            data-offer-version-id="{{ $offerVersion->id }}">
+            data-offer-version-id="{{ $activeVersion?->id }}">
 
             @php $i = 1; @endphp
 
@@ -62,17 +74,24 @@
                 <div class="p-5 bg-white">
 
                     {{-- BUYER ACTIONS --}}
-<div class="flex justify-end gap-3 mb-4 text-sm">
+                    <div class="flex justify-end gap-3 mb-4 text-sm">
 
-    <button class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-        Chat
-    </button>
+                        <button class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
+                            Chat
+                        </button>
 
-    <button class="px-4 py-1 border rounded bg-black text-white">
-        Create Counter Offer
-    </button>
+                        <a
+                            href="{{ route('buyer.rfqs.counter-offer.create', [
+                                'rfq' => $rfq->id,
+                                'offer' => $offer->id
+                            ]) }}"
+                            class="px-4 py-1 border rounded bg-black text-white hover:bg-gray-800 transition"
+                        >
+                            Create Counter Offer
+                        </a>
 
-</div>
+                    </div>
+
                     {{-- REQUIREMENTS --}}
                     <div class="border rounded-lg p-4 mb-6">
 
@@ -179,8 +198,6 @@
             </div>
 
         </div>
-
-       
 
     </div>
 

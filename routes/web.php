@@ -242,7 +242,13 @@ Route::prefix('dashboard/buyer')
     // OFFERS
     // =========================
 
+    
     Route::prefix('/rfqs/{rfq}/offers')->group(function () {
+
+        Route::post(
+    '/{offer}/versions/{version}/autosave', [RfqOfferController::class, 'buyerCounterAutosave'])->name('rfqs.counter-offer.autosave');
+
+        Route::get('/{offer}/counter-offer/create', [RfqOfferController::class, 'createCounterOffer'])->name('rfqs.counter-offer.create');
 
         Route::get('/', [RfqOfferController::class, 'index'])
             ->name('rfqs.offers.index');
