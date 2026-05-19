@@ -8,7 +8,7 @@ $item = $itemsByAttribute[$attribute->id] ?? null;
 
 /**
  * =========================
- * BUYER SNAPSHOT LOGIC
+ * BUYER SNAPSHOT (ONLY SUBMITTED VERSION)
  * =========================
  */
 $buyerValue = $buyerSnapshotMap[$attribute->id] ?? null;
@@ -18,11 +18,9 @@ $buyerText = $buyerValue?->value_text
     ?? $buyerValue?->value_date
     ?? null;
 
-$buyerOptions = $buyerValue?->options ?? collect();
+$buyerSelectedOptionId = $buyerValue?->attribute_option_id ?? null;
 
-$buyerSelectedOptionId =
-    $value->attribute_option_id
-    ?? $item?->options?->first()?->id;
+$buyerOptions = $buyerValue?->options ?? collect();
 
 
 /**
@@ -144,7 +142,7 @@ $price = $item?->unit_price ?? '';
                         data-field="select"
                         @checked((int)$selectedOptionId === (int)$option->id)
                         @disabled($isReadonly)
-                        class="text-gray-900 focus:ring-gray-900"
+                        class="{{ $isReadonly ? 'text-gray-500' : 'text-gray-900' }} focus:ring-gray-900"
                     >
 
                     <span>{{ $option->translatedValue() }}</span>
@@ -176,7 +174,7 @@ $price = $item?->unit_price ?? '';
                         data-field="multiselect"
                         @checked(in_array($option->id, $selectedOptions))
                         @disabled($isReadonly)
-                        class="text-gray-900 rounded focus:ring-gray-900"
+                        class="{{ $isReadonly ? 'text-gray-500' : 'text-gray-900' }} rounded focus:ring-gray-900"
                     >
 
                     <span>{{ $option->translatedValue() }}</span>

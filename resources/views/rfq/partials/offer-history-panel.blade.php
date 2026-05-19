@@ -53,121 +53,141 @@
                        
 
                         {{-- VERSIONS --}}
-                        @foreach($versions as $version)
+                        {{-- VERSIONS --}}
+@foreach($versions as $version)
 
-                            @php
-                                $isActive = isset($offerVersion) && $offerVersion->id === $version->id;
-                            @endphp
+    @php
+        $isActive = isset($offerVersion) && $offerVersion->id === $version->id;
 
-                            @if($isActive)
-                                {{-- ACTIVE = SAME STYLE AS DRAFT --}}
-                                <button
-                                    type="button"
-                                    class="group relative w-full text-left"
-                                    data-version-id="{{ $version->id }}"
-                                    data-status="{{ $version->status }}"
-                                >
+        /**
+         * =========================================================
+         * HIDE BUYER COUNTER DRAFTS
+         * =========================================================
+         * Показываем:
+         * - обычные версии
+         * - counter версии только если submitted
+         *
+         * Скрываем:
+         * - is_counter = 1 + status = draft
+         */
+        $isHiddenCounterDraft =
+            ($version->is_counter ?? false)
+            && $version->status === 'draft';
 
-                                    <div class="flex gap-4">
+        if ($isHiddenCounterDraft) {
+            continue;
+        }
+    @endphp
 
-                                        <div class="relative z-10 w-9 h-9 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1 0v14"/>
-                                            </svg>
-                                        </div>
+    @if($isActive)
+        {{-- ACTIVE = SAME STYLE AS DRAFT --}}
+        <button
+            type="button"
+            class="group relative w-full text-left"
+            data-version-id="{{ $version->id }}"
+            data-status="{{ $version->status }}"
+        >
 
-                                        <div class="flex-1 bg-blue-50 border border-blue-100 rounded-2xl p-4">
+            <div class="flex gap-4">
 
-                                            <div class="flex items-start justify-between gap-3">
+                <div class="relative z-10 w-9 h-9 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1 0v14"/>
+                    </svg>
+                </div>
 
-                                                <div>
-                                                    <div class="font-semibold text-sm text-gray-900">
-                                                        Version {{ $version->version_number }} (Viewing)
-                                                    </div>
+                <div class="flex-1 bg-blue-50 border border-blue-100 rounded-2xl p-4">
 
-                                                    <div class="text-xs text-gray-500 mt-1">
-                                                        {{ optional($version->created_at)->format('M d, Y · H:i') }}
-                                                    </div>
-                                                </div>
+                    <div class="flex items-start justify-between gap-3">
 
-                                                <span class="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-[10px] font-medium">
-                                                    {{ ucfirst($version->status) }}
-                                                </span>
+                        <div>
+                            <div class="font-semibold text-sm text-gray-900">
+                                Version {{ $version->version_number }} (Viewing)
+                            </div>
 
-                                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                {{ optional($version->created_at)->format('M d, Y · H:i') }}
+                            </div>
+                        </div>
 
-                                            <div class="mt-3 text-xs text-gray-600">
-                                                Currently selected version
-                                            </div>
+                        <span class="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-[10px] font-medium">
+                            {{ ucfirst($version->status) }}
+                        </span>
 
-                                        </div>
+                    </div>
 
-                                    </div>
+                    <div class="mt-3 text-xs text-gray-600">
+                        Currently selected version
+                    </div>
 
-                                </button>
-                            @else
-                                {{-- NORMAL VERSION --}}
-                                <button
-                                    type="button"
-                                    class="group relative w-full text-left"
-                                    data-version-id="{{ $version->id }}"
-                                    data-status="{{ $version->status }}"
-                                >
+                </div>
 
-                                    <div class="flex gap-4">
+            </div>
 
-                                        <div class="relative z-10 w-9 h-9 rounded-full bg-green-100 border border-green-200 flex items-center justify-center flex-shrink-0">
+        </button>
+    @else
+        {{-- NORMAL VERSION --}}
+        <button
+            type="button"
+            class="group relative w-full text-left"
+            data-version-id="{{ $version->id }}"
+            data-status="{{ $version->status }}"
+        >
 
-                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                 class="w-4 h-4 text-green-600"
-                                                 fill="none"
-                                                 viewBox="0 0 24 24"
-                                                 stroke="currentColor">
+            <div class="flex gap-4">
 
-                                                <path stroke-linecap="round"
-                                                      stroke-linejoin="round"
-                                                      stroke-width="2"
-                                                      d="M5 13l4 4L19 7" />
-                                            </svg>
+                <div class="relative z-10 w-9 h-9 rounded-full bg-green-100 border border-green-200 flex items-center justify-center flex-shrink-0">
 
-                                        </div>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="w-4 h-4 text-green-600"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor">
 
-                                        <div class="flex-1 border border-gray-200 rounded-2xl p-4 transition-all group-hover:border-gray-300 group-hover:shadow-md bg-white">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M5 13l4 4L19 7" />
+                    </svg>
 
-                                            <div class="flex items-start justify-between gap-3">
+                </div>
 
-                                                <div>
-                                                    <div class="font-semibold text-sm text-gray-900">
-                                                        Version {{ $version->version_number }}
-                                                    </div>
+                <div class="flex-1 border border-gray-200 rounded-2xl p-4 transition-all group-hover:border-gray-300 group-hover:shadow-md bg-white">
 
-                                                    <div class="text-xs text-gray-500 mt-1">
-                                                        {{ optional($version->created_at)->format('M d, Y · H:i') }}
-                                                    </div>
-                                                </div>
+                    <div class="flex items-start justify-between gap-3">
 
-                                                <span class="px-2 py-1 rounded-md
-                                                    {{ $version->status === 'submitted'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-600' }}
-                                                    text-[10px] font-medium">
-                                                    {{ ucfirst($version->status) }}
-                                                </span>
+                        <div>
+                            <div class="font-semibold text-sm text-gray-900">
+                                Version {{ $version->version_number }}
+                            </div>
 
-                                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                {{ optional($version->created_at)->format('M d, Y · H:i') }}
+                            </div>
+                        </div>
 
-                                            <div class="mt-3 text-xs text-gray-600 leading-relaxed">
-                                                Submitted version snapshot.
-                                            </div>
+                        <span class="px-2 py-1 rounded-md
+                            {{ $version->status === 'submitted'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-600' }}
+                            text-[10px] font-medium">
+                            {{ ucfirst($version->status) }}
+                        </span>
 
-                                        </div>
+                    </div>
 
-                                    </div>
+                    <div class="mt-3 text-xs text-gray-600 leading-relaxed">
+                        Submitted version snapshot.
+                    </div>
 
-                                </button>
-                            @endif
+                </div>
 
-                        @endforeach
+            </div>
+
+        </button>
+    @endif
+
+@endforeach
 
                     </div>
 

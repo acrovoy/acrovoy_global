@@ -36,22 +36,7 @@ class OfferVersionBuilder
      */
     protected function copyItems(RfqOffer $offer, RfqOfferVersion $version): void
     {
-        foreach ($offer->items as $item) {
-
-            RfqOfferVersionItem::create([
-                'offer_version_id' => $version->id,
-                'offer_item_id' => $item->id,
-                'requirement_id' => $item->attribute_id,
-
-                'unit_price' => $item->unit_price,
-                'quantity' => $item->quantity,
-                'currency' => $item->currency,
-
-                'lead_time_days' => $item->lead_time_days,
-                'moq' => $item->moq,
-                'notes' => $item->notes,
-            ]);
-        }
+       
     }
 
     /**
@@ -63,15 +48,6 @@ class OfferVersionBuilder
     array $payload
 ): RfqOfferVersionItem {
 
-logger()->info('DEBUG VERSION', [
-    'version_id' => $version->id,
-    'rfq_offer_id' => $version->rfq_offer_id,
-    'status' => $version->status,
-    'is_counter' => $version->is_counter,
-    'created_by' => $version->created_by,
-    'auth_id' => auth()->id(),
-    'payload' => $payload,
-]);
 
     $item = RfqOfferVersionItem::firstOrCreate([
         'offer_version_id' => $version->id,
@@ -136,31 +112,6 @@ logger()->info('DEBUG VERSION', [
     if (array_key_exists('option_ids', $payload)) {
         $item->options()->sync($payload['option_ids']);
     }
-
-    return $item;
-}
-
-public function updateCustomRequirement(
-    RfqOfferVersion $version,
-    int $requirementId,
-    string $key,
-    mixed $value
-): RfqOfferVersionItem {
-
-    $item = RfqOfferVersionItem::firstOrCreate([
-        'offer_version_id' => $version->id,
-        'requirement_id' => $requirementId,
-    ]);
-
-    if ($key === 'price') {
-        $item->unit_price = $value;
-    }
-
-    if ($key === 'notes') {
-        $item->notes = $value;
-    }
-
-    $item->save();
 
     return $item;
 }
