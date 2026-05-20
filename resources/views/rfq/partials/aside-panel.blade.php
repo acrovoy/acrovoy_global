@@ -29,45 +29,42 @@
                             </div>
                         </div>
 
-                       {{-- TIMER --}}
-<div 
-    x-data="countdown('{{ $rfq->closed_at->toIso8601String() }}')" 
-    x-init="start()"
-    class="flex flex-col items-end gap-1"
->
+                        {{-- TIMER --}}
+                        <div
+                            x-data="countdown('{{ $rfq->closed_at->toIso8601String() }}')"
+                            x-init="start()"
+                            class="flex flex-col items-end gap-1">
 
-    {{-- TIMER --}}
-    <div class="flex gap-1 text-center font-mono">
+                            {{-- TIMER --}}
+                            <div class="flex gap-1 text-center font-mono">
 
-        <div class="bg-gray-900 text-white px-2 py-1 rounded leading-tight">
-            <div class="text-sm" x-text="days"></div>
-            <div class="text-[8px] text-gray-400 tracking-wide">DAYS</div>
-        </div>
+                                <div class="bg-gray-900 text-white px-2 py-1 rounded leading-tight">
+                                    <div class="text-sm" x-text="days"></div>
+                                    <div class="text-[8px] text-gray-400 tracking-wide">DAYS</div>
+                                </div>
 
-        <div class="bg-gray-900 text-white px-2 py-1 rounded leading-tight">
-            <div class="text-sm" x-text="hours"></div>
-            <div class="text-[8px] text-gray-400 tracking-wide">HOURS</div>
-        </div>
+                                <div class="bg-gray-900 text-white px-2 py-1 rounded leading-tight">
+                                    <div class="text-sm" x-text="hours"></div>
+                                    <div class="text-[8px] text-gray-400 tracking-wide">HOURS</div>
+                                </div>
 
-        <div class="bg-gray-900 text-white px-2 py-1 rounded leading-tight">
-            <div 
-                class="text-sm transition-all duration-300"
-                :class="blink ? 'opacity-50 scale-95' : 'opacity-100 scale-100'"
-                x-text="minutes"
-            ></div>
-            <div class="text-[8px] text-gray-400 tracking-wide">MINUTES</div>
-        </div>
+                                <div class="bg-gray-900 text-white px-2 py-1 rounded leading-tight">
+                                    <div
+                                        class="text-sm transition-all duration-300"
+                                        :class="blink ? 'opacity-50 scale-95' : 'opacity-100 scale-100'"
+                                        x-text="minutes"></div>
+                                    <div class="text-[8px] text-gray-400 tracking-wide">MINUTES</div>
+                                </div>
 
-    </div>
+                            </div>
 
-    {{-- STATUS --}}
-    <div 
-        class="text-xs font-medium"
-        :class="statusColor"
-        x-text="statusText"
-    ></div>
+                            {{-- STATUS --}}
+                            <div
+                                class="text-xs font-medium"
+                                :class="statusColor"
+                                x-text="statusText"></div>
 
-</div>
+                        </div>
 
                     </div>
 
@@ -112,11 +109,11 @@
 
 
 
-        
 
 
 
-          
+
+
 
         </div>
     </div>

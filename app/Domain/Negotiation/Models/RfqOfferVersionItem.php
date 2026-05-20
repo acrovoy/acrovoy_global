@@ -23,6 +23,8 @@ class RfqOfferVersionItem extends Model
         'lead_time_days',
         'moq',
         'notes',
+
+        'updated_by',
     ];
 
 

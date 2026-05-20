@@ -13,6 +13,9 @@ use App\Services\Company\ActiveContextService;
 use Illuminate\Http\Request;
 use App\Domain\RFQ\Models\Rfq;
 use App\Domain\Negotiation\Services\OfferVersionBuilder;
+use App\Domain\Negotiation\Actions\OfferVersionItemAutosaveAction;
+use App\Domain\Negotiation\Actions\CounterOfferVersionItemAutosaveAction;
+use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
 
 class RfqOfferController extends Controller
 {
@@ -29,28 +32,6 @@ class RfqOfferController extends Controller
         return view('rfq.offers.index', compact('rfq', 'offers'));
     }
 
-
-
-    /**
-     * SUPPLIER: create offer (initial version)
-     */
-    public function store(
-        Request $request,
-        CreateRfqOfferAction $action,
-        ActiveContextService $context
-    ) {
-        $supplier = $context->supplier();
-
-        abort_if(!$supplier, 403);
-
-
-        $offer = $action->execute(
-            CreateRfqOfferData::fromArray($request->all()),
-            $supplier->id,
-        );
-
-        return response()->json($offer);
-    }
 
     /**
      * BUYER: accept specific OFFER VERSION (NOT offer itself)
@@ -96,203 +77,10 @@ class RfqOfferController extends Controller
         return back()->with('success', 'Offer rejected');
     }
 
-    public function autosave(
-        Rfq $rfq,
-        Request $request,
-        OfferVersionBuilder $builder,
-        ActiveContextService $context
-    ) {
-        abort_if(!$context->supplier(), 403);
-
-        $version = $builder->getDraftVersion(
-            rfqId: $rfq->id,
-            supplierId: $context->supplierId()
-        );
-
-        $payload = [];
-
-        /*
-    |--------------------------------------------------------------------------
-    | NOTES
-    |--------------------------------------------------------------------------
-    */
-
-        if ($request->has('notes')) {
-
-            $payload['notes'] = $request->notes;
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | PRICE
-    |--------------------------------------------------------------------------
-    */
-
-        if ($request->has('unit_price')) {
-
-            $payload['unit_price'] = $request->unit_price;
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | SELECT
-    |--------------------------------------------------------------------------
-    */
-
-        if ($request->has('option_id')) {
-
-            $payload['option_id'] = $request->option_id;
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | MULTISELECT
-    |--------------------------------------------------------------------------
-    */
-
-        if ($request->has('option_ids')) {
-
-            $payload['option_ids'] = $request->option_ids;
-        }
-
-        logger()->info('AUTOSAVE', [
-            'request' => $request->all(),
-            'payload' => $payload,
-        ]);
-
-        if (empty($payload)) {
-
-            return response()->json([
-                'ok' => false,
-                'debug' => 'payload empty'
-            ]);
-        }
-
-        $builder->updateItem(
-            version: $version,
-            attributeId: $request->requirement_id,
-            payload: $payload
-        );
-
-        return response()->json([
-            'ok' => true
-        ]);
-    }
-
-
-    public function buyerCounterAutosave(
-        Rfq $rfq,
-        RfqOffer $offer,
-        RfqOfferVersion $version,
-        Request $request,
-        OfferVersionBuilder $builder,
-        ActiveContextService $context
-    ) {
-
-
-        /*
-    |----------------------------------------------------------------------
-    | ACCESS CHECK
-    |----------------------------------------------------------------------
-    */
 
 
 
-        abort_unless($version->rfq_offer_id === $offer->id, 403);
-        abort_unless($version->status === 'draft', 403);
-        abort_unless($version->is_counter, 403);
 
-        logger()->info('AUTOSAVE', $request->all());
-
-        /*
-    |----------------------------------------------------------------------
-    | BUILD PAYLOAD (FLAT REQUEST)
-    |----------------------------------------------------------------------
-    */
-
-        $payload = [];
-
-        if ($request->has('notes')) {
-            $payload['notes'] = $request->input('notes');
-        }
-
-        if ($request->has('unit_price')) {
-            $payload['unit_price'] = $request->input('unit_price');
-        }
-
-        if ($request->has('option_id')) {
-            $payload['option_id'] = $request->input('option_id');
-        }
-
-        if ($request->has('option_ids')) {
-            $payload['option_ids'] = $request->input('option_ids', []);
-        }
-
-        /*
-    |----------------------------------------------------------------------
-    | EMPTY CHECK
-    |----------------------------------------------------------------------
-    */
-
-        if (empty($payload)) {
-            return response()->json([
-                'ok' => false,
-                'message' => 'Payload empty',
-            ]);
-        }
-
-        /*
-    |----------------------------------------------------------------------
-    | SAVE VIA BUILDER
-    |----------------------------------------------------------------------
-    */
-
-        $builder->updateItem(
-            version: $version,
-            attributeId: (int) $request->input('attribute_id'),
-            payload: $payload
-        );
-
-        return response()->json([
-            'ok' => true,
-        ]);
-    }
-
-
-
-    public function customAutosave(
-        Rfq $rfq,
-        Request $request,
-        OfferVersionBuilder $builder,
-        ActiveContextService $context
-    ) {
-        abort_if(!$context->supplier(), 403);
-
-        $version = $builder->getDraftVersion(
-            rfqId: $rfq->id,
-            supplierId: $context->supplierId()
-        );
-
-        $requirementId = (int) $request->input('requirement_id');
-        $field = $request->input('field');
-        $value = $request->input('value');
-
-        logger()->info('CUSTOM AUTOSAVE HIT', $request->all());
-
-        if (!$requirementId || !$field) {
-            return response()->json(['ok' => false]);
-        }
-
-        // ✅ ТОЛЬКО ЭТОТ МЕТОД
-        $builder->updateCustomRequirement(
-            version: $version,
-            requirementId: $requirementId,
-            key: $field,
-            value: $value
-        );
-
-        return response()->json(['ok' => true]);
-    }
 
 
     public function createRevision(Rfq $rfq, ActiveContextService $context)
@@ -354,6 +142,7 @@ class RfqOfferController extends Controller
                 'lead_time_days' => $item->lead_time_days,
                 'moq' => $item->moq,
                 'notes' => $item->notes,
+
             ]);
 
             /**
@@ -392,7 +181,8 @@ class RfqOfferController extends Controller
     public function createCounterOffer(
         Rfq $rfq,
         RfqOffer $offer,
-        ActiveContextService $context
+        ActiveContextService $context,
+        OfferVersionResolver $resolver,
     ) {
         $buyer = $context->isPersonal()
             ? auth()->user()
@@ -413,11 +203,9 @@ class RfqOfferController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $lastVersion = $offer->versions()
-            ->with(['items.options'])
-            ->where('is_counter', 0)
-            ->orderByDesc('version_number')
-            ->first();
+
+
+        $lastVersion = $resolver->lastSupplierVersion($offer);
 
         if (!$lastVersion) {
             abort(404);
@@ -429,19 +217,17 @@ class RfqOfferController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $draftCounter = $offer->versions()
-            ->where('is_counter', 1)
-            ->where('status', 'draft')
-            ->where('created_by', $context->user()->id)
-            ->latest()
-            ->first();
+        $draftCounter = $resolver->latestCounterVersion(
+            $offer,
+            $context->user()->id,
+            'draft'
+        );
 
-        $submittedCounter = $offer->versions()
-            ->where('is_counter', 1)
-            ->where('status', 'submitted')
-            ->where('created_by', $context->user()->id)
-            ->latest()
-            ->first();
+        $submittedCounter = $resolver->latestCounterVersion(
+            $offer,
+            $context->user()->id,
+            'submitted'
+        );
 
         /*
     |--------------------------------------------------------------------------
@@ -526,6 +312,7 @@ class RfqOfferController extends Controller
                 'lead_time_days' => $item->lead_time_days,
                 'moq' => $item->moq,
                 'notes' => $item->notes,
+
             ]);
 
             if ($item->options->count()) {
@@ -547,5 +334,41 @@ class RfqOfferController extends Controller
             'counterItemsByAttribute' => $newVersion->items->load('options')->keyBy('attribute_id'),
             'versions' => $versions,
         ]);
+    }
+
+
+    public function autosave(
+        Rfq $rfq,
+        Request $request,
+        OfferVersionItemAutosaveAction $action,
+        ActiveContextService $context
+    ) {
+        abort_if(!$context->supplier(), 403);
+
+        return $action->execute(
+            rfq: $rfq,
+            request: $request,
+            context: $context
+        );
+    }
+
+
+    public function buyerCounterAutosave(
+        Rfq $rfq,
+        RfqOffer $offer,
+        RfqOfferVersion $version,
+        Request $request,
+        CounterOfferVersionItemAutosaveAction $action,
+        ActiveContextService $context
+    ) {
+        abort_unless($version->rfq_offer_id === $offer->id, 403);
+        abort_unless($version->status === 'draft', 403);
+        abort_unless($version->is_counter, 403);
+
+        return $action->execute(
+            version: $version,
+            request: $request,
+            context: $context
+        );
     }
 }

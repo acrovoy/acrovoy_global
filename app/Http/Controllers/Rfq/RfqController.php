@@ -13,6 +13,9 @@ use App\Models\Attribute;
 use App\Models\AttributeGroup;
 use App\Domain\RFQ\Models\RfqAttributeValue;
 use App\Domain\Negotiation\Models\RfqOffer;
+use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
+use App\Domain\RFQ\Actions\GetRfqCategoriesAction;
+use App\Domain\RFQ\Services\RfqRequirementsLoader;
 
 
 class RfqController extends Controller
@@ -69,28 +72,7 @@ class RfqController extends Controller
 
         if ($activeTab === 'requirements') {
 
-            $rfq->loadMissing([
-
-                /*
-        |--------------------------------------------------------------------------
-        | SYSTEM ATTRIBUTES
-        |--------------------------------------------------------------------------
-        */
-                'systemAttributeValues.attribute.translations',
-                'systemAttributeValues.attribute.options.translations',
-                'systemAttributeValues.options',
-
-                /*
-        |--------------------------------------------------------------------------
-        | CUSTOM ATTRIBUTES
-        |--------------------------------------------------------------------------
-        */
-                'customAttributeValues.attribute.translations',
-                'customAttributeValues.attribute.options.translations',
-
-                'customAttributeValues.options.translations',
-            ]);
-
+            app(RfqRequirementsLoader::class)->load($rfq);
 
 
 
@@ -101,12 +83,7 @@ class RfqController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $categories = Category::query()
-                ->with('translations')
-                ->selectable()
-                ->forType('rfq')
-                ->ordered()
-                ->get();
+            $categories = app(GetRfqCategoriesAction::class)->execute();
 
             /*
             |--------------------------------------------------------------------------
@@ -117,10 +94,10 @@ class RfqController extends Controller
             $selectedCategory = null;
 
             /*
-|----------------------------------------------------------------------
-| RESOLVE CATEGORY (request OR saved RFQ)
-|----------------------------------------------------------------------
-*/
+            |----------------------------------------------------------------------
+            | RESOLVE CATEGORY (request OR saved RFQ)
+            |----------------------------------------------------------------------
+            */
 
             $categoryId = $request->get('category_id') ?? $rfq->category_id;
 
@@ -193,121 +170,37 @@ class RfqController extends Controller
                 abort(403);
             }
 
-            $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
-                ->firstOrCreate([
-                    'rfq_id' => $rfq->id,
-                    'participant_type' => get_class($supplier),
-                    'participant_id' => $supplier->id,
-                ]);
+            $offer = app(\App\Domain\Negotiation\Actions\CreateRfqOfferAction::class)
+                ->execute(
+                    rfq: $rfq,
+                    supplier: $supplier,
+                    context: $this->context
+                );
 
-            /*
-    |--------------------------------------------------------------------------
-    | SELECT VERSION FROM REQUEST
-    |--------------------------------------------------------------------------
-    */
-            $requestedVersionId = request('version');
+            $resolver = app(OfferVersionResolver::class);
 
-            if ($requestedVersionId) {
+            $offerVersion = $resolver->resolve(
+                $offer,
+                request('version')
+            );
 
-                $offerVersion = $offer->versions()
-                    ->with(['items.options.translations'])
-                    ->where('id', $requestedVersionId)
-                    ->first();
-            }
+            $currentDraft = $resolver->currentDraft($offer);
 
-            /*
-    |--------------------------------------------------------------------------
-    | DEFAULT BEHAVIOUR
-    |--------------------------------------------------------------------------
-    */
-            if (!$offerVersion) {
-
-                $offerVersion = $offer->versions()
-                    ->where('status', 'draft')
-                    ->orderByDesc('version_number')
-                    ->first();
-
-                /*
-        |--------------------------------------------------------------------------
-        | IF NO DRAFT EXISTS
-        |--------------------------------------------------------------------------
-        */
-                if (!$offerVersion) {
-
-                    if ($offer->versions()->count() === 0) {
-
-                        $offerVersion = $offer->versions()->create([
-                            'version_number' => 1,
-                            'status' => 'draft',
-                            'created_by' => $this->context->user()->id,
-                        ]);
-                    } else {
-
-                        $offerVersion = $offer->versions()
-                            ->orderByDesc('version_number')
-                            ->first();
-                    }
-                }
-            }
-
-            /*
-    |--------------------------------------------------------------------------
-    | LOAD RELATIONS (SAFE)
-    |--------------------------------------------------------------------------
-    */
-            if ($offerVersion) {
-                $offerVersion->load([
-                    'items.options.translations'
-                ]);
-            }
-
-            /*
-    |--------------------------------------------------------------------------
-    | CURRENT DRAFT (FOR HISTORY PANEL)
-    |--------------------------------------------------------------------------
-    */
-            $currentDraft = $offer->versions()
-                ->where('status', 'draft')
-                ->orderByDesc('version_number')
-                ->first();
-
-            /*
-    |--------------------------------------------------------------------------
-    | READONLY LOGIC (SAFE)
-    |--------------------------------------------------------------------------
-    */
-            $isReadonly = $offerVersion
-                ? $offerVersion->status !== 'draft'
-                : true;
-
-            $customRequirementIds = $rfq->customAttributeValues
-                ->pluck('attribute_id')
-                ->unique();
-
+            $canCreateRevision = $resolver->canCreateRevision($offer, $offerVersion);
 
             $versions = $offer->versions()
                 ->orderByDesc('version_number')
                 ->with(['items.options.translations'])
                 ->get();
 
+            $itemsByAttribute = $offerVersion
+                ? $offerVersion->items->keyBy('attribute_id')
+                : collect();
 
 
-            $latestSubmittedVersion = $offer->versions()
-                ->where('status', 'submitted')
-                ->orderByDesc('version_number')
-                ->first();
-
-            $isLatestSubmitted = $offerVersion
-                && $latestSubmittedVersion
-                && $offerVersion->id === $latestSubmittedVersion->id;
-
-            $hasDraft = $offer->versions()
-                ->where('status', 'draft')
-                ->exists();
-
-            $canCreateRevision = $isLatestSubmitted && !$hasDraft;
-
-            $isReadonly = $offerVersion->status !== 'draft';
+            $isReadonly = $offerVersion
+                ? $offerVersion->status !== 'draft'
+                : true;
         }
 
 
@@ -527,7 +420,7 @@ class RfqController extends Controller
                         ->keyBy('attribute_id')
                         : collect();
 
-                        
+
 
 
                     return redirect()->route(

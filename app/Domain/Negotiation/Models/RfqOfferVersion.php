@@ -16,7 +16,9 @@ class RfqOfferVersion extends Model
         'comment',
         'is_counter',
         'created_by',
-        'accepted_at'
+        'owner_type',
+        'owner_id',
+        'accepted_at',
     ];
 
 
