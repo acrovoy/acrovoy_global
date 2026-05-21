@@ -15,7 +15,14 @@ use App\Domain\RFQ\Models\Rfq;
 use App\Domain\Negotiation\Services\OfferVersionBuilder;
 use App\Domain\Negotiation\Actions\OfferVersionItemAutosaveAction;
 use App\Domain\Negotiation\Actions\CounterOfferVersionItemAutosaveAction;
+use App\Domain\Negotiation\Actions\CreateCounterOfferAction;
 use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
+use App\Domain\Negotiation\Actions\SubmitOfferVersionAction;
+use App\Domain\Negotiation\Actions\SubmitCounterOfferAction;
+use App\Domain\Negotiation\Actions\DeleteDraftOfferVersionAction;
+use App\Domain\Negotiation\Actions\DeleteCounterOfferDraftAction;
+
+
 
 class RfqOfferController extends Controller
 {
@@ -80,6 +87,60 @@ class RfqOfferController extends Controller
 
 
 
+    public function submitOfferVersion(
+    Rfq $rfq,
+    RfqOfferVersion $version,
+    ActiveContextService $context,
+    SubmitOfferVersionAction $action
+) {
+
+    if ($context->isGuest()) {
+        abort(403);
+    }
+
+    $user = $context->user();
+
+   
+    /*
+    |--------------------------------------------------------------------------
+    | PERSONAL
+    |--------------------------------------------------------------------------
+    */
+
+   
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMPANY
+    |--------------------------------------------------------------------------
+    */
+
+  
+
+  
+
+    if ($version->status !== 'draft') {
+        abort(422);
+    }
+
+    $submittedVersion = $action->execute($version);
+
+    return redirect()->route(
+    'rfqs.workspace',
+    [
+        'rfq' => $rfq->id,
+        'tab' => 's-requirements',
+        'offer' => $version->rfq_offer_id,
+        'version' => $submittedVersion->id,
+    ]
+)->with(
+    'success',
+    'Offer submitted successfully.'
+);
+}
+
+
+
 
 
 
@@ -108,7 +169,8 @@ class RfqOfferController extends Controller
          * =========================================
          */
         $lastVersion = $offer->versions()
-            ->orderByDesc('version_number')
+            ->where('status', 'submitted')
+            ->orderByDesc('created_at')
             ->first();
 
         if (!$lastVersion) {
@@ -121,8 +183,10 @@ class RfqOfferController extends Controller
          * =========================================
          */
         $newVersion = $offer->versions()->create([
-            'version_number' => $lastVersion->version_number + 1,
+            'version_number' => null,
             'status' => 'draft',
+            'owner_type' => get_class($supplier),
+            'owner_id' => $supplier->id,
             'created_by' => $context->user()->id,
         ]);
 
@@ -182,7 +246,7 @@ class RfqOfferController extends Controller
         Rfq $rfq,
         RfqOffer $offer,
         ActiveContextService $context,
-        OfferVersionResolver $resolver,
+        CreateCounterOfferAction $action
     ) {
         $buyer = $context->isPersonal()
             ? auth()->user()
@@ -192,149 +256,64 @@ class RfqOfferController extends Controller
             abort(403);
         }
 
-        $offer->loadMissing([
-            'versions.items.options',
-            'participant',
-        ]);
+        $offer->loadMissing(['participant']);
 
-        /*
-    |--------------------------------------------------------------------------
-    | LAST SUPPLIER VERSION
-    |--------------------------------------------------------------------------
-    */
-
-
-
-        $lastVersion = $resolver->lastSupplierVersion($offer);
-
-        if (!$lastVersion) {
-            abort(404);
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | COUNTER VERSIONS
-    |--------------------------------------------------------------------------
-    */
-
-        $draftCounter = $resolver->latestCounterVersion(
+        $result = $action->execute(
             $offer,
             $context->user()->id,
-            'draft'
+            $context
         );
 
-        $submittedCounter = $resolver->latestCounterVersion(
-            $offer,
-            $context->user()->id,
-            'submitted'
+        return view(
+            'rfq.workspace.create-counter-offer',
+            array_merge($result, [
+                'rfq' => $rfq,
+                'offer' => $offer,
+            ])
         );
-
-        /*
-    |--------------------------------------------------------------------------
-    | CASE 1: DRAFT EXISTS → EDIT IT
-    |--------------------------------------------------------------------------
-    */
-
-        if ($draftCounter) {
-
-            $versions = $offer->versions()
-                ->with(['items.options'])
-                ->orderByDesc('version_number')
-                ->get();
-
-            $counterItemsByAttribute = $draftCounter->items
-                ->load('options')
-                ->keyBy('attribute_id');
-
-            return view('rfq.workspace.create-counter-offer', [
-                'rfq' => $rfq,
-                'offer' => $offer,
-                'offerVersion' => $lastVersion,
-                'counterVersion' => $draftCounter,
-                'itemsByAttribute' => $lastVersion->items->keyBy('attribute_id'),
-                'counterItemsByAttribute' => $counterItemsByAttribute,
-                'versions' => $versions,
-            ]);
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | CASE 2: SUBMITTED EXISTS → READ ONLY
-    |--------------------------------------------------------------------------
-    */
-
-        if ($submittedCounter) {
-
-            $versions = $offer->versions()
-                ->with(['items.options'])
-                ->orderByDesc('version_number')
-                ->get();
-
-            $counterItemsByAttribute = $submittedCounter->items
-                ->load('options')
-                ->keyBy('attribute_id');
-
-            return view('rfq.workspace.create-counter-offer', [
-                'rfq' => $rfq,
-                'offer' => $offer,
-                'offerVersion' => $lastVersion,
-                'counterVersion' => $submittedCounter,
-                'itemsByAttribute' => $lastVersion->items->keyBy('attribute_id'),
-                'counterItemsByAttribute' => $counterItemsByAttribute,
-                'versions' => $versions,
-                'isReadonly' => true,
-            ]);
-        }
-
-        /*
-    |--------------------------------------------------------------------------
-    | CASE 3: NO COUNTER → CREATE NEW
-    |--------------------------------------------------------------------------
-    */
-
-        $newVersion = $offer->versions()->create([
-            'version_number' => $lastVersion->version_number + 1,
-            'status' => 'draft',
-            'is_counter' => 1,
-            'created_by' => $context->user()->id,
-            'comment' => null,
-            'total_price' => $lastVersion->total_price,
-        ]);
-
-        foreach ($lastVersion->items as $item) {
-
-            $newItem = $newVersion->items()->create([
-                'requirement_id' => $item->requirement_id,
-                'attribute_id' => $item->attribute_id,
-                'unit_price' => $item->unit_price,
-                'quantity' => $item->quantity,
-                'currency' => $item->currency,
-                'lead_time_days' => $item->lead_time_days,
-                'moq' => $item->moq,
-                'notes' => $item->notes,
-
-            ]);
-
-            if ($item->options->count()) {
-                $newItem->options()->sync($item->options->pluck('id'));
-            }
-        }
-
-        $versions = $offer->versions()
-            ->with(['items.options'])
-            ->orderByDesc('version_number')
-            ->get();
-
-        return view('rfq.workspace.create-counter-offer', [
-            'rfq' => $rfq,
-            'offer' => $offer,
-            'offerVersion' => $lastVersion,
-            'counterVersion' => $newVersion,
-            'itemsByAttribute' => $newVersion->items->keyBy('attribute_id'),
-            'counterItemsByAttribute' => $newVersion->items->load('options')->keyBy('attribute_id'),
-            'versions' => $versions,
-        ]);
     }
+
+
+    public function submitCounterOfferVersion(
+    Rfq $rfq,
+    RfqOfferVersion $version,
+    ActiveContextService $context,
+    SubmitCounterOfferAction $action
+) {
+
+    if ($context->isGuest()) {
+        abort(403);
+    }
+
+    $user = $context->user();
+
+    /*
+    |--------------------------------------------------------------------------
+    | OWNERSHIP CHECK
+    |--------------------------------------------------------------------------
+    */
+
+   
+
+    /*
+    |--------------------------------------------------------------------------
+    | EXECUTE
+    |--------------------------------------------------------------------------
+    */
+
+    $submitted = $action->execute($version);
+
+    return redirect()->route(
+        'rfqs.workspace',
+        [
+            'rfq' => $version->offer->rfq_id,
+            'tab' => 'offers',
+            'offer' => $version->rfq_offer_id,
+            'version' => $submitted->id,
+        ]
+    )->with('success', 'Counter offer submitted.');
+}
+
 
 
     public function autosave(
@@ -371,4 +350,76 @@ class RfqOfferController extends Controller
             context: $context
         );
     }
+
+    public function deleteDraftVersion(
+    Rfq $rfq,
+    RfqOfferVersion $version,
+    ActiveContextService $context,
+    DeleteDraftOfferVersionAction $action
+) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | AUTH CHECK
+    |--------------------------------------------------------------------------
+    */
+
+    if ($context->isGuest()) {
+        abort(403);
+    }
+
+    $user = $context->user();
+
+    $isOwner = false;
+
+   
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
+
+    $offerId = $version->rfq_offer_id;
+
+    $action->execute($version);
+
+    /*
+    |--------------------------------------------------------------------------
+    | REDIRECT BACK TO WORKSPACE
+    |--------------------------------------------------------------------------
+    */
+
+    return redirect()->route(
+        'rfqs.workspace',
+        [
+            'rfq' => $version->offer->rfq_id,
+            'tab' => 's-requirements',
+            'offer' => $offerId,
+        ]
+    )->with('success', 'Draft deleted successfully.');
+}
+
+
+public function deleteDraftCounterOfferVersion(
+    Rfq $rfq,
+    RfqOffer $offer,
+    RfqOfferVersion $version,
+    ActiveContextService $context,
+    DeleteCounterOfferDraftAction $action
+) {
+    abort_unless($version->rfq_offer_id === $offer->id, 403);
+
+    $action->execute($version, $context);
+
+    return redirect()
+        ->route('rfqs.workspace', [
+            'rfq' => $offer->rfq_id,
+            'tab' => 'offers',
+            'offer' => $offer->id,
+        ])
+        ->with('success', 'Draft counter offer deleted');
+}
+
+
 }

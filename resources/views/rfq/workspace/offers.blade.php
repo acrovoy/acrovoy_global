@@ -75,21 +75,19 @@
 
                     {{-- BUYER ACTIONS --}}
                     <div class="flex justify-end gap-3 mb-4 text-sm">
-
-                        <button class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-                            Chat
-                        </button>
+@if($isReadonly && $activeVersion?->status === 'submitted')
+                        
 
                         <a
                             href="{{ route('buyer.rfqs.counter-offer.create', [
                                 'rfq' => $rfq->id,
                                 'offer' => $offer->id
                             ]) }}"
-                            class="px-4 py-1 border rounded bg-black text-white hover:bg-gray-800 transition"
+                            class="px-4 py-1 border rounded-lg bg-black text-white hover:bg-gray-800 transition"
                         >
                             Create Counter Offer
                         </a>
-
+@endif
                     </div>
 
                     {{-- REQUIREMENTS --}}

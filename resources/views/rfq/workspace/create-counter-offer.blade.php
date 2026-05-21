@@ -3,8 +3,8 @@
 @section('dashboard-sidebar')
 
 @include('rfq.partials.aside-panel', [
-    'rfq' => $rfq,
-    'activeTab' => 'offers'
+'rfq' => $rfq,
+'activeTab' => 'offers'
 ])
 
 @endsection
@@ -19,157 +19,184 @@
     <div class="col-span-8">
 
         @php
-            $supplier = $offer->participant;
-            
+        $supplier = $offer->participant;
+
         @endphp
 
         <div
             class="max-w-5xl mx-auto"
             data-rfq-id="{{ $rfq->id }}"
             data-offer-id="{{ $offer->id }}"
-            data-offer-version-id="{{ $counterVersion?->id }}"
-        >
+            data-offer-version-id="{{ $counterVersion?->id }}">
 
-            <form
-                method="POST"
-                action=""
-                enctype="multipart/form-data"
-                id="counterOfferForm"
-            >
 
-                @csrf
-                @method('PUT')
 
-                <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+            @csrf
+            @method('PUT')
 
-                    {{-- HEADER --}}
-                    <div class="flex items-center justify-between p-4 bg-gray-50 border-b">
+            <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
 
-                        <div class="flex items-center gap-4">
+                {{-- HEADER --}}
+                <div class="flex items-center justify-between p-4 bg-gray-50 border-b">
 
-                            <img
-                                src="{{ $rfq->image ?? asset('images/no-photo.png') }}"
-                                class="w-12 h-12 rounded-lg object-cover border"
-                            >
+                    <div class="flex items-center gap-4">
 
-                            <div>
+                        <img
+                            src="{{ $rfq->image ?? asset('images/no-photo.png') }}"
+                            class="w-12 h-12 rounded-lg object-cover border">
 
-                                <div class="text-lg font-semibold text-gray-900">
-                                    {{ $rfq->title }}
-                                </div>
+                        <div>
 
-                                <div class="flex items-center gap-2 mt-1">
+                            <div class="text-lg font-semibold text-gray-900">
+                                {{ $rfq->title }}
+                            </div>
 
-                                    <div class="text-sm text-gray-500">Supplier:</div>
+                            <div class="flex items-center gap-2 mt-1">
 
-                                    <div class="text-sm font-medium text-gray-700">
-                                        {{ $supplier?->name ?? 'Unknown supplier' }}
-                                    </div>
+                                <div class="text-sm text-gray-500">Supplier:</div>
 
+                                <div class="text-sm font-medium text-gray-700">
+                                    {{ $supplier?->name ?? 'Unknown supplier' }}
                                 </div>
 
                             </div>
 
-                        </div>
-
-                        <div class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
-                            Version {{ $counterVersion?->version_number }}
-
-                            <div class="text-gray-500 text-[10px]">
-                                Based on Supplier Version {{ $offerVersion->version_number }}
-                            </div>
                         </div>
 
                     </div>
 
-                    {{-- BODY --}}
-                    <div class="pt-4 pb-6 px-6">
+                    <div class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
+                        Version {{ $counterVersion?->version_number }}
 
-                        {{-- TOP ACTIONS --}}
-                        <div class="flex items-center justify-between gap-3 mb-3">
+                        <div class="text-gray-500 text-[10px]">
+                            Based on Supplier Version {{ $offerVersion->version_number }}
+                        </div>
+                    </div>
 
-                            <div id="autosaveStatus" class="text-xs text-gray-400">
-                                Ready
+                </div>
+
+                {{-- BODY --}}
+                <div class="pt-4 pb-6 px-6">
+
+                    {{-- TOP ACTIONS --}}
+                    <div class="flex justify-end gap-3 mb-4 text-sm">
+
+                    <div id="autosaveStatus" class="text-xs text-gray-400">
+                                
                             </div>
+                        {{-- =========================================
+                                    DELETE DRAFT (only editable)
+                                ========================================= --}}
+
+                        <form method="POST"
+      action="{{ route('buyer.rfqs.counter.delete', [
+          'rfq' => $rfq->id,
+          'offer' => $offer->id,
+          'version' => $counterVersion->id
+      ]) }}"
+      onsubmit="return confirm('Delete this draft version?')">
+
+    @csrf
+    @method('DELETE')
+
+    <button type="submit"
+            class="px-4 py-1 border rounded-lg border-red-500 text-red-500 hover:bg-red-50">
+        Delete draft
+    </button>
+</form>
+
+
+
+                        {{-- =========================================
+                                CHAT (only when editable or submitted)
+                            ========================================= --}}
+                        <button type="button"
+                            class="px-4 py-1 border rounded-lg opacity-50 ">
+                            Chat
+                        </button>
+
+                        <form method="POST"
+                            action="{{ route('buyer.rfqs.counter.submit', [
+                                    'rfq' => $rfq->id,
+                                    'version' => $counterVersion->id
+                                ]) }}">
+
+                            @csrf
 
                             <button
                                 type="submit"
-                                name="action"
-                                value="submit"
-                                class="px-5 py-1 rounded-lg bg-black text-white hover:bg-gray-800 text-sm font-medium"
-                            >
+                                class="px-5 py-1 rounded-lg bg-black text-white hover:bg-gray-800 text-sm font-medium">
                                 Submit Counter Offer
                             </button>
 
-                        </div>
+                        </form>
 
-                        {{-- REQUIREMENTS --}}
-                        <div class="border rounded-xl p-5">
+                    </div>
 
-                            <div class="flex items-center justify-between mb-5">
+                    {{-- REQUIREMENTS --}}
+                    <div class="border rounded-xl p-5">
 
-                                <div>
-                                    <div class="text-xs uppercase tracking-wide text-gray-500 font-medium">
-                                        Buyer Counter Proposal
-                                    </div>
+                        <div class="flex items-center justify-between mb-5">
 
-                                    <div class="text-lg font-semibold text-gray-900 mt-1">
-                                        Negotiation Terms
-                                    </div>
+                            <div>
+                                <div class="text-xs uppercase tracking-wide text-gray-500 font-medium">
+                                    Buyer Counter Proposal
                                 </div>
 
-                                <div class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                                    Editable
+                                <div class="text-lg font-semibold text-gray-900 mt-1">
+                                    Negotiation Terms
                                 </div>
-
                             </div>
 
-                            {{-- REQUIREMENT ITEMS --}}
-                            @foreach($rfq->attributeValues as $value)
-
-                                <div data-attribute-id="{{ $value->attribute->id }}">
-                                    @include('rfq.workspace.components.buyer-counter-offer', [
-                                        'value' => $value,
-                                        'itemsByAttribute' => $itemsByAttribute,
-                                        'isReadonly' => false,
-                                        'offerVersion' => $counterVersion,
-                                        'counterItemsByAttribute' => $counterItemsByAttribute,
-                                    ])
-                                </div>
-
-                            @endforeach
+                            <div class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                                Editable
+                            </div>
 
                         </div>
 
-                        {{-- ATTACHMENTS --}}
-                        <div class="border rounded-xl p-5 mt-6">
+                        {{-- REQUIREMENT ITEMS --}}
+                        @foreach($rfq->attributeValues as $value)
 
-                            <div class="text-lg font-semibold text-gray-900">
-                                Attachments
+                        <div data-attribute-id="{{ $value->attribute->id }}">
+                            @include('rfq.workspace.components.buyer-counter-offer', [
+                            'value' => $value,
+                            'itemsByAttribute' => $itemsByAttribute,
+                            'isReadonly' => false,
+                            'offerVersion' => $counterVersion,
+                            'counterItemsByAttribute' => $counterItemsByAttribute,
+                            ])
+                        </div>
+
+                        @endforeach
+
+                    </div>
+
+                    {{-- ATTACHMENTS --}}
+                    <div class="border rounded-xl p-5 mt-6">
+
+                        <div class="text-lg font-semibold text-gray-900">
+                            Attachments
+                        </div>
+
+                        <div class="text-sm text-gray-500 mt-1">
+                            Upload negotiation files, revised specifications or commercial documents.
+                        </div>
+
+                        <div class="border-2 border-dashed rounded-xl p-8 text-center mt-4">
+
+                            <div class="text-sm font-medium text-gray-700">
+                                Upload files
                             </div>
 
-                            <div class="text-sm text-gray-500 mt-1">
-                                Upload negotiation files, revised specifications or commercial documents.
+                            <div class="text-xs text-gray-500 mt-1">
+                                PDF, XLSX, DOCX, ZIP up to 25MB
                             </div>
 
-                            <div class="border-2 border-dashed rounded-xl p-8 text-center mt-4">
-
-                                <div class="text-sm font-medium text-gray-700">
-                                    Upload files
-                                </div>
-
-                                <div class="text-xs text-gray-500 mt-1">
-                                    PDF, XLSX, DOCX, ZIP up to 25MB
-                                </div>
-
-                                <input
-                                    type="file"
-                                    name="attachments[]"
-                                    multiple
-                                    class="mt-4"
-                                >
-
-                            </div>
+                            <input
+                                type="file"
+                                name="attachments[]"
+                                multiple
+                                class="mt-4">
 
                         </div>
 
@@ -177,7 +204,9 @@
 
                 </div>
 
-            </form>
+            </div>
+
+
 
         </div>
 
@@ -187,8 +216,8 @@
     <div class="col-span-4">
 
         @include('rfq.partials.buyer-offer-history-panel', [
-            'versions' => $versions ?? collect(),
-            'counterVersion' => $counterVersion ?? null,
+        'versions' => $versions ?? collect(),
+        'counterVersion' => $counterVersion ?? null,
         ])
 
     </div>

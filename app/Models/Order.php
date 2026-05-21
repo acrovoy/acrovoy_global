@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+use App\Domain\Negotiation\Models\RfqOffer;
+
 class Order extends Model
 {
     use HasFactory;

@@ -4,6 +4,8 @@
 
 @php
     $currentCounterId = $counterVersion?->id ?? null;
+
+    
 @endphp
 
 <aside class="w-full flex-shrink-0">
@@ -53,12 +55,12 @@
                                     ]) . '?version=' . $version->id;
                                 } else {
                                     // ALL OTHER VERSIONS → BACK TO OFFERS TAB WITH SELECTED VERSION
-    $href = route('rfqs.workspace', [
-        'rfq' => $rfq->id,
-        'tab' => 'offers',
-        'offer' => $offer->id,
-        'counter_version' => $version->id, // optional for read-only view
-    ]);
+                                    $href = route('rfqs.workspace', [
+                                        'rfq' => $rfq->id,
+                                        'tab' => 'offers',
+                                        'offer' => $offer->id,
+                                        'counter_version' => $version->id, // optional for read-only view
+                                    ]);
                                 }
                             @endphp
 

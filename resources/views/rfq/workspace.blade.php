@@ -5,6 +5,7 @@
 @include('rfq.partials.aside-panel', ['rfq' => $rfq,
 'activeTab' => $activeTab])
 
+
 @endsection
 
 
@@ -14,14 +15,11 @@
 
 
 
-
 @php
 $context = app(\App\Services\Company\ActiveContextService::class);
 $mode = $context->role(); // buyer / supplier
 
-$itemsByRequirement = $offerVersion?->items
-    ?->whereNotNull('requirement_id')
-    ?->keyBy('requirement_id') ?? collect();
+
 
 $itemsByAttribute = $offerVersion?->items
     ?->whereNotNull('attribute_id')
@@ -49,7 +47,7 @@ $itemsByAttribute = $offerVersion?->items
 
     @case('s-requirements')
 @include('rfq.workspace.s-requirements', [
-    'itemsByRequirement' => $itemsByRequirement,
+    
     'itemsByAttribute' => $itemsByAttribute,
     'offerVersion' => $offerVersion
 ])

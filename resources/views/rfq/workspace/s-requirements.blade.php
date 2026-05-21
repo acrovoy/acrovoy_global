@@ -41,62 +41,91 @@
                 <div class="p-5 bg-white">
 
                     {{-- ACTIONS --}}
-<div class="flex justify-end gap-3 mb-4 text-sm">
-
-    {{-- =========================================
-        CHAT (only when editable or submitted)
-    ========================================= --}}
-    <button type="button"
-        class="px-4 py-1 border rounded
-        {{ $isReadonly ? 'opacity-50 cursor-not-allowed' : '' }}"
-        @disabled($isReadonly)
-    >
-        Chat
-    </button>
-
-    {{-- =========================================
-        SAVE DRAFT (only editable)
-    ========================================= --}}
-    @if(!$isReadonly)
-        <button type="button" class="px-4 py-1 border rounded">
-            Save Draft
-        </button>
-    @endif
+                    <div class="flex justify-end gap-3 mb-4 text-sm">
 
 
-    {{-- =========================================
-        SUBMIT OFFER
-    ========================================= --}}
-    <button type="button"
-        id="submit-offer"
-        @disabled($isReadonly)
-        class="px-4 py-1 rounded
-            {{ $isReadonly
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-black text-white'
-            }}"
-    >
-        Submit Offer
-    </button>
+                    {{-- =========================================
+                            DELETE DRAFT (only editable)
+                        ========================================= --}}
+                        @if(!$isReadonly)
+                            <form
+                        method="POST"
+                        action="{{ route('supplier.rfq.offers.versions.delete', [
+                            'rfq' => $rfq->id,
+                            'version' => $offerVersion->id,
+                        ]) }}"
+                        onsubmit="return confirm('Delete this draft version?')"
+                    >
+                        @csrf
+                        @method('DELETE')
+
+                        <button
+                            type="submit"
+                            class="px-4 py-1 border rounded border-red-500 text-red-500 hover:bg-red-50"
+                        >
+                            Delete draft
+                        </button>
+                    </form>
+                        
 
 
-    {{-- =========================================
-        CREATE NEW VERSION (REVISION)
-    ========================================= --}}
-    @if($canCreateRevision)
-    <form method="POST"
-          action="{{ route('supplier.rfq.offer.create-revision', $rfq) }}">
-        @csrf
+                        {{-- =========================================
+                            CHAT (only when editable or submitted)
+                        ========================================= --}}
+                        <button type="button"
+                            class="px-4 py-1 border rounded
+                            {{ $isReadonly ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            @disabled($isReadonly)
+                        >
+                            Chat
+                        </button>
 
-        <button type="submit"
-            class="px-4 py-1 border rounded bg-white hover:bg-gray-50"
-        >
-            Create New Version
-        </button>
-    </form>
-@endif
+                        
 
-</div>
+
+                    {{-- =========================================
+                        SUBMIT OFFER
+                    ========================================= --}}
+                    <form
+                        method="POST"
+                        action="{{ route('supplier.rfq.offers.versions.submit', [
+                            'rfq' => $rfq->id,
+                            'version' => $offerVersion->id,
+                        ]) }}"
+                    >
+                        @csrf
+
+                        <button
+                            type="submit"
+                            @disabled($isReadonly)
+                            class="px-4 py-1 rounded
+                                {{ $isReadonly
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-black text-white hover:bg-gray-800'
+                                }}"
+                        >
+                            Submit Offer
+                        </button>
+                    </form>
+                    @endif
+
+                        {{-- =========================================
+                            CREATE NEW VERSION (REVISION)
+                        ========================================= --}}
+                        @if($canCreateRevision)
+                        <form method="POST"
+                            action="{{ route('supplier.rfq.offer.create-revision', $rfq) }}">
+                            @csrf
+
+                            <button type="submit"
+                                class="px-4 py-1 border rounded bg-white hover:bg-gray-50"
+                            >
+                                Create New Version
+                            </button>
+                        </form>
+                    @endif
+
+                    </div>
 
 
                     @php

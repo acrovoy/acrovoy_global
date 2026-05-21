@@ -189,7 +189,7 @@ class RfqController extends Controller
             $canCreateRevision = $resolver->canCreateRevision($offer, $offerVersion);
 
             $versions = $offer->versions()
-                ->orderByDesc('version_number')
+                ->orderByDesc('created_at')
                 ->with(['items.options.translations'])
                 ->get();
 
@@ -354,7 +354,15 @@ class RfqController extends Controller
                 $offerVersion = $offer->latestVersion;
 
                 $versions = $offer->versions()
-                    ->orderByDesc('version_number')
+                    ->where(function ($q) {
+
+                        // НЕ supplier draft
+                        $q->where(function ($q) {
+                            $q->where('is_counter', 1)
+                                ->orWhere('status', '!=', 'draft');
+                        });
+                    })
+                    ->orderByDesc('created_at')
                     ->get();
             }
 
@@ -376,6 +384,12 @@ class RfqController extends Controller
 
             $offerVersion = $counterVersion ?? $offerVersion;
 
+            $offerVersion = $offerVersion && $offerVersion->status !== 'draft'
+                ? $offerVersion
+                : $offer->versions()
+                ->where('status', '!=', 'draft')
+                ->orderByDesc('created_at')
+                ->first();
 
 
             if ($counterVersion) {
@@ -407,7 +421,7 @@ class RfqController extends Controller
                     ->where('is_counter', 1)
                     ->where('status', 'draft')
                     ->where('created_by', auth()->id())
-                    ->orderByDesc('version_number')
+                    ->orderByDesc('created_at')
                     ->first();
 
                 if ($existingDraftCounter) {
@@ -419,7 +433,6 @@ class RfqController extends Controller
                         ->get()
                         ->keyBy('attribute_id')
                         : collect();
-
 
 
 

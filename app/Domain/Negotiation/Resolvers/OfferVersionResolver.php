@@ -32,10 +32,14 @@ class OfferVersionResolver
          * 2. ACTIVE DRAFT
          * =========================
          */
+
+
         $draft = $offer->versions()
             ->where('status', 'draft')
-            ->orderByDesc('version_number')
+            ->where('is_counter', 0)
+            ->orderByDesc('created_at')
             ->first();
+
 
         if ($draft) {
             return $draft;
@@ -46,8 +50,21 @@ class OfferVersionResolver
          * 3. LAST VERSION (fallback)
          * =========================
          */
+
+
         return $offer->versions()
-            ->orderByDesc('version_number')
+            ->where(function ($q) {
+
+                // supplier versions
+                $q->where('is_counter', 0)
+
+                    // counter versions ONLY if submitted
+                    ->orWhere(function ($q) {
+                        $q->where('is_counter', 1)
+                            ->where('status', 'submitted');
+                    });
+            })
+            ->orderByDesc('created_at')
             ->first();
     }
 
@@ -60,7 +77,8 @@ class OfferVersionResolver
     {
         return $offer->versions()
             ->where('status', 'draft')
-            ->orderByDesc('version_number')
+            ->where('is_counter', 0)
+            ->orderByDesc('created_at')
             ->first();
     }
 
@@ -73,7 +91,8 @@ class OfferVersionResolver
     {
         return $offer->versions()
             ->where('status', 'submitted')
-            ->orderByDesc('version_number')
+            ->where('is_counter', 0)
+            ->orderByDesc('created_at')
             ->first();
     }
 
@@ -93,50 +112,59 @@ class OfferVersionResolver
 
 
     public function hasDraft(RfqOffer $offer): bool
-{
-    return $offer->versions()
-        ->where('status', 'draft')
-        ->exists();
-}
+    {
+        return $offer->versions()
+            ->where('status', 'draft')
+            ->where('is_counter', 0)
+            ->exists();
+    }
 
 
-public function canCreateRevision(
-    RfqOffer $offer,
-    $version
-): bool {
-
-    $latestSubmitted = $this->lastSubmitted($offer);
-
-    $isLatestSubmitted =
+    public function canCreateRevision(
+        RfqOffer $offer,
         $version
-        && $latestSubmitted
-        && $version->id === $latestSubmitted->id;
+    ): bool {
 
-    return $isLatestSubmitted
-        && !$this->hasDraft($offer);
-}
+        $latestSubmitted = $this->lastSubmitted($offer);
 
+        $isLatestSubmitted =
+            $version
+            && $latestSubmitted
+            && $version->id === $latestSubmitted->id;
 
-public function lastSupplierVersion(RfqOffer $offer)
-{
-    return $offer->versions()
-        ->where('is_counter', 0)
-        ->orderByDesc('version_number')
-        ->first();
-}
+        return $isLatestSubmitted
+            && !$this->hasDraft($offer);
+    }
 
 
-public function latestCounterVersion(
-    RfqOffer $offer,
-    int $userId,
-    string $status
-) {
-    return $offer->versions()
-        ->where('is_counter', 1)
-        ->where('status', $status)
-        ->where('created_by', $userId)
-        ->latest()
-        ->first();
-}
+    public function lastSupplierVersion(RfqOffer $offer)
+    {
+        return $offer->versions()
+            ->where('is_counter', 0)
+            ->orderByDesc('created_at')
+            ->first();
+    }
 
+
+    public function latestCounterVersion(
+        RfqOffer $offer,
+        int $userId,
+        string $status
+    ) {
+        return $offer->versions()
+            ->where('is_counter', 1)
+            ->where('status', $status)
+            ->where('created_by', $userId)
+            ->latest()
+            ->first();
+    }
+
+    public function lastSupplierSubmittedVersion(RfqOffer $offer)
+    {
+        return $offer->versions()
+            ->where('is_counter', 0)
+            ->where('status', 'submitted')
+            ->orderByDesc('created_at')
+            ->first();
+    }
 }

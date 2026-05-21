@@ -96,27 +96,27 @@ use App\Models\Supplier;
 Route::get('/', [HomeController::class, 'index'])->name('main');
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 Route::get('/dashboard', DashboardController::class)->middleware(['auth'])->name('dashboard.home');
-      
+
 Route::middleware('auth')->group(function () {
     Route::get('/company/switcher', [CompanySwitchController::class, 'index'])->name('company.switcher');
     Route::post('/company/switch', [CompanySwitchController::class, 'switch'])->name('company.switch');
 });
-   
+
 Route::get('/rfqs/{rfq}', [RfqController::class, 'show'])
     ->name('rfqs.workspace');
 
 //main supplier
 Route::prefix('supplier')->group(function () {
- 
+
     Route::get('orders', [ManufacturerOrderController::class, 'index'])->name('supplier.orders');
     Route::get('orders/{id}', [ManufacturerOrderController::class, 'show'])->name('supplier.orders.show');
     Route::delete('certificate/{id}', [ManufacturerController::class, 'deleteCertificate'])->name('supplier.certificate.delete');
-    
+
     Route::get('/locations/regions', [LocationController::class, 'regionsByCountry'])->name('supplier.locations.regions');
     Route::get('/locations/locations', [LocationController::class, 'locationsByRegion'])->name('supplier.locations.locations');
     Route::post('orders/origin/{item}', [ManufacturerOrderController::class, 'storeOrigin'])->name('manufacturer.orders.origin.store');
     Route::post('orders/{order}/status', [ManufacturerOrderController::class, 'updateStatus'])->name('supplier.orders.update-status');
-      
+
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::post('/products/{product}/price-tiers', [ProductPriceController::class, 'store']);
@@ -141,16 +141,32 @@ Route::prefix('supplier')->group(function () {
 
     Route::prefix('/rfq/{rfq}/offers')->group(function () {
 
+
+        Route::delete('/versions/{version}', [RfqOfferController::class, 'deleteDraftVersion'])->name('supplier.rfq.offers.versions.delete');
+
+        
+        
+
+         /*
+        |--------------------------------------------------------------------------
+        | SUBMIT OFFER VERSION
+        |--------------------------------------------------------------------------
+        */
+
+        Route::post('/versions/{version}/submit', [RfqOfferController::class, 'submitOfferVersion'])->name('supplier.rfq.offers.versions.submit');
+
+
         Route::post('/', [RfqOfferController::class, 'store'])
             ->name('supplier.rfq.offers.store');
 
         Route::get('/{offer}', [RfqOfferController::class, 'show'])
             ->name('supplier.rfq.offers.show');
+
+       
     });
 
     Route::post('/offers/{offer}/reject', [RfqOfferController::class, 'reject'])
         ->name('supplier.offers.reject');
-
 });
 
 Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])->name('rfqs.custom-attributes.store');
@@ -169,107 +185,109 @@ Route::prefix('dashboard/buyer')
     ->name('buyer.')
     ->group(function () {
 
-    // =========================
-    // RFQ CORE
-    // =========================
+        // =========================
+        // RFQ CORE
+        // =========================
 
-    Route::get('/rfqs', [BuyerRfqController::class, 'index'])
-        ->name('rfqs.index');
+        Route::get('/rfqs', [BuyerRfqController::class, 'index'])
+            ->name('rfqs.index');
 
-    Route::get('/rfqs/create', [BuyerRfqController::class, 'create'])
-        ->name('rfqs.create');
+        Route::get('/rfqs/create', [BuyerRfqController::class, 'create'])
+            ->name('rfqs.create');
 
-    Route::post('/rfqs', [BuyerRfqController::class, 'store'])
-        ->name('rfqs.store');
+        Route::post('/rfqs', [BuyerRfqController::class, 'store'])
+            ->name('rfqs.store');
 
-    Route::get('/rfqs/{rfq}/edit', [BuyerRfqController::class, 'edit'])
-        ->name('rfqs.edit');
+        Route::get('/rfqs/{rfq}/edit', [BuyerRfqController::class, 'edit'])
+            ->name('rfqs.edit');
 
-    Route::put('/rfqs/{rfq}', [BuyerRfqController::class, 'update'])
-        ->name('rfqs.update');
+        Route::put('/rfqs/{rfq}', [BuyerRfqController::class, 'update'])
+            ->name('rfqs.update');
 
 
-         // =========================
-    // WORKSPACE / DRAWER UPDATE
-    // =========================
-    
-    Route::patch('/rfqs/{rfq}/field', [BuyerRfqController::class, 'updateField'])
-    ->name('rfqs.update.field');
+        // =========================
+        // WORKSPACE / DRAWER UPDATE
+        // =========================
 
-    // =========================
-    // WORKSPACE ENTRY (SHELL)
-    // =========================
+        Route::patch('/rfqs/{rfq}/field', [BuyerRfqController::class, 'updateField'])
+            ->name('rfqs.update.field');
 
- 
+        // =========================
+        // WORKSPACE ENTRY (SHELL)
+        // =========================
 
-    // =========================
-    // REQUIREMENTS (WORKSPACE TAB)
-    // =========================
 
-    Route::prefix('/rfqs/{rfq}/requirements')->group(function () {
 
-        Route::get('/', [RfqRequirementController::class, 'show'])
-            ->name('rfqs.requirements.show');
+        // =========================
+        // REQUIREMENTS (WORKSPACE TAB)
+        // =========================
 
-        Route::get('/edit', [RfqRequirementController::class, 'edit'])
-            ->name('rfqs.requirements.edit');
+        Route::prefix('/rfqs/{rfq}/requirements')->group(function () {
 
-        Route::post('/', [RfqRequirementController::class, 'store'])
-            ->name('rfqs.requirements.store');
+            Route::get('/', [RfqRequirementController::class, 'show'])
+                ->name('rfqs.requirements.show');
 
-            
+            Route::get('/edit', [RfqRequirementController::class, 'edit'])
+                ->name('rfqs.requirements.edit');
+
+            Route::post('/', [RfqRequirementController::class, 'store'])
+                ->name('rfqs.requirements.store');
+        });
+
+        // =========================
+        // PARTICIPANTS
+        // =========================
+
+        Route::patch('/rfq/{rfq}/visibility/category', [RfqVisibilityController::class, 'updateCategory'])->name('rfq.visibility.category.update');
+
+        Route::patch('/rfq/{rfq}/visibility', [RfqVisibilityController::class, 'update'])->name('rfq.visibility.update');
+
+        Route::get('/rfqs/{rfq}/participants', [RfqParticipantController::class, 'index'])
+            ->name('rfqs.participants.index');
+
+        Route::post('/rfqs/{rfq}/participants/invite', [RfqParticipantController::class, 'invite'])
+            ->name('rfqs.participants.invite');
+
+        Route::post('/rfq/{rfq}/participants', [RfqParticipantController::class, 'store'])->name('rfq.participants.store');
+
+        Route::patch('/rfq/{rfq}/participants/{participant}/remove', [RfqParticipantController::class, 'remove'])->name('rfq.participants.remove');
+
+        // =========================
+        // OFFERS
+        // =========================
+
+
+        Route::prefix('/rfqs/{rfq}/offers')->group(function () {
+
+            Route::post('/{version}/submit-counter', [RfqOfferController::class, 'submitCounterOfferVersion'])->name('rfqs.counter.submit');
+
+            Route::post('/{offer}/versions/{version}/autosave', [RfqOfferController::class, 'buyerCounterAutosave'])->name('rfqs.counter-offer.autosave');
+
+            Route::get('/{offer}/counter-offer/create', [RfqOfferController::class, 'createCounterOffer'])->name('rfqs.counter-offer.create');
+
+            Route::get('/', [RfqOfferController::class, 'index'])
+                ->name('rfqs.offers.index');
+
+            Route::get('/{offer}', [RfqOfferController::class, 'show'])
+                ->name('rfqs.offers.show');
+
+            Route::post('/{offer}/versions/{version}/accept', [RfqOfferController::class, 'accept'])
+                ->name('rfqs.offers.versions.accept');
+
+            Route::post('/{offer}/reject', [RfqOfferController::class, 'reject'])
+                ->name('rfqs.offers.reject');
+
+
+            Route::delete('/{offer}/counter-offer/{version}', [RfqOfferController::class, 'deleteDraftCounterOfferVersion'])->name('rfqs.counter.delete');
+        });
+
+        // =========================
+        // AUDIT
+        // =========================
+
+        Route::get('/rfqs/{rfq}/audit', [RfqAuditController::class, 'index'])
+            ->name('rfqs.audit.index');
     });
-
-    // =========================
-    // PARTICIPANTS
-    // =========================
-
-    Route::patch('/rfq/{rfq}/visibility/category', [RfqVisibilityController::class, 'updateCategory'])->name('rfq.visibility.category.update');
-
-    Route::patch('/rfq/{rfq}/visibility', [RfqVisibilityController::class, 'update'])->name('rfq.visibility.update');
-
-    Route::get('/rfqs/{rfq}/participants', [RfqParticipantController::class, 'index'])
-        ->name('rfqs.participants.index');
-
-    Route::post('/rfqs/{rfq}/participants/invite', [RfqParticipantController::class, 'invite'])
-        ->name('rfqs.participants.invite');
-
-    Route::post('/rfq/{rfq}/participants', [RfqParticipantController::class, 'store'])->name('rfq.participants.store');
-
-    Route::patch('/rfq/{rfq}/participants/{participant}/remove', [RfqParticipantController::class, 'remove'])->name('rfq.participants.remove');
-
-    // =========================
-    // OFFERS
-    // =========================
-
-    
-    Route::prefix('/rfqs/{rfq}/offers')->group(function () {
-
-        Route::post(
-    '/{offer}/versions/{version}/autosave', [RfqOfferController::class, 'buyerCounterAutosave'])->name('rfqs.counter-offer.autosave');
-
-        Route::get('/{offer}/counter-offer/create', [RfqOfferController::class, 'createCounterOffer'])->name('rfqs.counter-offer.create');
-
-        Route::get('/', [RfqOfferController::class, 'index'])
-            ->name('rfqs.offers.index');
-
-        Route::get('/{offer}', [RfqOfferController::class, 'show'])
-            ->name('rfqs.offers.show');
-
-        Route::post('/{offer}/versions/{version}/accept', [RfqOfferController::class, 'accept'])
-            ->name('rfqs.offers.versions.accept');
-
-        Route::post('/{offer}/reject', [RfqOfferController::class, 'reject'])
-            ->name('rfqs.offers.reject');
-    });
-
-    // =========================
-    // AUDIT
-    // =========================
-
-    Route::get('/rfqs/{rfq}/audit', [RfqAuditController::class, 'index'])
-        ->name('rfqs.audit.index');
-});
 
 
 
@@ -277,15 +295,14 @@ Route::prefix('dashboard/buyer')
 Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
     Route::prefix('company/team')->name('team.')->group(function () {
-       
+
         Route::get('/', [TeamController::class, 'index'])->name('index');
         Route::get('/members', [TeamController::class, 'members'])->name('members');
         Route::get('/invite', [TeamController::class, 'invite'])->name('invite');
         Route::post('/invite', [TeamController::class, 'sendInvite'])->name('invite.send');
         Route::get('/roles', [TeamController::class, 'roles'])->name('roles');
-
     });
-   
+
     Route::resource('shipping-templates', ShippingTemplateController::class)->except(['show']);
 
 
@@ -308,26 +325,26 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
 
 
-//            /*
-//     |--------------------------------------------------------------------------
-//     | RFQ SUPPLIER WORKSPACE
-//     |--------------------------------------------------------------------------
-//     */
+    //            /*
+    //     |--------------------------------------------------------------------------
+    //     | RFQ SUPPLIER WORKSPACE
+    //     |--------------------------------------------------------------------------
+    //     */
 
-//     Route::prefix('rfqs')->name('rfqs.')->group(function () {
-
-       
-      
-//        Route::post('/{rfq}/offer/autosave', [RfqOfferController::class, 'autosave'])
-//     ->name('offer.autosave');
-
-//     Route::post(
-//     '/{rfq}/custom-autosave',
-//     [RfqOfferController::class, 'customAutosave']
-// );
+    //     Route::prefix('rfqs')->name('rfqs.')->group(function () {
 
 
-//     });
+
+    //        Route::post('/{rfq}/offer/autosave', [RfqOfferController::class, 'autosave'])
+    //     ->name('offer.autosave');
+
+    //     Route::post(
+    //     '/{rfq}/custom-autosave',
+    //     [RfqOfferController::class, 'customAutosave']
+    // );
+
+
+    //     });
 
 
 });
@@ -388,7 +405,6 @@ Route::prefix('dashboard/category-selector')->group(function () {
     Route::get('/children/{parent}', [CategorySelectorController::class, 'children']);
     Route::get('/path/{id}', [CategorySelectorController::class, 'getPath']);
     Route::get('/attributes/{categoryId}', [CategorySelectorController::class, 'attributes']);
-
 });
 
 Route::prefix('dashboard/manufacturer')->name('manufacturer.')->group(function () {
@@ -424,10 +440,10 @@ Route::prefix('dashboard/manufacturer')->name('manufacturer.')->group(function (
     Route::post('/dashboard/manufacturer/products/{id}/update-stock', [ProductController::class, 'updateStock'])
         ->middleware(['auth', 'role:manufacturer'])->name('products.update-stock');
 
-    
+
 
     // SHOW PAGE
-    
+
 
     Route::get('/premium-seller-plans', [PremiumSellerPlanController::class, 'index'])
         ->name('premium-plans');
@@ -457,29 +473,29 @@ Route::prefix('dashboard/manufacturer')
     ->group(function () {
 
 
-    Route::post('catalog-image', [ManufacturerController::class, 'uploadCatalogImage'])
-        ->name('catalog.upload');
+        Route::post('catalog-image', [ManufacturerController::class, 'uploadCatalogImage'])
+            ->name('catalog.upload');
 
-    Route::put('orders/{order}/shipments/{orderItemShipment}', [ManufacturerOrderController::class, 'updateShipment'])
-        ->name('orders.shipments.update');
-    
-    Route::delete(
+        Route::put('orders/{order}/shipments/{orderItemShipment}', [ManufacturerOrderController::class, 'updateShipment'])
+            ->name('orders.shipments.update');
+
+        Route::delete(
             '/certificates/{certificate}',
             [ManufacturerController::class, 'deleteCertificate']
         )->name('certificates.delete');
-
-    
     });
 
 Route::post('/certificates/upload', [ManufacturerController::class, 'uploadCertificate'])
     ->name('manufacturer.certificates.upload');
 
-Route::post('/factory/photos/upload',
+Route::post(
+    '/factory/photos/upload',
     [ManufacturerController::class, 'uploadFactoryPhotos']
 )->name('manufacturer.factory.photos.upload');
 
 
-Route::delete('/factory/photos/{id}',
+Route::delete(
+    '/factory/photos/{id}',
     [ManufacturerController::class, 'deleteFactoryPhoto']
 )->name('manufacturer.factory.photos.delete');
 
@@ -492,14 +508,14 @@ Route::prefix('dashboard/buyer')
 
 
         Route::get('/premium-buyer-plans', [PremiumBuyerPlanController::class, 'index'])
-        ->name('premium-plans');
+            ->name('premium-plans');
 
         Route::get('/premium-buyer-plans/compare', [PremiumBuyerPlanController::class, 'compare'])
-        ->name('premium-plans.compare');
+            ->name('premium-plans.compare');
 
         Route::post('/premium-buyer-plans/subscribe', [PremiumBuyerPlanController::class, 'subscribe'])
-        ->name('premium-plans.subscribe');
-      
+            ->name('premium-plans.subscribe');
+
         Route::get('/orders', [BuyerOrderController::class, 'index'])
             ->name('orders');
 
@@ -554,7 +570,7 @@ Route::middleware('auth')->group(function () {
 Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {
 
     Route::put('disputes/{dispute}/accept', [OrderDisputeController::class, 'accept'])->name('buyer.disputes.accept');
-   
+
     //Projects
     Route::resource('projects', BuyerProjectController::class)->names([
         'index' => 'buyer.projects.index',
@@ -569,7 +585,6 @@ Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {
     Route::post('project-items', [ProjectItemController::class, 'store'])->name('buyer.project-items.store');
 
     Route::post('custom-orders', [BuyerProjectController::class, 'storeCustomization'])->name('buyer.custom-orders.store');
-
 });
 
 
@@ -600,11 +615,10 @@ Route::middleware(['auth', 'role:buyer'])->prefix('buyer/cart')->name('buyer.car
     Route::delete('/remove/{cartItem}', [CartController::class, 'remove'])->name('remove');
 });
 
-Route::middleware(['auth','role:buyer'])->prefix('buyer/wishlist')->name('buyer.wishlist.')->group(function () {
-        Route::get('/', [WishlistController::class,'index'])->name('index');
-        Route::post('/toggle/{product}', [WishlistController::class,'toggle'])->name('toggle');
-        Route::get('/count', [WishlistController::class, 'count'])->name('count');
-
+Route::middleware(['auth', 'role:buyer'])->prefix('buyer/wishlist')->name('buyer.wishlist.')->group(function () {
+    Route::get('/', [WishlistController::class, 'index'])->name('index');
+    Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('toggle');
+    Route::get('/count', [WishlistController::class, 'count'])->name('count');
 });
 
 
@@ -633,13 +647,13 @@ Route::middleware(['auth', 'role:buyer'])->group(function () {
         ->name('buyer.orders.track');
 
     Route::post('buyer/orders/{order}/confirm-delivery-price', [OrderController::class, 'confirmDeliveryPrice'])
-    ->name('buyer.orders.confirm-delivery-price');
+        ->name('buyer.orders.confirm-delivery-price');
 
     Route::get('/buyer/locations/regions', [LocationController::class, 'regionsByCountry'])
         ->name('buyer.locations.regions');
 
     Route::get('/buyer/locations/locations', [LocationController::class, 'locationsByRegion'])
-    ->name('buyer.locations.locations');
+        ->name('buyer.locations.locations');
 });
 
 
@@ -722,21 +736,21 @@ Route::get('/faq', function () {
 Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group(function () {
 
     Route::get('/', function () {
-    return view('dashboard.admin.home');
-})->name('home');
+        return view('dashboard.admin.home');
+    })->name('home');
 
     Route::get('orders/{order}/shipments', [AdminOrdersController::class, 'shipments'])->name('orders.shipments');
     Route::put('orders/{order}/shipments/{orderItemShipment}', [AdminOrdersController::class, 'updateShipment'])
-    ->name('orders.shipments.update');
+        ->name('orders.shipments.update');
     Route::post('orders/{order}/upload-invoice-delivery', [AdminOrdersController::class, 'uploadInvoiceDelivery'])
         ->name('orders.upload-invoice-delivery');
     Route::post('orders/{order}/calculate-delivery', [AdminOrdersController::class, 'calculateDeliveryPrice'])
-    ->name('orders.calculate-delivery');
-    
+        ->name('orders.calculate-delivery');
+
 
     // Virify & Trusted
     Route::post('sellers/{seller}/verify-trust', [AdminSellersController::class, 'updateVerifyTrust']);
-    
+
     // Products moderation
     Route::resource('products', AdminProductController::class);
     Route::get('/products/{product}', [AdminProductController::class, 'show'])->name('products.show');
@@ -823,30 +837,29 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         Route::get('materials/{material}/edit', [MaterialsController::class, 'edit'])->name('materials.edit');
         Route::put('materials/{material}', [MaterialsController::class, 'update'])->name('materials.update');
         Route::delete('materials/{material}', [MaterialsController::class, 'destroy'])->name('materials.destroy');
-        
+
         // Manufacturing capabilities
-        Route::get('manufacturing-capabilities',[ManufacturingCapabilityController::class, 'index'])->name('manufacturing-capabilities.index');
-        Route::get('manufacturing-capabilities/create',[ManufacturingCapabilityController::class, 'create'])->name('manufacturing-capabilities.create');
-        Route::post('manufacturing-capabilities',[ManufacturingCapabilityController::class, 'store'])->name('manufacturing-capabilities.store');
-        Route::get('manufacturing-capabilities/{capability}/edit',[ManufacturingCapabilityController::class, 'edit'])->name('manufacturing-capabilities.edit');
-        Route::put('manufacturing-capabilities/{capability}',[ManufacturingCapabilityController::class, 'update'])->name('manufacturing-capabilities.update');
-        Route::delete('manufacturing-capabilities/{capability}',[ManufacturingCapabilityController::class, 'destroy'])->name('manufacturing-capabilities.destroy');
+        Route::get('manufacturing-capabilities', [ManufacturingCapabilityController::class, 'index'])->name('manufacturing-capabilities.index');
+        Route::get('manufacturing-capabilities/create', [ManufacturingCapabilityController::class, 'create'])->name('manufacturing-capabilities.create');
+        Route::post('manufacturing-capabilities', [ManufacturingCapabilityController::class, 'store'])->name('manufacturing-capabilities.store');
+        Route::get('manufacturing-capabilities/{capability}/edit', [ManufacturingCapabilityController::class, 'edit'])->name('manufacturing-capabilities.edit');
+        Route::put('manufacturing-capabilities/{capability}', [ManufacturingCapabilityController::class, 'update'])->name('manufacturing-capabilities.update');
+        Route::delete('manufacturing-capabilities/{capability}', [ManufacturingCapabilityController::class, 'destroy'])->name('manufacturing-capabilities.destroy');
 
         //Locations
         Route::get('locations/regions', [LocationController::class, 'regionsByCountry'])->name('locations.regions');
         Route::get('locations/locations', [LocationController::class, 'regionsWithChildren'])->name('locations.locations');
         Route::resource('locations', LocationController::class);
-        
+
         //ATTRIBUTES
         Route::resource('attributes', AttributeController::class);
-        
+
         //ATTRIBUTES OPTIONS (select / multiselect)
         Route::get('attributes/{attribute}/options', [AttributeOptionController::class, 'index'])->name('attributes.options.index');
         Route::post('attributes/{attribute}/options', [AttributeOptionController::class, 'store'])->name('attributes.options.store');
         Route::put('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'update'])->name('attributes.options.update');
         Route::delete('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'destroy'])->name('attributes.options.destroy');
-    
-        });
+    });
 
 
     // === Help Center ===
@@ -881,20 +894,16 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
     Route::get('messages/{thread}', [AdminMessageController::class, 'threadMessages'])->name('thread');
 
     Route::post('messages/{thread}/send', [AdminMessageController::class, 'sendMessage'])
-    ->middleware(['auth', 'role:admin'])
-    ->name('messages.send');
+        ->middleware(['auth', 'role:admin'])
+        ->name('messages.send');
 
     Route::get('messages/{thread}/poll', [AdminMessageController::class, 'pollMessages'])
-    ->middleware(['auth', 'role:admin'])
-    ->name('messages.poll');
+        ->middleware(['auth', 'role:admin'])
+        ->name('messages.poll');
 
     Route::get('messages/{thread}', [AdminMessageController::class, 'threadMessages'])
-    ->middleware(['auth', 'role:admin'])
-    ->name('messages.thread');
-
-
-
-
+        ->middleware(['auth', 'role:admin'])
+        ->name('messages.thread');
 });
 
 

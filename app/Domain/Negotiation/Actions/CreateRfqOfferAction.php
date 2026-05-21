@@ -32,7 +32,7 @@ class CreateRfqOfferAction
 
         if ($offer->versions()->count() === 0) {
             $offer->versions()->create([
-                'version_number' => 1,
+                'version_number' => null,
                 'status' => 'draft',
                 'owner_type' => get_class($supplier),
                 'owner_id' => $supplier->id,
