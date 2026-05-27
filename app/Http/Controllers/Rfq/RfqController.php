@@ -18,10 +18,12 @@ use App\Domain\RFQ\Actions\GetRfqCategoriesAction;
 use App\Domain\RFQ\Services\RfqRequirementsLoader;
 
 
+
 class RfqController extends Controller
 {
     public function __construct(
-        private ActiveContextService $context
+        private ActiveContextService $context,
+        private OfferVersionResolver $resolver
     ) {}
 
     public function show(Request $request, Rfq $rfq)
@@ -156,6 +158,8 @@ class RfqController extends Controller
         $offers = null;
         $counterVersion = null;
         $isReadonly = true;
+        $isCounter = false;
+        $supplierOfferVersionToCounter = null;
 
         if ($activeTab === 's-requirements') {
 
@@ -184,6 +188,16 @@ class RfqController extends Controller
                 request('version')
             );
 
+            if($offerVersion->is_counter == 1)
+                    {
+                    $versionNumberOfCounter = $offerVersion->version_number;
+                    $supplierOfferVersionToCounter = $offer->versions()
+                        ->where('status', '!=', 'draft')
+                        ->where('is_counter', 0)
+                        ->where('version_number', $versionNumberOfCounter-1)
+                        ->first();
+}
+
             $currentDraft = $resolver->currentDraft($offer);
 
             $canCreateRevision = $resolver->canCreateRevision($offer, $offerVersion);
@@ -193,14 +207,16 @@ class RfqController extends Controller
                 ->with(['items.options.translations'])
                 ->get();
 
-            $itemsByAttribute = $offerVersion
-                ? $offerVersion->items->keyBy('attribute_id')
-                : collect();
+            
 
 
             $isReadonly = $offerVersion
                 ? $offerVersion->status !== 'draft'
                 : true;
+
+
+            $isCounter = $offerVersion?->is_counter ?? false;
+
         }
 
 
@@ -313,6 +329,10 @@ class RfqController extends Controller
 
         $counterOffers = collect();
         $counterItemsByAttribute = collect();
+        $lastsubmittedVersion = collect();
+        $existingDraftCounter = null;
+        $supplierOfferVersion = null;
+       
 
 
         if ($activeTab === 'offers') {
@@ -329,7 +349,6 @@ class RfqController extends Controller
 
             $offer = null;
             $offerVersion = null;
-
             $versions = collect();
 
             // =========================
@@ -352,6 +371,18 @@ class RfqController extends Controller
             if ($offer) {
 
                 $offerVersion = $offer->latestVersion;
+
+                $supplierOfferVersion = $offer->versions()
+                    ->where('is_counter', 0)
+                    ->where('status', '!=', 'draft')
+                    ->orderByDesc('created_at')
+                    ->with(['items.options'])
+                    ->first();
+
+                $lastsubmittedVersion = $offer->versions()
+                    ->where('status', '!=', 'draft')
+                    ->orderByDesc('created_at')
+                    ->first();
 
                 $versions = $offer->versions()
                     ->where(function ($q) {
@@ -391,14 +422,17 @@ class RfqController extends Controller
                 ->orderByDesc('created_at')
                 ->first();
 
+                if($offerVersion->is_counter == 1)
+                    {
+                    $versionNumberOfCounter = $offerVersion->version_number;
+                    $supplierOfferVersionToCounter = $offer->versions()
+                        ->where('status', '!=', 'draft')
+                        ->where('is_counter', 0)
+                        ->where('version_number', $versionNumberOfCounter-1)
+                        ->first();
+}
 
-            if ($counterVersion) {
-                $counterVersion->loadMissing('items.options');
-
-                $counterItemsByAttribute = $counterVersion
-                    ->items
-                    ->keyBy('attribute_id');
-            }
+            
 
 
 
@@ -420,7 +454,8 @@ class RfqController extends Controller
                 $existingDraftCounter = $offer->versions()
                     ->where('is_counter', 1)
                     ->where('status', 'draft')
-                    ->where('created_by', auth()->id())
+                    ->where('owner_type', $ownerType)
+                    ->where('owner_id', $ownerId)
                     ->orderByDesc('created_at')
                     ->first();
 
@@ -443,6 +478,8 @@ class RfqController extends Controller
                             'offer' => $offer->id,
                             'version' => $existingDraftCounter->id,
                             'counterVersion' => $counterVersion,
+                            'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
+                            'supplierOfferVersion' => $supplierOfferVersion,
                             'counterItemsByAttribute' => $counterItemsByAttribute ?? collect(),
 
                         ]
@@ -517,6 +554,7 @@ class RfqController extends Controller
             'selectedCategoryIds' => $selectedCategoryIds,
             'offerVersion' => $offerVersion,
             'isReadonly' => $isReadonly,
+            'isCounter' => $isCounter,
             'currentDraft' => $currentDraft,
             'versions' => $versions,
             'canCreateRevision' => $canCreateRevision,
@@ -524,7 +562,10 @@ class RfqController extends Controller
             'offers' => $offers,
             'counterOffers' => $counterOffers,
             'counterVersion' => $counterVersion,
-
+            'lastsubmittedVersion' => $lastsubmittedVersion,
+            'existingDraftCounter' => $existingDraftCounter,
+            'supplierOfferVersion' => $supplierOfferVersion,
+            'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
             'counterItemsByAttribute' => $counterItemsByAttribute,
 
             'itemsByAttribute' => $offerVersion?->items

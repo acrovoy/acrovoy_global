@@ -53,7 +53,7 @@ $counterNotes = old(
 
 $counterPrice = old(
     "{$attribute->id}.unit_price",
-    $counterItem?->unit_price ?? $supplierPrice
+    $counterItem?->unit_price ?? null
 );
 
 $counterSelectedOptionId = old(
@@ -205,9 +205,9 @@ $counterSelectedOptions = old(
         <input
             type="text"
             name="notes[{{ $attribute->id }}]"
-            value="{{ $counterNotes }}"
+            
             class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm
-                   focus:outline-none focus:ring-1 focus:ring-gray-900"
+                   focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Add your counter notes..."
         >
 
@@ -233,7 +233,7 @@ $counterSelectedOptions = old(
                 name="unit_price[{{ $attribute->id }}]"
                 value="{{ $counterPrice }}"
                 class="w-40 border border-blue-200 rounded-lg px-3 py-2 text-sm text-right
-                       focus:outline-none focus:ring-1 focus:ring-gray-900 bg-white"
+                       focus:outline-none focus:ring-1 focus:ring-500-900 bg-white"
                 placeholder="0.00"
             >
 

@@ -1,17 +1,12 @@
- {{-- BACK --}}
- <a href="
-        @if($isBuyer ?? false)
-           {{ route('buyer.rfqs.index') }} 
-        @else
-            {{ route('supplier.rfqs.index') }}
-        @endif
-    "
-     class="text-sm text-gray-500 hover:text-gray-900 transition">
+{{-- BACK --}}
+    <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
+    class="text-sm text-gray-500 hover:text-gray-900 transition">
+    
+        ← Back to RFQ Overview
+    </a>
 
-     ← Back to RFQs
- </a>
-
- <x-alerts />
+    
+<x-alerts />
 
  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-5">
 

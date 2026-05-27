@@ -1,15 +1,9 @@
 
- {{-- BACK --}}
-    <a href="
-        @if($isBuyer ?? false)
-           {{ route('buyer.rfqs.index') }} 
-        @else
-            {{ route('supplier.rfqs.index') }}
-        @endif
-    "
+{{-- BACK --}}
+    <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
     class="text-sm text-gray-500 hover:text-gray-900 transition">
     
-        ← Back to RFQs
+        ← Back to RFQ Overview
     </a>
 
     

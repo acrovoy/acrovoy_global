@@ -170,6 +170,7 @@ class RfqOfferController extends Controller
          */
         $lastVersion = $offer->versions()
             ->where('status', 'submitted')
+            ->where('is_counter', 0)
             ->orderByDesc('created_at')
             ->first();
 
@@ -261,14 +262,18 @@ class RfqOfferController extends Controller
         $result = $action->execute(
             $offer,
             $context->user()->id,
-            $context
+            $context,
+            request()->boolean('create')
         );
+
+        $counterVersion = $result['counterVersion'] ?? null;
 
         return view(
             'rfq.workspace.create-counter-offer',
             array_merge($result, [
                 'rfq' => $rfq,
                 'offer' => $offer,
+                'counter_version' => $counterVersion,
             ])
         );
     }
@@ -419,6 +424,30 @@ public function deleteDraftCounterOfferVersion(
             'offer' => $offer->id,
         ])
         ->with('success', 'Draft counter offer deleted');
+}
+
+
+public function comparison(Rfq $rfq)
+{
+    $rfq->load([
+        'attributeValues.attribute.options',
+        'attributeValues.options',
+        'offers.participant',
+        'offers.versions.items.options',
+    ]);
+
+    $offers = RfqOffer::query()
+    ->with([
+        'versions.items.options'
+    ])
+    ->get();
+    
+    $offers = $rfq->offers;
+
+    return view('rfq.workspace.offer-comparison', [
+        'rfq' => $rfq,
+        'offers' => $offers,
+    ]);
 }
 
 

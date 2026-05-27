@@ -7,6 +7,12 @@ $type = $attribute->type;
 
 $item = $itemsByAttribute[$attribute->id] ?? null;
 
+
+
+
+
+
+
 /*
 |--------------------------------------------------------------------------
 | BUYER ORIGINAL REQUIREMENT
@@ -24,23 +30,59 @@ $value->attribute_option_id
 
 $buyerOptions = $value->options ?? collect();
 
+$offerBuyerNotes = $item?->notes ?? '';
+
+$offerBuyerPrice = $item?->unit_price ?? '';
+
+
+
+$isCounter  = $item?->version?->is_counter ?? false;
+
+$supplierItem = $supplierOfferVersionToCounter?->items
+?->firstWhere('attribute_id', $attribute->id);
+
+
 /*
 |--------------------------------------------------------------------------
 | SUPPLIER OFFER
 |--------------------------------------------------------------------------
 */
 
-$offerNotes = $item?->notes ?? '';
 
-$offerPrice = $item?->unit_price ?? '';
 
-$offerSelectedOptionId =
-$item?->options?->first()?->id;
+/*
+|--------------------------------------------------------------------------
+| SUPPLIER OFFER DATA
+|--------------------------------------------------------------------------
+*/
+if ($isCounter) {
 
-$offerSelectedOptions =
-$item?->options?->pluck('id')->toArray() ?? [];
+    $offerNotes = $supplierItem?->notes ?? '';
+    $offerPrice = $supplierItem?->unit_price ?? '';
 
+    $offerSelectedOptionId = $supplierItem?->options?->first()?->id;
+
+    $offerSelectedOptions = $supplierItem?->options?->pluck('id')->toArray() ?? [];
+
+    $supplierOfferDate = $supplierOfferVersion?->created_at;
+
+} else {
+
+    $offerNotes = $item?->notes ?? '';
+    $offerPrice = $item?->unit_price ?? '';
+
+    $offerSelectedOptionId = $item?->options?->first()?->id;
+
+    $offerSelectedOptions = $item?->options?->pluck('id')->toArray() ?? [];
+
+    $supplierOfferDate = $supplierOfferVersion?->created_at;
+}
+
+
+
+// dd($supplierOfferDate, $counterDate = $item?->version?->id);
 @endphp
+
 
 
 <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 mb-3">
@@ -114,6 +156,26 @@ $item?->options?->pluck('id')->toArray() ?? [];
 
         </div>
 
+        @if($isCounter )
+        <div class="text-xs text-yellow-600 mb-1 mt-3">
+            Your notes
+        </div>
+
+        <div class="w-full border border-yellow-200 rounded p-2 {{ $isReadonly ? 'bg-yellow-50 text-gray-600' : 'bg-white text-yellow-800' }} text-sm min-h-[44px]">
+
+            @if($offerBuyerNotes)
+            {{ $offerBuyerNotes }}
+            @else
+            <span class="text-gray-400">
+                No notes provided
+            </span>
+            @endif
+
+        </div>
+        @endif
+
+
+
     </div>
 
 
@@ -179,23 +241,47 @@ $item?->options?->pluck('id')->toArray() ?? [];
         <div class="text-xs text-gray-500">
             Attachments submitted
         </div>
+        <div>
+            {{-- PRICE --}}
+            <div class="border border-gray-200 rounded px-3 py-1 {{ $isReadonly ? 'bg-gray-50 text-gray-600' : 'bg-white text-gray-800' }} text-sm  min-w-[90px] text-right">
 
-        {{-- PRICE --}}
-        <div class="border border-gray-200 rounded px-3 py-1 {{ $isReadonly ? 'bg-gray-50 text-gray-600' : 'bg-white text-gray-800' }} text-sm  min-w-[90px] text-right">
+                @if($offerPrice)
 
-            @if($offerPrice)
+                ${{ number_format((float)$offerPrice, 2) }}
 
-            ${{ number_format((float)$offerPrice, 2) }}
+                @else
 
-            @else
+                <span class="text-gray-400">
+                    —
+                </span>
 
-            <span class="text-gray-400">
-                —
-            </span>
+                @endif
 
+            </div>
+            @if($isCounter  && $offerBuyerPrice)
+           
+            <div class="text-xs text-yellow-600 mb-1 mt-1">
+                Your proposed price
+            </div>
+
+            <div class=" border border-yellow-200 rounded px-3 py-1 {{ $isReadonly ? 'bg-yellow-50 text-yellow-600' : 'bg-white text-yellow-800' }} text-sm  min-w-[90px] text-right">
+
+
+
+                ${{ number_format((float)$offerBuyerPrice, 2) }}
+
+
+
+
+
+            </div>
+
+           
             @endif
 
         </div>
+
+
 
     </div>
 

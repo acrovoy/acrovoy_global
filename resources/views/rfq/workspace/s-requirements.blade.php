@@ -22,20 +22,16 @@
                         <div class="w-5 font-semibold">{{ $i }}</div>
 
                         <img src="{{ $rfq->image ?? asset('images/no-photo.png') }}"
-                            class="w-10 h-10 rounded object-cover">
+                            class="w-12 h-12 rounded-lg object-cover border">
 
-                        <div class="text-sm">
+                        <div class="text-lg font-semibold text-gray-900">
                             {{ $rfq->title }}
+                            <div class="text-red-500 text-xs">Awaiting your reply for supplier's offer</div>
                         </div>
+                    
+                        
                     </div>
-
-                    <div class="flex items-center gap-4 text-sm">
-
-
-                        <span class="text-red-500 text-xs">
-                            Awaiting your reply for supplier's offer
-                        </span>
-                    </div>
+                     
                 </div>
 
                 <div class="p-5 bg-white">
@@ -44,70 +40,65 @@
                     <div class="flex justify-end gap-3 mb-4 text-sm">
 
 
-                    {{-- =========================================
+                        {{-- =========================================
                             DELETE DRAFT (only editable)
                         ========================================= --}}
                         @if(!$isReadonly)
-                            <form
-                        method="POST"
-                        action="{{ route('supplier.rfq.offers.versions.delete', [
+                        <form
+                            method="POST"
+                            action="{{ route('supplier.rfq.offers.versions.delete', [
                             'rfq' => $rfq->id,
                             'version' => $offerVersion->id,
                         ]) }}"
-                        onsubmit="return confirm('Delete this draft version?')"
-                    >
-                        @csrf
-                        @method('DELETE')
+                            onsubmit="return confirm('Delete this draft version?')">
+                            @csrf
+                            @method('DELETE')
 
-                        <button
-                            type="submit"
-                            class="px-4 py-1 border rounded border-red-500 text-red-500 hover:bg-red-50"
-                        >
-                            Delete draft
-                        </button>
-                    </form>
-                        
+                            <button
+                                type="submit"
+                                class="px-4 py-1 border rounded-lg border-red-200 text-red-300 hover:bg-red-50 hover:text-red-500">
+                                Delete draft
+                            </button>
+                        </form>
+
 
 
                         {{-- =========================================
                             CHAT (only when editable or submitted)
                         ========================================= --}}
                         <button type="button"
-                            class="px-4 py-1 border rounded
+                            class="px-4 py-1 border border-gray-500 text-gray-500 rounded-lg opacity-50 hover:bg-gray-50 hover:text-gray-800
                             {{ $isReadonly ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            @disabled($isReadonly)
-                        >
-                            Chat
+                            @disabled($isReadonly)>
+                            Chat with Orderer
                         </button>
 
-                        
 
 
-                    {{-- =========================================
+
+                        {{-- =========================================
                         SUBMIT OFFER
                     ========================================= --}}
-                    <form
-                        method="POST"
-                        action="{{ route('supplier.rfq.offers.versions.submit', [
+                        <form
+                            method="POST"
+                            action="{{ route('supplier.rfq.offers.versions.submit', [
                             'rfq' => $rfq->id,
                             'version' => $offerVersion->id,
-                        ]) }}"
-                    >
-                        @csrf
+                        ]) }}">
+                            @csrf
 
-                        <button
-                            type="submit"
-                            @disabled($isReadonly)
-                            class="px-4 py-1 rounded
+                            <button
+                                type="submit"
+                                @disabled($isReadonly)
+                                class="px-5 py-1 rounded-lg bg-gray-700 text-white hover:bg-gray-800 text-sm font-medium
                                 {{ $isReadonly
                                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     : 'bg-black text-white hover:bg-gray-800'
-                                }}"
-                        >
-                            Submit Offer
-                        </button>
-                    </form>
-                    @endif
+                                }}">
+                                Submit Offer
+                            </button>
+                        </form>
+                        @endif
 
                         {{-- =========================================
                             CREATE NEW VERSION (REVISION)
@@ -118,12 +109,11 @@
                             @csrf
 
                             <button type="submit"
-                                class="px-4 py-1 border rounded bg-white hover:bg-gray-50"
-                            >
+                                class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
                                 Create New Version
                             </button>
                         </form>
-                    @endif
+                        @endif
 
                     </div>
 
@@ -141,8 +131,8 @@
 
                         @if($isReadonly)
 
-                        <div class="mb-3 flex items-center justify-between">
 
+                        <div class="flex justify-between text-xs text-gray-500 font-medium">
                             <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                 Submitted Version
                             </div>
@@ -150,9 +140,33 @@
                             <div class="px-2 py-1 rounded bg-green-100 text-green-700 text-xs">
                                 Read only
                             </div>
-
                         </div>
 
+                        @else
+                        <div class="flex justify-between text-xs text-gray-500 font-medium">
+                            <div class="uppercase"> Supplier Proposal
+                            </div>
+
+                             {{-- FINAL CHECKBOX --}}
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+
+            <input
+                type="checkbox"
+                name="is_final"
+                value="1"
+                @checked($offerVersion?->is_final)
+                class="w-4 h-4 rounded border-gray-300
+                       text-gray-900 focus:ring-0 focus:outline-none"
+            >
+
+            <span class="text-[11px] text-gray-600">
+                Mark as Final Offer
+            </span>
+
+        </label>
+
+
+                        </div>
                         @endif
 
 

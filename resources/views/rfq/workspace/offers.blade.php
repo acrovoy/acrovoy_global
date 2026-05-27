@@ -2,28 +2,39 @@
 
 @section('dashboard-content')
 
+{{-- BACK --}}
+    <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
+    class="text-sm text-gray-500 hover:text-gray-900 transition">
+    
+        ← Back to RFQ Overview
+    </a>
+
+    
+<x-alerts />
+
+
 <div class="grid grid-cols-12 gap-6">
 
     {{-- LEFT BIG BLOCK --}}
     <div class="col-span-8">
 
         @php
-            $supplier = $offer->participant;
-            $isReadonly = true;
+        $supplier = $offer->participant;
+        $isReadonly = true;
 
-            /*
-            |---------------------------------------------
-            | ACTIVE VERSION FIX
-            |---------------------------------------------
-            */
+        /*
+        |---------------------------------------------
+        | ACTIVE VERSION FIX
+        |---------------------------------------------
+        */
 
-            $activeVersion = null;
+        $activeVersion = null;
 
-            if (isset($counterVersion) && $counterVersion) {
-                $activeVersion = $counterVersion;
-            } else {
-                $activeVersion = $offerVersion ?? null;
-            }
+        if (isset($counterVersion) && $counterVersion) {
+        $activeVersion = $counterVersion;
+        } else {
+        $activeVersion = $offerVersion ?? null;
+        }
         @endphp
 
         <div class="max-w-5xl mx-auto"
@@ -44,7 +55,7 @@
                         </div>
 
                         <img src="{{ $rfq->image ?? asset('images/no-photo.png') }}"
-                             class="w-10 h-10 rounded object-cover">
+                            class="w-10 h-10 rounded object-cover">
 
                         <div>
 
@@ -75,19 +86,29 @@
 
                     {{-- BUYER ACTIONS --}}
                     <div class="flex justify-end gap-3 mb-4 text-sm">
-@if($isReadonly && $activeVersion?->status === 'submitted')
-                        
+
+
+                        @if($activeVersion->id === $lastsubmittedVersion->id && !$existingDraftCounter)
+
+
+                        <a
+                            href=""
+                            class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
+                            Close negotiation
+                        </a>
+
+
 
                         <a
                             href="{{ route('buyer.rfqs.counter-offer.create', [
                                 'rfq' => $rfq->id,
-                                'offer' => $offer->id
+                                'offer' => $offer->id,
+                                'create' => true,
                             ]) }}"
-                            class="px-4 py-1 border rounded-lg bg-black text-white hover:bg-gray-800 transition"
-                        >
+                            class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
                             Create Counter Offer
                         </a>
-@endif
+                        @endif
                     </div>
 
                     {{-- REQUIREMENTS --}}
@@ -112,9 +133,10 @@
                         @foreach($rfq->attributeValues as $value)
 
                             @include('rfq.workspace.components.supplier-offer', [
-                                'value' => $value,
-                                'itemsByAttribute' => $itemsByAttribute,
-                                'isReadonly' => true
+                            'value' => $value,
+                            'itemsByAttribute' => $itemsByAttribute,
+                            'isReadonly' => true,
+                            'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
                             ])
 
                         @endforeach
@@ -171,23 +193,21 @@
 
                                 <div class="border rounded-lg p-4">
 
-                                    <div class="font-medium mb-1">
-                                        Delivery by Acrovoy
-                                    </div>
-
-                                    <div class="text-sm text-gray-500 mb-3">
-                                        Delivery handled by platform
-                                    </div>
-
-                                    <div class="bg-blue-100 text-blue-700 px-3 py-2 rounded w-fit">
-                                        Price: $0.00
-                                    </div>
-
+                                <div class="font-medium mb-1">
+                                    Delivery by Acrovoy
                                 </div>
 
-                            @endfor
+                                <div class="text-sm text-gray-500 mb-3">
+                                    Delivery handled by platform
+                                </div>
+
+                                <div class="bg-blue-100 text-blue-700 px-3 py-2 rounded w-fit">
+                                    Price: $0.00
+                                </div>
 
                         </div>
+
+                        @endfor
 
                     </div>
 
@@ -199,12 +219,14 @@
 
     </div>
 
-    {{-- RIGHT SIDEBAR --}}
-    <div class="col-span-4">
+</div>
 
-        @include('rfq.partials.buyer-offer-history-panel')
+{{-- RIGHT SIDEBAR --}}
+<div class="col-span-4">
 
-    </div>
+    @include('rfq.partials.buyer-offer-history-panel')
+
+</div>
 
 </div>
 

@@ -63,6 +63,7 @@ $itemsByAttribute = $offerVersion?->items
     'offerVersion' => $offerVersion ?? null,
     'counterItemsByAttribute' => $counterItemsByAttribute ?? collect(),
     'itemsByAttribute' => $itemsByAttribute ?? collect(),
+    'existingDraftCounter' => $existingDraftCounter,
 ])
 @break
 

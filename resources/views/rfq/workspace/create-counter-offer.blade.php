@@ -51,27 +51,23 @@
                                 {{ $rfq->title }}
                             </div>
 
-                            <div class="flex items-center gap-2 mt-1">
+                            <div class="flex items-center gap-2">
 
                                 <div class="text-sm text-gray-500">Supplier:</div>
 
                                 <div class="text-sm font-medium text-gray-700">
                                     {{ $supplier?->name ?? 'Unknown supplier' }}
                                 </div>
+                                
 
                             </div>
+                            <div class="text-red-500 text-xs">Awaiting your reply for supplier's offer</div>
 
                         </div>
 
                     </div>
 
-                    <div class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
-                        Version {{ $counterVersion?->version_number }}
-
-                        <div class="text-gray-500 text-[10px]">
-                            Based on Supplier Version {{ $offerVersion->version_number }}
-                        </div>
-                    </div>
+                    
 
                 </div>
 
@@ -81,29 +77,29 @@
                     {{-- TOP ACTIONS --}}
                     <div class="flex justify-end gap-3 mb-4 text-sm">
 
-                    <div id="autosaveStatus" class="text-xs text-gray-400">
-                                
-                            </div>
+                        <div id="autosaveStatus" class="text-xs text-gray-400">
+
+                        </div>
                         {{-- =========================================
                                     DELETE DRAFT (only editable)
                                 ========================================= --}}
 
                         <form method="POST"
-      action="{{ route('buyer.rfqs.counter.delete', [
-          'rfq' => $rfq->id,
-          'offer' => $offer->id,
-          'version' => $counterVersion->id
-      ]) }}"
-      onsubmit="return confirm('Delete this draft version?')">
+                            action="{{ route('buyer.rfqs.counter.delete', [
+                                        'rfq' => $rfq->id,
+                                        'offer' => $offer->id,
+                                        'version' => $counterVersion->id
+                                    ]) }}"
+                            onsubmit="return confirm('Delete this draft version?')">
 
-    @csrf
-    @method('DELETE')
+                            @csrf
+                            @method('DELETE')
 
-    <button type="submit"
-            class="px-4 py-1 border rounded-lg border-red-500 text-red-500 hover:bg-red-50">
-        Delete draft
-    </button>
-</form>
+                            <button type="submit"
+                                class="px-4 py-1 border rounded-lg border-red-200 text-red-300 hover:bg-red-50 hover:text-red-500">
+                                Delete draft
+                            </button>
+                        </form>
 
 
 
@@ -111,8 +107,8 @@
                                 CHAT (only when editable or submitted)
                             ========================================= --}}
                         <button type="button"
-                            class="px-4 py-1 border rounded-lg opacity-50 ">
-                            Chat
+                            class="px-4 py-1 border border-gray-500 text-gray-500 rounded-lg opacity-50 hover:bg-gray-50 hover:text-gray-800">
+                            Chat with Supplier
                         </button>
 
                         <form method="POST"
@@ -125,7 +121,7 @@
 
                             <button
                                 type="submit"
-                                class="px-5 py-1 rounded-lg bg-black text-white hover:bg-gray-800 text-sm font-medium">
+                                class="px-5 py-1 rounded-lg bg-gray-700 text-white hover:bg-gray-800 text-sm font-medium">
                                 Submit Counter Offer
                             </button>
 
@@ -136,21 +132,23 @@
                     {{-- REQUIREMENTS --}}
                     <div class="border rounded-xl p-5">
 
-                        <div class="flex items-center justify-between mb-5">
+                        <div class=" mb-4">
 
                             <div>
-                                <div class="text-xs uppercase tracking-wide text-gray-500 font-medium">
-                                    Buyer Counter Proposal
+                                <div class="flex justify-between text-xs uppercase text-gray-500 font-medium">
+                                    <div>Buyer Counter Proposal</div>
+
+                                    <div class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-[10px] font-medium">
+                                        Editable
+                                    </div>
                                 </div>
 
-                                <div class="text-lg font-semibold text-gray-900 mt-1">
-                                    Negotiation Terms
-                                </div>
+
+                            </div>
+                            <div class="font-medium mb-3">
+                                Negotiation Terms
                             </div>
 
-                            <div class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                                Editable
-                            </div>
 
                         </div>
 

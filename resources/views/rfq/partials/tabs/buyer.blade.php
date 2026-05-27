@@ -3,13 +3,13 @@
 
 <div class="text-[13px] font-medium tracking-wide text-gray-700">
 
-@php
-        function tabClass($active) {
-        return $active
-        ? 'bg-black/5'
-        : 'bg-white';
-        }
-        @endphp
+    @php
+    function tabClass($active) {
+    return $active
+    ? 'bg-black/5'
+    : 'bg-white';
+    }
+    @endphp
 
     {{-- OVERVIEW --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
@@ -28,9 +28,9 @@
         </span>
     </a>
 
-   
 
-   
+
+
 
     {{-- SUPPLIER OFFERS --}}
     <div class="border-t border-gray-100 py-3 px-2 flex justify-between items-center text-gray-700">
@@ -40,9 +40,9 @@
 
     @php
     $offers = $rfq->offers ?? collect();
-@endphp
+    @endphp
 
-@if($offers->isEmpty())
+    @if($offers->isEmpty())
 
     <div class="mt-3 mx-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
         <div class="text-xs text-gray-500 leading-relaxed">
@@ -54,15 +54,15 @@
         </div>
     </div>
 
-@else
+    @else
 
-  <div class="mt-3 space-y-2">
+    <div class="mt-3 space-y-2">
 
-    @foreach($offers as $offer)
+        @foreach($offers as $offer)
 
         @php
-            $supplier = $offer->participant;
-            $version = $offer->latestVersion;
+        $supplier = $offer->participant;
+        $version = $offer->latestVersion;
         @endphp
 
         <a href="{{ route('rfqs.workspace', [
@@ -70,7 +70,7 @@
             'tab' => 'offers',
             'offer' => $offer->id
         ]) }}"
-           class="group flex items-center justify-between gap-3 px-3 py-2.5
+            class="group flex items-center justify-between gap-3 px-3 py-2.5
                   rounded-lg border border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 shadow-sm
                   transition-all duration-200
                   hover:bg-black/5 hover:border-gray-300 hover:shadow">
@@ -97,17 +97,31 @@
             </div>
 
             {{-- ARROW --}}
-        <div class="text-gray-300 group-hover:text-gray-500 transition">
-            →
-        </div>
+            <div class="text-gray-300 group-hover:text-gray-500 transition">
+                →
+            </div>
 
         </a>
 
-    @endforeach
+        @endforeach
+
+
+        <div class="flex justify-end mt-3">
+
+    <a
+        href="{{ route('buyer.rfqs.offer-comparison', $rfq->id) }}"
+        class="px-4 py-1.5 text-sm rounded-md
+               bg-white text-gray-700
+               hover:bg-gray-900 hover:text-white hover:border-gray-900
+               transition">
+        Compare offers
+    </a>
 
 </div>
 
-@endif
+    </div>
+
+    @endif
 
 
 
@@ -116,7 +130,7 @@
 
 
 
-     {{-- REQUIREMENTS --}}
+    {{-- REQUIREMENTS --}}
     <div class="py-3 px-2 flex justify-between items-center text-gray-700 border-t border-gray-100 mt-3">
         <span class="uppercase">Requirements</span>
         <span>↓</span>
@@ -124,13 +138,13 @@
 
 
     @include('rfq.partials.aside-products.buyer', [
-            'rfq' => $rfq,
-            'activeTab' => $activeTab
-            ])
+    'rfq' => $rfq,
+    'activeTab' => $activeTab
+    ])
 
 
 
-     {{-- PARTICIPANTS --}}
+    {{-- PARTICIPANTS --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants']) }}"
         class="border-t border-gray-100 group relative flex justify-between items-center py-3 px-2 mt-4 rounded-md
               hover:bg-black/5 transition-all duration-200 {{ tabClass($activeTab === 'participants') }}">

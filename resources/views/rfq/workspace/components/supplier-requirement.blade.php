@@ -4,7 +4,8 @@ $type = $attribute->type;
 
 $item = $itemsByAttribute[$attribute->id] ?? null;
 
-
+$supplierItem = $supplierOfferVersionToCounter?->items
+?->firstWhere('attribute_id', $attribute->id);
 
 /**
  * =========================
@@ -22,6 +23,7 @@ $buyerSelectedOptionId = $buyerValue?->attribute_option_id ?? null;
 
 $buyerOptions = $buyerValue?->options ?? collect();
 
+$buyerCounterPrice = $item?->unit_price ?? '';
 
 /**
  * =========================
@@ -29,7 +31,25 @@ $buyerOptions = $buyerValue?->options ?? collect();
  * =========================
  */
 
-$selectedValue = $value->value_text
+
+if ($isCounter) {
+
+  $selectedValue = $supplierItem?->value_text
+        ?? $supplierItem?->value_number
+        ?? $supplierItem?->value_date
+        ?? null;
+
+    $selectedOptionId = $supplierItem?->options?->first()?->id ?? null;
+
+    $selectedOptions = $supplierItem?->options?->pluck('id')->toArray() ?? [];
+
+    $notes = $supplierItem?->notes ?? '';
+
+    $price = $supplierItem?->unit_price ?? '';
+
+} else {
+
+    $selectedValue = $value->value_text
     ?? $value->value_number
     ?? $value->value_date
     ?? null;
@@ -40,6 +60,9 @@ $selectedOptions = $item?->options?->pluck('id')->toArray() ?? [];
 
 $notes = $item?->notes ?? '';
 $price = $item?->unit_price ?? '';
+}
+
+
 @endphp
 
 
@@ -53,6 +76,7 @@ $price = $item?->unit_price ?? '';
 
     {{-- LABEL --}}
     <label class="block text-sm font-medium text-gray-800 mb-2">
+       
        {{ $attribute->name }}:
 
         {{-- BUYER SNAPSHOT --}}
@@ -104,7 +128,7 @@ $price = $item?->unit_price ?? '';
 
 
     {{-- SUPPLIER --}}
-    <div class="text-xs text-gray-500 mb-1">
+    <div class="text-xs text-gray-500">
         Your offer
         
     </div>
@@ -114,15 +138,37 @@ $price = $item?->unit_price ?? '';
     data-autosave
     data-requirement-id="{{ $attribute->id }}"
     data-field="notes"
-    placeholder="Notes"
+    placeholder="Add your notes..."
     @if($isReadonly) readonly @endif
-    class="w-full border rounded p-2 mb-3 text-sm
+    class="w-full border border-gray-300 rounded-lg p-2 text-sm
         {{ $isReadonly
             ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
-            : 'focus:outline-none focus:ring-0 focus:border-gray-900'
+            : 'focus:outline-none focus:ring-0 focus:border-blue-500'
         }}"
 >{{ $notes }}</textarea>
 
+{{-- BUYER NOTES --}}
+
+@if($isCounter)
+ <div class="text-xs text-yellow-500 mb-1">
+        Buyer proposal
+        
+    </div>
+
+    <textarea
+    name="offer[{{ $attribute->id }}][notes]"
+    data-autosave
+    data-requirement-id="{{ $attribute->id }}"
+    data-field="notes"
+    placeholder="Add your notes..."
+    @if($isReadonly) readonly @endif
+    class="w-full border border-yellow-300 rounded-lg p-2 mb-3 text-sm
+        {{ $isReadonly
+            ? 'bg-yellow-50 text-yellow-700 cursor-default yellow-gray-200'
+            : 'focus:outline-none focus:ring-0 focus:border-blue-500'
+        }}"
+>{{ $item?->notes ?? '' }}</textarea>
+@endif
 
     {{-- SELECT --}}
     @if($type === 'select')
@@ -189,11 +235,11 @@ $price = $item?->unit_price ?? '';
 
 
     {{-- PRICE + FILE --}}
-    <div class="flex items-center gap-3">
+    <div class="flex items-center justify-between gap-3">
 
         @if(!$isReadonly)
 
-            <div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400">
+            <div class="w-12 h-12 border-dashed border rounded-lg flex items-center justify-center text-gray-400">
                 +
             </div>
 
@@ -205,25 +251,64 @@ $price = $item?->unit_price ?? '';
 
         @endif
 
-       <input
-    type="number"
-    step="0.01"
-    min="0"
-    name="offer[{{ $attribute->id }}][price]"
-    value="{{ $price ? number_format((float)$price, 2, '.', '') : '' }}"
-    data-autosave
-    data-requirement-id="{{ $attribute->id }}"
-    data-field="price"
-    placeholder="0.00"
-    @if($isReadonly) readonly @endif
-    class="ml-auto border rounded px-3 py-1 w-24 text-sm
-        {{ $isReadonly
-            ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
-            : 'focus:outline-none focus:ring-0 focus:border-gray-900'
-        }}"
->
 
-    </div>
+       
+
+        
+
+        <div class="flex flex-col items-end">
+
+            <div class="text-[11px] text-gray-400 mb-1">
+                USD
+            </div>
+{{-- Supplier --}}
+            
+                <input
+                type="number"
+                step="0.01"
+                min="0"
+                name="offer[{{ $attribute->id }}][price]"
+                value="{{ $price ? number_format((float)$price, 2, '.', '') : '' }}"
+                data-autosave
+                data-requirement-id="{{ $attribute->id }}"
+                data-field="price"
+                placeholder="0.00"
+                @if($isReadonly) readonly @endif
+                class="ml-auto border border-gray-200 rounded-lg px-3 py-1 w-24 text-sm
+                    {{ $isReadonly
+                        ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
+                        : 'focus:outline-none focus:ring-0 focus:border-blue-500'
+                    }}"
+            >
+
+            {{-- Buyer --}}
+
+@if($isCounter)
+            <div class="text-xs text-yellow-500 mb-1 mt-1">
+                Buyer proposed price
+            </div>
+            <input
+                type="number"
+                step="0.01"
+                min="0"
+                name="offer[{{ $attribute->id }}][price]"
+                value="{{ $buyerCounterPrice !== '' ? number_format((float)$buyerCounterPrice, 2, '.', '') : '' }}"
+                data-autosave
+                data-requirement-id="{{ $attribute->id }}"
+                data-field="price"
+                placeholder="0.00"
+                @if($isReadonly) readonly @endif
+                class="ml-auto border border-yellow-200 rounded-lg px-3 py-1 w-24 text-sm
+                    {{ $isReadonly
+                        ? 'bg-yellow-50 text-yellow-700 cursor-default border-yellow-200'
+                        : 'focus:outline-none focus:ring-0 focus:border-blue-500'
+                    }}"
+            >
+@endif
+             
+             </div>
+             </div>
+        
 
 </div>
 

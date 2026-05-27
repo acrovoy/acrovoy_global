@@ -11,15 +11,23 @@ class CreateCounterOfferAction
         private OfferVersionResolver $resolver
     ) {}
 
-    public function execute(RfqOffer $offer, int $userId, $context): array
+    public function execute(RfqOffer $offer, int $userId, $context, bool $create = false): array
     {
+
+
+
+
         /*
-        |--------------------------------------------------------------------------
+        |---------------       
+        -----------------------------------------------------------
         | STRICT RULE: ONLY SUBMITTED SUPPLIER VERSION
         |--------------------------------------------------------------------------
         */
 
         $supplierVersion = $this->resolver
+            ->lastSupplierSubmittedVersion($offer);
+
+        $supplierOfferVersion = $this->resolver
             ->lastSupplierSubmittedVersion($offer);
 
         if (!$supplierVersion) {
@@ -35,13 +43,15 @@ class CreateCounterOfferAction
         $draftCounter = $this->resolver->latestCounterVersion(
             $offer,
             $userId,
-            'draft'
+            'draft',
+            $context
         );
 
         $submittedCounter = $this->resolver->latestCounterVersion(
             $offer,
             $userId,
-            'submitted'
+            'submitted',
+            $context
         );
 
         /*
@@ -56,6 +66,7 @@ class CreateCounterOfferAction
             return [
                 'mode' => 'draft',
                 'offerVersion' => $supplierVersion,
+                'supplierOfferVersion' => $supplierOfferVersion,
                 'counterVersion' => $draftCounter,
                 'itemsByAttribute' => $supplierVersion->items->keyBy('attribute_id'),
                 'counterItemsByAttribute' => $draftCounter->items->load('options')->keyBy('attribute_id'),
@@ -69,17 +80,19 @@ class CreateCounterOfferAction
         |--------------------------------------------------------------------------
         */
 
-        // if ($submittedCounter) {
-        //     return [
-        //         'mode' => 'readonly',
-        //         'offerVersion' => $supplierVersion,
-        //         'counterVersion' => $submittedCounter,
-        //         'itemsByAttribute' => $supplierVersion->items->keyBy('attribute_id'),
-        //         'counterItemsByAttribute' => $submittedCounter->items->load('options')->keyBy('attribute_id'),
-        //         'versions' => $this->getVersions($offer),
-        //         'isReadonly' => true,
-        //     ];
-        // }
+        if ($submittedCounter && $create == false) {
+
+
+        return [
+        'mode' => 'readonly',
+        'offerVersion' => $supplierVersion,
+        'counterVersion' => $submittedCounter,
+        'itemsByAttribute' => $supplierVersion->items->keyBy('attribute_id'),
+        'counterItemsByAttribute' => $submittedCounter->items->load('options')->keyBy('attribute_id'),
+        'versions' => $this->getVersions($offer),
+        'isReadonly' => true,
+        ];
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -187,14 +200,13 @@ class CreateCounterOfferAction
 
         foreach ($supplierVersion->items as $item) {
             $newItem = $newVersion->items()->create([
-                'requirement_id' => $item->requirement_id,
                 'attribute_id' => $item->attribute_id,
-                'unit_price' => $item->unit_price,
+                'unit_price' => null,
                 'quantity' => $item->quantity,
                 'currency' => $item->currency,
                 'lead_time_days' => $item->lead_time_days,
                 'moq' => $item->moq,
-                'notes' => $item->notes,
+                'notes' => '',
             ]);
 
             if ($item->options->count()) {

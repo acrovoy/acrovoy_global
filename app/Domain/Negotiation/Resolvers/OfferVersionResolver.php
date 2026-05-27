@@ -149,12 +149,23 @@ class OfferVersionResolver
     public function latestCounterVersion(
         RfqOffer $offer,
         int $userId,
-        string $status
+        string $status,
+        $context
     ) {
+
+        $ownerType = $context->isPersonal()
+            ? \App\Models\User::class
+            : \App\Models\Buyer::class;
+
+        $ownerId = $context->isPersonal()
+            ? auth()->user()->id
+            : $context->company()->id;
+
         return $offer->versions()
             ->where('is_counter', 1)
             ->where('status', $status)
-            ->where('created_by', $userId)
+            ->where('owner_type', $ownerType)
+            ->where('owner_id', $ownerId)
             ->latest()
             ->first();
     }
