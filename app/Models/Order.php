@@ -63,7 +63,7 @@ public function disputes()
 
 public function rfqOffer()
 {
-    return $this->belongsTo(RfqOffer::class, 'rfq_offer_id', 'id');
+    return $this->belongsTo(RfqOffer::class, 'offer_version_id'); 
 }
 
 public function shipments()

@@ -46,7 +46,7 @@ class ManufacturerOrderController extends Controller
 
             // 🟣 Заказы из RFQ
             ->orWhereHas('order.rfqOffer', function ($q) use ($supplierId) {
-                $q->where('supplier_id', $supplierId);
+                $q->where('participant_id', $supplierId);
             });
 
         })
@@ -61,6 +61,8 @@ class ManufacturerOrderController extends Controller
     if ($status = request('status')) {
         $ordersQuery->whereHas('order', fn ($q) => $q->where('status', $status));
     }
+
+
 
     $orders = $ordersQuery->get()
         ->groupBy(fn ($item) => $item->order->id)
@@ -98,7 +100,7 @@ class ManufacturerOrderController extends Controller
             $q->where('supplier_id', $supplierId);
         })
         ->orWhereHas('order.rfqOffer', function ($q) use ($supplierId) {
-            $q->where('supplier_id', $supplierId);
+            $q->where('participant_id', $supplierId);
         })
         ->whereIn('status', [
             'pending',
