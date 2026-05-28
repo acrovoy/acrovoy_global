@@ -538,9 +538,7 @@
                 </div>
 
                 {{-- Cart count --}}
-                @php
-                    $cartCount = \App\Models\CartItem::where('user_id', auth()->id())->sum('quantity');
-                @endphp
+                
 
                 @if($cartCount > 0)
                     <span class="bg-black text-white text-xs font-semibold px-2 py-0.5 rounded-full">

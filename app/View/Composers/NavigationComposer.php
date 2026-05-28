@@ -130,7 +130,9 @@ $catalogCategories = Category::with('children')
     ->count();
 
                     //Cart
-$cartCount = CartItem::where('user_id', auth()->id())->sum('quantity');
+$cartCount = CartItem::where('buyer_type', ActiveContext::type())
+    ->where('buyer_id', ActiveContext::id())
+    ->sum('quantity');
 
         $view->with([
             'catalogCategories' => $catalogCategories,

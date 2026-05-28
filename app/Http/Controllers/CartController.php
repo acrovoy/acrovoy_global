@@ -7,12 +7,14 @@ use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\PriceTier;
+use App\Facades\ActiveContext; 
 
 class CartController extends Controller
 {
     public function index()
     {
-        $cartItems = CartItem::where('user_id', auth()->id())
+        $cartItems = CartItem::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
             ->with('product')
             ->get();
 
@@ -23,12 +25,10 @@ class CartController extends Controller
 
     public function add(Request $request, Product $product)
     {
-
-    
         $user = auth()->user();
 
         /** 1. MOQ продукта */
-        $moq = $product->moq; // например поле moq в products
+        $moq = $product->moq;
 
         /** 2. Ищем подходящий ценовой диапазон */
         $priceTier = PriceTier::where('product_id', $product->id)
@@ -44,8 +44,9 @@ class CartController extends Controller
             return back()->withErrors('Price not found for MOQ');
         }
 
-        /** 3. Если товар уже есть в корзине — не дублируем */
-        $cartItem = CartItem::where('user_id', $user->id)
+        /** 3. Проверка корзины */
+        $cartItem = CartItem::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
             ->where('product_id', $product->id)
             ->first();
 
@@ -53,89 +54,74 @@ class CartController extends Controller
             return back()->with('info', 'Product already in cart');
         }
 
-        /** 4. Записываем в корзину */
+        /** 4. Добавление */
         CartItem::create([
-            'user_id'    => $user->id,
+            'buyer_type' => ActiveContext::type(),
+            'buyer_id'   => ActiveContext::id(),
             'product_id' => $product->id,
             'quantity'   => $moq,
             'price'      => $priceTier->price,
+            'created_by' => auth()->id(),
         ]);
 
         return back()->with('success', 'Product added to cart');
     }
 
     public function update(Request $request, CartItem $cartItem)
-{
-    abort_if($cartItem->user_id !== auth()->id(), 403);
+    {
+        abort_if(
+            $cartItem->buyer_id !== ActiveContext::id(),
+            403
+        );
 
-    $action = $request->input('action');
+        $action = $request->input('action');
 
-    /** меняем количество */
+        if ($action === 'increase') {
+            $cartItem->quantity++;
+        }
 
-    if ($action === 'increase') {
-        $cartItem->quantity++;
+        if ($action === 'decrease' && $cartItem->quantity > 1) {
+            $cartItem->quantity--;
+        }
+
+        /** цена */
+        $priceTier = PriceTier::where('product_id', $cartItem->product_id)
+            ->where('min_qty', '<=', $cartItem->quantity)
+            ->where(function ($q) use ($cartItem) {
+                $q->where('max_qty', '>=', $cartItem->quantity)
+                  ->orWhereNull('max_qty');
+            })
+            ->orderByDesc('min_qty')
+            ->first();
+
+        if ($priceTier) {
+            $cartItem->price = $priceTier->price;
+        }
+
+        $cartItem->save();
+
+        /** totals */
+        $itemTotal = $cartItem->price * $cartItem->quantity;
+
+        $cartTotal = CartItem::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
+            ->get()
+            ->sum(fn ($item) => $item->price * $item->quantity);
+
+        return response()->json([
+            'quantity' => $cartItem->quantity,
+            'price' => number_format($cartItem->price, 2),
+            'itemTotal' => number_format($itemTotal, 2),
+            'cartTotal' => number_format($cartTotal, 2),
+        ]);
     }
-
-    if ($action === 'decrease' && $cartItem->quantity > 1) {
-        $cartItem->quantity--;
-    }
-
-
-    /** ищем цену по диапазону */
-
-    $priceTier = PriceTier::where('product_id', $cartItem->product_id)
-        ->where('min_qty', '<=', $cartItem->quantity)
-        ->where(function ($q) use ($cartItem) {
-
-            $q->where('max_qty', '>=', $cartItem->quantity)
-              ->orWhereNull('max_qty');
-
-        })
-        ->orderByDesc('min_qty') // ← ключевой момент
-        ->first();
-
-
-    /** применяем цену */
-
-    if ($priceTier) {
-
-        $cartItem->price = $priceTier->price;
-
-    }
-
-
-    $cartItem->save();
-
-
-    /** считаем суммы */
-
-    $itemTotal = $cartItem->price * $cartItem->quantity;
-
-
-    $cartTotal = CartItem::where('user_id', auth()->id())
-        ->get()
-        ->sum(fn ($item) => $item->price * $item->quantity);
-
-
-    return response()->json([
-
-        'quantity' => $cartItem->quantity,
-
-        'price' => number_format($cartItem->price, 2),
-
-        'itemTotal' => number_format($itemTotal, 2),
-
-        'cartTotal' => number_format($cartTotal, 2),
-
-    ]);
-}
-
-
-
 
     public function remove(CartItem $cartItem)
     {
-        abort_if($cartItem->user_id !== auth()->id(), 403);
+        abort_if(
+            $cartItem->buyer_id !== ActiveContext::id(),
+            403
+        );
 
         $cartItem->delete();
 
@@ -143,14 +129,11 @@ class CartController extends Controller
     }
 
     public function addAndRedirect(Request $request, Product $product)
-{
-    
-     $user = auth()->user();
+    {
+        $user = auth()->user();
 
-        /** 1. MOQ продукта */
-        $moq = $product->moq; // например поле moq в products
+        $moq = $product->moq;
 
-        /** 2. Ищем подходящий ценовой диапазон */
         $priceTier = PriceTier::where('product_id', $product->id)
             ->where('min_qty', '<=', $moq)
             ->where(function ($q) use ($moq) {
@@ -164,8 +147,8 @@ class CartController extends Controller
             return back()->withErrors('Price not found for MOQ');
         }
 
-        /** 3. Если товар уже есть в корзине — не дублируем */
-        $cartItem = CartItem::where('user_id', $user->id)
+        $cartItem = CartItem::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
             ->where('product_id', $product->id)
             ->first();
 
@@ -173,14 +156,15 @@ class CartController extends Controller
             return back()->with('info', 'Product already in cart');
         }
 
-        /** 4. Записываем в корзину */
         CartItem::create([
-            'user_id'    => $user->id,
+            'buyer_type' => ActiveContext::type(),
+            'buyer_id'   => ActiveContext::id(),
             'product_id' => $product->id,
             'quantity'   => $moq,
             'price'      => $priceTier->price,
+            'created_by' => auth()->id(),
         ]);
 
-    return redirect()->route('buyer.cart.index');
-}
+        return redirect()->route('buyer.cart.index');
+    }
 }
