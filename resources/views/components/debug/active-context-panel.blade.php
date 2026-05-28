@@ -1,27 +1,27 @@
 @if(app()->environment('local'))
 
 @php
-    $user = $user ?? auth()->user();
+$user = $user ?? auth()->user();
 
-    try {
-        $ctx = $context ?? app(\App\Services\Company\ActiveContextService::class);
-    } catch (\Throwable $e) {
-        $ctx = null;
-    }
+try {
+$ctx = $context ?? app(\App\Services\Company\ActiveContextService::class);
+} catch (\Throwable $e) {
+$ctx = null;
+}
 
-    $rfq = $rfq ?? null;
-    $offer = $offer ?? null;
-    $offerVersion = $offerVersion ?? null;
+$rfq = $rfq ?? null;
+$offer = $offer ?? null;
+$offerVersion = $offerVersion ?? null;
 @endphp
 
 <div id="debug-panel"
-     class="fixed bottom-4 right-4 z-50 w-[360px]
+    class="fixed bottom-4 right-4 z-50 w-[360px]
      bg-black text-green-400 text-xs font-mono
      rounded-lg shadow-2xl">
 
     {{-- HEADER (CLICK TO TOGGLE) --}}
     <div id="debug-toggle"
-         class="flex justify-between items-center px-4 py-2 cursor-pointer bg-gray-900 rounded-t-lg">
+        class="flex justify-between items-center px-4 py-2 cursor-pointer bg-gray-900 rounded-t-lg">
 
         <div class="text-white font-bold">
             🔎 ActiveContext Debug
@@ -34,6 +34,9 @@
 
     {{-- CONTENT --}}
     <div id="debug-content" class="p-4 space-y-1" style="display:none">
+
+
+        
 
         {{-- USER --}}
         <div>
@@ -57,61 +60,43 @@
             {{ $ctx?->type() ? class_basename($ctx->type()) : 'null' }}
         </div>
 
-        <div>
+        <div >
             role: {{ $ctx?->role() ?? 'null' }}
         </div>
 
-        <hr class="border-gray-700 my-1">
+        <hr class="border-gray-700 my-1 mt-2">
 
-        {{-- RFQ CONTEXT --}}
-        <div class="text-white font-bold">
-            RFQ Context
+<div class="text-white font-bold mt-2">
+            Session RAW
         </div>
 
-        <div>rfq_id: {{ $rfq?->id ?? 'null' }}</div>
-        <div>rfq_status: {{ $rfq?->status ?? 'null' }}</div>
-        <div>rfq_stage: {{ $rfq?->stage?->name ?? 'null' }}</div>
+        <div>active_mode: {{ session('active_mode') }}</div>
+        <div>active_company_type: {{ session('active_company_type') }}</div>
+        <div>active_company_id: {{ session('active_company_id') }}</div>
 
-        <hr class="border-gray-700 my-1">
 
-        {{-- NEGOTIATION --}}
-        <div class="text-white font-bold">
-            Negotiation
-        </div>
 
-        <div>offer_id: {{ $offer?->id ?? 'null' }}</div>
-        <div>offer_status: {{ $offer?->status ?? 'null' }}</div>
-        <div>version: {{ $offerVersion?->version ?? 'null' }}</div>
-        <div>parent_version: {{ $offerVersion?->parent_version_id ?? 'null' }}</div>
+        <div>active_personal_mode: {{ session('active_personal_mode') }}</div>
 
-        <hr class="border-gray-700 my-1">
-
-        {{-- LEGACY --}}
-        <div class="text-white">
-            Legacy Supplier Link
-        </div>
-
-        <div>
-            supplier_id: {{ $user?->supplier?->id ?? 'null' }}
-        </div>
+        
 
         {{-- POLICY --}}
         @if($product)
 
-            <hr class="border-gray-700 my-1">
+        <hr class="border-gray-700 my-1">
 
-            <div class="text-white">
-                Policy Check
-            </div>
+        <div class="text-white">
+            Policy Check
+        </div>
 
-            <div>
-                can update product:
-                @can('update', $product)
-                    <span class="text-green-400">YES</span>
-                @else
-                    <span class="text-red-400">NO</span>
-                @endcan
-            </div>
+        <div>
+            can update product:
+            @can('update', $product)
+            <span class="text-green-400">YES</span>
+            @else
+            <span class="text-red-400">NO</span>
+            @endcan
+        </div>
 
         @endif
 

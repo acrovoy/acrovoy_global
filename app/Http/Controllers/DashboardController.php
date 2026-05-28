@@ -23,15 +23,11 @@ class DashboardController extends Controller
          */
         if (ActiveContext::isCompany()) {
 
-            if (ActiveContext::type() === Supplier::class) {
-
-                return view('dashboard.supplier.home', [
-                    'company' => ActiveContext::company(),
-                    'role' => ActiveContext::role(),
-                ]);
-
-            }
-
+            return match (ActiveContext::type()) {
+                Supplier::class => view('dashboard.supplier.home'),
+                \App\Models\Buyer::class => view('dashboard.buyer.home'),
+                default => abort(403),
+            };
         }
 
         /**
@@ -39,8 +35,14 @@ class DashboardController extends Controller
          */
         if (ActiveContext::isPersonal()) {
 
-            return view('dashboard.buyer.home');
 
+            $view = match (ActiveContext::role()) {
+                'supplier' => 'dashboard.supplier.home',
+                'buyer' => 'dashboard.buyer.home',
+                default => 'dashboard.buyer.home',
+            };
+
+            return view($view);
         }
 
         /**

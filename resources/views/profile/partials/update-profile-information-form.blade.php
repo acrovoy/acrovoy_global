@@ -115,7 +115,8 @@
             
             <select id="role" name="role" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                 <option value="buyer" @selected(old('role', $user->role) === 'buyer')>Buyer</option>
-                <option value="manufacturer" @selected(old('role', $user->role) === 'manufacturer')>Manufacturer</option>
+                <option value="supplier" @selected(old('role', $user->role) === 'supplier')>Supplier</option>
+                <option value="logistics" @selected(old('role', $user->role) === 'logistics')>Logistics</option>
             </select>
 
             <x-input-error class="mt-2" :messages="$errors->get('role')" />

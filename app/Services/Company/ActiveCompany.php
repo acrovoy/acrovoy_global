@@ -1,187 +1,142 @@
 <?php
 
-namespace App\Services\Company;
+namespace App\View\Components\Dashboard;
 
+use Illuminate\View\Component;
 use App\Models\CompanyUser;
-use Illuminate\Support\Facades\Auth;
+use App\Facades\ActiveContext;
+use App\Services\Menu\MenuService;
+use App\Services\Menu\MenuContext;
 
-class ActiveCompany
+class Sidebar extends Component
 {
-    /**
-     * SESSION KEYS
-     */
-    private const KEY_ID    = 'active_company_id';
-    private const KEY_TYPE  = 'active_company_type';
-    private const KEY_ROLE  = 'active_company_role';
+    public $companies;
+    public $active;
+    public $menu;
 
-    /*
-    |--------------------------------------------------------------------------
-    | BASIC GETTERS
-    |--------------------------------------------------------------------------
-    */
+    public $isPersonal;
+    public $role;
 
-    public static function id()
+    public function __construct()
     {
-        return session(self::KEY_ID);
-    }
+        $user = auth()->user();
 
-    public static function type()
-    {
-        return session(self::KEY_TYPE);
-    }
+        /*
+        |--------------------------------------------------------------------------
+        | COMPANIES
+        |--------------------------------------------------------------------------
+        */
+        $this->companies = CompanyUser::query()
+            ->where('user_id', $user->id)
+            ->with('company')
+            ->get();
 
-    public static function role()
-    {
-        return session(self::KEY_ROLE);
-    }
+        /*
+        |--------------------------------------------------------------------------
+        | CONTEXT MODE
+        |--------------------------------------------------------------------------
+        */
+        $this->isPersonal = ActiveContext::mode() === 'personal';
 
-    /*
-    |--------------------------------------------------------------------------
-    | CHECKS
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | ACTIVE COMPANY (ONLY IF COMPANY MODE)
+        |--------------------------------------------------------------------------
+        */
+        $this->active = null;
 
-    public static function isSet(): bool
-    {
-        return self::id() !== null && self::type() !== null;
-    }
+        if (ActiveContext::isCompany()) {
 
-    public static function hasActive(): bool
-    {
-        return self::isSet() && self::model() !== null;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | CORE RESOLVERS
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Return CompanyUser membership record
-     */
-    public static function membership(): ?CompanyUser
-    {
-        if (!self::isSet()) {
-            return null;
+            $this->active = $this->companies->firstWhere(function ($company) {
+                return $company->company_id == ActiveContext::id()
+                    && $company->company_type == ActiveContext::type();
+            });
         }
 
-        return CompanyUser::where('user_id', Auth::id())
-            ->where('company_id', self::id())
-            ->where('company_type', self::type())
-            ->first();
-    }
+        /*
+        |--------------------------------------------------------------------------
+        | ROLE RESOLUTION (IMPORTANT FIX)
+        |--------------------------------------------------------------------------
+        */
+        if (ActiveContext::isCompany()) {
 
-    /**
-     * Return active company model (Supplier / Logistic / etc.)
-     */
-    public static function model()
-    {
-        if (!self::isSet()) {
-            return self::fallback();
+            $this->role = $this->active?->role ?? 'member';
+
+        } else {
+
+            $this->role = $user->setting('platform_mode', 'buyer');
         }
 
-        $membership = self::membership();
+        /*
+        |--------------------------------------------------------------------------
+        | MENU
+        |--------------------------------------------------------------------------
+        */
+        $menu = collect(
+            MenuService::get(
+                MenuContext::context($user),
+                MenuContext::metrics($user)
+            )
+        );
 
-        if (!$membership) {
-            return self::fallback();
+        /*
+        |--------------------------------------------------------------------------
+        | POLICY FILTER
+        |--------------------------------------------------------------------------
+        */
+        $menu = $menu->filter(function ($item) use ($user) {
+
+            if (!isset($item['can'])) {
+                return true;
+            }
+
+            return $user->can(
+                $item['can'][0],
+                $item['can'][1]
+            );
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | REMOVE EMPTY HEADERS
+        |--------------------------------------------------------------------------
+        */
+        $filtered = collect();
+        $items = $menu->values();
+
+        for ($i = 0; $i < $items->count(); $i++) {
+
+            $item = $items[$i];
+
+            if ($item['type'] === 'header') {
+
+                $hasLinkInsideSection = false;
+
+                for ($j = $i + 1; $j < $items->count(); $j++) {
+
+                    if ($items[$j]['type'] === 'header') {
+                        break;
+                    }
+
+                    if ($items[$j]['type'] === 'link') {
+                        $hasLinkInsideSection = true;
+                        break;
+                    }
+                }
+
+                if (!$hasLinkInsideSection) {
+                    continue;
+                }
+            }
+
+            $filtered->push($item);
         }
 
-        $class = self::type();
-
-        if (!class_exists($class)) {
-            return self::fallback();
-        }
-
-        return $class::find(self::id());
+        $this->menu = $filtered->values()->toArray();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FALLBACK LOGIC
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Safe fallback if session is invalid
-     */
-    public static function fallback()
+    public function render()
     {
-        $user = Auth::user();
-
-        if (!$user) {
-            return null;
-        }
-
-        $first = CompanyUser::where('user_id', $user->id)->first();
-
-        if (!$first) {
-            return null;
-        }
-
-        // auto-repair session
-        session([
-            self::KEY_ID   => $first->company_id,
-            self::KEY_TYPE => $first->company_type,
-            self::KEY_ROLE => $first->role,
-        ]);
-
-        return $first->company;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | SET ACTIVE COMPANY
-    |--------------------------------------------------------------------------
-    */
-
-    public static function set(CompanyUser $membership): void
-    {
-        session([
-            self::KEY_ID   => $membership->company_id,
-            self::KEY_TYPE => $membership->company_type,
-            self::KEY_ROLE => $membership->role,
-        ]);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | SECURITY CHECK
-    |--------------------------------------------------------------------------
-    */
-
-    public static function ensureAccess(): void
-    {
-        $membership = self::membership();
-
-        if (!$membership) {
-            abort(403, 'You do not have access to this company context.');
-        }
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | SHORTCUT HELPERS
-    |--------------------------------------------------------------------------
-    */
-
-    public static function company()
-    {
-        return self::model();
-    }
-
-    public static function user()
-    {
-        return Auth::user();
-    }
-
-    public static function isOwner(): bool
-    {
-        return self::role() === 'owner';
-    }
-
-    public static function isAdmin(): bool
-    {
-        return in_array(self::role(), ['owner', 'admin']);
+        return view('components.dashboard.sidebar');
     }
 }

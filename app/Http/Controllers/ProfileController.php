@@ -54,16 +54,10 @@ class ProfileController extends Controller
         $newRole = $request->input('role');
 
         // Разрешаем только допустимые роли для обычного пользователя
-        if (in_array($newRole, ['buyer', 'manufacturer'])) {
+        if (in_array($newRole, ['buyer', 'supplier', 'logistics'])) {
             $user->role = $newRole;
 
-            // Если роль стала manufacturer и supplier ещё нет — создаём запись
-            if ($newRole === 'manufacturer' && !$user->supplier) {
-                \App\Models\Supplier::create([
-                    'user_id' => $user->id,
-                    'name' => 'Company Name',
-                ]);
-            }
+            
         }
     }
 

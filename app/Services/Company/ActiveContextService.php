@@ -4,6 +4,7 @@ namespace App\Services\Company;
 
 use App\Models\CompanyUser;
 use App\Models\Supplier;
+use App\Models\Buyer;
 use Illuminate\Database\Eloquent\Model;
 
 class ActiveContextService
@@ -38,55 +39,67 @@ class ActiveContextService
         /**
          * PERSONAL MODE
          */
-        if (!$type || $type === 'personal' || !$id) {
+        $mode = session('active_mode', 'personal');
+
+        if ($mode === 'personal') {
+
+            $personal = session('active_personal_mode', 'buyer');
 
             $this->context = [
                 'mode' => 'personal',
                 'user' => $user,
-                'company_id' => null,
-                'company_type' => null,
-                'role' => 'buyer',
+                'company_id' => $user->id,
+                'company_type' => \App\Models\User::class,
+                'role' => $personal,
             ];
 
             return;
         }
 
-        /**
-         * COMPANY MODE
-         */
-        $membership = CompanyUser::query()
-            ->where('user_id', $user->id)
-            ->where('company_id', $id)
-            ->where('company_type', $type)
-            ->where('status', 'active')
-            ->first();
 
-        /**
-         * fallback → если нет доступа
-         */
-        if (!$membership) {
+        if ($mode === 'company' && $type && $id) {
 
+            /**
+             * COMPANY MODE
+             */
+            $membership = CompanyUser::query()
+                ->where('user_id', $user->id)
+                ->where('company_id', $id)
+                ->where('company_type', $type)
+                ->where('status', 'active')
+                ->first();
+
+            /**
+             * fallback → если нет доступа
+             */
+            if (!$membership) {
+
+                $personal = session('active_personal_mode', $user->setting('platform_mode', 'buyer'));
+
+                $this->context = [
+                    'mode' => 'personal',
+                    'user' => $user,
+                    'company_id' => null,
+                    'company_type' => null,
+                    'role' => $personal,
+                ];
+
+                return;
+            }
+
+            /**
+             * COMPANY CONTEXT
+             */
             $this->context = [
-                'mode' => 'personal',
+                'mode' => 'company',
                 'user' => $user,
-                'company_id' => null,
-                'company_type' => null,
-                'role' => 'buyer',
+                'company_id' => $id,
+                'company_type' => $type,
+                'role' => $membership->role,
             ];
-
-            return;
+        } else {
+            $this->fallbackPersonal($user);
         }
-
-        /**
-         * COMPANY CONTEXT
-         */
-        $this->context = [
-            'mode' => 'company',
-            'user' => $user,
-            'company_id' => $id,
-            'company_type' => $type,
-            'role' => $membership->role,
-        ];
     }
 
     /**
@@ -197,11 +210,60 @@ class ActiveContextService
         return $this->company();
     }
 
+    public function buyer(): ?Buyer
+    {
+        if (!$this->isCompany()) {
+            return null;
+        }
+
+        if ($this->type() !== Buyer::class) {
+            return null;
+        }
+
+        return $this->company();
+    }
+
+    public function buyerId(): ?int
+    {
+        return $this->buyer()?->id;
+    }
+
     /**
      * SUPPLIER ID SAFE ACCESS
      */
     public function supplierId(): ?int
     {
         return $this->supplier()?->id;
+    }
+
+    public function isSupplier(): bool
+    {
+        if ($this->isCompany()) {
+            return $this->type() === \App\Models\Supplier::class;
+        }
+
+        return auth()->user()?->setting('platform_mode') === 'supplier';
+    }
+
+    public function isBuyer(): bool
+    {
+        if ($this->isCompany()) {
+            return $this->type() === \App\Models\Buyer::class;
+        }
+
+        return auth()->user()?->setting('platform_mode') === 'buyer';
+    }
+
+    private function fallbackPersonal($user): void
+    {
+        $personalMode = $user->setting('platform_mode', 'buyer');
+
+        $this->context = [
+            'mode' => 'personal',
+            'user' => $user,
+            'company_id' => $user->id,
+            'company_type' => \App\Models\User::class,
+            'role' => $personalMode,
+        ];
     }
 }

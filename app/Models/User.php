@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\UserSetting;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 use App\Domain\Media\Models\Media;
 
@@ -146,6 +148,33 @@ public function companyMemberships()
     return $this->hasMany(CompanyUser::class);
 }
 
+
+public function settings(): HasMany
+{
+    return $this->hasMany(UserSetting::class);
+}
+
+
+public function setting(
+    string $key,
+    mixed $default = null
+): mixed {
+    return $this->settings
+        ->firstWhere('key', $key)
+        ?->value ?? $default;
+}
+
+
+public function setSetting(
+    string $key,
+    mixed $value
+): UserSetting {
+    return UserSetting::setValue(
+        $this->id,
+        $key,
+        $value
+    );
+}
 
 
 }

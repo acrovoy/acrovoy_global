@@ -110,13 +110,15 @@
 
     
     @include('layouts.footer')
-
+@php
+    $user = auth()->user();
+@endphp
 
     {{-- Временная зона (для проверки скрипта) --}}
 <div id="timezone-display" class="fixed bottom-2 left-2 text-gray-600 text-xs px-2 py-1 rounded z-50">
     <span id="timezone-value">detecting...</span>
     <span id="current-time">--:--:--</span>
-    <p>Registered at: <span data-utc="{{ auth()->user()->created_at ?? '' }}"></span></p>
+    <p>Registered at: <span data-utc="{{ $user?->created_at ?? '' }}"></span></p>
 </div>
 
 
@@ -127,7 +129,7 @@
     // ----------------------
     // 1. Определяем временную зону
     // ----------------------
-    const tz = @json(auth()->user()->timezone ?? null) // timezone из базы для залогиненных
+    const tz = @json($user?->timezone ?? null) // timezone из базы для залогиненных
               || localStorage.getItem('timezone')      // из localStorage
               || Intl.DateTimeFormat().resolvedOptions().timeZone; // системная как fallback
 

@@ -12,17 +12,11 @@ use App\Models\CompanyUser;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Show login page
-     */
     public function create(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle login
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -30,64 +24,114 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
 
-        /**
-         * 1. ADMIN → direct
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN
+        |--------------------------------------------------------------------------
+        */
         if ($user->role === 'admin') {
             return redirect()->route('admin.home');
         }
 
-        /**
-         * 2. BUYER → PERSONAL MODE (seed only)
-         */
-        if ($user->role === 'buyer') {
+        /*
+        |--------------------------------------------------------------------------
+        | GLOBAL PERSONAL MODE (DEFAULT STATE)
+        |--------------------------------------------------------------------------
+        */
+        $personalMode = $user->setting('platform_mode', 'buyer');
 
-            session([
-                'active_company_type' => 'personal',
-                'active_company_id' => null,
-                'active_company_role' => 'buyer',
-            ]);
+        /*
+        |--------------------------------------------------------------------------
+        | 1. RESTORE LAST COMPANY CONTEXT
+        |--------------------------------------------------------------------------
+        */
+        $lastCompanyUserId = $user->setting('last_company_user_id');
 
-            return redirect()->route('buyer.home');
+        if ($lastCompanyUserId) {
+
+            $membership = CompanyUser::find($lastCompanyUserId);
+
+            if ($membership) {
+
+                session([
+                    'active_mode' => 'company',
+                    'active_company_type' => $membership->company_type,
+                    'active_company_id' => $membership->company_id,
+                    'active_company_role' => $membership->role,
+                    'active_personal_mode' => $personalMode,
+                ]);
+
+                return redirect()->route('dashboard.home');
+            }
         }
 
-        /**
-         * 3. COMPANY USERS (supplier / manufacturer / logistics)
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | 2. LOAD MEMBERSHIPS
+        |--------------------------------------------------------------------------
+        */
         $memberships = CompanyUser::where('user_id', $user->id)->get();
 
-        /**
-         * 3.1 no companies → onboarding
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | 3. NO COMPANIES → PERSONAL MODE
+        |--------------------------------------------------------------------------
+        */
         if ($memberships->isEmpty()) {
-            return redirect()->route('onboarding.company.select');
+
+            session([
+                'active_mode' => 'personal',
+                'active_company_type' => null,
+                'active_company_id' => null,
+                'active_company_role' => null,
+                'active_personal_mode' => $personalMode,
+            ]);
+
+            return redirect()->route(
+                $personalMode === 'supplier'
+                    ? 'dashboard.home'
+                    : 'buyer.home'
+            );
         }
 
-        /**
-         * 3.2 single company → auto select
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | 4. SINGLE COMPANY → AUTO LOGIN
+        |--------------------------------------------------------------------------
+        */
         if ($memberships->count() === 1) {
 
             $m = $memberships->first();
 
             session([
-                'active_company_id' => $m->company_id,
+                'active_mode' => 'company',
                 'active_company_type' => $m->company_type,
+                'active_company_id' => $m->company_id,
                 'active_company_role' => $m->role,
+                'active_personal_mode' => $personalMode,
             ]);
+
+            $user->setSetting('last_company_user_id', $m->id);
 
             return redirect()->route('dashboard.home');
         }
 
-        /**
-         * 3.3 multiple companies → user chooses context
-         */
+        /*
+        |--------------------------------------------------------------------------
+        | 5. MULTIPLE COMPANIES → SWITCHER
+        |--------------------------------------------------------------------------
+        */
+        session([
+            'active_mode' => 'personal',
+            'active_company_type' => null,
+            'active_company_id' => null,
+            'active_company_role' => null,
+            'active_personal_mode' => $personalMode,
+        ]);
+
         return redirect()->route('company.switcher');
     }
 
-    /**
-     * Logout
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

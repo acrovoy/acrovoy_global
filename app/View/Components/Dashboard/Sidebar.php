@@ -14,6 +14,8 @@ class Sidebar extends Component
     public $active;
     public $menu;
     public $isPersonal;
+    public $personalMode; // buyer / supplier / null
+    public $role;
 
     public function __construct()
     {
@@ -28,16 +30,25 @@ class Sidebar extends Component
             ->get();
 
         /**
-         * Detect mode
+         * Detect personal mode
          */
         $this->isPersonal = ActiveContext::isPersonal();
 
+        $this->role = ActiveContext::role();
+
         /**
-         * Resolve active company (company mode only)
+         * Personal mode type (buyer / supplier)
+         */
+        $this->personalMode = $this->isPersonal
+            ? session('platform_mode', 'buyer')
+            : null;
+
+        /**
+         * Resolve active company
          */
         $this->active = null;
 
-        if (! $this->isPersonal) {
+        if (ActiveContext::isCompany()) {
 
             $this->active = $this->companies->firstWhere(function ($company) {
                 return $company->company_id == ActiveContext::id()
@@ -48,9 +59,6 @@ class Sidebar extends Component
         /**
          * Build menu
          */
-        /**
-         * Build menu (policy filtered + remove empty headers)
-         */
         $menu = collect(
             MenuService::get(
                 MenuContext::context($user),
@@ -59,7 +67,7 @@ class Sidebar extends Component
         );
 
         /**
-         * Step 1: filter by policy
+         * Filter by policy
          */
         $menu = $menu->filter(function ($item) use ($user) {
 
@@ -74,54 +82,44 @@ class Sidebar extends Component
         });
 
         /**
- * Step 2: remove empty headers correctly
- */
-$filtered = collect();
+         * Remove empty headers
+         */
+        $filtered = collect();
+        $items = $menu->values();
 
-$items = $menu->values();
+        for ($i = 0; $i < $items->count(); $i++) {
 
-for ($i = 0; $i < $items->count(); $i++) {
+            $item = $items[$i];
 
-    $item = $items[$i];
+            if (($item['type'] ?? null) === 'header') {
 
-    if ($item['type'] === 'header') {
+                $hasLinkInsideSection = false;
 
-        $hasLinkInsideSection = false;
+                for ($j = $i + 1; $j < $items->count(); $j++) {
 
-        for ($j = $i + 1; $j < $items->count(); $j++) {
+                    if (($items[$j]['type'] ?? null) === 'header') {
+                        break;
+                    }
 
-            if ($items[$j]['type'] === 'header') {
-                break;
+                    if (($items[$j]['type'] ?? null) === 'link') {
+                        $hasLinkInsideSection = true;
+                        break;
+                    }
+                }
+
+                if (!$hasLinkInsideSection) {
+                    continue;
+                }
             }
 
-            if ($items[$j]['type'] === 'link') {
-                $hasLinkInsideSection = true;
-                break;
-            }
+            $filtered->push($item);
         }
 
-        if (!$hasLinkInsideSection) {
-            continue;
-        }
-    }
-
-    $filtered->push($item);
-}
-
-$this->menu = $filtered->values()->toArray();
+        $this->menu = $filtered->values()->toArray();
     }
 
     public function render()
     {
         return view('components.dashboard.sidebar');
-    }
-
-    private function can($roles): bool
-    {
-        if (!$roles) return true;
-
-        $role = ActiveContext::role();
-
-        return in_array($role, (array) $roles);
     }
 }
