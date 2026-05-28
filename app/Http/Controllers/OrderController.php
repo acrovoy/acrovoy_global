@@ -24,7 +24,8 @@ class OrderController extends Controller
 
     public function index(Request $request)
 {
-    $query = Order::where('user_id', auth()->id());
+    $query = Order::where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id());
 
     if ($request->filled('status')) {
         $query->where('status', $request->status);
@@ -33,15 +34,23 @@ class OrderController extends Controller
     $orders = $query->orderBy('created_at', 'desc')->get();
 
     $disputedOrderIds = OrderDispute::whereHas('order', function ($q) {
-            $q->where('user_id', auth()->id());
+            $q->where('buyer_type', ActiveContext::type())
+              ->where('buyer_id', ActiveContext::id());
         })
-        ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
+        ->whereIn('status', [
+            'pending',
+            'supplier_offer',
+            'rejected',
+            'admin_review'
+        ])
         ->pluck('order_id')
         ->toArray();
 
-    return view('dashboard.buyer.orders.index', compact('orders',
-        'disputedOrderIds'));
-}
+    return view(
+        'dashboard.buyer.orders.index',
+        compact('orders', 'disputedOrderIds')
+    );
+    }
 
     // Переход на страницу чекаута
     public function checkout()
@@ -253,7 +262,9 @@ if ($shippingTemplate?->logistic_company_id) {
 
         // 1️⃣ Создаём заказ
         $order = Order::create([
-            'user_id' => auth()->id(),
+            'buyer_type' => ActiveContext::type(),
+            'buyer_id'   => ActiveContext::id(),
+            'created_by' => auth()->id(),
             'status' => 'pending',
             'type' => 'product',
             'total' => $total,
@@ -410,27 +421,11 @@ public function editAddress(Order $order)
     return view('dashboard.buyer.orders.edit-address', compact('order'));
 }
 
-public function invoice(Order $order)
-{
-    // Проверяем, что заказ принадлежит текущему пользователю
-    if ($order->user_id !== auth()->id()) {
-        abort(403);
-    }
 
-    // Если инвойса нет
-    if (!$order->invoice_file || !\Storage::disk('public')->exists($order->invoice_file)) {
-        return back()->with('info', 'Invoice is not yet uploaded by the seller.');
-    }
-
-    // Отдаём файл
-    return response()->download(storage_path('app/public/' . $order->invoice_file));
-}
 
 public function track(Order $order)
 {
-    if ($order->user_id !== auth()->id()) {
-        abort(403);
-    }
+    
 
     if (!$order->tracking_number) {
         return back()->with('error', 'Tracking not available.');
@@ -445,10 +440,13 @@ public function track(Order $order)
 public function edit(int $id)
     {
         $order = Order::where('id', $id)
-            ->where('user_id', auth()->id())
-            ->where('status', 'pending') // только pending
-            ->with('items.product')
-            ->firstOrFail();
+
+        ->where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
+
+        ->where('status', 'pending') // только pending
+        ->with('items.product')
+        ->firstOrFail();
 
         $countries = Country::withCurrentTranslation()
     ->orderBy('name')->get();
@@ -527,9 +525,12 @@ public function edit(int $id)
 
 
     $order = Order::where('id', $id)
-        ->where('user_id', auth()->id())
-        ->where('status', 'pending') // только pending
-        ->firstOrFail();
+
+    ->where('buyer_type', ActiveContext::type())
+    ->where('buyer_id', ActiveContext::id())
+
+    ->where('status', 'pending') // только pending
+    ->firstOrFail();
 
     
 

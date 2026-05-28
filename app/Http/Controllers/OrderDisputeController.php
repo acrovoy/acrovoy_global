@@ -10,12 +10,13 @@ use App\Services\SupplierOrderAccessService;
 use App\Models\Order;
 use App\Models\OrderDispute;
 use App\Models\Supplier;
+use App\Facades\ActiveContext;
 
 class OrderDisputeController extends Controller
 {
     public function create(Order $order)
     {
-        $this->authorize('view', $order);
+        
 
         if ($order->status !== 'completed') {
             return redirect()->back()->with('error', 'Спор можно открыть только после завершения заказа.');
@@ -26,7 +27,7 @@ class OrderDisputeController extends Controller
 
     public function store(Request $request, Order $order)
     {
-        $this->authorize('view', $order);
+        
 
         if ($order->status !== 'completed') {
             return redirect()->back()->with('error', 'Невозможно открыть спор для незавершенного заказа.');
@@ -38,11 +39,21 @@ class OrderDisputeController extends Controller
             'attachment' => 'nullable|file|mimes:jpg,png,pdf|max:2048',
         ]);
 
-        $dispute = new OrderDispute();
-        $dispute->order_id = $order->id;
-        $dispute->user_id = Auth::id();
-        $dispute->reason = $request->reason;
-        $dispute->action = $request->action;
+        $user = auth()->user();
+
+    $dispute = new OrderDispute();
+
+    $dispute->order_id = $order->id;
+
+    // 🔥 новая архитектура
+    $dispute->buyer_type = ActiveContext::type();
+    $dispute->buyer_id   = ActiveContext::id();
+
+    // кто реально создал запись (может быть саппорт/админ/покупатель)
+    $dispute->created_by = $user->id;
+
+    $dispute->reason = $request->reason;
+    $dispute->action = $request->action;
 
         if ($request->hasFile('attachment')) {
             $dispute->attachment = $request->file('attachment')->store('disputes', 'public');
@@ -62,56 +73,57 @@ class OrderDisputeController extends Controller
     /**
      * Продавец — обновление спора
      */
-    public function update(Request $request, Order $order, OrderDispute $dispute, SupplierOrderAccessService $access)
-    {
+    public function update(
+    Request $request,
+    Order $order,
+    OrderDispute $dispute,
+    SupplierOrderAccessService $access
+) {
 
-        \Log::info('Dispute update called', [
-    'order_id' => $order->id,
-    'dispute_id' => $dispute->id,
-    'user_id' => auth()->id(),
-]);
+    \Log::info('Dispute update called', [
+        'order_id' => $order->id,
+        'dispute_id' => $dispute->id,
+        'user_id' => auth()->id(),
+    ]);
 
+    // 🔥 защита: спор должен принадлежать этому заказу
+    abort_if($dispute->order_id !== $order->id, 404);
 
-        // Проверяем что заказ принадлежит продавцу
-        $supplier = Supplier::where('user_id', auth()->id())->first();
+    // 🔥 защита: спор должен принадлежать текущему buyer context
+    abort_if(
+        $dispute->buyer_type !== ActiveContext::type() ||
+        $dispute->buyer_id !== ActiveContext::id(),
+        403
+    );
 
-       
+    // 🔥 supplier проверка (если это supplier route)
+    $supplier = Supplier::where('user_id', auth()->id())->first();
 
-abort_if(
-    !$access->canAccess($order, $supplier),
-    403
-);
+    abort_if(!$supplier, 403);
 
-abort_if($dispute->order_id !== $order->id, 404);
+    // 🔥 доступ через сервис (если у тебя уже есть ACL логика)
+    $access->checkAccess($order, $supplier);
 
+    $request->validate([
+        'status' => 'required|in:pending,approved,rejected,return,resolved,supplier_offer',
+        'supplier_comment' => 'nullable|string|max:1000',
+    ]);
 
-      
+    $dispute->update([
+        'status' => $request->status,
+        'supplier_comment' => $request->supplier_comment,
+        'created_by' => $dispute->created_by ?? auth()->id(), // страховка
+    ]);
 
-      
-
-        $request->validate([
-            'status'        => 'required|in:pending,approved,rejected,return,resolved,supplier_offer',
-            'supplier_comment' => 'nullable|string|max:1000',
-        ]);
-
-        $dispute->update([
-            'status'        => $request->status,
-            'supplier_comment' => $request->supplier_comment,
-            
-        ]);
-
-        return redirect()->back()->with('success', 'Спор обновлён');
-    }
+    return redirect()->back()->with('success', 'Спор обновлён');
+}
 
 
 
     public function cancel(OrderDispute $dispute)
 {
     // Проверка владельца спора
-    if ($dispute->user_id !== auth()->id()) {
-        return redirect()->back()
-            ->with('error', 'У вас нет доступа к этому спору.');
-    }
+   
 
     // Проверка статуса
     if ($dispute->status !== 'pending') {
@@ -131,7 +143,8 @@ abort_if($dispute->order_id !== $order->id, 404);
 
     public function support(OrderDispute $dispute)
 {
-    if ($dispute->user_id !== auth()->id()) {
+    if ($dispute->buyer_type !== ActiveContext::type() ||
+        $dispute->buyer_id !== ActiveContext::id()) {
         return redirect()->route('buyer.orders')
             ->with('error', 'Доступ запрещён.');
     }
@@ -143,7 +156,8 @@ abort_if($dispute->order_id !== $order->id, 404);
 public function accept(OrderDispute $dispute)
 {
     // Проверяем, что спор принадлежит текущему покупателю
-    if ($dispute->user_id !== auth()->id()) {
+    if ($dispute->buyer_type !== ActiveContext::type() ||
+        $dispute->buyer_id !== ActiveContext::id()) {
         abort(403, 'Unauthorized');
     }
 
@@ -163,7 +177,8 @@ public function accept(OrderDispute $dispute)
 public function reject(Request $request, OrderDispute $dispute)
 {
     // Проверяем, что спор принадлежит текущему покупателю
-    if ($dispute->user_id !== auth()->id()) {
+    if ($dispute->buyer_type !== ActiveContext::type() ||
+        $dispute->buyer_id !== ActiveContext::id()) {
         abort(403, 'Unauthorized');
     }
 
@@ -191,7 +206,8 @@ public function reject(Request $request, OrderDispute $dispute)
 public function appeal(Request $request, OrderDispute $dispute)
 {
     // Проверяем, что спор принадлежит текущему покупателю
-    if ($dispute->user_id !== auth()->id()) {
+    if ($dispute->buyer_type !== ActiveContext::type() ||
+        $dispute->buyer_id !== ActiveContext::id()) {
         abort(403, 'Unauthorized');
     }
 
@@ -221,7 +237,8 @@ public function appeal(Request $request, OrderDispute $dispute)
 public function close(OrderDispute $dispute)
 {
     // Проверяем, что спор принадлежит текущему покупателю
-    if ($dispute->user_id !== auth()->id()) {
+    if ($dispute->buyer_type !== ActiveContext::type() ||
+        $dispute->buyer_id !== ActiveContext::id()) {
         abort(403, 'Unauthorized');
     }
 
