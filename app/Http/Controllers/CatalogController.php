@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 
 use App\Domain\Filters\FilterFactory;
 
+use App\Facades\ActiveContext;
+
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Attribute;
@@ -21,7 +23,10 @@ class CatalogController extends Controller
     $locale = app()->getLocale();
 
     $wishlistIds = auth()->user()
-    ? auth()->user()->wishlist()->pluck('products.id')->toArray()
+    ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
+        ->pluck('product_id')
+        ->toArray()
     : [];
 
     // Mega Menu (верхний каталог)

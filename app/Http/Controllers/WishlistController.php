@@ -1,21 +1,25 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Facades\ActiveContext;
+
 
 use Illuminate\Http\Request;
 
 use App\Models\Product;
+use App\Models\Wishlist;
 
 class WishlistController extends Controller
 {
 
     public function index()
     {
-        $items = auth()
-            ->user()
-            ->wishlist()
-            ->latest()
-            ->paginate(8);
+         $items = Wishlist::query()
+        ->where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
+        ->with('product')
+        ->latest()
+        ->paginate(8);
 
         return view(
             'dashboard.buyer.wishlist.index',
@@ -29,33 +33,46 @@ class WishlistController extends Controller
 
     public function toggle(Product $product)
 {
-    $user = auth()->user();
+    $query = Wishlist::query()
+        ->where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
+        ->where('product_id', $product->id);
 
-    if ($user->wishlist()->where('product_id', $product->id)->exists()) {
+    $wishlist = $query->first();
 
-        $user->wishlist()->detach($product->id);
+    if ($wishlist) {
+
+        $wishlist->delete();
 
         $status = 'removed';
 
     } else {
 
-        $user->wishlist()->attach($product->id);
+      Wishlist::firstOrCreate([
+    'buyer_type' => ActiveContext::type(),
+    'buyer_id'   => ActiveContext::id(),
+    'product_id' => $product->id,
+], [
+    'created_by' => auth()->id(),
+]);
 
         $status = 'added';
-
     }
 
     return response()->json([
         'status' => $status,
-        'count' => $user->wishlist()->count()
+
+        'count' => Wishlist::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
+            ->count()
     ]);
 }
 
 public function count()
 {
     return response()->json([
-        'count' => auth()->user()
-            ->wishlist()
+        'count' => Wishlist::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
             ->count()
     ]);
 }

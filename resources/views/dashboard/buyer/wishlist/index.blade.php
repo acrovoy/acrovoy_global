@@ -67,7 +67,9 @@
 
 <div class="space-y-4">
 
-@foreach($items as $product)
+@foreach($items as $item)
+
+@php $product = $item->product; @endphp
 
 <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col md:flex-row justify-between items-start md:items-center hover:shadow-md transition">
 

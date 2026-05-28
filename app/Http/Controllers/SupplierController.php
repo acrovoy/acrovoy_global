@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Facades\ActiveContext;
+
 use App\Domain\Filters\Supplier\CountryFilter;
 use App\Domain\Filters\FilterFactory;
 
@@ -310,8 +312,11 @@ class SupplierController extends Controller
         $supplierRating = round($supplier->supplierReviews->avg('rating'), 1);
         $count = $supplier->supplierReviews->count();
 
-         $wishlistIds = auth()->user()
-    ? auth()->user()->wishlist()->pluck('products.id')->toArray()
+        $wishlistIds = auth()->check()
+    ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
+        ->pluck('product_id')
+        ->toArray()
     : [];
         
 

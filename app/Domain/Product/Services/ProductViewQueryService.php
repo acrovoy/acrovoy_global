@@ -2,6 +2,8 @@
 
 namespace App\Domain\Product\Services;
 
+use App\Facades\ActiveContext;
+
 use App\Models\Product;
 use App\Models\Project;
 use Illuminate\Support\Facades\Auth;
@@ -12,8 +14,11 @@ class ProductViewQueryService
     {
         $user = Auth::user();
         
-    $wishlistIds = auth()->user()
-    ? auth()->user()->wishlist()->pluck('product_id')->toArray()
+    $wishlistIds = $user
+    ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
+        ->pluck('product_id')
+        ->toArray()
     : [];
 
         // Загружаем продукт с необходимыми связями, включая варианты

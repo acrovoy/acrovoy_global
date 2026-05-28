@@ -4,6 +4,8 @@
 
 namespace App\View\Composers;
 
+use App\Facades\ActiveContext;
+
 use Illuminate\View\View;
 use App\Models\Category;
 use App\Models\Country;
@@ -123,10 +125,9 @@ $catalogCategories = Category::with('children')
 
         //Wishlist
 
-        $wishlistCount = Wishlist::where(
-                    'user_id',
-                    auth()->id()
-                    )->count();
+        $wishlistCount = Wishlist::where('buyer_type', ActiveContext::type())
+    ->where('buyer_id', ActiveContext::id())
+    ->count();
 
                     //Cart
 $cartCount = CartItem::where('user_id', auth()->id())->sum('quantity');
