@@ -12,6 +12,7 @@ use App\Services\OrderStatusService;
 use App\Models\UserAddress;
 use App\Models\Country;  
 use App\Models\Location;
+use App\Facades\ActiveContext;
 
 
 
@@ -47,7 +48,8 @@ class OrderController extends Controller
 {
     $user = auth()->user();
 
-    $cartItems = CartItem::where('user_id', $user->id)
+    $cartItems = CartItem::where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
         ->with(['product.shippingTemplates.translations'])
         ->get();
 
@@ -196,14 +198,15 @@ if ($request->boolean('save_as_new')) {
 
 
 
-    $cartItems = CartItem::where('user_id', auth()->id())
-        ->with('product')
-        ->get();
+   $cartItems = CartItem::where('buyer_type', ActiveContext::type())
+    ->where('buyer_id', ActiveContext::id())
+    ->with('product')
+    ->get();
 
-    if ($cartItems->isEmpty()) {
-        return redirect()->route('buyer.cart.index')
-            ->with('error', 'Your cart is empty.');
-    }
+if ($cartItems->isEmpty()) {
+    return redirect()->route('buyer.cart.index')
+        ->with('error', 'Your cart is empty.');
+}
 
     // Сумма товаров
     $itemsTotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
@@ -327,7 +330,9 @@ if ($shippingTemplate?->logistic_company_id) {
         }
 
         // 5️⃣ Очищаем корзину
-        CartItem::where('user_id', auth()->id())->delete();
+        CartItem::where('buyer_type', ActiveContext::type())
+    ->where('buyer_id', ActiveContext::id())
+    ->delete();
     });
 
     return redirect()->route('buyer.orders.show', $order)
