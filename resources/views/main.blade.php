@@ -158,7 +158,7 @@
         <h2 class="text-3xl font-bold mb-10">Our Supplier Locations</h2>
 
         <div class="flex flex-wrap justify-center gap-4">
-            @foreach ($countries as $country)
+            @foreach ($countriees as $country)
                 <span class="px-4 py-2 rounded-full font-semibold 
                     {{ $country === 'Vietnam' 
                         ? 'bg-yellow-200 text-yellow-900' 

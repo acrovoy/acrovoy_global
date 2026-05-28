@@ -531,8 +531,7 @@ Route::prefix('dashboard/buyer')
 
 
 
-Route::post('/dashboard/switch-role', [DashboardRoleController::class, 'switch'])
-    ->name('dashboard.switch-role');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

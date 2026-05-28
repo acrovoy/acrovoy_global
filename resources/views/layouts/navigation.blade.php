@@ -15,35 +15,17 @@
 
             </div>
 
+
+
             <div class="flex justify-between h-16 items-center ml-4">
 
+
+                @if(ActiveContext::isBuyer())
                 <!-- Purchase Country Selector -->
                 <div class="relative hidden sm:block ml-4">
                     <span class="text-xs text-gray-500 whitespace-nowrap">
                         {{ __('layouts/navigation.select_purchase_country') }}
                     </span>
-
-                    @php
-                    $countries = \App\Models\Country::withCurrentTranslation()
-                    ->where('is_active', 1)
-                    ->orderBy('translated_name')
-                    ->get();
-
-                    $currentCountry = strtolower(
-                    auth()->user()->purchase_country
-                    ?? request()->cookie('purchase_country')
-                    ?? session('purchase_country', \App\Models\Country::where('is_default', 1)->value('code') ?? 'us')
-                    );
-
-                    $currentCountryName = optional(
-                    $countries->firstWhere('code', $currentCountry)
-                    )->name ?? strtoupper($currentCountry);
-
-                    // Приоритетные страны, например самые популярные для B2B
-
-                    $mainCountries = $countries->where('is_priority', 1);
-                    $otherCountries = $countries->where('is_priority', 0);
-                    @endphp
 
                     <x-dropdown align="left" width="36">
                         <x-slot name="trigger">
@@ -90,33 +72,13 @@
                         </x-slot>
                     </x-dropdown>
                 </div>
-
+                @endif
 
                 <!-- Currency Selector (Desktop) with Priority -->
                 <div class="relative ml-4 hidden sm:block">
                     <span class="text-xs text-gray-500 whitespace-nowrap">
                         {{ __('layouts/navigation.select_currency') }}
                     </span>
-
-                    @php
-                    // Получаем все активные валюты
-                    $currencies = \App\Models\Currency::where('is_active', 1)
-                    ->orderBy('code')
-                    ->get();
-
-                    // Текущая валюта
-                    $currentCurrency = strtolower(
-                    auth()->user()->currency
-                    ?? session('currency', 'usd')
-                    );
-
-                    $currentCurrencyObj = $currencies->firstWhere('code', strtoupper($currentCurrency));
-                    $currentCurrencyCode = $currentCurrencyObj->code ?? strtoupper($currentCurrency);
-
-                    // Разделяем валюты по приоритету
-                    $mainCurrencies = $currencies->where('is_priority', 1);
-                    $otherCurrencies = $currencies->where('is_priority', 0);
-                    @endphp
 
                     <x-dropdown align="left" width="36">
                         <x-slot name="trigger">
@@ -187,110 +149,44 @@
                         {{ __('layouts/navigation.select_language') }}
                     </span>
 
-                    @php
-                    use App\Models\Language;
 
-                    $languages = Language::where('is_active', true)
-                    ->orderBy('sort_order')
-                    ->get(); // <- Получаем коллекцию объектов
-                        $currentLang=app()->getLocale();
-                        @endphp
+                    <x-dropdown align="right" width="36">
+                        <x-slot name="trigger">
+                            @php
+                            $currentLanguage = $languages->firstWhere('code', $currentLang);
+                            @endphp
+                            <button class="flex items-center text-gray-700 hover:text-gray-900 font-medium"
+                                dir="{{ $currentLanguage->direction ?? 'ltr' }}">
+                                <span class="text-sm mr-1">
+                                    {{ $currentLanguage->native_name ?? $currentLanguage->name }}
+                                </span>
+                                <svg class="ml-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        </x-slot>
 
-                        <x-dropdown align="right" width="36">
-                            <x-slot name="trigger">
-                                @php
-                                $currentLanguage = $languages->firstWhere('code', $currentLang);
-                                @endphp
-                                <button class="flex items-center text-gray-700 hover:text-gray-900 font-medium"
-                                    dir="{{ $currentLanguage->direction ?? 'ltr' }}">
-                                    <span class="text-sm mr-1">
-                                        {{ $currentLanguage->native_name ?? $currentLanguage->name }}
-                                    </span>
-                                    <svg class="ml-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                            </x-slot>
-
-                            <x-slot name="content">
-                                <div class="bg-[#F7F3EA] min-w-[120px]">
-                                    @foreach($languages as $language)
-                                    @if($language->code !== $currentLang)
-                                    <x-dropdown-link href="{{ route('locale.switch', $language->code) }}"
-                                        dir="{{ $language->direction ?? 'ltr' }}">
-                                        {{ $language->native_name ?? $language->name }}
-                                    </x-dropdown-link>
-                                    @endif
-                                    @endforeach
-                                </div>
-                            </x-slot>
-                        </x-dropdown>
+                        <x-slot name="content">
+                            <div class="bg-[#F7F3EA] min-w-[120px]">
+                                @foreach($languages as $language)
+                                @if($language->code !== $currentLang)
+                                <x-dropdown-link href="{{ route('locale.switch', $language->code) }}"
+                                    dir="{{ $language->direction ?? 'ltr' }}">
+                                    {{ $language->native_name ?? $language->name }}
+                                </x-dropdown-link>
+                                @endif
+                                @endforeach
+                            </div>
+                        </x-slot>
+                    </x-dropdown>
 
 
                 </div>
 
 
 
-
-                {{-- 🔔 Уведомление о спорах --}}
-                @php
-                use App\Models\OrderDispute;
-
-                $disputeCount = 0;
-                $disputeLink = null;
-
-                if (auth()->check()) {
-
-                // 🧑 Покупатель
-                if (auth()->user()->role === 'buyer') {
-
-                $buyerOpenDisputes = OrderDispute::whereHas('order', function ($q) {
-                $q->where('user_id', auth()->id());
-                })
-                ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
-                ->get();
-
-                $disputeCount = $buyerOpenDisputes->count();
-
-                if ($disputeCount > 0) {
-                $disputeLink = route(
-                'buyer.orders.show',
-                $buyerOpenDisputes->first()->order_id
-                );
-                }
-                }
-
-                // 🏭 Продавец (manufacturer)
-                if (
-                auth()->user()->role === 'manufacturer' &&
-                auth()->user()->supplier
-                ) {
-
-                $sellerOpenDisputes = OrderDispute::whereHas(
-                'order.items.product',
-                function ($q) {
-                $q->where(
-                'supplier_id',
-                auth()->user()->supplier->id
-                );
-                }
-                )
-                ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
-                ->get();
-
-                $disputeCount = $sellerOpenDisputes->count();
-
-                if ($disputeCount > 0) {
-                $disputeLink = route(
-                'manufacturer.orders.show',
-                $sellerOpenDisputes->first()->order_id
-                );
-                }
-                }
-                }
-                @endphp
 
                 {{-- 🔔 Значок --}}
                 @if($disputeCount > 0 && $disputeLink)
@@ -326,9 +222,9 @@
 
                 {{-- Rfq offers --}}
 
-                
 
 
+@if(ActiveContext::isBuyer())  
 
                 <!-- Wishlist  Dropdown -->
                 @auth
@@ -352,16 +248,6 @@
                  116.364 6.364L12 21.364 4.318
                  12.682a4.5 4.5 0 010-6.364z" />
                     </svg>
-
-
-                    {{-- Badge --}}
-                    @php
-                    $wishlistCount = \App\Models\Wishlist::where(
-                    'user_id',
-                    auth()->id()
-                    )->count();
-                    @endphp
-
 
                     @if($wishlistCount > 0)
                     <span id="wishlist-count"
@@ -397,10 +283,6 @@
                             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13L17 13M7 13H5.4" />
                     </svg>
 
-                    {{-- Badge --}}
-                    @php
-                    $cartCount = \App\Models\CartItem::where('user_id', auth()->id())->sum('quantity');
-                    @endphp
 
                     @if($cartCount > 0)
                     <span class="absolute -top-2 -right-2 bg-red-600 text-white
@@ -412,7 +294,7 @@
 
                 @endauth
 
-
+@endif
 
 
 
@@ -500,6 +382,8 @@
 
     <!-- Mobile Menu -->
     <div x-show="open" x-transition class="sm:hidden">
+
+    @if(ActiveContext::isBuyer())  
         <!-- Country Selector -->
         <div class="pt-4 border-t border-gray-200 px-4">
             <span class="text-xs text-gray-500 block mb-1">{{ __('layouts/navigation.select_purchase_country') }}</span>
@@ -547,7 +431,7 @@
 
             </x-dropdown>
         </div>
-
+@endif
         <!-- Currency Selector (Mobile) -->
         <div class="pt-4 border-t border-gray-200 px-4">
             <span class="text-xs text-gray-500 block mb-1">
@@ -598,32 +482,27 @@
 
         <!-- Language Selector -->
         <div class="pt-4 border-t border-gray-200 px-4">
-            @php
-            $languages = Language::where('is_active', true)
-            ->orderBy('sort_order')
-            ->get(); // <- Получаем коллекцию объектов
-                $currentLang=app()->getLocale();
-                @endphp
-                <span class="text-xs text-gray-500 block mb-1">{{ __('layouts/navigation.select_language') }}</span>
-                <x-dropdown>
-                    <x-slot name="trigger">
-                        <button class="flex items-center" dir="{{ $currentLanguage->direction ?? 'ltr' }}">
-                            {{ $currentLanguage->native_name ?? $currentLanguage->name }}
-                        </button>
-                    </x-slot>
 
-                    <x-slot name="content">
-                        @foreach($languages as $language)
-                        @if($language->code !== $currentLang)
-                        <x-dropdown-link
-                            href="{{ route('locale.switch', $language->code) }}"
-                            dir="{{ $language->direction ?? 'ltr' }}">
-                            {{ $language->native_name ?? $language->name }}
-                        </x-dropdown-link>
-                        @endif
-                        @endforeach
-                    </x-slot>
-                </x-dropdown>
+            <span class="text-xs text-gray-500 block mb-1">{{ __('layouts/navigation.select_language') }}</span>
+            <x-dropdown>
+                <x-slot name="trigger">
+                    <button class="flex items-center" dir="{{ $currentLanguage->direction ?? 'ltr' }}">
+                        {{ $currentLanguage->native_name ?? $currentLanguage->name }}
+                    </button>
+                </x-slot>
+
+                <x-slot name="content">
+                    @foreach($languages as $language)
+                    @if($language->code !== $currentLang)
+                    <x-dropdown-link
+                        href="{{ route('locale.switch', $language->code) }}"
+                        dir="{{ $language->direction ?? 'ltr' }}">
+                        {{ $language->native_name ?? $language->name }}
+                    </x-dropdown-link>
+                    @endif
+                    @endforeach
+                </x-slot>
+            </x-dropdown>
 
 
 
@@ -704,7 +583,7 @@
 
     </div>
 
-    <script>
+ <script>
         document.querySelectorAll('.wishlist-toggle')
             .forEach(button => {
 
