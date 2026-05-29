@@ -67,15 +67,18 @@ use App\Services\Company\ActiveContextService;
 class ProductController extends Controller
 {
 
+    protected ActiveContextService $activeContext;
+
+    public function __construct(ActiveContextService $activeContext)
+    {
+        $this->activeContext = $activeContext;
+    }
+
     public function index(Request $request, ProductListQueryService $service)
     {
-        $context = app(ActiveContextService::class);
-
-
-        
-
         $products = $service->getSupplierProducts(
-            $context->id(),
+            $this->activeContext->id(),
+            $this->activeContext->type(),
             $request->only(['sort', 'status', 'user'])
         );
 
@@ -93,41 +96,43 @@ class ProductController extends Controller
         return view('product.show', $service->getProductViewData($slug));
     }
 
-    public function create(ProductFormDataService $service, ActiveContextService $context)
+    public function create(ProductFormDataService $service)
     {
 
+        $supplierId = $this->activeContext->id();
+        $supplierType = $this->activeContext->type();
 
-        abort_if(!$context->isCompany(), 403);
-        abort_if($context->type() !== Supplier::class, 403);
-
+        abort_if(!$this->activeContext->isCompany(), 403);
+        abort_if($this->activeContext->type() !== Supplier::class, 403);
 
         $data = $service->getCreateFormData();
-        $supplierId = $context->id();
 
         abort_if(!$supplierId, 403);
 
 
 
-        $products = Product::with('translations') // Загружаем сразу переводы
+        $products = Product::with('translations')
             ->where('supplier_id', $supplierId)
+            ->where('supplier_type', $supplierType)
             ->get();
 
 
-$ownerType = $context->isPersonal()
-    ? \App\Models\User::class
-    : \App\Models\Supplier::class;
+        $ownerType = $this->activeContext->isPersonal()
+            ? \App\Models\User::class
+            : \App\Models\Supplier::class;
 
-$ownerId = $context->id();
+        $ownerId = $this->activeContext->id();
 
-$groups = AttributeGroup::where('owner_type', $ownerType)
-    ->where('owner_id', $ownerId)
-    ->get();
+        $groups = AttributeGroup::where('owner_type', $ownerType)
+            ->where('owner_id', $ownerId)
+            ->get();
 
 
 
 
         return view('dashboard.supplier.add-product', array_merge($data, [
-            'products' => $products, 'groups' => $groups,
+            'products' => $products,
+            'groups' => $groups,
         ]));
     }
 
@@ -144,15 +149,15 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
         SyncShippingTemplateAction $shippingAction,
         AttachProductVariantAction $attachProductVariantAction,
         ProductDTOFactory $dtoFactory,
-        ActiveContextService $context,
     ) {
 
 
 
-        abort_if(!$context->isCompany(), 403);
-        abort_if($context->type() !== Supplier::class, 403);
+        abort_if(!$this->activeContext->isCompany(), 403);
+        abort_if($this->activeContext->type() !== Supplier::class, 403);
 
-        $supplierId = $context->id();
+        $supplierId = $this->activeContext->id();
+        $supplierType = $this->activeContext->type();
 
 
         DB::transaction(function () use (
@@ -168,6 +173,7 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
             $attributeAction,
             $customAttributeAction,
             $supplierId,
+            $supplierType,
         ) {
 
             /*
@@ -175,7 +181,7 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
         | Create Product
         |-------------------------------------------------------------------------- 
         */
-            $productDTO = $dtoFactory->fromRequest($request, $supplierId);
+            $productDTO = $dtoFactory->fromRequest($request);
             $product = $createProduct->execute($productDTO);
 
             /*
@@ -190,7 +196,7 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
                 $request->description
             );
 
-          
+
             /*
         |-------------------------------------------------------------------------- 
         | Variant Group Guarantee
@@ -252,7 +258,11 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
                     if (empty($variantProductId)) continue;
 
                     $variantProduct = Product::find($variantProductId);
-                    if (!$variantProduct || $variantProduct->supplier_id !== $supplierId) continue;
+                    if (
+                        !$variantProduct ||
+                        $variantProduct->supplier_id !== $supplierId ||
+                        $variantProduct->supplierType !== $supplierType
+                    ) continue;
 
                     $group = $attachProductVariantAction->execute($product, $variantProduct);
 
@@ -372,14 +382,14 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
     public function edit(
         Product $product,
         ProductEditQueryService $service,
-        ActiveContextService $context
+
     ) {
 
-    
 
-        abort_if(!$context->isCompany(), 403);
-        abort_if($context->type() !== Supplier::class, 403);
-        abort_if($product->supplier_id !== $context->id(), 403);
+
+        abort_if(!$this->activeContext->isCompany(), 403);
+        abort_if($this->activeContext->type() !== Supplier::class, 403);
+        abort_if($product->supplier_id !== $this->activeContext->id(), 403);
 
 
         return view(
@@ -394,20 +404,12 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
         UpdateProductAction $action,
         ProductDTOFactory $dtoFactory,
         SyncProductAttributeAction $attributeAction,
-        ActiveContextService $context,
+
     ) {
-
-
-
-     $context = app(\App\Services\Company\ActiveContextService::class);
-
-    
 
         $this->authorize('update', $product);
 
-        $supplierId = $context->id();
-
-        $dto = $dtoFactory->fromUpdateRequest($request, $supplierId);
+        $dto = $dtoFactory->fromUpdateRequest($request);
 
         $translations = [];
 
@@ -418,8 +420,6 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
                 'description' => $request->description[$locale] ?? null,
             ];
         }
-
-
 
         if ($request->has('variants')) {
 
@@ -584,17 +584,19 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
     public function updateStock(
         Request $request,
         Product $product,
-        ActiveContextService $context
+
     ) {
 
         $request->validate([
             'stock' => ['required', 'integer', 'min:0'],
         ]);
 
-        abort_if(!$context->isCompany(), 403);
-        abort_if($context->type() !== Supplier::class, 403);
+        $ActiveContext = $this->activeContext;
 
-        abort_if($product->supplier_id !== $context->id(), 403);
+        abort_if(!$ActiveContext->isCompany(), 403);
+        abort_if($ActiveContext->type() !== Supplier::class, 403);
+
+        abort_if($product->supplier_id !== $ActiveContext->id(), 403);
 
         $product->stock()->update([
             'quantity' => $request->stock
@@ -616,114 +618,111 @@ $groups = AttributeGroup::where('owner_type', $ownerType)
         ]);
     }
 
-public function storeCustomAttribute(
-    Request $request,
-    
-    ActiveContextService $context
-) {
-    $ownerType = $context->isPersonal()
-        ? 'App\Models\User'
-        : 'App\Models\Supplier';
+    public function storeCustomAttribute(
+        Request $request,
 
-    $owner = $context->isPersonal()
-        ? auth()->user()
-        : $context->company();
+        ActiveContextService $context
+    ) {
+        $ownerType = $context->isPersonal()
+            ? 'App\Models\User'
+            : 'App\Models\Supplier';
 
-    $data = $request->validate([
-        'id' => ['nullable', 'exists:attributes,id'],
-        'key' => ['required', 'string'],
-        'type' => ['required', 'string'],
-        'options' => ['nullable', 'array'],
-    ]);
+        $owner = $context->isPersonal()
+            ? auth()->user()
+            : $context->company();
 
-    if ($request->filled('group_name')) {
+        $data = $request->validate([
+            'id' => ['nullable', 'exists:attributes,id'],
+            'key' => ['required', 'string'],
+            'type' => ['required', 'string'],
+            'options' => ['nullable', 'array'],
+        ]);
 
-    $group = AttributeGroup::firstOrCreate([
-        'name' => $request->group_name,
-        'owner_id' => $owner->id,
-        'owner_type' => $ownerType,
-        'created_by' => auth()->id(),
-    ]);
+        if ($request->filled('group_name')) {
 
-    $groupId = $group->id;
+            $group = AttributeGroup::firstOrCreate([
+                'name' => $request->group_name,
+                'owner_id' => $owner->id,
+                'owner_type' => $ownerType,
+                'created_by' => auth()->id(),
+            ]);
 
-} else {
-    $groupId = $request->group_id;
-}
+            $groupId = $group->id;
+        } else {
+            $groupId = $request->group_id;
+        }
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | CODE
     |--------------------------------------------------------------------------
     */
-    $code = Str::slug($data['key'], '_');
+        $code = Str::slug($data['key'], '_');
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | ATTRIBUTE (ONLY DEFINITION)
     |--------------------------------------------------------------------------
     */
-    $attribute = Attribute::updateOrCreate(
-        [
-            'id' => $data['id'] ?? null,
-            'entity_type' => 'product',
-            'context' => 'product',
-        ],
-        [
-            'code' => $code,
-            'group_id' => $groupId ?? null,
-            'type' => $data['type'],
-            'is_custom' => 1,
-            'is_system' => 0,
-            'owner_type' => $ownerType,
-            'owner_id' => $owner->id,
-            'created_by' => auth()->id(),
-        ]
-    );
+        $attribute = Attribute::updateOrCreate(
+            [
+                'id' => $data['id'] ?? null,
+                'entity_type' => 'product',
+                'context' => 'product',
+            ],
+            [
+                'code' => $code,
+                'group_id' => $groupId ?? null,
+                'type' => $data['type'],
+                'is_custom' => 1,
+                'is_system' => 0,
+                'owner_type' => $ownerType,
+                'owner_id' => $owner->id,
+                'created_by' => auth()->id(),
+            ]
+        );
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | TRANSLATION
     |--------------------------------------------------------------------------
     */
-    $attribute->translations()->updateOrCreate(
-        [
-            'locale' => app()->getLocale(),
-        ],
-        [
-            'name' => $data['key'],
-        ]
-    );
+        $attribute->translations()->updateOrCreate(
+            [
+                'locale' => app()->getLocale(),
+            ],
+            [
+                'name' => $data['key'],
+            ]
+        );
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | OPTIONS (ONLY FOR SELECT TYPES)
     |--------------------------------------------------------------------------
     */
-    if (in_array($data['type'], ['select', 'multiselect'])) {
+        if (in_array($data['type'], ['select', 'multiselect'])) {
 
-        // очищаем старые опции при редактировании
-        $attribute->options()->delete();
+            // очищаем старые опции при редактировании
+            $attribute->options()->delete();
 
-        foreach ($data['options'] ?? [] as $opt) {
+            foreach ($data['options'] ?? [] as $opt) {
 
-            if (!$opt) continue;
+                if (!$opt) continue;
 
-            $attribute->options()->create([
-                // если у тебя переводная система — тут можно расширить
-            ]);
-
-            $attribute->options()->latest()->first()
-                ?->translations()
-                ->create([
-                    'locale' => app()->getLocale(),
-                    'value' => $opt,
+                $attribute->options()->create([
+                    // если у тебя переводная система — тут можно расширить
                 ]);
+
+                $attribute->options()->latest()->first()
+                    ?->translations()
+                    ->create([
+                        'locale' => app()->getLocale(),
+                        'value' => $opt,
+                    ]);
+            }
         }
+
+        return back()->with('success', 'Attribute created');
     }
-
-    return back()->with('success', 'Attribute created');
-}
-
-    
 }

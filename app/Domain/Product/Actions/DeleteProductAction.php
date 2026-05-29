@@ -8,13 +8,14 @@ use Illuminate\Support\Facades\Auth;
 use App\Domain\Media\Services\MediaService;
 use App\Domain\Media\Models\Media;
 
+use App\Facades\ActiveContext; 
 
 
 class DeleteProductAction
 {
     public function execute(Product $product): void
 {
-    $supplierId = Auth::user()?->supplier?->id;
+    $supplierId = ActiveContext::id();
 
     abort_if(
         !$supplierId || $product->supplier_id !== $supplierId,

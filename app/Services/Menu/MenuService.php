@@ -12,6 +12,8 @@ class MenuService
 
             'buyer' => self::buyer($metrics),
             'supplier' => self::supplier($metrics),
+            'supplier_individual' => self::supplierIndividual($metrics),
+            'buyer_individual' => self::buyerIndividual($metrics),
             'logistics' => self::logistics($metrics),
 
             default => [],
@@ -143,6 +145,8 @@ class MenuService
         ];
     }
 
+    
+
     private static function logistics($m)
     {
         return [
@@ -171,4 +175,98 @@ class MenuService
             ['type' => 'link', 'label' => 'Settings', 'route' => 'logistics.settings'],
         ];
     }
+
+    private static function supplierIndividual($m)
+{
+    return [
+        ['type' => 'header', 'label' => 'Overview'],
+        ['type' => 'link', 'label' => 'Dashboard', 'route' => 'dashboard.home'],
+
+        ['type' => 'header', 'label' => 'Sales'],
+
+        [
+            'type' => 'link',
+            'label' => 'Orders',
+            'route' => 'manufacturer.orders',
+            'badge' => $m['openDisputeCount'] ?? null,
+        ],
+
+        [
+            'type' => 'link',
+            'label' => 'RFQs',
+            'route' => 'supplier.rfqs.index',
+            'badge' => $m['acceptedOfferCount'] ?? null,
+        ],
+
+        [
+            'type' => 'link',
+            'label' => 'Project RFQs',
+            'route' => 'supplier.rfqs.index',
+        ],
+
+        ['type' => 'header', 'label' => 'Products'],
+
+        [
+            'type' => 'link',
+            'label' => 'Add Product',
+            'route' => 'manufacturer.products.create',
+        ],
+        [
+            'type' => 'link',
+            'label' => 'Product List',
+            'route' => 'manufacturer.products.index',
+        ],
+
+        ['type' => 'header', 'label' => 'Fulfillment'],
+
+        [
+            'type' => 'link',
+            'label' => 'Shipping Center',
+            'route' => 'supplier.shipping-templates.index',
+        ],
+
+        // ❌ НЕТ TEAM БЛОКА
+
+        // ❌ НЕТ COMPANY PROFILE
+
+        ['type' => 'header', 'label' => 'Communication'],
+        ['type' => 'link', 'label' => 'Messages', 'route' => 'manufacturer.messages'],
+
+        ['type' => 'header', 'label' => 'Billing'],
+        ['type' => 'link', 'label' => 'Premium Plans', 'route' => 'manufacturer.premium-plans'],
+    ];
+
+    
+}
+
+private static function buyerIndividual($m)
+{
+    return [
+        ['type' => 'header', 'label' => 'Overview'],
+        ['type' => 'link', 'label' => 'Dashboard', 'route' => 'dashboard.home'],
+
+        ['type' => 'header', 'label' => 'Purchasing'],
+
+        [
+            'type' => 'link',
+            'label' => 'My Orders',
+            'route' => 'buyer.orders.index',
+            'badge' => $m['openDisputeCount'] ?? null,
+        ],
+        [
+            'type' => 'link',
+            'label' => 'RFQs',
+            'route' => 'buyer.rfqs.index',
+        ],
+
+        ['type' => 'header', 'label' => 'Shopping'],
+        ['type' => 'link', 'label' => 'Cart', 'route' => 'buyer.cart.index'],
+        ['type' => 'link', 'label' => 'Wishlist', 'route' => 'buyer.wishlist.index'],
+
+        ['type' => 'header', 'label' => 'Communication'],
+        ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messages'],
+    ];
+}
+
+
 }

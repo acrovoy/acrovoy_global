@@ -4,7 +4,6 @@ namespace App\Services\Menu;
 
 use App\Models\OrderDispute;
 use App\Domain\Negotiation\Models\RfqOffer;
-
 use App\Models\CompanyUser;
 use App\Services\Company\ActiveContextService;
 use App\Facades\ActiveContext;
@@ -21,15 +20,17 @@ class MenuContext
 
         if (!$user) return $data;
 
-        /**
-         * ======================================
-         * COMPANY-AWARE CONTEXT (NEW SYSTEM)
-         * ======================================
-         */
-        if (ActiveContext::isCompany()) {
+        $ctx = app(ActiveContextService::class);
 
-            $companyId = ActiveContext::id();
-            $companyType = ActiveContext::type();
+        /**
+         * =========================
+         * COMPANY MODE
+         * =========================
+         */
+        if ($ctx->isCompany()) {
+
+            $companyId = $ctx->id();
+            $companyType = $ctx->type();
 
             $membership = CompanyUser::where('user_id', $user->id)
                 ->where('company_type', $companyType)
@@ -40,8 +41,8 @@ class MenuContext
                 return $data;
             }
 
-            // 🔹 SUPPLIER COMPANY LOGIC
-            if (str_contains($companyType, 'Supplier')) {
+            // 🔹 SUPPLIER (ANY TYPE: TEAM OR INDIVIDUAL)
+            if ($ctx->isSupplier()) {
 
                 $data['openDisputeCount'] = OrderDispute::whereHas('order.items.product', function ($q) use ($companyId) {
                     $q->where('supplier_id', $companyId);
@@ -55,21 +56,20 @@ class MenuContext
                     ->count();
             }
 
-            // 🔹 LOGISTICS COMPANY LOGIC (готово под будущее)
-            if (str_contains($companyType, 'LogisticCompany')) {
-                // сюда позже добавишь shipping metrics
+            // 🔹 LOGISTICS COMPANY
+            if ($ctx->type() === \App\Models\LogisticCompany::class) {
+                // future logic
             }
 
             return $data;
         }
 
         /**
-         * ======================================
-         * FALLBACK LEGACY SYSTEM (OLD ROLE)
-         * ======================================
+         * =========================
+         * PERSONAL MODE (LEGACY)
+         * =========================
          */
 
-        // BUYER
         if ($user->setting('platform_mode') === 'buyer') {
 
             $data['openDisputeCount'] = OrderDispute::whereHas('order', function ($q) use ($user) {
@@ -77,25 +77,19 @@ class MenuContext
             })
                 ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
                 ->count();
-
-            // $data['newOfferCount'] = RfqOffer::whereHas('rfq', function ($q) use ($user) {
-            //     $q->where('buyer_id', $user->id)
-            //       ->where('status', 'active');
-            // })
-            // ->whereNull('buyer_viewed_at')
-            // ->count();
         }
 
-        // SUPPLIER (LEGACY LINKED MODEL)
         if ($user->setting('platform_mode') === 'supplier' && $user->supplier) {
 
-            $data['openDisputeCount'] = OrderDispute::whereHas('order.items.product', function ($q) use ($user) {
-                $q->where('supplier_id', $user->supplier->id);
+            $supplierId = $user->supplier->id;
+
+            $data['openDisputeCount'] = OrderDispute::whereHas('order.items.product', function ($q) use ($supplierId) {
+                $q->where('supplier_id', $supplierId);
             })
                 ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
                 ->count();
 
-            $data['acceptedOfferCount'] = RfqOffer::where('participant_id', $user->supplier->id)
+            $data['acceptedOfferCount'] = RfqOffer::where('participant_id', $supplierId)
                 ->where('status', 'accepted')
                 ->count();
         }
@@ -107,31 +101,48 @@ class MenuContext
 {
     if (!$user) return 'buyer';
 
-    $ctx = app(\App\Services\Company\ActiveContextService::class);
+    $ctx = app(ActiveContextService::class);
 
+    /**
+     * COMPANY MODE
+     */
     if ($ctx->isCompany()) {
 
-        $type = $ctx->type();
-
-        if (str_contains($type, 'Supplier')) {
+        if ($ctx->isSupplier()) {
             return 'supplier';
         }
 
-        if (str_contains($type, 'Buyer')) {
+        if ($ctx->type() === \App\Models\Buyer::class) {
             return 'buyer';
         }
 
-        if (str_contains($type, 'LogisticCompany')) {
+        if ($ctx->type() === \App\Models\LogisticCompany::class) {
             return 'logistics';
         }
     }
 
+    /**
+     * PERSONAL MODE
+     */
     if ($ctx->isPersonal()) {
-        return $ctx->role() ?? 'buyer';
+
+        // 🔥 FIX 1: supplier individual
+        if ($ctx->role() === 'supplier') {
+            return 'supplier_individual';
+        }
+
+        // 🔥 FIX 2: buyer individual (явно)
+        if ($ctx->role() === 'buyer') {
+            return 'buyer_individual';
+        }
+
+        return 'buyer_individual';
     }
 
-    return 'buyer';
+    return 'buyer_individual';
 }
 
-    
+
+
+
 }

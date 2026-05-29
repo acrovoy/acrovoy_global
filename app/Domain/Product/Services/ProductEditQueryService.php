@@ -72,7 +72,10 @@ class ProductEditQueryService
 
 public function getSupplierProducts()
 {
-    $supplierId = auth()->user()?->supplier?->id;
+
+$ActiveContext = app(ActiveContextService::class);
+    $supplierId = $ActiveContext->id();
+    $supplierType = $ActiveContext->type();
 
     if (!$supplierId) {
         return collect();
@@ -80,37 +83,41 @@ public function getSupplierProducts()
 
     return Product::with('translations')
         ->where('supplier_id', $supplierId)
+        ->where('supplier_type', $supplierType)
         ->get();
 }
 
 private function authorizeProduct(Product $product): void
 {
-    $context = app(ActiveContextService::class);
+    $ActiveContext = app(ActiveContextService::class);
 
-    abort_if(!$context->isCompany(), 403);
-    abort_if($context->type() !== Supplier::class, 403);
-    abort_if($product->supplier_id !== $context->id(), 403);
+    abort_if(!$ActiveContext->isCompany(), 403);
+    abort_if($ActiveContext->type() !== Supplier::class, 403);
+    abort_if($product->supplier_id !== $ActiveContext->id(), 403);
 }
 
     private function getShippingTemplates()
-    {
-        $context = app(ActiveContextService::class);
+{
+    $context = app(ActiveContextService::class);
 
     abort_if(!$context->isCompany(), 403);
 
     $supplierId = $context->id();
+    $supplierType = $context->type();
 
-        return ShippingTemplate::where('manufacturer_id', $supplierId)
-            ->with('translations')
-            ->get();
-    }
+    return ShippingTemplate::where('provider_id', $supplierId)
+        ->where('provider_type', $supplierType)
+        ->with('translations')
+        ->get();
+}
 
     private function getDefaultShippingTemplate()
-    {
-        return ShippingTemplate::with('translations')
-            ->where('logistic_company_id', 1)
-            ->first();
-    }
+{
+    return ShippingTemplate::with('translations')
+        ->where('provider_type', \App\Models\LogisticCompany::class)
+        ->where('provider_id', 1)
+        ->first();
+}
 
     private function prepareMaterials($languages)
     {

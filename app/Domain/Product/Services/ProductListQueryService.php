@@ -6,17 +6,20 @@ use App\Models\Product;
 
 class ProductListQueryService
 {
-    public function getSupplierProducts($supplierId, array $filters)
-    {
+    public function getSupplierProducts(
+        int $supplierId,
+        string $supplierType,
+        array $filters
+    ) {
         $query = Product::query()
             ->with([
                 'user',
                 'category',
                 'images',
                 'priceTiers',
-                
             ])
-            ->where('supplier_id', $supplierId);
+            ->where('supplier_id', $supplierId)
+            ->where('supplier_type', $supplierType);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
