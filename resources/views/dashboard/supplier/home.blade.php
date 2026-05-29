@@ -344,7 +344,7 @@ $supplier = \App\Models\Supplier::find($supplierId);
                 View RFQs
             </a>
 
-            <a href="{{ route('manufacturer.orders') }}"
+            <a href="{{ route('supplier.orders') }}"
                class="px-4 py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-100 transition">
                 Manage Orders
             </a>
@@ -539,7 +539,7 @@ $supplier = \App\Models\Supplier::find($supplierId);
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3">
-            <a href="{{ route('manufacturer.premium-plans') }}"
+            <a href="{{ route('supplier.premium-plans') }}"
                class="px-5 py-2.5 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition text-center">
                 View Plans
             </a>

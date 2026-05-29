@@ -32,11 +32,11 @@
             <h3 class="text-lg font-semibold mb-3">For Partners</h3>
             <ul class="space-y-1">
                 <li><a href="{{ route('manufacturer.home') }}" class="hover:text-white transition">Dashboard</a></li>
-                <li><a href="{{ route('manufacturer.products.index') }}" class="hover:text-white transition">My Products</a></li>
-                <li><a href="{{ route('manufacturer.orders') }}" class="hover:text-white transition">Orders</a></li>
+                <li><a href="{{ route('supplier.products.index') }}" class="hover:text-white transition">My Products</a></li>
+                <li><a href="{{ route('supplier.orders') }}" class="hover:text-white transition">Orders</a></li>
                 <li><a href="" class="hover:text-white transition">RFQs</a></li>
                 <li><a href="{{ route('supplier.company.profile') }}" class="hover:text-white transition">Company Profile</a></li>
-                <li><a href="{{ route('manufacturer.premium-plans') }}" class="text-orange-500 hover:text-orange-600 transition">Premium Plans</a></li>
+                <li><a href="{{ route('supplier.premium-plans') }}" class="text-orange-500 hover:text-orange-600 transition">Premium Plans</a></li>
             </ul>
         </div>
 

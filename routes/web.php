@@ -410,7 +410,7 @@ Route::prefix('dashboard/category-selector')->group(function () {
     Route::get('/attributes/{categoryId}', [CategorySelectorController::class, 'attributes']);
 });
 
-Route::prefix('dashboard/manufacturer')->name('manufacturer.')->group(function () {
+Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])
         ->name('products.destroy');
@@ -418,8 +418,7 @@ Route::prefix('dashboard/manufacturer')->name('manufacturer.')->group(function (
     Route::get('/products', [ProductController::class, 'index'])
         ->name('products.index');
 
-    Route::get('/add-product', [ProductController::class, 'create'])
-        ->name('products.create');
+    Route::get('/add-product', [ProductController::class, 'create'])->name('products.create');
 
     Route::post('/products', [ProductController::class, 'store'])
         ->name('products.store');
@@ -465,14 +464,13 @@ Route::prefix('dashboard/manufacturer')->name('manufacturer.')->group(function (
 
 
 
-Route::post('/dashboard/manufacturer/products/{product}/update-price-tiers', [ProductPriceController::class, 'updatePriceTiers'])
+Route::post('/dashboard/supplier/products/{product}/update-price-tiers', [ProductPriceController::class, 'updatePriceTiers'])
     ->name('products.update-price-tiers');
 
 
 
 Route::prefix('dashboard/manufacturer')
     ->name('manufacturer.')
-    ->middleware(['auth', 'role:manufacturer'])
     ->group(function () {
 
 

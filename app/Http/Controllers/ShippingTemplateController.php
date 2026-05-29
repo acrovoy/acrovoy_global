@@ -29,11 +29,16 @@ class ShippingTemplateController extends Controller
 
     $context = app(ActiveContextService::class);
 
-abort_if(!$context->isCompany(), 403);
+
 
 $supplierId = $context->id();   
+$supplierType = $context->type(); 
 
-        $templates = ShippingTemplate::with('locations')->where('manufacturer_id', $supplierId)->get();
+        $templates = ShippingTemplate::with('locations')
+        ->where('provider_type', $supplierType)
+        ->where('provider_id', $supplierId)
+        ->get();
+
         return view('dashboard.supplier.shipping-templates.index', compact('templates'));
     }
 
@@ -90,17 +95,20 @@ $supplierId = $context->id();
 
     $context = app(ActiveContextService::class);
 
-abort_if(!$context->isCompany(), 403);
 
-$supplierId = $context->id();
+
+$supplierId = $context->id();   
+$supplierType = $context->type(); 
 
 
         // 1️⃣ Создаем базовую запись шаблона
         $template = ShippingTemplate::create([
-            'manufacturer_id' => $supplierId,
+            'provider_id' => $supplierId,
+            'provider_type' => $supplierType,
             'price' => $data['price'],
             'price_unit' => $data['price_unit'],
             'delivery_time' => $data['delivery_time'] ?? null,
+            'created_by' => auth()->id(),
         ]);
 
         // 2️⃣ Создаем мультиязычные переводы
@@ -134,13 +142,10 @@ $supplierId = $context->id();
 {
     $context = app(ActiveContextService::class);
 
-abort_if(!$context->isCompany(), 403);
+
 
 $supplierId = $context->id();  
-    // Проверяем, что шаблон принадлежит текущему пользователю
-    if ($shippingTemplate->manufacturer_id !== $supplierId) {
-        abort(403);
-    }
+    
 
     // Получаем все страны
     $countries = Country::withCurrentTranslation()
@@ -184,13 +189,11 @@ $supplierId = $context->id();
 
 $context = app(ActiveContextService::class);
 
-abort_if(!$context->isCompany(), 403);
 
-$supplierId = $context->id();
 
-if ($shippingTemplate->manufacturer_id !== $supplierId) {
-    abort(403);
-}
+
+
+
 
     // Валидация
     $data = $request->validate([
@@ -211,6 +214,7 @@ if ($shippingTemplate->manufacturer_id !== $supplierId) {
             'price' => $data['price'],
             'price_unit' => $data['price_unit'],
             'delivery_time' => $data['delivery_time'] ?? null,
+            'updated_by' => auth()->id(),
         ]);
 
         // 2️⃣ Обновляем мультиязычные переводы
@@ -255,13 +259,9 @@ if ($shippingTemplate->manufacturer_id !== $supplierId) {
     {
         $context = app(ActiveContextService::class);
 
-abort_if(!$context->isCompany(), 403);
 
-$supplierId = $context->id();
 
-        if($shippingTemplate->manufacturer_id !== $supplierId){
-            abort(403);
-        }
+
 
         $shippingTemplate->locations()->detach();
         $shippingTemplate->delete();

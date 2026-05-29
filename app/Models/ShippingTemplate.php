@@ -13,8 +13,10 @@ class ShippingTemplate extends Model
     use HasFactory;
 
     protected $fillable = [
-        'manufacturer_id',
-        'logistic_company_id',
+        'provider_id',
+        'provider_type',
+        'created_by',
+        'updated_by',
         'title',
         'description',
         'price',

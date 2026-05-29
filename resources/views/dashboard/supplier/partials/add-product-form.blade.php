@@ -1,7 +1,7 @@
 <x-alerts />
 
 <form method="POST"
-    action="{{ route('manufacturer.products.store') }}"
+    action="{{ route('supplier.products.store') }}"
     enctype="multipart/form-data"
     class="" id="productForm">
     @csrf

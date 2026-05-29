@@ -102,12 +102,12 @@ class ProductController extends Controller
         $supplierId = $this->activeContext->id();
         $supplierType = $this->activeContext->type();
 
-        abort_if(!$this->activeContext->isCompany(), 403);
-        abort_if($this->activeContext->type() !== Supplier::class, 403);
+        
+        
 
         $data = $service->getCreateFormData();
 
-        abort_if(!$supplierId, 403);
+        
 
 
 
@@ -153,8 +153,7 @@ class ProductController extends Controller
 
 
 
-        abort_if(!$this->activeContext->isCompany(), 403);
-        abort_if($this->activeContext->type() !== Supplier::class, 403);
+        
 
         $supplierId = $this->activeContext->id();
         $supplierType = $this->activeContext->type();
@@ -374,7 +373,7 @@ class ProductController extends Controller
             }
         });
 
-        return redirect()->route('manufacturer.products.index')
+        return redirect()->route('supplier.products.index')
             ->with('success', 'Product created successfully');
     }
 
@@ -577,7 +576,7 @@ class ProductController extends Controller
 
 
         return redirect()
-            ->route('manufacturer.products.index')
+            ->route('supplier.products.index')
             ->with('success', 'Product updated successfully');
     }
 
@@ -593,8 +592,7 @@ class ProductController extends Controller
 
         $ActiveContext = $this->activeContext;
 
-        abort_if(!$ActiveContext->isCompany(), 403);
-        abort_if($ActiveContext->type() !== Supplier::class, 403);
+        
 
         abort_if($product->supplier_id !== $ActiveContext->id(), 403);
 

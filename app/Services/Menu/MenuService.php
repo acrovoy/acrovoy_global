@@ -69,7 +69,7 @@ class MenuService
             [
                 'type' => 'link',
                 'label' => 'Orders',
-                'route' => 'manufacturer.orders',
+                'route' => 'supplier.orders',
                 'badge' => $m['openDisputeCount'] ?? null,
                 'can' => ['salesAccess', User::class],
             ],
@@ -94,13 +94,13 @@ class MenuService
             [
                 'type' => 'link',
                 'label' => 'Add Product',
-                'route' => 'manufacturer.products.create',
+                'route' => 'supplier.products.create',
                 'can' => ['salesAccess', User::class],
             ],
             [
                 'type' => 'link',
                 'label' => 'Product List',
-                'route' => 'manufacturer.products.index',
+                'route' => 'supplier.products.index',
                 'can' => ['salesAccess', User::class],
             ],
 
@@ -138,10 +138,10 @@ class MenuService
             ['type' => 'link', 'label' => 'Company Profile', 'route' => 'supplier.company.show'],
 
             ['type' => 'header', 'label' => 'Communication'],
-            ['type' => 'link', 'label' => 'Messages', 'route' => 'manufacturer.messages'],
+            ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messages'],
 
             ['type' => 'header', 'label' => 'Billing'],
-            ['type' => 'link', 'label' => 'Premium Plans', 'route' => 'manufacturer.premium-plans'],
+            ['type' => 'link', 'label' => 'Premium Plans', 'route' => 'supplier.premium-plans'],
         ];
     }
 
@@ -187,7 +187,7 @@ class MenuService
         [
             'type' => 'link',
             'label' => 'Orders',
-            'route' => 'manufacturer.orders',
+            'route' => 'supplier.orders',
             'badge' => $m['openDisputeCount'] ?? null,
         ],
 
@@ -209,12 +209,12 @@ class MenuService
         [
             'type' => 'link',
             'label' => 'Add Product',
-            'route' => 'manufacturer.products.create',
+            'route' => 'supplier.products.create',
         ],
         [
             'type' => 'link',
             'label' => 'Product List',
-            'route' => 'manufacturer.products.index',
+            'route' => 'supplier.products.index',
         ],
 
         ['type' => 'header', 'label' => 'Fulfillment'],
@@ -230,10 +230,10 @@ class MenuService
         // ❌ НЕТ COMPANY PROFILE
 
         ['type' => 'header', 'label' => 'Communication'],
-        ['type' => 'link', 'label' => 'Messages', 'route' => 'manufacturer.messages'],
+        ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messages'],
 
         ['type' => 'header', 'label' => 'Billing'],
-        ['type' => 'link', 'label' => 'Premium Plans', 'route' => 'manufacturer.premium-plans'],
+        ['type' => 'link', 'label' => 'Premium Plans', 'route' => 'supplier.premium-plans'],
     ];
 
     

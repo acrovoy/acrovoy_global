@@ -92,9 +92,34 @@
                     @if($product->supplier)
                     <p class="text-xs text-gray-400 mb-0 mt-6">
                         <span class="text-[10px]">SUPPLIER:</span>
-                        <a href="{{ route('supplier.show', $product->supplier->slug) }}" class="text-xs text-gray-500 hover:text-blue-600">
-                            {{ $product->supplier->name }}
-                        </a>
+                        
+                        
+                        @php
+                    $supplier = $product->supplier
+
+                    @endphp
+
+@if($supplier)
+    @php
+        $name = $supplier instanceof \App\Models\Supplier
+            ? $supplier->name
+            : trim(($supplier->name ?? '') . ' ' . ($supplier->last_name ?? ''));
+
+        $url = $supplier instanceof \App\Models\Supplier
+            ? route('supplier.show', $supplier->slug)
+            : null; // для user можно потом добавить свой роут
+    @endphp
+
+    @if($url)
+        <a href="{{ $url }}" class="text-xs text-gray-500 hover:text-blue-600">
+            {{ $name }}
+        </a>
+    @else
+        <span class="text-xs text-gray-500">
+            {{ $name }}
+        </span>
+    @endif
+@endif
 
                         @if($product->supplier->level === 'Platinum')
                         <span class="px-1 py-0.5 text-[7px] font-bold uppercase  bg-gray-900 text-white rounded ml-1">

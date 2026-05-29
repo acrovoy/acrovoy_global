@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const productId = productIdInput.value;
         const newStock = stockInput.value;
 
-        fetch(`/dashboard/manufacturer/products/${productId}/update-stock`, {
+        fetch(`/dashboard/supplier/products/${productId}/update-stock`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    fetch(`/dashboard/manufacturer/products/${productId}/update-price-tiers`, {
+    fetch(`/dashboard/supplier/products/${productId}/update-price-tiers`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

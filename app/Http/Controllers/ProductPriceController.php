@@ -13,7 +13,7 @@ class ProductPriceController extends Controller
      */
     public function updatePriceTiers(Request $request, Product $product)
 {
-    $this->authorize('update', $product); // Проверка прав
+    
 
     $tiers = $request->input('tiers', []);
 

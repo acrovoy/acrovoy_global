@@ -516,10 +516,24 @@
                 {{-- Supplier Info --}}
                 <div class="text-gray-700">
                     {{ __('product/product_show.supplier') }}
-                    <a href="{{ url('/supplier/' . $product1->supplier->slug) }}" class="font-medium text-blue-600 hover:underline">
-                        {{ $product1->supplier->name }}
-                    </a>
 
+                    @php
+                    $supplier = $product1->supplier
+                    @endphp
+
+                    @if($supplier)
+                                        @php
+                                            $name = $supplier instanceof \App\Models\Supplier
+                                                ? $supplier->name
+                                                : trim(($supplier->name ?? '') . ' ' . ($supplier->last_name ?? ''));
+                                        
+@endphp
+                                    <span class="font-medium text-gray-900">
+                                        {{ $name }}
+                                    </span>
+                    @else
+                                        <span class="text-gray-400">—</span>
+                    @endif
                 </div>
 
             </div>

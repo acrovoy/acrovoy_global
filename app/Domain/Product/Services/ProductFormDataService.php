@@ -19,9 +19,16 @@ class ProductFormDataService
 
         $context = app(ActiveContextService::class);
 
-        abort_if(!$context->isCompany(), 403);
+        
 
         $supplierId = $context->id();
+        $supplierType = $context->type();
+
+        $ShippingTe111mplate = ShippingTemplate::with('translations')
+                ->where('provider_type', 'App\Models\LogisticCompany')
+                ->where('provider_id', 1)
+                ->first();
+
 
         return [
             'categories' => Category::all(),
@@ -34,12 +41,14 @@ class ProductFormDataService
                 ->where('is_active', true)
                 ->get(),
 
-            'shippingTemplates' => ShippingTemplate::where('manufacturer_id', $supplierId)
+            'shippingTemplates' => ShippingTemplate::where('provider_type', $supplierType)
+                ->where('provider_id', $supplierId)
                 ->with('translations')
                 ->get(),
 
             'defaultShippingTemplate' => ShippingTemplate::with('translations')
-                ->where('logistic_company_id', 1)
+                ->where('provider_type', 'App\Models\LogisticCompany')
+                ->where('provider_id',1)
                 ->first(),
 
             'customAttributes' => Attribute::query()
