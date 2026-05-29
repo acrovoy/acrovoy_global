@@ -227,7 +227,9 @@ class MenuService
 
         // ❌ НЕТ TEAM БЛОКА
 
-        // ❌ НЕТ COMPANY PROFILE
+         ['type' => 'header', 'label' => 'Company'],
+            ['type' => 'link', 'label' => 'My Companies', 'route' => 'supplier.company.show'],
+            ['type' => 'link', 'label' => 'Create Company', 'route' => 'supplier.company.show'],
 
         ['type' => 'header', 'label' => 'Communication'],
         ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messages'],
@@ -262,6 +264,10 @@ private static function buyerIndividual($m)
         ['type' => 'header', 'label' => 'Shopping'],
         ['type' => 'link', 'label' => 'Cart', 'route' => 'buyer.cart.index'],
         ['type' => 'link', 'label' => 'Wishlist', 'route' => 'buyer.wishlist.index'],
+
+         ['type' => 'header', 'label' => 'Company'],
+            ['type' => 'link', 'label' => 'My Companies', 'route' => 'buyer.messages'],
+            ['type' => 'link', 'label' => 'Create Company', 'route' => 'buyer.messages'],
 
         ['type' => 'header', 'label' => 'Communication'],
         ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messages'],

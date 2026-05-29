@@ -23,9 +23,9 @@
                 @if($isPersonal)
 
                     @if(($role ?? 'buyer') === 'supplier')
-                        Supplier Personal
+                        Supplier Individual
                     @else
-                        Buyer Personal
+                        Buyer Individual
                     @endif
 
                 @else
@@ -71,7 +71,7 @@
                     class="w-full text-left px-3 py-2 hover:bg-gray-50 transition flex justify-between items-center">
 
                 <div>
-                    <div class="font-medium">Buyer Personal</div>
+                    <div class="font-medium">Buyer Individual</div>
                     <div class="text-xs text-gray-500">Personal buyer account</div>
                 </div>
 
@@ -92,7 +92,7 @@
                     class="w-full text-left px-3 py-2 hover:bg-gray-50 transition flex justify-between items-center">
 
                 <div>
-                    <div class="font-medium">Supplier Personal</div>
+                    <div class="font-medium">Supplier Individual</div>
                     <div class="text-xs text-gray-500">Personal supplier account</div>
                 </div>
 
