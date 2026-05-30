@@ -26,6 +26,7 @@ class Sidebar extends Component
          */
         $this->companies = CompanyUser::query()
             ->where('user_id', $user->id)
+            ->where('status', 'active')
             ->with('company')
             ->get();
 
