@@ -96,18 +96,69 @@ class ProductController extends Controller
         return view('product.show', $service->getProductViewData($slug));
     }
 
+
+    public function createNew(ProductFormDataService $service)
+    {
+
+
+
+        $supplierId = $this->activeContext->id();
+        $supplierType = $this->activeContext->type();
+        $products = Product::with('translations')
+            ->where('supplier_id', $supplierId)
+            ->where('supplier_type', $supplierType)
+            ->get();
+        $availableAttributesGrouped = collect();
+
+        $data = $service->getCreateFormData();
+
+return view('product.create.add-product', array_merge($data, [
+    'steps' => 1,
+    'countries' => Country::all(),
+    'products' => $products,
+    'availableAttributesGrouped' => $availableAttributesGrouped,
+]));
+    }
+
+
+    public function createStep2(ProductFormDataService $service)
+    {
+
+
+
+        $supplierId = $this->activeContext->id();
+        $supplierType = $this->activeContext->type();
+        $products = Product::with('translations')
+            ->where('supplier_id', $supplierId)
+            ->where('supplier_type', $supplierType)
+            ->get();
+        $availableAttributesGrouped = collect();
+
+        $data = $service->getCreateFormData();
+
+return view('product.create.add-product', array_merge($data, [
+    'steps' => 2,
+    'countries' => Country::all(),
+    'products' => $products,
+    'availableAttributesGrouped' => $availableAttributesGrouped,
+]));
+    }
+
+
     public function create(ProductFormDataService $service)
     {
+
+
 
         $supplierId = $this->activeContext->id();
         $supplierType = $this->activeContext->type();
 
-        
-        
+
+
 
         $data = $service->getCreateFormData();
 
-        
+
 
 
 
@@ -123,6 +174,25 @@ class ProductController extends Controller
 
         $ownerId = $this->activeContext->id();
 
+
+
+
+        $availableAttributes = Attribute::query()
+            ->where('entity_type', 'product')
+            ->where('is_custom', 1)
+            ->where('is_active', true)
+            ->where('owner_type', $ownerType)
+            ->where('owner_id', $ownerId)
+            ->get();
+
+        $availableAttributesGrouped = $availableAttributes
+            ->load('group')
+            ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
+            ->sortBy(function ($attrs, $groupName) {
+                return strtolower($groupName) === 'general' ? 0 : 1;
+            });
+
+
         $groups = AttributeGroup::where('owner_type', $ownerType)
             ->where('owner_id', $ownerId)
             ->get();
@@ -133,8 +203,96 @@ class ProductController extends Controller
         return view('dashboard.supplier.add-product', array_merge($data, [
             'products' => $products,
             'groups' => $groups,
+            'availableAttributesGrouped' => $availableAttributesGrouped,
+            'availableAttributes' => $availableAttributes,
+
         ]));
     }
+
+
+     public function storeStep1(
+        Request $request,
+        CreateProductAction $createProduct,
+        SyncProductTranslationAction $translationAction,
+        SyncProductPriceTierAction $priceAction,
+        SyncProductAttributeAction $attributeAction,
+        SyncProductCustomAttributeAction $customAttributeAction,
+        SyncProductSpecificationAction $specAction,
+        SyncProductMaterialAction $materialAction,
+        SyncShippingTemplateAction $shippingAction,
+        AttachProductVariantAction $attachProductVariantAction,
+        ProductDTOFactory $dtoFactory,
+    ) {
+
+        /*
+        |-------------------------------------------------------------------------- 
+        | Create Product
+        |-------------------------------------------------------------------------- 
+        */
+            $productDTO = $dtoFactory->fromRequest($request);
+            $product = $createProduct->execute($productDTO);
+
+            /*
+        |-------------------------------------------------------------------------- 
+        | Translation Sync
+        |-------------------------------------------------------------------------- 
+        */
+            $translationAction->execute(
+                $product,
+                $request->name,
+                $request->undername,
+                $request->description
+            );
+
+            return redirect()->route('supplier.products.create-step2')
+            ->with('success', 'Product created successfully');
+
+            
+
+    }
+
+
+    public function storeStep2(
+        Request $request,
+        CreateProductAction $createProduct,
+        SyncProductTranslationAction $translationAction,
+        SyncProductPriceTierAction $priceAction,
+        SyncProductAttributeAction $attributeAction,
+        SyncProductCustomAttributeAction $customAttributeAction,
+        SyncProductSpecificationAction $specAction,
+        SyncProductMaterialAction $materialAction,
+        SyncShippingTemplateAction $shippingAction,
+        AttachProductVariantAction $attachProductVariantAction,
+        ProductDTOFactory $dtoFactory,
+    ) {
+
+        /*
+        |-------------------------------------------------------------------------- 
+        | Create Product
+        |-------------------------------------------------------------------------- 
+        */
+            $productDTO = $dtoFactory->fromRequest($request);
+            $product = $createProduct->execute($productDTO);
+
+            /*
+        |-------------------------------------------------------------------------- 
+        | Translation Sync
+        |-------------------------------------------------------------------------- 
+        */
+            $translationAction->execute(
+                $product,
+                $request->name,
+                $request->undername,
+                $request->description
+            );
+
+            return redirect()->route('supplier.products.create-step2')
+            ->with('success', 'Product created successfully');
+
+            
+
+    }
+
 
 
     public function store(
@@ -153,7 +311,7 @@ class ProductController extends Controller
 
 
 
-        
+
 
         $supplierId = $this->activeContext->id();
         $supplierType = $this->activeContext->type();
@@ -339,10 +497,10 @@ class ProductController extends Controller
             | CUSTOM ATTRIBUTES
             |--------------------------------------------------------------------------
             */
-            if ($request->has('attributes')) {
+            if ($request->has('custom_attributes')) {
                 $customAttributeAction->execute(
                     $product,
-                    $request->input('attributes')
+                    $request->input('custom_attributes')
                 );
             }
 
@@ -592,7 +750,7 @@ class ProductController extends Controller
 
         $ActiveContext = $this->activeContext;
 
-        
+
 
         abort_if($product->supplier_id !== $ActiveContext->id(), 403);
 
@@ -701,26 +859,52 @@ class ProductController extends Controller
     */
         if (in_array($data['type'], ['select', 'multiselect'])) {
 
-            // очищаем старые опции при редактировании
             $attribute->options()->delete();
 
             foreach ($data['options'] ?? [] as $opt) {
 
                 if (!$opt) continue;
 
-                $attribute->options()->create([
-                    // если у тебя переводная система — тут можно расширить
-                ]);
+                // ✔ СРАЗУ получаем созданный option
+                $option = $attribute->options()->create([]);
 
-                $attribute->options()->latest()->first()
-                    ?->translations()
-                    ->create([
+                // ✔ НЕ create(), а updateOrCreate
+                $option->translations()->updateOrCreate(
+                    [
                         'locale' => app()->getLocale(),
+                    ],
+                    [
                         'value' => $opt,
-                    ]);
+                    ]
+                );
             }
         }
 
         return back()->with('success', 'Attribute created');
+    }
+
+    public function attachAttributes(Request $request, Product $product)
+    {
+        $request->validate([
+            'attributes' => ['array'],
+            'attributes.*' => ['exists:attributes,id'],
+        ]);
+
+        $attributeIds = $request->input('attributes', []);
+
+        // attach missing
+        foreach ($attributeIds as $attributeId) {
+            ProductAttributeValue::firstOrCreate([
+                'product_id' => $product->id,
+                'attribute_id' => $attributeId,
+            ]);
+        }
+
+        // optional sync (remove unchecked)
+        ProductAttributeValue::where('product_id', $product->id)
+            ->whereNotIn('attribute_id', $attributeIds)
+            ->delete();
+
+        return back();
     }
 }

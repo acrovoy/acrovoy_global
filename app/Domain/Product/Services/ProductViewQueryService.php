@@ -33,11 +33,14 @@ class ProductViewQueryService
             'variantGroup.items.media',
             'attributeValues.attribute',
             'attributeValues.translations',
-            'attributeValues.options.option', // чтобы подтянуть саму Option и её переводы
+            'attributeValues.options.option.translations'
 
         ])
             ->where('slug', $slug)
             ->firstOrFail();
+
+
+
 
         $projects = collect();
 

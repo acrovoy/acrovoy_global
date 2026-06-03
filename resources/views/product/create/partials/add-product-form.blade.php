@@ -1,88 +1,79 @@
 <x-alerts />
 
-<form method="POST"
-    action="{{ route('supplier.products.store') }}"
-    enctype="multipart/form-data"
-    class="" id="productForm">
-    @csrf
 
-    <input type="hidden" name="user_id" value="{{ auth()->id() }}">
 
     @php
     $languages = \App\Models\Language::where('is_active', true)->get();
     @endphp
 
     {{-- Шаги формы --}}
-    
-    <div class="form-step" data-step="1">
 
-        @include('dashboard.supplier.sections.step1')
+    @if($steps == 1)
+    <div>
 
-    </div>
-
-    <div class="form-step hidden" data-step="2">
-
-        @include('dashboard.supplier.sections.step2')
+        @include('product.create.sections.step1')
 
     </div>
+    @endif
 
-    <div class="form-step hidden" data-step="3">
+    @if($steps == 2)
+    <div>
+
+        @include('product.create.sections.step2')
+
+    </div>
+    @endif
+
+
+    @if($steps == 3)
+    <div class="">
 
         @include('dashboard.supplier.sections.step3')
 
 
     </div>
+    @endif
 
-    
-    <div class="form-step hidden" data-step="4">
+    @if($steps == 4)
+    <div class="">
 
         @include('dashboard.supplier.sections.step4')
 
 
     </div>
+    @endif
 
 
-    <div class="form-step hidden" data-step="5">
+    @if($steps == 5)
+    <div class="">
 
         @include('dashboard.supplier.sections.step5')
 
 
     </div>
+    @endif
 
 
 
 
-    <div class="form-step hidden" data-step="6">
+    @if($steps == 6)
+    <div class="">
 
         @include('dashboard.supplier.sections.step6')
 
-
-
-
-
-
-
     </div>
+    @endif
 
-    <div class="form-step hidden" data-step="7">
+    @if($steps == 7)
+    <div class="">
 
         @include('dashboard.supplier.sections.step7')
 
-
-
-
-
-
-
     </div>
+    @endif
 
 
-    {{-- Навигация между шагами --}}
-    <div class="flex mt-6">
-        <button type="button" id="prevBtn" class="bg-gray-300 px-6 py-2 rounded hidden">Назад</button>
-        <button type="button" id="nextBtn" class="ml-auto bg-blue-800 text-white px-6 py-2 rounded">Далее</button>
-        <button type="submit" id="submitBtn" class="ml-auto bg-green-600 text-white px-6 py-2 rounded hidden">Сохранить</button>
-    </div>
+   
 </form>
 
 
@@ -369,7 +360,7 @@
 
 
 
-     </form>
+    
  </div>
 
 <script>

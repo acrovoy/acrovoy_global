@@ -341,4 +341,10 @@ public function supplierName(): ?string
             'wishlists'
         )->withTimestamps();
     }
+
+
+
+
+
+
 }

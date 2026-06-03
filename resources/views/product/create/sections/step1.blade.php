@@ -1,3 +1,11 @@
+<form method="POST"
+    action="{{ route('supplier.products.store-step1') }}"
+    enctype="multipart/form-data"
+    class="" id="productForm">
+    @csrf
+
+    <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+
 <h3 class="text-2xl font-bold mb-6">Basic Information</h3>
 
 {{-- Product Name --}}
@@ -536,4 +544,14 @@
             Used for inventory tracking and integrations
         </div>
     </div>
+
+
+
+
 </div>
+
+<button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded">
+    Next
+</button>
+
+ </form>

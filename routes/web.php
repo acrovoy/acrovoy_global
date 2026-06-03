@@ -146,10 +146,10 @@ Route::prefix('supplier')->group(function () {
 
         Route::delete('/versions/{version}', [RfqOfferController::class, 'deleteDraftVersion'])->name('supplier.rfq.offers.versions.delete');
 
-        
-        
 
-         /*
+
+
+        /*
         |--------------------------------------------------------------------------
         | SUBMIT OFFER VERSION
         |--------------------------------------------------------------------------
@@ -163,13 +163,13 @@ Route::prefix('supplier')->group(function () {
 
         Route::get('/{offer}', [RfqOfferController::class, 'show'])
             ->name('supplier.rfq.offers.show');
-
-       
     });
 
     Route::post('/offers/{offer}/reject', [RfqOfferController::class, 'reject'])
         ->name('supplier.offers.reject');
 });
+
+Route::post('/products/{product}/attach-attributes', [ProductController::class, 'attachAttributes'])->name('products.attach-attributes');
 
 Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])->name('rfqs.custom-attributes.store');
 
@@ -419,6 +419,14 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
     Route::get('/products', [ProductController::class, 'index'])
         ->name('products.index');
+
+    Route::get('/add-new-product', [ProductController::class, 'createNew'])->name('new_products.create');
+    Route::get('/add-step2-product', [ProductController::class, 'createStep2'])->name('products.create-step2');
+
+    Route::post('/products-step1', [ProductController::class, 'storeStep1'])->name('products.store-step1');
+    Route::post('/products-step2', [ProductController::class, 'storeStep2'])->name('products.store-step2');
+
+    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
 
     Route::get('/add-product', [ProductController::class, 'create'])->name('products.create');
 
@@ -921,13 +929,13 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
         ->name('companies.store');
 
     Route::get('/companies/{id}/edit', [CompanyController::class, 'edit'])
-    ->name('companies.edit');
+        ->name('companies.edit');
 
-Route::put('/companies/{id}', [CompanyController::class, 'update'])
-    ->name('companies.update');
+    Route::put('/companies/{id}', [CompanyController::class, 'update'])
+        ->name('companies.update');
 
-Route::delete('/companies/{id}', [CompanyController::class, 'destroy'])
-    ->name('companies.destroy');
+    Route::delete('/companies/{id}', [CompanyController::class, 'destroy'])
+        ->name('companies.destroy');
 });
 
 Route::get('/dashboard/users/find-by-email', [UserController::class, 'findByEmail'])

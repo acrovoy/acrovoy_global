@@ -13,7 +13,7 @@ class ProductDTO
         public readonly int $supplierId,
         public readonly string $supplierType,
         public readonly ?int $createdBy = null,
-        public readonly int $categoryId,
+        public readonly ?int $categoryId = null,
         public readonly ?int $moq = null,
         public readonly ?int $leadTime = null,
         public readonly bool $customization = false,

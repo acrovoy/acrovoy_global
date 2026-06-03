@@ -12,6 +12,8 @@ class SyncProductCustomAttributeAction
 {
     public function execute(Product $product, array $attributes): void
     {
+
+
         foreach ($attributes as $attributeId => $data) {
 
             $value = $data['value'] ?? null;
@@ -20,15 +22,20 @@ class SyncProductCustomAttributeAction
                 $value = json_encode($value);
             }
 
-            ProductAttributeValue::updateOrCreate(
+            $pav = ProductAttributeValue::updateOrCreate(
                 [
                     'product_id' => $product->id,
                     'attribute_id' => $attributeId,
                 ],
-                [
-                    'value_text' => is_string($value) ? $value : null,
-                ]
+                []
             );
+
+            
+            ProductAttributeValueTranslation::create([
+                'product_attribute_value_id' => $pav->id,
+                'locale' => 'en',
+                'value' => (string) $value,
+            ]);
         }
     }
 }

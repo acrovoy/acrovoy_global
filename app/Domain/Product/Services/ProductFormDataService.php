@@ -54,7 +54,7 @@ class ProductFormDataService
             'customAttributes' => Attribute::query()
                 ->where('entity_type', 'product')
                 ->where('is_custom', 1)
-                ->where('owner_type', 'App\Models\Supplier')
+                ->where('owner_type', $supplierType)
                 ->where('owner_id', $supplierId)
                 ->with([
                     'translations',

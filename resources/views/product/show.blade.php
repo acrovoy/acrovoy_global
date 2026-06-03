@@ -329,21 +329,28 @@
 
                     <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
                         {{-- Атрибуты --}}
-                        @foreach($product1->attributeValues as $attrValue)
-                        <li class="flex justify-between py-2">
-                            <span class="text-gray-600">{{ $attrValue->attribute->name ?? $attrValue->attribute->code }}</span>
-                            <span class="font-medium text-gray-900">
-                                @php
-                                $value = in_array($attrValue->attribute->type, ['select', 'multiselect'])
-                                ? $attrValue->getOptionValues()
-                                : $attrValue->getTranslatedValue();
 
-                                $unit = $attrValue->attribute->unit ? ' ' . $attrValue->attribute->unit : '';
-                                @endphp
-                                {{ $value }}{{ $unit }}
-                            </span>
-                        </li>
-                        @endforeach
+                        
+                       @foreach($product1->attributeValues as $attrValue)
+
+                     
+    <li class="flex justify-between py-2">
+        <span class="text-gray-600">
+            {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
+        </span>
+
+        <span class="font-medium text-gray-900">
+
+            @php
+                $unit = $attrValue->attribute->unit ? ' ' . $attrValue->attribute->unit : '';
+            @endphp
+
+            {{ $attrValue->display_value}}{{ $unit }}
+
+        </span>
+    </li>
+
+@endforeach
 
                         {{-- Спецификации пользователя без отдельной разделительной линии --}}
                         @foreach($product1->specifications as $spec)

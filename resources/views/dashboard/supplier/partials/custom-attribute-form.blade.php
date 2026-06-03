@@ -13,7 +13,7 @@
 
         <button
             type="button"
-            onclick="openAttributeDrawer()"
+            onclick="openDrawer('attribute-picker-drawer')"
             class="text-sm text-gray-600 hover:text-gray-900">
             + Add attribute
         </button>
@@ -142,7 +142,7 @@
 
                                                 <input
                                                     type="text"
-                                                    name="attributes[{{ $attribute->id }}][value]"
+                                                    name="custom_attributes[{{ $attribute->id }}][value]"
                                                     placeholder="Enter value..."
                                                     class="w-full border border-gray-300 rounded-xl
                                                            px-4 py-2.5 text-sm
@@ -156,7 +156,7 @@
                                                 <input
                                                     type="number"
                                                     step="0.01"
-                                                    name="attributes[{{ $attribute->id }}][value]"
+                                                    name="custom_attributes[{{ $attribute->id }}][value]"
                                                     placeholder="0"
                                                     class="w-full border border-gray-300 rounded-xl
                                                            px-4 py-2.5 text-sm
@@ -168,7 +168,7 @@
                                             @elseif($attribute->type === 'select')
 
                                                 <select
-                                                    name="attributes[{{ $attribute->id }}][value]"
+                                                    name="custom_attributes[{{ $attribute->id }}][value]"
                                                     class="w-full border border-gray-300 rounded-xl
                                                            px-4 py-2.5 text-sm bg-white
                                                            focus:ring-2 focus:ring-gray-900/10
@@ -209,7 +209,7 @@
 
                                                                 <input
                                                                     type="checkbox"
-                                                                    name="attributes[{{ $attribute->id }}][value][]"
+                                                                    name="custom_attributes[{{ $attribute->id }}][value][]"
                                                                     value="{{ $option->id }}"
                                                                     class="rounded border-gray-300
                                                                            text-gray-900
