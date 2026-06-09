@@ -17,7 +17,7 @@ class AdminProductController extends Controller
     $query = Product::query()
         ->with([
             'images',
-            'supplier.user', 
+            'supplier', 
             'category',
             'images',
             'priceTiers',
@@ -27,7 +27,7 @@ class AdminProductController extends Controller
 
     // Фильтр по саплаеру
     if ($supplierFilter) {
-        $query->whereHas('supplier.user', function ($q) use ($supplierFilter) {
+        $query->whereHas('supplier', function ($q) use ($supplierFilter) {
             $q->where('name', 'like', "%{$supplierFilter}%");
         });
     }

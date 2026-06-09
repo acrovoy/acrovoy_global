@@ -221,16 +221,12 @@ class MenuService
 
         ['type' => 'header', 'label' => 'Products'],
 
-        [
-            'type' => 'link',
-            'label' => 'Add Product New',
-            'route' => 'supplier.new_products.create',
-        ],
+       
 
         [
             'type' => 'link',
             'label' => 'Add Product',
-            'route' => 'supplier.products.create',
+            'route' => 'supplier.new_products.create',
         ],
         [
             'type' => 'link',

@@ -55,7 +55,7 @@
    @php
     use App\Models\Language;
 
-    $language = optional(Language::where('code', $product1->supplier->user->language)->first());
+    $language = optional(Language::where('code', $product1->supplier->language)->first());
 @endphp
 
 <div class="ml-auto text-sm">
