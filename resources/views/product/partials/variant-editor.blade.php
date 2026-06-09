@@ -154,10 +154,19 @@
     </div>
 
     <button type="button"
-        id="addVariantBtn"
-        class="text-blue-700 mt-3 font-medium px-4 py-2 rounded-lg hover:bg-blue-50 transition">
-        + Add Variant
-    </button>
+    id="addVariantBtn"
+    class="inline-flex items-center gap-2 mt-4 px-4 py-2
+           text-sm font-medium text-blue-600
+           bg-blue-50 border border-blue-100
+           rounded-lg
+           hover:bg-blue-100 hover:border-blue-200
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
+
+    <span class="text-lg leading-none">+</span>
+    <span>Add Variant</span>
+
+</button>
 
 </div>
 

@@ -106,17 +106,12 @@ class MenuService
 
             [
             'type' => 'link',
-            'label' => 'Add Product New',
+            'label' => 'Add Product',
             'route' => 'supplier.new_products.create',
         ],
 
         
-            [
-                'type' => 'link',
-                'label' => 'Add Product',
-                'route' => 'supplier.products.create',
-                'can' => ['salesAccess', User::class],
-            ],
+           
             [
                 'type' => 'link',
                 'label' => 'Product List',

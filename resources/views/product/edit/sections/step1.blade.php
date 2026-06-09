@@ -1,3 +1,10 @@
+{{-- ================= PROGRESS BAR ================= --}}
+
+
+@include('product.edit.partials.progress-bar', [$mode = 'edit'])
+
+
+
 <form method="POST"
             action="{{ route('supplier.products.update-step1', [
           'product' => $product->id,
@@ -506,7 +513,12 @@
 
 </div>
 <div class="flex justify-between">
-<div></div>
+
+<a href="{{ route('supplier.products.index') }}"
+   class="mt-4 bg-gray-50 border border-gray-400 hover:bg-gray-100 text-gray-400 px-6 py-2 rounded">
+    Cancel
+</a>
+
 <button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded end">
     Next
 </button>

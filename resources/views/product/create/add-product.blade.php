@@ -17,7 +17,7 @@
 
     {{-- Form card --}}
     <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
-        <div class="p-6">
+        <div class="px-6 pb-6">
             @include('product.create.partials.add-product-form', [
     'steps' => $steps
 ])

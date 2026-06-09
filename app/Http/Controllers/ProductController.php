@@ -251,49 +251,15 @@ class ProductController extends Controller
             $request->description
         );
 
-        return redirect()->route('supplier.products.create-step2')
-            ->with('success', 'Product created successfully');
+        return redirect()->route('supplier.products.edit-step', [
+    'product' => $product->id,
+    'step' => 2,
+])
+            ->with('success', 'Product created successfully. Please proceed to the next step to add more details.');
     }
 
 
-    public function storeStep2(
-        Request $request,
-        CreateProductAction $createProduct,
-        SyncProductTranslationAction $translationAction,
-        SyncProductPriceTierAction $priceAction,
-        SyncProductAttributeAction $attributeAction,
-        SyncProductCustomAttributeAction $customAttributeAction,
-        SyncProductSpecificationAction $specAction,
-        SyncProductMaterialAction $materialAction,
-        SyncShippingTemplateAction $shippingAction,
-        AttachProductVariantAction $attachProductVariantAction,
-        ProductDTOFactory $dtoFactory,
-    ) {
-
-        /*
-        |-------------------------------------------------------------------------- 
-        | Create Product
-        |-------------------------------------------------------------------------- 
-        */
-        $productDTO = $dtoFactory->fromRequest($request);
-        $product = $createProduct->execute($productDTO);
-
-        /*
-        |-------------------------------------------------------------------------- 
-        | Translation Sync
-        |-------------------------------------------------------------------------- 
-        */
-        $translationAction->execute(
-            $product,
-            $request->name,
-            $request->undername,
-            $request->description
-        );
-
-        return redirect()->route('supplier.products.create-step2')
-            ->with('success', 'Product created successfully');
-    }
-
+    
 
 
     public function store(

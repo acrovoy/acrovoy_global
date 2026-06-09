@@ -1,3 +1,7 @@
+
+
+
+
 <form method="POST"
     action="{{ route('supplier.products.store-step1') }}"
     enctype="multipart/form-data"
@@ -549,11 +553,20 @@
 
 
 </div>
+
+
 <div class="flex justify-between">
-<div></div>
-<button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded end hover:bg-blue-500 transition-colors">
+
+<a href="{{ route('supplier.products.index') }}"
+   class="mt-4 bg-gray-50 border border-gray-400 hover:bg-gray-100 text-gray-400 px-6 py-2 rounded">
+    Cancel
+</a>
+
+<button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded end">
     Next
 </button>
 
 </div>
+
+
  </form>

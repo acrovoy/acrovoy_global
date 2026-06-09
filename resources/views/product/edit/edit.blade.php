@@ -10,12 +10,12 @@
     </p>
 </div>
 
-
+<x-alerts />
 
 <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
     <div class="p-6">
 
-        <x-alerts />
+        
 
         
 
@@ -175,20 +175,34 @@
         </div>
 
         {{-- ACTIONS --}}
-        <div class="flex justify-end gap-2 mt-6">
+<div class="flex justify-end gap-2 mt-6">
 
-            <button type="button"
-                onclick="closeAttributeDrawer()"
-                class="px-4 py-2 bg-gray-200 rounded-lg">
-                Cancel
-            </button>
+    <button type="button"
+        onclick="closeAttributeDrawer()"
+        class="inline-flex items-center gap-2 px-4 py-2
+                        text-sm font-medium text-gray-700
+                        bg-white border border-gray-200
+                        rounded-lg
+                        hover:bg-gray-50 hover:border-gray-300
+                        active:scale-[0.98]
+                        transition-all duration-150 shadow-sm">
 
-            <button type="submit"
-                class="px-4 py-2 bg-gray-900 text-white rounded-lg">
-                Save
-            </button>
+        Cancel
+    </button>
 
-        </div>
+    <button type="submit"
+        class="inline-flex items-center gap-2 px-4 py-2
+               text-sm font-semibold text-white
+               bg-gray-900 border border-gray-900
+               rounded-lg
+               hover:bg-gray-800 hover:border-gray-800
+               active:scale-[0.98]
+               transition-all duration-150 shadow-sm">
+
+        Save
+    </button>
+
+</div>
 
     </form>
 </div>
@@ -206,11 +220,19 @@
          <div class="flex items-center gap-2">
 
              <button type="button"
-                 onclick="openDrawer('attribute-drawer')"
-                 class="px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition mb-4">
+    onclick="openDrawer('attribute-drawer')"
+    class="inline-flex items-center gap-2 px-4 py-2
+           text-sm font-medium text-gray-700
+           bg-white border border-gray-200
+           rounded-lg
+           hover:bg-gray-50 hover:border-gray-300
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm mb-4">
 
-                 + Create attribute
-             </button>
+    <span class="text-lg leading-none">+</span>
+    <span>Create attribute</span>
+
+</button>
 
          </div>
      </div>
@@ -324,32 +346,55 @@
              </div>
 
              {{-- RIGHT ACTIONS --}}
-             <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2">
 
-                 {{-- archive --}}
-                 <button
-                     type="submit"
-                     formaction=""
-                     formmethod="POST"
-                     onclick="return confirm('Archive selected attributes?')"
-                     class="px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-500 hover:text-white transition">
+                {{-- DELETE --}}
+                <button
+                    type="submit"
+                    formaction=""
+                    formmethod="POST"
+                    onclick="return confirm('Archive selected attributes?')"
+                    class="inline-flex items-center gap-2 px-4 py-2
+                        text-sm font-medium text-red-600
+                        bg-red-50 border border-red-100
+                        rounded-lg
+                        hover:bg-red-100 hover:border-red-200
+                        active:scale-[0.98]
+                        transition-all duration-150 shadow-sm">
 
-                     Delete selected
-                 </button>
+                    <span>Delete selected</span>
+                </button>
 
-                 <button type="button"
-                     onclick="closeAllDrawers()"
-                     class="text-sm  px-4 py-2 bg-gray-200 rounded-lg hover:text-gray-700 transition">
+                {{-- CANCEL --}}
+                <button
+                    type="button"
+                    onclick="closeAllDrawers()"
+                    class="inline-flex items-center gap-2 px-4 py-2
+                        text-sm font-medium text-gray-700
+                        bg-white border border-gray-200
+                        rounded-lg
+                        hover:bg-gray-50 hover:border-gray-300
+                        active:scale-[0.98]
+                        transition-all duration-150 shadow-sm">
 
-                     Cancel
-                 </button>
+                    <span>Cancel</span>
+                </button>
 
-                 <button type="submit"
-        class="px-4 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition">
-    Attach selected
-</button>
+                {{-- PRIMARY --}}
+                <button
+                    type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2
+                        text-sm font-semibold text-white
+                        bg-black border border-black
+                        rounded-lg
+                        hover:bg-gray-800 hover:border-gray-800
+                        active:scale-[0.98]
+                        transition-all duration-150 shadow-sm">
 
-             </div>
+                    <span>Attach selected</span>
+                </button>
+
+            </div>
 
          </div>
 

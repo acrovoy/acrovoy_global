@@ -1,3 +1,7 @@
+
+@include('product.edit.partials.progress-bar', [$mode = 'edit'])
+
+
 <form method="POST"
     action="{{ route('supplier.products.update-step1', [
           'product' => $product->id,
@@ -10,14 +14,31 @@
 
     <input type="hidden" name="user_id" value="{{ auth()->id() }}">
 
-    {{-- Commercial Terms  --}}
-    <div>
-        <h3 class="text-xl font-semibold mb-4">Commercial Terms</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <input type="text" name="moq" placeholder="MOQ (e.g. 10 pcs)" class="input" value="{{ $product->moq }}">
+    {{-- Commercial Terms --}}
+<div>
+    <h3 class="text-xl font-semibold mb-4">Commercial Terms</h3>
 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                MOQ <span class="text-xs text-gray-500">(Minimum Order Quantity)</span>
+            </label>
+
+            <input
+                type="number"
+                name="moq"
+                value="{{ old('moq', $product->moq) }}"
+                class="w-full rounded-xl border border-gray-300
+                           px-4 py-3 text-sm
+                           focus:ring-2 focus:ring-black/10
+                           focus:border-black transition"
+                placeholder="e.g. 10 pcs"
+            >
         </div>
+
     </div>
+</div>
 
     {{-- PRICE TIERS  --}}
     <div class=" mt-6 ">
@@ -41,13 +62,26 @@
             </div>
             @endif
         </div>
-        <button type="button" onclick="addPriceTier()" class="text-blue-700 mt-3">+ Add price tier</button>
+        <button type="button"
+    onclick="addPriceTier()"
+    class="inline-flex items-center gap-2 mt-4 px-4 py-2
+           text-sm font-medium text-blue-600
+           bg-blue-50 border border-blue-100
+           rounded-lg
+           hover:bg-blue-100 hover:border-blue-200
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
+
+    <span class="text-lg leading-none">+</span>
+    <span>Add price tier</span>
+
+</button>
     </div>
 
-    <div class="flex justify-between">
+    <div class="flex justify-between mt-6">
 
         <a href="{{ route('supplier.products.edit-step', [$product->id, 4]) }}"
-            class="mt-4 text-white bg-gray-600 hover:bg-gray-400 text-white px-6 py-2 rounded">
+            class="mt-4 bg-gray-50 border border-gray-400 hover:bg-gray-100 text-gray-400 px-6 py-2 rounded">
             Previous
         </a>
 
@@ -61,4 +95,4 @@
 
 </form>
 
-@vite(['resources/js/product-edit.js'])
+@vite('resources/js/product-edit.js')

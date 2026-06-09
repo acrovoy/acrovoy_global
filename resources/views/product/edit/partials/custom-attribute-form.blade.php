@@ -12,11 +12,20 @@
         </div>
 
         <button
-            type="button"
-            onclick="openDrawer('attribute-picker-drawer')"
-            class="text-sm text-gray-600 hover:text-gray-900">
-            + Add attribute
-        </button>
+    type="button"
+    onclick="openDrawer('attribute-picker-drawer')"
+    class="inline-flex items-center gap-2 mt-3 px-4 py-2
+           text-sm font-medium text-gray-700
+           bg-white border border-gray-200
+           rounded-lg
+           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
+
+    <span class="text-lg leading-none">+</span>
+    <span>Add attribute</span>
+
+</button>
 
     </div>
 

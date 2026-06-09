@@ -424,7 +424,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
     Route::get('/add-step2-product', [ProductController::class, 'createStep2'])->name('products.create-step2');
 
     Route::post('/products-step1', [ProductController::class, 'storeStep1'])->name('products.store-step1');
-    Route::post('/products-step2', [ProductController::class, 'storeStep2'])->name('products.store-step2');
+    
 
     Route::get('/products/{product}/edit-step/{step}', [ProductController::class, 'editStep'])->name('products.edit-step');
     
