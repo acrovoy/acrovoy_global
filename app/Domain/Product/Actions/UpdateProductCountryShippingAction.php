@@ -3,21 +3,16 @@
 namespace App\Domain\Product\Actions;
 
 use App\Domain\Product\DTO\ProductCountryDTO;
-
-use App\Domain\Product\Actions\SyncProductPriceTierAction;
-use App\Domain\Product\Actions\SyncProductMaterialAction;
-use App\Domain\Product\Actions\SyncProductSpecificationAction;
-use App\Domain\Product\Actions\SyncProductAttributeAction;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
 class UpdateProductCountryShippingAction
 {
-       public function execute(
+    public function execute(
         Product $product,
         ProductCountryDTO $data,
         array $shippingTemplates = [],
-        
+
     ): Product {
 
         return DB::transaction(function () use (
@@ -25,7 +20,7 @@ class UpdateProductCountryShippingAction
             $shippingTemplates,
             $data,
         ) {
-          
+
 
 
             /* ============================
@@ -38,7 +33,7 @@ class UpdateProductCountryShippingAction
 
 
             $product->update([
-                
+
                 'country_id' => $data->countryId,
             ]);
 

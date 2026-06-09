@@ -224,7 +224,6 @@ class ProductController extends Controller
         SyncProductPriceTierAction $priceAction,
         SyncProductAttributeAction $attributeAction,
         SyncProductCustomAttributeAction $customAttributeAction,
-        SyncProductSpecificationAction $specAction,
         SyncProductMaterialAction $materialAction,
         SyncShippingTemplateAction $shippingAction,
         AttachProductVariantAction $attachProductVariantAction,
@@ -269,7 +268,6 @@ class ProductController extends Controller
         SyncProductPriceTierAction $priceAction,
         SyncProductAttributeAction $attributeAction,
         SyncProductCustomAttributeAction $customAttributeAction,
-        SyncProductSpecificationAction $specAction,
         SyncProductMaterialAction $materialAction,
         SyncShippingTemplateAction $shippingAction,
         AttachProductVariantAction $attachProductVariantAction,
@@ -289,7 +287,6 @@ class ProductController extends Controller
             $createProduct,
             $translationAction,
             $priceAction,
-            $specAction,
             $materialAction,
             $shippingAction,
             $dtoFactory,
@@ -451,7 +448,7 @@ class ProductController extends Controller
             $materialIds = explode(',', $request->materials_selected ?? '');
             $materialAction->execute($product, array_filter($materialIds));
 
-            $specAction->execute($product, $request->specs ?? []);
+            
 
             $shippingAction->execute(
                 $product,
@@ -583,28 +580,11 @@ class ProductController extends Controller
         );
     }
 
-    public function editStep2(
-        Product $product,
-        ProductEditQueryService $service,
-
-    ) {
-
-
-
-
-        return view(
-            'product.edit.edit',
-            $service->getEditViewData($product),
-            [
-                'steps' => 2
-            ]
-        );
-    }
+   
 
     public function updateStep(
         Request $request,
         Product $product,
-        UpdateProductAction $action,
         UpdateProductBasicInfoAction $basicInfoAction,
         UpdateProductCategoryAction $updateProductCategoryAction,
         UpdateProductMaterialsAction $updateProductMaterialsAction,
@@ -903,192 +883,6 @@ class ProductController extends Controller
             ]);
     }
 
-
-
-    public function update(
-        UpdateProductRequest $request,
-        Product $product,
-        UpdateProductAction $action,
-        ProductDTOFactory $dtoFactory,
-        SyncProductAttributeAction $attributeAction,
-
-    ) {
-
-
-
-        $this->authorize('update', $product);
-
-        $dto = $dtoFactory->fromUpdateRequest($request);
-
-        $translations = [];
-
-        foreach ($request->name as $locale => $name) {
-            $translations[$locale] = [
-                'name' => $name,
-                'undername' => $request->undername[$locale] ?? null,
-                'description' => $request->description[$locale] ?? null,
-            ];
-        }
-
-        if ($request->has('variants')) {
-
-            $mediaService = app(\App\Domain\Media\Services\MediaService::class);
-
-            // 🔹 Новый вариант — ищем variant_group_id среди существующих айтемов
-            $variantGroupId = $product->variantItems()->first()?->variant_group_id;
-
-            // Если группы нет и будут добавляться новые айтемы, создаём её
-            if (!$variantGroupId && collect($request->variants)->filter(fn($v) => !empty($v['linked_product_id']))->isNotEmpty()) {
-                $variantGroup = \App\Models\ProductVariantGroup::create([
-                    'product_id' => $product->id,
-                ]);
-                $variantGroupId = $variantGroup->id;
-
-                // Обновляем родительский продукт
-                $product->update(['variant_group_id' => $variantGroupId]);
-            }
-
-            $incomingIds = collect($request->variants)->pluck('id')->filter()->all();
-            $existingVariants = $product->variantItems;
-
-            // Удаляем отсутствующие
-            $existingVariants->each(function ($variant) use ($incomingIds, $mediaService) {
-                if (!in_array($variant->id, $incomingIds)) {
-                    if ($variant->media) $mediaService->delete($variant->media);
-                    $product = $variant->product;
-                    $variant->delete();
-
-                    $product->update(['variant_group_id' => null]);
-                }
-            });
-
-
-
-
-
-
-
-            // Создаем / обновляем
-            foreach ($request->variants as $variantData) {
-
-                if (!empty($variantData['id'])) {
-                    // 🔹 Существующий вариант
-
-                    $variant = \App\Models\ProductVariantItem::find($variantData['id']);
-
-
-                    //БЕЗОПАСНІЙ ВАРИАНТ. ПОТОМ ПОМЕНЯТЬ И ПРОВЕРИТЬ
-                    // $variant = ProductVariantItem::where('variant_group_id', $product->variant_group_id)->find($variantData['id']);
-
-
-
-                    if (!$variant) continue;
-
-                    $variant->title = $variantData['title'];
-                    $variant->product_id = $variantData['linked_product_id'] ?? null;
-                    $variant->save();
-                } else {
-
-
-
-
-                    // 🔹 Создаём новый вариант
-                    $variant = \App\Models\ProductVariantItem::create([
-                        'product_id' => $variantData['linked_product_id'] ?? null,
-                        'variant_group_id' => $variantGroupId,
-                        'title' => $variantData['title'],
-
-                    ]);
-
-                    $linkedProductId = $variantData['linked_product_id'] ?? $product->id;
-                    if ($linkedProductId) {
-                        \App\Models\Product::where('id', $linkedProductId)
-                            ->update(['variant_group_id' => $variantGroupId]);
-                    }
-                }
-
-                // 🔹 Обработка изображения
-                if (!empty($variantData['image'])) {
-                    $mediaService = app(\App\Domain\Media\Services\MediaService::class);
-                    $media = $mediaService->upload(
-                        new \App\Domain\Media\DTO\UploadMediaDTO(
-                            file: $variantData['image'],
-                            model: $variant,
-                            collection: 'product_variant_image',
-                            sortOrder: 0,
-                            isMain: false
-                        )
-                    );
-
-                    $variant->update(['media_id' => $media->id]);
-                }
-            }
-
-            // Проверяем, сколько айтемов осталось в группе
-            $remainingVariants = $product->variantItems()->get();
-
-            if ($remainingVariants->count() <= 1) {
-                foreach ($remainingVariants as $variant) {
-                    if ($variant->media) $mediaService->delete($variant->media);
-                    $variant->delete();
-                }
-
-                // Удаляем саму группу
-                if ($product->variant_group_id) {
-                    \App\Models\ProductVariantGroup::find($product->variant_group_id)?->delete();
-                    $product->update(['variant_group_id' => null]);
-                }
-            }
-        }
-
-
-        // 🔹 Сохраняем/обновляем Shipping Dimensions (габариты и вес упаковки)
-        $shippingData = $request->input('shipping', []);
-
-        if (!empty($shippingData)) {
-            $product->shippingDimensions()->updateOrCreate(
-                [], // Laravel автоматически подставит product_id
-                [
-                    'length'       => $shippingData['length'] ?? 0,
-                    'width'        => $shippingData['width'] ?? 0,
-                    'height'       => $shippingData['height'] ?? 0,
-                    'weight'       => $shippingData['weight'] ?? 0,
-                    'package_type' => $shippingData['package_type'] ?? 'box',
-                ]
-            );
-        }
-
-
-
-        $attributes = $request->input('attributes', []); // Если атрибутов нет, массив пустой
-        if ($attributes instanceof \Symfony\Component\HttpFoundation\ParameterBag) {
-            $attributes = $attributes->all();
-        }
-
-
-
-        $action->execute(
-            product: $product,
-            data: $dto,
-            translations: $translations,
-            shippingTemplates: $request->shipping_templates ?? [],
-            mediaFiles: $request->file('images', []),
-            existingIds: $request->existing_ids ?? [],
-            sortOrder: $request->sort_order ?? [],
-            existingSortOrder: $request->existing_sort_order ?? [],
-            isMain: $request->is_main ?? [],
-            priceTiers: $request->price_tiers ?? [],
-            materialsSelected: $request->materials_selected ?? '',
-            specifications: $request->specs ?? [],
-            attributes: $attributes,
-        );
-
-
-
-        return redirect()
-            ->route('supplier.products.index')
-            ->with('success', 'Product updated successfully');
-    }
 
     public function updateStock(
         Request $request,

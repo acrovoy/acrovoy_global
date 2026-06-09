@@ -24,7 +24,6 @@ class ProductViewQueryService
         // Загружаем продукт с необходимыми связями, включая варианты
         $product1 = Product::with([
             'images',
-            'specifications.translations', // чтобы сразу были переводы ключей/значений
             'priceTiers',
             'supplier',
             'category',

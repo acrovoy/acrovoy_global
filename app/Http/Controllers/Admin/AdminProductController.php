@@ -51,7 +51,6 @@ public function show(Product $product)
     {
         $product->load([
             'images',
-            'specifications',
             'priceTiers',
             'supplier',
             'category',

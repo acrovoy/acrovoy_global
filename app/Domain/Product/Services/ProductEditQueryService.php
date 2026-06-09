@@ -61,7 +61,6 @@ class ProductEditQueryService
         'materialsPrepared' => $this->prepareMaterials($languages),
         'selectedMaterials' => $product->materials->pluck('id')->toArray(),
         'translations' => $this->prepareTranslations($product, $languages),
-        'specsTranslations' => $this->prepareSpecs($product, $languages),
         'variants' => $variants,
         'products' => $products,
     ];
@@ -163,26 +162,5 @@ private function authorizeProduct(Product $product): void
         return $result;
     }
 
-    private function prepareSpecs($product, $languages)
-    {
-        $result = [];
-
-        foreach ($languages as $language) {
-
-            $result[$language->code] = [];
-
-            foreach ($product->specifications as $i => $spec) {
-
-                $translation = $spec->translations
-                    ->firstWhere('locale', $language->code);
-
-                $result[$language->code][$i] = [
-                    'key' => $translation->key ?? '',
-                    'value' => $translation->value ?? '',
-                ];
-            }
-        }
-
-        return $result;
-    }
+    
 }

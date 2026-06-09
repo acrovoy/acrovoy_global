@@ -28,7 +28,6 @@ class BuyerProjectController extends Controller
         // Можно заранее загрузить позиции и их детали для быстрого доступа в UI
         ->with([
             'items.descriptions',
-            'items.specifications',
             'items.materials',
             'items.colors',
         ])
@@ -45,7 +44,6 @@ class BuyerProjectController extends Controller
 
     // Загружаем только необходимые связи
     $project->load([
-        'items.specifications',
         'items.materials',
         'items.colors',
         'items.descriptions', // если выводим description
@@ -193,7 +191,6 @@ public function storeCustomization(Request $request)
     // ЛОГИКА ПОЛНОСТЬЮ СКОПИРОВАНА ИЗ ProjectItemController
 
     $product = Product::with([
-        'specifications.translations',
         'materials',
         'colors',
         'translations',

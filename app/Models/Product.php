@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Specification;
 use App\Domain\Media\Models\Media;
 
 class Product extends Model
@@ -71,10 +70,7 @@ public function supplierName(): ?string
     return null;
 }
 
-    public function specifications()
-    {
-        return $this->hasMany(Specification::class);
-    }
+    
 
     public function priceTiers()
     {

@@ -183,19 +183,7 @@
                 @endif
 
                 {{-- Specifications --}}
-                @if($product1->specifications->count())
-                    <div class="bg-white rounded-xl shadow p-6 mb-6">
-                        <h3 class="font-semibold text-lg mb-2 leading-none">Specifications</h3>
-                        <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
-                            @foreach($product1->specifications as $spec)
-                                <li class="flex justify-between py-2">
-                                    <span class="text-gray-600">{{ $spec->key }}</span>
-                                    <span class="font-medium text-gray-900">{{ $spec->value }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+               
 
                 {{-- Materials --}}
                 @if($product1->materials->isNotEmpty())

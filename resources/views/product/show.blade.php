@@ -319,8 +319,8 @@
                 @endif
 
 
-                {{-- Product Attributes + Specifications --}}
-                @if($product1->attributeValues->count() || $product1->specifications->count())
+                {{-- Product Attributes --}}
+                @if($product1->attributeValues->count())
                 <div class="bg-white rounded-xl shadow p-6 mb-6">
                     <h3 class="font-semibold text-lg mb-2 leading-none">{{ __('product/product_show.specification') }}</h3>
                     <p class="text-sm text-gray-500 leading-tight">
@@ -352,13 +352,7 @@
 
 @endforeach
 
-                        {{-- Спецификации пользователя без отдельной разделительной линии --}}
-                        @foreach($product1->specifications as $spec)
-                        <li class="flex justify-between py-2">
-                            <span class="text-gray-600">{{ $spec->key }}</span>
-                            <span class="font-medium text-gray-900">{{ $spec->value }}</span>
-                        </li>
-                        @endforeach
+                       
                     </ul>
                 </div>
                 @endif
