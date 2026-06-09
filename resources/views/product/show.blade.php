@@ -192,7 +192,7 @@
 
                         {{-- Edit --}}
                         @can('update', $product1)
-                        <a href="{{ route('products.edit', $product1->id) }}"
+                        <a href="{{ route('supplier.products.edit-step', [$product1->id, 1]) }}"
                             class="w-full sm:w-auto text-center
                       inline-flex items-center justify-center gap-2
                       px-4 py-2

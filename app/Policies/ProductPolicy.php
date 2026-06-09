@@ -60,14 +60,27 @@ class ProductPolicy
     
         $context = app(ActiveContextService::class);
 
-        return $context->isCompany()
-            && $context->type() === Supplier::class
-            && $product->supplier_id === $context->id()
-            && in_array($context->role(), [
-                'owner',
-                'administrator',
-                'sales'
-            ]);
+        return
+        $product->supplier_id === $context->id()
+        && $product->supplier_type === $context->type()
+        && (
+            // company mode roles
+            (
+                $context->isCompany()
+                && in_array($context->role(), [
+                    'owner',
+                    'administrator',
+                    'sales',
+                ])
+            )
+
+            // personal mode
+            ||
+
+            (
+                $context->isPersonal()
+            )
+        );
     }
 
 

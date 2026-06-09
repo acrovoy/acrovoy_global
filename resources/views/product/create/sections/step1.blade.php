@@ -549,9 +549,11 @@
 
 
 </div>
-
-<button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded">
+<div class="flex justify-between">
+<div></div>
+<button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded end hover:bg-blue-500 transition-colors">
     Next
 </button>
 
+</div>
  </form>

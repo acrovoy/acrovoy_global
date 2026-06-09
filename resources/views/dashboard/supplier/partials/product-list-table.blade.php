@@ -85,7 +85,10 @@
                         <a href="{{ route('product.show', $product->slug) }}" class="text-gray-800 hover:underline">View</a>
 
                         @if($product->status !== 'pending')
-                            <a href="{{ route('products.edit', $product->id) }}" class="text-blue-600 hover:underline">Edit</a>
+                            <a href="{{ route('supplier.products.edit-step', [$product->id, 1]) }}"
+   class="text-blue-600 hover:underline">
+    Edit
+</a>
                             <button type="button" class="text-red-600 hover:underline delete-product" data-id="{{ $product->id }}">Delete</button>
                         @endif
                     </td>

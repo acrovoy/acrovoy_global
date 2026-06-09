@@ -24,6 +24,13 @@ use App\Domain\Product\Services\ProductListQueryService;
 /* === ACTIONS === */
 use App\Domain\Product\Actions\DeleteProductAction;
 use App\Domain\Product\Actions\UpdateProductAction;
+use App\Domain\Product\Actions\UpdateProductBasicInfoAction;
+use App\Domain\Product\Actions\UpdateProductCategoryAction;
+use App\Domain\Product\Actions\UpdateProductMaterialsAction;
+use App\Domain\Product\Actions\UpdateProductMediaAction;
+use App\Domain\Product\Actions\UpdateProductMoqPriceAction;
+use App\Domain\Product\Actions\UpdateProductCountryShippingAction;
+use App\Domain\Product\Actions\UpdateProductVariantAction;
 use App\Domain\Product\Actions\AttachProductVariantAction;
 
 /* === DTO === */
@@ -112,12 +119,12 @@ class ProductController extends Controller
 
         $data = $service->getCreateFormData();
 
-return view('product.create.add-product', array_merge($data, [
-    'steps' => 1,
-    'countries' => Country::all(),
-    'products' => $products,
-    'availableAttributesGrouped' => $availableAttributesGrouped,
-]));
+        return view('product.create.add-product', array_merge($data, [
+            'steps' => 1,
+            'countries' => Country::all(),
+            'products' => $products,
+            'availableAttributesGrouped' => $availableAttributesGrouped,
+        ]));
     }
 
 
@@ -136,12 +143,12 @@ return view('product.create.add-product', array_merge($data, [
 
         $data = $service->getCreateFormData();
 
-return view('product.create.add-product', array_merge($data, [
-    'steps' => 2,
-    'countries' => Country::all(),
-    'products' => $products,
-    'availableAttributesGrouped' => $availableAttributesGrouped,
-]));
+        return view('product.create.add-product', array_merge($data, [
+            'steps' => 2,
+            'countries' => Country::all(),
+            'products' => $products,
+            'availableAttributesGrouped' => $availableAttributesGrouped,
+        ]));
     }
 
 
@@ -210,7 +217,7 @@ return view('product.create.add-product', array_merge($data, [
     }
 
 
-     public function storeStep1(
+    public function storeStep1(
         Request $request,
         CreateProductAction $createProduct,
         SyncProductTranslationAction $translationAction,
@@ -229,26 +236,23 @@ return view('product.create.add-product', array_merge($data, [
         | Create Product
         |-------------------------------------------------------------------------- 
         */
-            $productDTO = $dtoFactory->fromRequest($request);
-            $product = $createProduct->execute($productDTO);
+        $productDTO = $dtoFactory->fromRequest($request);
+        $product = $createProduct->execute($productDTO);
 
-            /*
+        /*
         |-------------------------------------------------------------------------- 
         | Translation Sync
         |-------------------------------------------------------------------------- 
         */
-            $translationAction->execute(
-                $product,
-                $request->name,
-                $request->undername,
-                $request->description
-            );
+        $translationAction->execute(
+            $product,
+            $request->name,
+            $request->undername,
+            $request->description
+        );
 
-            return redirect()->route('supplier.products.create-step2')
+        return redirect()->route('supplier.products.create-step2')
             ->with('success', 'Product created successfully');
-
-            
-
     }
 
 
@@ -271,26 +275,23 @@ return view('product.create.add-product', array_merge($data, [
         | Create Product
         |-------------------------------------------------------------------------- 
         */
-            $productDTO = $dtoFactory->fromRequest($request);
-            $product = $createProduct->execute($productDTO);
+        $productDTO = $dtoFactory->fromRequest($request);
+        $product = $createProduct->execute($productDTO);
 
-            /*
+        /*
         |-------------------------------------------------------------------------- 
         | Translation Sync
         |-------------------------------------------------------------------------- 
         */
-            $translationAction->execute(
-                $product,
-                $request->name,
-                $request->undername,
-                $request->description
-            );
+        $translationAction->execute(
+            $product,
+            $request->name,
+            $request->undername,
+            $request->description
+        );
 
-            return redirect()->route('supplier.products.create-step2')
+        return redirect()->route('supplier.products.create-step2')
             ->with('success', 'Product created successfully');
-
-            
-
     }
 
 
@@ -544,9 +545,7 @@ return view('product.create.add-product', array_merge($data, [
 
 
 
-        abort_if(!$this->activeContext->isCompany(), 403);
-        abort_if($this->activeContext->type() !== Supplier::class, 403);
-        abort_if($product->supplier_id !== $this->activeContext->id(), 403);
+
 
 
         return view(
@@ -554,6 +553,391 @@ return view('product.create.add-product', array_merge($data, [
             $service->getEditViewData($product)
         );
     }
+
+    public function editStep(
+        Product $product,
+        ProductEditQueryService $service,
+        $step = 1
+    ) {
+
+        $ownerType = $this->activeContext->isPersonal()
+            ? \App\Models\User::class
+            : \App\Models\Supplier::class;
+
+        $ownerId = $this->activeContext->id();
+
+
+
+
+        $availableAttributes = Attribute::query()
+            ->where('entity_type', 'product')
+            ->where('is_custom', 1)
+            ->where('is_active', true)
+            ->where('owner_type', $ownerType)
+            ->where('owner_id', $ownerId)
+            ->get();
+
+        $availableAttributesGrouped = $availableAttributes
+            ->load('group')
+            ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
+            ->sortBy(function ($attrs, $groupName) {
+                return strtolower($groupName) === 'general' ? 0 : 1;
+            });
+
+
+        $groups = AttributeGroup::where('owner_type', $ownerType)
+            ->where('owner_id', $ownerId)
+            ->get();
+
+
+
+        $editData = $service->getEditViewData($product);
+
+        $attachedIds = $product->attributes()->pluck('attributes.id')->toArray();
+
+        $attachedAttributes = Attribute::whereIn('id', $attachedIds)->get();
+
+        $customAttributes = $product->attributes()
+            ->where('is_custom', 1)
+            ->with('group')
+            ->get();
+
+
+        return view(
+            'product.edit.edit',
+            $editData,
+            [
+                'steps' => $step,
+                'customAttributes' => $customAttributes,
+                'attachedAttributes' => $attachedAttributes,
+                'attachedIds' => $attachedIds,
+                'groups' => $groups,
+                'availableAttributesGrouped' => $availableAttributesGrouped,
+            ]
+        );
+    }
+
+    public function editStep2(
+        Product $product,
+        ProductEditQueryService $service,
+
+    ) {
+
+
+
+
+        return view(
+            'product.edit.edit',
+            $service->getEditViewData($product),
+            [
+                'steps' => 2
+            ]
+        );
+    }
+
+    public function updateStep(
+        Request $request,
+        Product $product,
+        UpdateProductAction $action,
+        UpdateProductBasicInfoAction $basicInfoAction,
+        UpdateProductCategoryAction $updateProductCategoryAction,
+        UpdateProductMaterialsAction $updateProductMaterialsAction,
+        UpdateProductMediaAction $updateProductMediaAction,
+        UpdateProductMoqPriceAction $updateMoqPriceAction,
+        UpdateProductCountryShippingAction $updateCountryShippingaction,
+        UpdateProductVariantAction $updateProductVariantAction,
+        SyncProductCustomAttributeAction $customAttributeAction,
+        ProductDTOFactory $dtoFactory,
+        SyncProductAttributeAction $attributeAction,
+        $step = 1
+    ) {
+
+
+        $nextstep = $step + 1;
+
+        if ($step == 1) {
+
+            $dto = $dtoFactory->fromUpdateBasicRequest($request);
+
+            $translations = [];
+            if ($request->name) {
+                foreach ($request->name as $locale => $name) {
+                    $translations[$locale] = [
+                        'name' => $name,
+                        'undername' => $request->undername[$locale] ?? null,
+                        'description' => $request->description[$locale] ?? null,
+                    ];
+                }
+            }
+
+            $basicInfoAction->execute(
+                product: $product,
+                data: $dto,
+                translations: $translations,
+
+            );
+
+
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
+        } elseif ($step == 2) {
+
+            $dto = $dtoFactory->fromUpdateCategoryRequest($request);
+
+
+            $updateProductCategoryAction->execute(
+
+                product: $product,
+                data: $dto,
+
+            );
+
+
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
+        } elseif ($step == 3) {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | CUSTOM ATTRIBUTES
+            |--------------------------------------------------------------------------
+            */
+            if ($request->has('custom_attributes')) {
+                $customAttributeAction->execute(
+                    $product,
+                    $request->input('custom_attributes')
+                );
+            }
+
+
+
+            $updateProductMaterialsAction->execute(
+                product: $product,
+                materialsSelected: $request->materials_selected ?? '',
+
+            );
+
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
+        } elseif ($step == 4) {
+
+
+
+            $updateProductMediaAction->execute(
+                product: $product,
+                mediaFiles: $request->file('images', []),
+                existingIds: $request->existing_ids ?? [],
+                sortOrder: $request->sort_order ?? [],
+                existingSortOrder: $request->existing_sort_order ?? [],
+                isMain: $request->is_main ?? [],
+
+            );
+
+
+
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
+        } elseif ($step == 5) {
+
+            $dto = $dtoFactory->fromUpdateMoqRequest($request);
+
+            $updateMoqPriceAction->execute(
+                product: $product,
+                data: $dto,
+                priceTiers: $request->price_tiers ?? [],
+
+            );
+
+
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
+        } elseif ($step == 6) {
+
+
+            // 🔹 Сохраняем/обновляем Shipping Dimensions (габариты и вес упаковки)
+            $shippingData = $request->input('shipping', []);
+
+            if (!empty($shippingData)) {
+                $product->shippingDimensions()->updateOrCreate(
+                    [], // Laravel автоматически подставит product_id
+                    [
+                        'length'       => $shippingData['length'] ?? 0,
+                        'width'        => $shippingData['width'] ?? 0,
+                        'height'       => $shippingData['height'] ?? 0,
+                        'weight'       => $shippingData['weight'] ?? 0,
+                        'package_type' => $shippingData['package_type'] ?? 'box',
+                    ]
+                );
+            }
+            $dto = $dtoFactory->fromUpdateCountryRequest($request);
+
+            $updateCountryShippingaction->execute(
+                product: $product,
+                data: $dto,
+                shippingTemplates: $request->shipping_templates ?? [],
+
+            );
+
+
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
+        } elseif ($step == 7) {
+
+
+
+
+
+            if ($request->has('variants')) {
+
+                $mediaService = app(\App\Domain\Media\Services\MediaService::class);
+
+                // 🔹 Новый вариант — ищем variant_group_id среди существующих айтемов
+                $variantGroupId = $product->variantItems()->first()?->variant_group_id;
+
+                // Если группы нет и будут добавляться новые айтемы, создаём её
+                if (!$variantGroupId && collect($request->variants)->filter(fn($v) => !empty($v['linked_product_id']))->isNotEmpty()) {
+                    $variantGroup = \App\Models\ProductVariantGroup::create([
+                        'product_id' => $product->id,
+                    ]);
+                    $variantGroupId = $variantGroup->id;
+
+                    // Обновляем родительский продукт
+                    $product->update(['variant_group_id' => $variantGroupId]);
+                }
+
+                $incomingIds = collect($request->variants)->pluck('id')->filter()->all();
+                $existingVariants = $product->variantItems;
+
+                // Удаляем отсутствующие
+                $existingVariants->each(function ($variant) use ($incomingIds, $mediaService) {
+                    if (!in_array($variant->id, $incomingIds)) {
+                        if ($variant->media) $mediaService->delete($variant->media);
+                        $product = $variant->product;
+                        $variant->delete();
+
+                        $product->update(['variant_group_id' => null]);
+                    }
+                });
+
+
+
+
+
+
+
+                // Создаем / обновляем
+                foreach ($request->variants as $variantData) {
+
+                    if (!empty($variantData['id'])) {
+                        // 🔹 Существующий вариант
+
+                        $variant = \App\Models\ProductVariantItem::find($variantData['id']);
+
+
+                        //БЕЗОПАСНІЙ ВАРИАНТ. ПОТОМ ПОМЕНЯТЬ И ПРОВЕРИТЬ
+                        // $variant = ProductVariantItem::where('variant_group_id', $product->variant_group_id)->find($variantData['id']);
+
+
+
+                        if (!$variant) continue;
+
+                        $variant->title = $variantData['title'];
+                        $variant->product_id = $variantData['linked_product_id'] ?? null;
+                        $variant->save();
+                    } else {
+
+
+
+
+                        // 🔹 Создаём новый вариант
+                        $variant = \App\Models\ProductVariantItem::create([
+                            'product_id' => $variantData['linked_product_id'] ?? null,
+                            'variant_group_id' => $variantGroupId,
+                            'title' => $variantData['title'],
+
+                        ]);
+
+                        $linkedProductId = $variantData['linked_product_id'] ?? $product->id;
+                        if ($linkedProductId) {
+                            \App\Models\Product::where('id', $linkedProductId)
+                                ->update(['variant_group_id' => $variantGroupId]);
+                        }
+                    }
+
+                    // 🔹 Обработка изображения
+                    if (!empty($variantData['image'])) {
+                        $mediaService = app(\App\Domain\Media\Services\MediaService::class);
+                        $media = $mediaService->upload(
+                            new \App\Domain\Media\DTO\UploadMediaDTO(
+                                file: $variantData['image'],
+                                model: $variant,
+                                collection: 'product_variant_image',
+                                sortOrder: 0,
+                                isMain: false
+                            )
+                        );
+
+                        $variant->update(['media_id' => $media->id]);
+                    }
+                }
+
+                // Проверяем, сколько айтемов осталось в группе
+                $remainingVariants = $product->variantItems()->get();
+
+                if ($remainingVariants->count() <= 1) {
+                    foreach ($remainingVariants as $variant) {
+                        if ($variant->media) $mediaService->delete($variant->media);
+                        $variant->delete();
+                    }
+
+                    // Удаляем саму группу
+                    if ($product->variant_group_id) {
+                        \App\Models\ProductVariantGroup::find($product->variant_group_id)?->delete();
+                        $product->update(['variant_group_id' => null]);
+                    }
+                }
+            }
+
+
+
+
+            $dto = $dtoFactory->fromUpdateVariantRequest($request);
+
+
+            $updateProductVariantAction->execute(
+                product: $product,
+                data: $dto,
+
+            );
+        }
+
+        return redirect()
+            ->route('supplier.products.edit-step', [
+                'product' => $product->id,
+                'step' => $step,
+            ]);
+    }
+
+
 
     public function update(
         UpdateProductRequest $request,
@@ -563,6 +947,8 @@ return view('product.create.add-product', array_merge($data, [
         SyncProductAttributeAction $attributeAction,
 
     ) {
+
+
 
         $this->authorize('update', $product);
 
@@ -892,6 +1278,9 @@ return view('product.create.add-product', array_merge($data, [
 
         $attributeIds = $request->input('attributes', []);
 
+        $customAttributeIds = Attribute::where('is_custom', 1)
+            ->pluck('id');
+
         // attach missing
         foreach ($attributeIds as $attributeId) {
             ProductAttributeValue::firstOrCreate([
@@ -902,6 +1291,7 @@ return view('product.create.add-product', array_merge($data, [
 
         // optional sync (remove unchecked)
         ProductAttributeValue::where('product_id', $product->id)
+            ->whereIn('attribute_id', $customAttributeIds)
             ->whereNotIn('attribute_id', $attributeIds)
             ->delete();
 

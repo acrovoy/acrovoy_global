@@ -19,7 +19,7 @@ class ProductEditQueryService
 {
     public function getEditViewData(Product $product): array
 {
-    $this->authorizeProduct($product);
+    
 
     // 🔹 Eager load всех нужных связей
     $product->load([
@@ -28,7 +28,6 @@ class ProductEditQueryService
         'materials',
         'priceTiers',
         'shippingTemplates',
-        'specifications.translations',
         'variantGroup.items.product',
         'variantGroup.items.media',
     ]);
@@ -77,9 +76,7 @@ $ActiveContext = app(ActiveContextService::class);
     $supplierId = $ActiveContext->id();
     $supplierType = $ActiveContext->type();
 
-    if (!$supplierId) {
-        return collect();
-    }
+   
 
     return Product::with('translations')
         ->where('supplier_id', $supplierId)
@@ -100,7 +97,7 @@ private function authorizeProduct(Product $product): void
 {
     $context = app(ActiveContextService::class);
 
-    abort_if(!$context->isCompany(), 403);
+    
 
     $supplierId = $context->id();
     $supplierType = $context->type();

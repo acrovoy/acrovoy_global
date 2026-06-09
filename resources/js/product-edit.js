@@ -17,7 +17,7 @@ let selectedMaterials = [];
  * 🔹 INIT FROM HIDDEN INPUT (EDIT MODE)
  */
 function initSelectedMaterials() {
-    if (!selectedMaterialsInput.value) return;
+    if (!selectedMaterialsInput || !selectedMaterialsInput.value) return;
 
     const ids = selectedMaterialsInput.value.split(',');
 
@@ -288,6 +288,7 @@ updatePriceTierRemoveButtons();
 // ==========================
 // добавление новой строки
 // ==========================
+
 window.addPriceTier = function () {
 
     const container = document.getElementById('price-tiers');

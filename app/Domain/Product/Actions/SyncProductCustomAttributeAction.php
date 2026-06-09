@@ -30,12 +30,16 @@ class SyncProductCustomAttributeAction
                 []
             );
 
-            
-            ProductAttributeValueTranslation::create([
-                'product_attribute_value_id' => $pav->id,
-                'locale' => 'en',
-                'value' => (string) $value,
-            ]);
+
+            ProductAttributeValueTranslation::updateOrCreate(
+                [
+                    'product_attribute_value_id' => $pav->id,
+                    'locale' => 'en',
+                ],
+                [
+                    'value' => (string) $value,
+                ]
+            );
         }
     }
 }
