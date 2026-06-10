@@ -11,7 +11,9 @@ class HelpController extends Controller
 {
     public function index()
     {
-        $categories = HelpCategory::with('translations')->get();
+        $categories = HelpCategory::with('translations')
+        ->where('main_page', 1)
+        ->get();
 
         // dd($categories);
         return view('help.index', compact('categories'));
@@ -19,12 +21,20 @@ class HelpController extends Controller
 
     public function category($slug)
 {
+    
     $locale = app()->getLocale(); // текущий язык пользователя
 
     // Получаем категорию с переводами по текущей локали
     $category = HelpCategory::with(['translations' => function ($query) use ($locale) {
         $query->where('locale', $locale);
     }])->where('slug', $slug)->firstOrFail();
+
+
+    $categories = HelpCategory::with([
+    'translations',
+    'articles.translations',
+    'children.articles.translations',
+])->whereNull('parent_id')->get();
 
     // Загружаем статьи с переводами по текущей локали
     $articles = $category->articles()
@@ -55,6 +65,6 @@ class HelpController extends Controller
     
 
 
-    return view('help.category', compact('category', 'articles', 'selectedArticle'));
+    return view('help.category', compact('category', 'categories' , 'articles', 'selectedArticle'));
 }
 }

@@ -8,7 +8,13 @@
 
         {{-- Кнопка добавления новой категории --}}
         <a href="{{ route('admin.help.categories.create') }}"
-           class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
+           class="inline-flex items-center gap-2 mt-3 px-4 py-2
+           text-sm font-medium text-gray-700
+           bg-white border border-gray-200
+           rounded-lg
+           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
             + Add New Category
         </a>
     </div>
@@ -21,7 +27,7 @@
                     <th class="px-5 py-3 font-medium text-gray-600">ID</th>
                     <th class="px-5 py-3 font-medium text-gray-600">Name</th>
                     <th class="px-5 py-3 font-medium text-gray-600">Description</th>
-                    <th class="px-5 py-3 font-medium text-gray-600">Slug</th>
+                    
                     <th class="px-5 py-3 font-medium text-gray-600">Created At</th>
                     <th class="px-5 py-3 font-medium text-gray-600 text-right">Actions</th>
                 </tr>
@@ -31,28 +37,29 @@
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-5 py-3 font-medium text-gray-900">{{ $category->id }}</td>
 
-                        {{-- Name --}}
                         <td class="px-5 py-3">
-                            @foreach($category->translations as $translation)
-                                <div class="mb-1">
-                                    <strong class="text-gray-500">{{ $translation->locale }}:</strong>
-                                    <span class="text-gray-900">{{ $translation->name }}</span>
-                                </div>
-                            @endforeach
-                        </td>
+    
+    <div class="font-medium text-gray-900">
+        {{ $category->translations->firstWhere('locale', 'en')->name }}
+    </div>
+
+    @if($category->parent)
+        <div class="text-xs text-yellow-500 mt-1">
+          {{ optional($category->parent->translations->firstWhere('locale', 'en'))->name }}
+        </div>
+    @endif
+
+</td>
 
                         {{-- Description --}}
                         <td class="px-5 py-3">
-                            @foreach($category->translations as $translation)
-                                <div class="mb-1">
-                                    <strong class="text-gray-500">{{ $translation->locale }}:</strong>
-                                    <span class="text-gray-700">{{ $translation->description }}</span>
-                                </div>
-                            @endforeach
+
+                        {{ $category->translations->firstWhere('locale', 'en')->description  }}
+                            
                         </td>
 
-                        <td class="px-5 py-3 text-gray-700">{{ $category->slug }}</td>
-                        <td class="px-5 py-3 text-gray-700">{{ $category->created_at }}</td>
+                        
+                        <td class="px-5 py-3 text-gray-700 text-[10px]">{{ $category->created_at }}</td>
 
                         {{-- Actions --}}
                         <td class="px-5 py-3 text-right space-x-2">

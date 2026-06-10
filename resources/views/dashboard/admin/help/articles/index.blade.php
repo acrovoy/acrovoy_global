@@ -8,7 +8,13 @@
 
         {{-- Кнопка добавления новой статьи --}}
         <a href="{{ route('admin.help.articles.create') }}"
-           class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
+           class="inline-flex items-center gap-2 mt-3 px-4 py-2
+           text-sm font-medium text-gray-700
+           bg-white border border-gray-200
+           rounded-lg
+           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
             + Add New Article
         </a>
     </div>
@@ -19,10 +25,11 @@
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="px-5 py-3 font-medium text-gray-600">ID</th>
-                    <th class="px-5 py-3 font-medium text-gray-600">Slug</th>
+                    <th class="px-5 py-3 font-medium text-gray-600">Title</th>
+                    
                     <th class="px-5 py-3 font-medium text-gray-600">Category</th>
-                    <th class="px-5 py-3 font-medium text-gray-600">Title (all languages)</th>
-                    <th class="px-5 py-3 font-medium text-gray-600">Content (first 100 chars)</th>
+                    
+                    
                     <th class="px-5 py-3 font-medium text-gray-600 text-right">Actions</th>
                 </tr>
             </thead>
@@ -31,30 +38,40 @@
                 @foreach($articles as $article)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-5 py-3 font-medium text-gray-900">{{ $article->id }}</td>
-                        <td class="px-5 py-3 text-gray-700">{{ $article->slug }}</td>
-                        <td class="px-5 py-3 text-gray-700">{{ $article->category }}</td>
 
                         {{-- Title по языкам --}}
                         <td class="px-5 py-3">
-                            @foreach($article->translations as $translation)
-                                <div class="mb-1">
-                                    <strong class="text-gray-500">{{ strtoupper($translation->locale) }}:</strong>
-                                    <span class="text-gray-900">{{ $translation->title }}</span>
-                                </div>
-                            @endforeach
+                            
+                            <span class="text-gray-900">
+         {{ optional($article->translations->firstWhere('locale', 'en'))->title ?? '—' }}
+    </span>
                         </td>
 
-                        {{-- Content по языкам (частично) --}}
-                        <td class="px-5 py-3">
-                            @foreach($article->translations as $translation)
-                                <div class="mb-1">
-                                    <strong class="text-gray-500">{{ strtoupper($translation->locale) }}:</strong>
-                                    <span class="text-gray-700">
-                                        {{ \Illuminate\Support\Str::limit(strip_tags($translation->content), 100) }}
-                                    </span>
-                                </div>
-                            @endforeach
-                        </td>
+
+                        
+                        <td class="px-5 py-3 text-gray-700">
+                         @php
+        $category = \App\Models\HelpCategory::with('parent.translations')
+            ->where('slug', $article->category)
+            ->first();
+    @endphp
+    <div>
+        <div class="font-medium">
+            {{ $category?->translations->firstWhere('locale', 'en')->name ?? '—' }}
+        </div>
+
+        @if($category?->parent)
+            <div class="text-xs text-yellow-500 mt-1">
+                 {{ optional($category->parent->translations->firstWhere('locale', 'en'))->name }}
+            </div>
+        @endif
+    </div>
+
+</td>
+
+                        
+
+                        
 
                         {{-- Actions --}}
                         <td class="px-5 py-3 text-right space-x-2">

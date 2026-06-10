@@ -20,15 +20,15 @@
             </a>
             <a href="{{ route('help.category', 'buyers') }}" 
                class="px-6 py-3 bg-white rounded-lg shadow hover:shadow-md font-semibold transition">
-                {{ optional($categories->firstWhere('slug', 'buyers'))->translated_name ?? 'Buyers Help' }}
+               Buyers Help
             </a>
             <a href="{{ route('help.category', 'sellers') }}" 
                class="px-6 py-3 bg-white rounded-lg shadow hover:shadow-md font-semibold transition">
-                {{ optional($categories->firstWhere('slug', 'sellers'))->translated_name ?? 'Sellers Help' }}
+               Sellers Help
             </a>
             <a href="{{ route('help.category', 'payments') }}" 
                class="px-6 py-3 bg-white rounded-lg shadow hover:shadow-md font-semibold transition">
-                {{ optional($categories->firstWhere('slug', 'payments'))->translated_name ?? 'Payments' }}
+                Payments
             </a>
         </div>
 

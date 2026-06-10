@@ -901,6 +901,11 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
             Route::put('/{article}', [AdminHelpController::class, 'updateArticle'])->name('update');
             Route::delete('/{article}', [AdminHelpController::class, 'destroyArticle'])->name('destroy');
         });
+
+
+        Route::post('/upload-image', [AdminHelpController::class, 'upload'])->name('upload');
+
+
     });
 
 

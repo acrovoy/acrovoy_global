@@ -19,7 +19,12 @@ class AdminHelpController extends Controller
 
     public function categories() {
     // Загружаем все категории с их переводами
-    $categories = HelpCategory::with('translations')->get();
+    $categories = HelpCategory::with([
+    'translations',
+    'children.translations',
+    'children.articles.translations',
+    'articles.translations',
+])->get();
 
     return view('dashboard.admin.help.categories.index', compact('categories'));
 }
@@ -32,19 +37,27 @@ class AdminHelpController extends Controller
 
    public function create() {
     $locales = Language::where('is_active', 1)->pluck('code')->toArray();
-    return view('dashboard.admin.help.categories.create', compact('locales'));
+
+    $categories = HelpCategory::with('translations')->get();
+
+
+
+
+    return view('dashboard.admin.help.categories.create', compact('locales', 'categories'));
 }
 
 // Сохранение новой категории
 public function store(Request $request) {
     $request->validate([
         'slug' => 'required|unique:help_categories,slug',
+        'parent_id' => 'nullable|exists:help_categories,id',
         'translations.*.name' => 'required|string',
     ]);
 
     $category = HelpCategory::create([
-        'slug' => $request->slug,
-    ]);
+    'slug' => $request->slug,
+    'parent_id' => $request->parent_id,
+]);
 
     // Сохраняем переводы
     foreach ($request->translations as $locale => $data) {
@@ -108,9 +121,11 @@ public function storeArticle(Request $request)
         'translations.*.content' => 'required|string',
     ]);
 
+    $category = HelpCategory::findOrFail($request->category);
+
     $article = HelpArticle::create([
         'slug' => $request->slug,
-        'category' => $request->category,
+        'category' => $category->slug,
         'published' => 1,
     ]);
 
@@ -164,6 +179,25 @@ public function destroyArticle(HelpArticle $article)
 {
     $article->delete();
     return redirect()->route('admin.help.articles.index')->with('success', 'Article deleted successfully.');
+}
+
+
+public function upload(Request $request)
+{
+
+
+
+
+    $request->validate([
+        'upload' => 'required|image|max:2048',
+    ]);
+
+    $path = $request->file('upload')->store('help', 'public');
+
+     return response()->json([
+        'uploaded' => true,
+         'url' => asset('storage/' . $path)
+    ]);
 }
 
 

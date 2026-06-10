@@ -8,6 +8,23 @@
 <form action="{{ route('admin.help.categories.store') }}" method="POST">
     @csrf
 
+    <div class="mb-4">
+    <label class="block mb-1 font-semibold">
+        Parent Category
+    </label>
+
+    <select name="parent_id" class="w-full border p-2 rounded">
+        <option value="">-- Root Category --</option>
+
+        @foreach($categories as $cat)
+            <option value="{{ $cat->id }}">
+                {{ $cat->translated_name }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
+
     {{-- Slug --}}
     <div class="mb-4">
         <label class="block mb-1 font-semibold">Slug</label>
@@ -30,6 +47,8 @@
             @endforeach
         </div>
     </div>
+
+    
 
     {{-- Description block --}}
     <div class="mb-6 border-b pb-2">

@@ -20,7 +20,7 @@
         <option value="">-- Select Category --</option>
         @foreach($categories as $cat)
             @php
-                $name = $cat->translations->first()->name ?? 'No Name';
+                $name = $cat->translations->firstWhere('locale', 'en')->name ?? 'No Name';
             @endphp
             <option value="{{ $cat->slug }}"
                 {{ old('category', $article->category ?? '') == $cat->slug ? 'selected' : '' }}>
@@ -64,13 +64,27 @@
     </button>
 </form>
 
+
 {{-- CKEditor 5 CDN --}}
-<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
+
+    
 document.addEventListener('DOMContentLoaded', () => {
+
     document.querySelectorAll('textarea.ckeditor').forEach(el => {
-        ClassicEditor.create(el).catch(error => console.error(error));
+
+        ClassicEditor.create(el, {
+            ckfinder: {
+                uploadUrl: "{{ route('admin.help.upload') }}?_token={{ csrf_token() }}"
+            }
+            
+        })
+        .catch(error => console.error(error));
+        
+
     });
+
 });
 </script>
 @endsection
