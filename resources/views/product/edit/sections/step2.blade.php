@@ -83,7 +83,7 @@
 
 
 
-<button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded">
+<button disabled id="step-2-submit" type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded">
     Next
 </button>
 
@@ -108,6 +108,8 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
 
             if (this.initialCategory) {
                 await this.loadPath(this.initialCategory);
+                
+                document.getElementById('step-2-submit').disabled = false;    
             }
         },
 
