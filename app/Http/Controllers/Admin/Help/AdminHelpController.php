@@ -106,7 +106,7 @@ public function update(Request $request, HelpCategory $category) {
 
 public function createArticle()
 {
-    $locales = \App\Models\Language::where('is_active', 1)->pluck('code');
+    $locales = Language::where('is_active', 1)->pluck('code');
     $categories = HelpCategory::all();
     return view('dashboard.admin.help.articles.create', compact('locales', 'categories'));
 }
@@ -143,7 +143,7 @@ public function storeArticle(Request $request)
 // Форма редактирования статьи
 public function editArticle(HelpArticle $article)
 {
-    $locales = \App\Models\Language::where('is_active', 1)->pluck('code');
+    $locales = Language::where('is_active', 1)->pluck('code');
     $categories = HelpCategory::all();
     $article->load('categoryObj');
     return view('dashboard.admin.help.articles.edit', compact('article', 'locales', 'categories'));
