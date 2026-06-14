@@ -122,7 +122,12 @@ class RfqController extends Controller
                     ->keyBy('attribute_id');
 
                 if ($selectedCategory) {
+
+                $hiddenIds = $rfq->hiddenAttributes->pluck('id')->toArray();
+
+
                     $attributes = $selectedCategory->attributes
+                        ->whereNotIn('id', $hiddenIds)
                         ->sortBy('pivot.sort_order')
                         ->map(function ($attribute) use ($savedValues) {
 

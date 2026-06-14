@@ -339,11 +339,23 @@ class RfqRequirementController extends Controller
 }
 
 public function dettach(Rfq $rfq, Attribute $attribute)
+    {
+        RfqAttributeValue::where('rfq_id', $rfq->id)
+            ->where('attribute_id', $attribute->id)
+            ->delete();
+
+        $rfq->hiddenAttributes()->syncWithoutDetaching([
+            $attribute->id
+        ]);
+
+        return response()->json([
+            'success' => true
+        ]);
+    }
+
+    public function restoreAll(Rfq $rfq)
 {
-    RfqAttributeValue::query()
-        ->where('rfq_id', $rfq->id)
-        ->where('attribute_id', $attribute->id)
-        ->delete();
+    $rfq->hiddenAttributes()->detach();
 
     return response()->json([
         'success' => true

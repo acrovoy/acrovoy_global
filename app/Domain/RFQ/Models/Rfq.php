@@ -151,4 +151,15 @@ public function getPublicIdAttribute()
     return 'RFQ-' . str_pad($this->id, 5, '0', STR_PAD_LEFT);
 }
 
+
+public function hiddenAttributes()
+{
+    return $this->belongsToMany(
+        \App\Models\Attribute::class,
+        'rfq_hidden_attributes',
+        'rfq_id',
+        'attribute_id'
+    );
+}
+
 }

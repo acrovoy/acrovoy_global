@@ -45,8 +45,6 @@ class SaveRfqRequirementsAction
             | RESET CUSTOM ATTRIBUTES (ADDED)
             |--------------------------------------------------------------------------
             */
-
-            
         }
 
         /*
@@ -70,6 +68,26 @@ class SaveRfqRequirementsAction
             | MULTISELECT
             |--------------------------------------------------------------------------
             */
+
+            if ($attribute->type === 'multiselect') {
+
+                $record = RfqAttributeValue::updateOrCreate(
+                    [
+                        'rfq_id' => $rfqId,
+                        'attribute_id' => $attributeId,
+                    ],
+                    []
+                );
+
+                $values = is_array($value)
+                    ? array_filter($value)
+                    : [];
+
+                $record->options()->sync($values);
+
+                continue;
+            }
+
 
             if (is_array($value)) {
 

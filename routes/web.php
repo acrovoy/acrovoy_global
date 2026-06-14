@@ -234,6 +234,8 @@ Route::prefix('dashboard/buyer')
 
             Route::post('/', [RfqRequirementController::class, 'store'])
                 ->name('rfqs.requirements.store');
+
+            Route::post('/restore-all', [RfqRequirementController::class, 'restoreAll'])->name('rfqs.requirements.restoreAll');
         });
 
         // =========================

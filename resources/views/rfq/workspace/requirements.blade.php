@@ -79,18 +79,35 @@
          <input type="hidden" name="rfq_id" value="{{ $rfq->id }}">
          <input type="hidden" name="category_id" value="{{ $selectedCategory->id }}">
 
-         {{-- CATEGORY TITLE --}}
-         <div class="mb-4 p-3 bg-gray-50 rounded-lg border">
+        
+        {{-- CATEGORY TITLE --}}
+<div class="mb-4 p-3 bg-gray-50 rounded-lg border">
 
-             <div class="text-sm font-semibold text-gray-900">
-                 {{ $selectedCategory->name }}
-             </div>
+    <div class="flex items-start justify-between gap-3">
 
-             <div class="text-xs text-gray-500">
-                 Fill in technical requirements for this category
-             </div>
+        <div>
+            <div class="text-sm font-semibold text-gray-900">
+                {{ $selectedCategory->name }}
+            </div>
 
-         </div>
+            <div class="text-xs text-gray-500">
+                Fill in technical requirements for this category
+            </div>
+        </div>
+
+        <button
+            type="button"
+            id="restore-all-attributes"
+            class="text-xs px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 whitespace-nowrap"
+        >
+            Restore all hidden attributes
+        </button>
+
+    </div>
+
+</div>
+
+         
 
          {{-- ATTRIBUTES --}}
          <div class="space-y-5">
@@ -458,3 +475,25 @@
          }
      }
  </script>
+
+ <script>
+document.getElementById('restore-all-attributes')
+    .addEventListener('click', async function () {
+
+        const url = "{{ route('buyer.rfqs.requirements.restoreAll', $rfq->id) }}";
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            location.reload(); // проще всего для начала
+        }
+    });
+</script>

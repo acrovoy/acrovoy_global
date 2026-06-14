@@ -30,6 +30,14 @@ class RfqRequirementsLoader
             'customAttributeValues.attribute.translations',
             'customAttributeValues.attribute.options.translations',
             'customAttributeValues.options.translations',
+
+            /*
+            |--------------------------------------------------------------------------
+            | HIDDEN ATTRIBUTES (❗ ВОТ ЭТОГО НЕ ХВАТАЕТ)
+            |--------------------------------------------------------------------------
+            */
+            'hiddenAttributes',
+
         ]);
 
         return $rfq;
