@@ -1,11 +1,40 @@
 {{-- Модалка для ввода места погрузки --}}
-<div x-show="open" x-transition x-cloak
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+<div
+    x-show="open"
+    x-cloak
+    class="fixed inset-0 z-50 overflow-hidden">
+    {{-- Backdrop --}}
+    <div
+        x-show="open"
+        x-transition.opacity
+        class="absolute inset-0 bg-black/50 p-6"
+        @click="open = false">
+    </div>
 
-    <div class="bg-white rounded-lg p-6 w-full max-w-lg" @click.away="open = false">
-        <h3 class="text-lg font-semibold mb-4">Enter Pickup Address</h3>
+    {{-- Drawer --}}
+    <div
+        x-show="open"
+        x-transition:enter="transform transition ease-in-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transform transition ease-in-out duration-300"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="absolute right-0 top-0 h-full w-full max-w-xl bg-white shadow-xl overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-6 border-b pb-4">
+            <h3 class="text-lg font-semibold">
+                Enter Pickup Address
+            </h3>
 
-        <form method="POST" :action="`/manufacturer/orders/origin/${itemId}`">
+            <button
+                type="button"
+                @click="open = false"
+                class="text-gray-500 hover:text-gray-700 text-xl">
+                ×
+            </button>
+        </div>
+
+        <form method="POST" :action="`/supplier/orders/origin/${itemId}`">
             @csrf
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -116,6 +145,3 @@
         </form>
     </div>
 </div>
-<script>
-
-</script>

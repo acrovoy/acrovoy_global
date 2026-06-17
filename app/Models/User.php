@@ -92,10 +92,7 @@ class User extends Authenticatable
         return $this->hasOne(Supplier::class);
     }
 
-    public function addresses()
-{
-    return $this->hasMany(UserAddress::class);
-}
+   
 
 public function defaultAddress()
 {

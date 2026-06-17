@@ -218,6 +218,7 @@ Route::prefix('dashboard/buyer')
         // WORKSPACE ENTRY (SHELL)
         // =========================
 
+        Route::post('/rfqs/{rfq}/address', [RfqController::class, 'attachAddress'])->name('rfqs.attach.address');
 
 
         // =========================
@@ -236,6 +237,8 @@ Route::prefix('dashboard/buyer')
                 ->name('rfqs.requirements.store');
 
             Route::post('/restore-all', [RfqRequirementController::class, 'restoreAll'])->name('rfqs.requirements.restoreAll');
+
+            
         });
 
         // =========================
@@ -525,17 +528,13 @@ Route::prefix('dashboard/buyer')
     ->group(function () {
 
 
-        Route::get('/premium-buyer-plans', [PremiumBuyerPlanController::class, 'index'])
-            ->name('premium-plans');
+        Route::get('/premium-buyer-plans', [PremiumBuyerPlanController::class, 'index'])->name('premium-plans');
 
-        Route::get('/premium-buyer-plans/compare', [PremiumBuyerPlanController::class, 'compare'])
-            ->name('premium-plans.compare');
+        Route::get('/premium-buyer-plans/compare', [PremiumBuyerPlanController::class, 'compare'])->name('premium-plans.compare');
 
-        Route::post('/premium-buyer-plans/subscribe', [PremiumBuyerPlanController::class, 'subscribe'])
-            ->name('premium-plans.subscribe');
+        Route::post('/premium-buyer-plans/subscribe', [PremiumBuyerPlanController::class, 'subscribe'])->name('premium-plans.subscribe');
 
-        Route::get('/orders', [BuyerOrderController::class, 'index'])
-            ->name('orders');
+        Route::get('/orders', [BuyerOrderController::class, 'index'])->name('orders');
 
         Route::get('/orders/{id}', [BuyerOrderController::class, 'show'])->name('orders.show');
 
@@ -619,10 +618,7 @@ Route::post('/manufacturer/orders/{order}/update-tracking', [ManufacturerOrderCo
 
 
 
-Route::post(
-    '/manufacturer/orders/{order}/status',
-    [ManufacturerOrderController::class, 'updateStatus']
-)->name('manufacturer.orders.update-status');
+Route::post('/manufacturer/orders/{order}/status', [ManufacturerOrderController::class, 'updateStatus'])->name('manufacturer.orders.update-status');
 
 Route::middleware(['auth', 'role:buyer'])->prefix('buyer/cart')->name('buyer.cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');

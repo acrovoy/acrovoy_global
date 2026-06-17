@@ -1,129 +1,153 @@
 <div
     x-show="editAddressModalOpen"
-    x-transition
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
->
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-        <button @click="editAddressModalOpen = false"
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
-            ✕
-        </button>
+    x-cloak
+    class="fixed inset-0 z-50 overflow-hidden">
+    {{-- Backdrop --}}
+    <div
+        x-show="editAddressModalOpen"
+        x-transition.opacity
+        class="absolute inset-0 bg-black/50"
+        @click="editAddressModalOpen = false"></div>
 
-        <h2 class="text-xl font-semibold mb-4">Редактировать адрес</h2>
+    {{-- Drawer --}}
+    <div
+        x-show="editAddressModalOpen"
+        x-transition:enter="transform transition ease-in-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transform transition ease-in-out duration-300"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="absolute right-0 top-0 h-full w-full max-w-2xl bg-white shadow-xl overflow-y-auto">
+        <div class="sticky top-0 bg-white z-10 border-b px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-semibold">
+                Редактировать адрес
+            </h2>
 
-        <form method="POST" action="{{ route('buyer.orders.update-address', $order->id) }}">
-            @csrf
-            @method('PUT')
-
-           {{-- Контакты и адрес --}}
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
-                <h3 class="font-semibold mb-4">Контактные данные и адрес</h3>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {{-- Имя --}}
-                    <div>
-                        <label class="text-sm text-gray-600">Имя</label>
-                        <input type="text"
-                            name="first_name"
-                            id="first_name"
-                            value="{{ $lastAddress->first_name ?? auth()->user()->first_name ?? '' }}"
-                            class="w-full border rounded p-2">
-                    </div>
-
-                    {{-- Фамилия --}}
-                    <div>
-                        <label class="text-sm text-gray-600">Фамилия</label>
-                        <input type="text"
-                            name="last_name"
-                            id="last_name"
-                            value="{{ $lastAddress->last_name ?? old('last_name') ?? '' }}"
-                            class="w-full border rounded p-2">
-                    </div>
-
-                    {{-- Телефон --}}
-                    <div class="sm:col-span-2">
-                        <label class="text-sm text-gray-600">Телефон</label>
-                        <input type="text"
-                            name="phone"
-                            id="phone"
-                            value="{{ $lastAddress->phone ?? old('phone') ?? '' }}"
-                            class="w-full border rounded p-2">
-                    </div>
-
-                
-                    
-                </div>
-            </div>
-
-
-
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
-            <h3 class="font-semibold mb-4">Адрес доставки</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {{-- Страна --}}
-                <div>
-                    <label class="text-sm text-gray-600">Страна</label>
-                    <select name="country" id="country" class="w-full border rounded p-2">
-                        <option value="">Выберите страну</option>
-                        @foreach($countries as $country)
-                            <option value="{{ $country->id }}"
-                                {{ $lastAddress && $lastAddress->country == $country->id ? 'selected' : '' }}>
-                                {{ $country->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                {{-- Регион / область --}}
-        <div>
-            <label class="text-sm text-gray-600">Регион / Область</label>
-            <select name="region" id="region" class="w-full border rounded p-2" disabled>
-                <option value="">Выберите регион</option>
-            </select>
+            <button
+                type="button"
+                @click="editAddressModalOpen = false"
+                class="text-gray-500 hover:text-gray-700 text-xl">
+                ✕
+            </button>
         </div>
 
-                {{-- Город --}}
-        <div>
-            <label class="text-sm text-gray-600">Город</label>
-            <select name="city" id="city" class="w-full border rounded p-2">
-                <option value="">Выберите город</option>
-            </select>
-            <small class="text-gray-500 block mt-1">
-                Если не нашли свой город или локацию, заполните поле ниже
-            </small>
-            <input type="text" name="city_manual" id="city_manual"
-                placeholder="Введите свой город"
-                class="w-full border rounded p-2 mt-1">
-        </div>
+        <div class="p-6">
 
-                {{-- Улица --}}
-                <div class="sm:col-span-2">
-                    <label class="text-sm text-gray-600">Улица, дом, квартира</label>
-                    <input type="text" name="street" id="street"
-                        value="{{ $lastAddress->street ?? '' }}"
-                        class="w-full border rounded p-2">
+            <form method="POST" action="{{ route('buyer.orders.update-address', $order->id) }}">
+                @csrf
+                @method('PUT')
+
+                {{-- Контакты и адрес --}}
+                <div class="bg-white p-4 rounded-lg shadow mb-6">
+                    <h3 class="font-semibold mb-4">Контактные данные и адрес</h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {{-- Имя --}}
+                        <div>
+                            <label class="text-sm text-gray-600">Имя</label>
+                            <input type="text"
+                                name="first_name"
+                                id="first_name"
+                                value="{{ $lastAddress->first_name ?? auth()->user()->first_name ?? '' }}"
+                                class="w-full border rounded p-2">
+                        </div>
+
+                        {{-- Фамилия --}}
+                        <div>
+                            <label class="text-sm text-gray-600">Фамилия</label>
+                            <input type="text"
+                                name="last_name"
+                                id="last_name"
+                                value="{{ $lastAddress->last_name ?? old('last_name') ?? '' }}"
+                                class="w-full border rounded p-2">
+                        </div>
+
+                        {{-- Телефон --}}
+                        <div class="sm:col-span-2">
+                            <label class="text-sm text-gray-600">Телефон</label>
+                            <input type="text"
+                                name="phone"
+                                id="phone"
+                                value="{{ $lastAddress->phone ?? old('phone') ?? '' }}"
+                                class="w-full border rounded p-2">
+                        </div>
+
+
+
+                    </div>
                 </div>
 
-                {{-- Почтовый индекс --}}
-                <div>
-                    <label class="text-sm text-gray-600">Почтовый индекс</label>
-                    <input type="text" name="postal_code" id="postal_code"
-                        value="{{ $lastAddress->postal_code ?? '' }}"
-                        class="w-full border rounded p-2">
+
+
+                <div class="bg-white p-4 rounded-lg shadow mb-6">
+                    <h3 class="font-semibold mb-4">Адрес доставки</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {{-- Страна --}}
+                        <div>
+                            <label class="text-sm text-gray-600">Страна</label>
+                            <select name="country" id="country" class="w-full border rounded p-2">
+                                <option value="">Выберите страну</option>
+                                @foreach($countries as $country)
+                                <option value="{{ $country->id }}"
+                                    {{ $lastAddress && $lastAddress->country == $country->id ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Регион / область --}}
+                        <div>
+                            <label class="text-sm text-gray-600">Регион / Область</label>
+                            <select name="region" id="region" class="w-full border rounded p-2" disabled>
+                                <option value="">Выберите регион</option>
+                            </select>
+                        </div>
+
+                        {{-- Город --}}
+                        <div>
+                            <label class="text-sm text-gray-600">Город</label>
+                            <select name="city" id="city" class="w-full border rounded p-2">
+                                <option value="">Выберите город</option>
+                            </select>
+                            <small class="text-gray-500 block mt-1">
+                                Если не нашли свой город или локацию, заполните поле ниже
+                            </small>
+                            <input type="text" name="city_manual" id="city_manual"
+                                placeholder="Введите свой город"
+                                class="w-full border rounded p-2 mt-1">
+                        </div>
+
+                        {{-- Улица --}}
+                        <div class="sm:col-span-2">
+                            <label class="text-sm text-gray-600">Улица, дом, квартира</label>
+                            <input type="text" name="street" id="street"
+                                value="{{ $lastAddress->street ?? '' }}"
+                                class="w-full border rounded p-2">
+                        </div>
+
+                        {{-- Почтовый индекс --}}
+                        <div>
+                            <label class="text-sm text-gray-600">Почтовый индекс</label>
+                            <input type="text" name="postal_code" id="postal_code"
+                                value="{{ $lastAddress->postal_code ?? '' }}"
+                                class="w-full border rounded p-2">
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" @click="editAddressModalOpen = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Сохранить</button>
+                </div>
+            </form>
         </div>
-
-
-            <div class="flex justify-end gap-2 mt-4">
-                <button type="button" @click="editAddressModalOpen = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Отмена</button>
-                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Сохранить</button>
-            </div>
-        </form>
     </div>
-</div>
+    </div>
 
-<script>
+    <script>
 const regionsUrl = @json(route('buyer.locations.regions'));
 const locationsUrl = @json(route('buyer.locations.locations'));
 
@@ -228,47 +252,45 @@ regionSelect?.addEventListener('change', function() {
 // ============================================
 // Подгрузка локаций (города)
 // ============================================
-function fetchLocations(regionId, selectedCityId = null) {
+async function fetchLocations(regionId, selectedCityId = null) {
+
     if (!cityInput) return;
 
     cityInput.innerHTML = '<option value="">Выберите город</option>';
     cityInput.disabled = true;
 
-    fetch(`${locationsUrl}?region_id=${regionId}`)
-        .then(res => res.json())
-        .then(data => {
+    try {
 
-            let cityFound = false;
+        const res = await fetch(`${locationsUrl}?region_id=${regionId}`);
+        const data = await res.json();
 
-            data.forEach(loc => {
-                const option = document.createElement('option');
-                
-                // Передаем ID города в value
-                option.value = loc.id;
+        let cityFound = false;
 
-                // Название города для отображения
-                option.textContent = loc.name;
+        data.forEach(loc => {
 
-                // Сохраняем название в data-name
-                option.dataset.name = loc.name;
+            const option = document.createElement('option');
 
-                // Если выбранный город совпадает
-                if (selectedCityId && selectedCityId == loc.id) {
-                    option.selected = true;
-                    cityFound = true;
-                }
+            option.value = loc.id;
+            option.textContent = loc.name;
+            option.dataset.name = loc.name;
 
-                cityInput.appendChild(option);
-            });
-
-            cityInput.disabled = false;
-
-            // Если выбранный город не найден — оставляем его в ручном поле
-            if (selectedCityId && !cityFound) {
-                cityManualInput.value = selectedCityId; // Или можно передать название
+            if (selectedCityId && selectedCityId == loc.id) {
+                option.selected = true;
+                cityFound = true;
             }
-        })
-        .catch(console.error);
+
+            cityInput.appendChild(option);
+        });
+
+        cityInput.disabled = false;
+
+        if (selectedCityId && !cityFound) {
+            cityManualInput.value = selectedCityId;
+        }
+
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 
@@ -298,33 +320,54 @@ cityManualInput?.addEventListener('input', function() {
 // ============================================
 // 4. Подгрузка регионов
 // ============================================
-function fetchRegions(countryId, selectedRegionId = null) {
+async function fetchRegions(countryId, selectedRegionId = null) {
     if (!regionSelect) return;
 
     regionSelect.innerHTML = '<option value="">Выберите регион</option>';
 
     if (!countryId) return;
 
-    fetch(`${regionsUrl}?country_id=${countryId}`)
-        .then(res => res.json())
-        .then(data => {
-            data.forEach(r => {
-                const option = document.createElement('option');
-                option.value = r.id;
-                option.textContent = r.name;
+    try {
 
-                if (selectedRegionId && selectedRegionId == r.id) {
-                    option.selected = true;
-                }
+        const res = await fetch(`${regionsUrl}?country_id=${countryId}`);
+        const data = await res.json();
 
-                regionSelect.appendChild(option);
-            });
-        })
-        .catch(console.error);
+        data.forEach(r => {
+
+            const option = document.createElement('option');
+            option.value = r.id;
+            option.textContent = r.name;
+
+            if (selectedRegionId && selectedRegionId == r.id) {
+                option.selected = true;
+            }
+
+            regionSelect.appendChild(option);
+        });
+
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 
+document.addEventListener('DOMContentLoaded', async () => {
 
+    const selectedCountry = countrySelect?.value;
+    const selectedRegion = '{{ $lastAddress->region ?? '' }}';
+    const selectedCity = '{{ $lastAddress->city ?? '' }}';
+
+    if (selectedCountry) {
+
+        await fetchRegions(selectedCountry, selectedRegion);
+
+        regionSelect.disabled = false;
+
+        if (selectedRegion) {
+            await fetchLocations(selectedRegion, selectedCity);
+        }
+    }
+});
 
 
 

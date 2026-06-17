@@ -73,7 +73,7 @@
     @forelse($orders as $order)
         <tr 
             class="hover:bg-gray-50 transition cursor-pointer"
-            onclick="window.location='{{ route('manufacturer.orders.show', $order['id']) }}'"
+            onclick="window.location='{{ route('supplier.orders.show', $order['id']) }}'"
         >
             <td class="px-5 py-3 font-medium text-gray-900 flex items-center gap-2">
                 <div>

@@ -217,10 +217,8 @@
     {{-- Footer Order Date --}}
     <div class="flex justify-between text-sm text-gray-500">
         <span>Order date: {{ $order['date'] }}</span>
-        
-    </div>
-    {{ $lastAddress->origin_region_id }}
-</div>
+       </div> 
+    
 
 <script>
 function pickupModal() {

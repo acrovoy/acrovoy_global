@@ -10,6 +10,7 @@ use App\Domain\RFQ\Enums\RfqVisibilityType;
 
 use App\Models\User;
 use App\Models\Category;
+use App\Models\UserAddress;
 
 class Rfq extends Model
 {
@@ -24,6 +25,7 @@ class Rfq extends Model
         'created_by',
         'title',
         'description',
+        'delivery_address_id',
         'type',
         'status',
         'published_at',
@@ -160,6 +162,11 @@ public function hiddenAttributes()
         'rfq_id',
         'attribute_id'
     );
+}
+
+public function deliveryAddress()
+{
+    return $this->belongsTo(UserAddress::class, 'delivery_address_id');
 }
 
 }

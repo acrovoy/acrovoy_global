@@ -306,13 +306,7 @@ abort_if(
 {
     $user = $context->user();
 
-    if (!$context->isCompany()) {
-    abort(403);
-}
-
-if ($context->role() !== 'supplier') {
-    abort(403);
-}
+    
 
 
     $request->validate([

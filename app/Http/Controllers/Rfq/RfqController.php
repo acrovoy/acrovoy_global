@@ -7,6 +7,8 @@ use App\Domain\RFQ\Models\Rfq;
 use App\Services\Company\ActiveContextService;
 use Illuminate\Http\Request;
 use App\Models\Category;
+use App\Models\UserAddress;
+use App\Models\Country;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
 use App\Models\Supplier;
 use App\Models\Attribute;
@@ -16,6 +18,8 @@ use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
 use App\Domain\RFQ\Actions\GetRfqCategoriesAction;
 use App\Domain\RFQ\Services\RfqRequirementsLoader;
+
+use App\Facades\ActiveContext;
 
 
 
@@ -60,6 +64,8 @@ class RfqController extends Controller
         $rfq->loadMissing([
             'participants.participant',
             'visibilityCategories',
+            'deliveryAddress.regionLocation',
+            'deliveryAddress.country',
         ]);
 
         /*
@@ -71,6 +77,7 @@ class RfqController extends Controller
         $categories = null;
         $selectedCategory = null;
         $attributes = collect();
+
 
         if ($activeTab === 'requirements') {
 
@@ -123,7 +130,7 @@ class RfqController extends Controller
 
                 if ($selectedCategory) {
 
-                $hiddenIds = $rfq->hiddenAttributes->pluck('id')->toArray();
+                    $hiddenIds = $rfq->hiddenAttributes->pluck('id')->toArray();
 
 
                     $attributes = $selectedCategory->attributes
@@ -193,15 +200,14 @@ class RfqController extends Controller
                 request('version')
             );
 
-            if($offerVersion->is_counter == 1)
-                    {
-                    $versionNumberOfCounter = $offerVersion->version_number;
-                    $supplierOfferVersionToCounter = $offer->versions()
-                        ->where('status', '!=', 'draft')
-                        ->where('is_counter', 0)
-                        ->where('version_number', $versionNumberOfCounter-1)
-                        ->first();
-}
+            if ($offerVersion->is_counter == 1) {
+                $versionNumberOfCounter = $offerVersion->version_number;
+                $supplierOfferVersionToCounter = $offer->versions()
+                    ->where('status', '!=', 'draft')
+                    ->where('is_counter', 0)
+                    ->where('version_number', $versionNumberOfCounter - 1)
+                    ->first();
+            }
 
             $currentDraft = $resolver->currentDraft($offer);
 
@@ -212,7 +218,7 @@ class RfqController extends Controller
                 ->with(['items.options.translations'])
                 ->get();
 
-            
+
 
 
             $isReadonly = $offerVersion
@@ -221,7 +227,6 @@ class RfqController extends Controller
 
 
             $isCounter = $offerVersion?->is_counter ?? false;
-
         }
 
 
@@ -337,7 +342,7 @@ class RfqController extends Controller
         $lastsubmittedVersion = collect();
         $existingDraftCounter = null;
         $supplierOfferVersion = null;
-       
+
 
 
         if ($activeTab === 'offers') {
@@ -427,17 +432,16 @@ class RfqController extends Controller
                 ->orderByDesc('created_at')
                 ->first();
 
-                if($offerVersion->is_counter == 1)
-                    {
-                    $versionNumberOfCounter = $offerVersion->version_number;
-                    $supplierOfferVersionToCounter = $offer->versions()
-                        ->where('status', '!=', 'draft')
-                        ->where('is_counter', 0)
-                        ->where('version_number', $versionNumberOfCounter-1)
-                        ->first();
-}
+            if ($offerVersion->is_counter == 1) {
+                $versionNumberOfCounter = $offerVersion->version_number;
+                $supplierOfferVersionToCounter = $offer->versions()
+                    ->where('status', '!=', 'draft')
+                    ->where('is_counter', 0)
+                    ->where('version_number', $versionNumberOfCounter - 1)
+                    ->first();
+            }
 
-            
+
 
 
 
@@ -519,6 +523,28 @@ class RfqController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        $countries = Country::withCurrentTranslation()
+            ->orderBy('name')->get();
+
+
+        $buyerType = $this->context->type();
+        $buyerId = $this->context->id();
+
+
+        $savedAddresses = UserAddress::query()
+            ->where('user_id', $buyerId)
+            ->where('user_type', $buyerType)
+            ->orderByDesc('updated_at')->get();
+
+        // Опционально: последний использованный адрес
+        $lastAddress = $savedAddresses->first();
+
+        $currentSavedAddress = UserAddress::query()
+            ->where('id', $rfq->delivery_address_id)
+            ->first();
+
+        $currentAddressId = $rfq->delivery_address_id;
+
         $suppliers = Supplier::query()
             ->orderBy('name')
             ->limit(50)
@@ -556,6 +582,11 @@ class RfqController extends Controller
             'suppliers' => $suppliers,
             'allCategories' => $allCategories,
             'participants' => $participants,
+            'savedAddresses' => $savedAddresses,
+            'lastAddress' => $lastAddress,
+            'currentSavedAddress' => $currentSavedAddress,
+            'currentAddressId' => $currentAddressId,
+            'countries' => $countries,
             'selectedCategoryIds' => $selectedCategoryIds,
             'offerVersion' => $offerVersion,
             'isReadonly' => $isReadonly,
@@ -616,5 +647,95 @@ class RfqController extends Controller
 
         return $rfq->participants
             ->contains('supplier_id', $this->context->id());
+    }
+
+
+
+    public function attachAddress(Request $request, Rfq $rfq)
+    {
+        $request->validate([
+            'saved_address_id' => 'nullable|exists:user_addresses,id',
+            'first_name' => 'nullable|string',
+            'last_name' => 'nullable|string',
+            'country' => 'nullable',
+            'region' => 'nullable',
+            'city' => 'nullable',
+            'street' => 'nullable|string',
+            'postal_code' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'save_as_new' => 'nullable|boolean',
+        ]);
+
+
+
+        $addressId = $request->saved_address_id;
+
+        // 1. ЕСЛИ ВЫБРАН СУЩЕСТВУЮЩИЙ
+        if ($addressId) {
+            $address = UserAddress::where('id', $addressId)
+                ->where('user_id', ActiveContext::id())
+                ->where('user_type', ActiveContext::type())
+                ->firstOrFail();
+        }
+
+        // 2. ЕСЛИ НОВЫЙ АДРЕС
+        else {
+
+
+            $finalCity = $request->city_manual ?: null;
+            $cityId = null;
+
+            // 1️⃣ Если пользователь ввёл новый город вручную
+            if ($request->filled('city_manual')) {
+                $existingLocation = \App\Models\Location::where('name', $finalCity)
+                    ->where('parent_id', $request->region)
+                    ->first();
+
+                if ($existingLocation) {
+                    $cityId = $existingLocation->id;
+                } else {
+                    $newLocation = \App\Models\Location::create([
+                        'name'       => $finalCity,
+                        'parent_id'  => $request->region ?: null,
+                        'country_id' => $request->country,
+                        'updated_by' => auth()->user()->id,
+                    ]);
+                    $cityId = $newLocation->id;
+                }
+            }
+            // 2️⃣ Если город выбран из списка
+            elseif ($request->filled('city')) {
+                // Здесь важно, чтобы в форме приходил ID выбранного города, а не название
+                $cityId = (int) $request->city;
+            }
+
+            $cityModel = \App\Models\Location::find($cityId);
+            $finalCity = $cityModel?->name ?? '';
+
+
+            $address = UserAddress::create([
+                'user_id' => ActiveContext::id(),
+                'user_type' => ActiveContext::type(),
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'country' => $request->country,
+                'region' => $request->region,
+                'city' => $finalCity,
+                'street' => $request->street,
+                'postal_code' => $request->postal_code,
+                'phone' => $request->phone,
+            ]);
+
+            // если пользователь хочет сохранить
+            if ($request->save_as_new) {
+                // уже сохранён автоматически
+            }
+        }
+
+        $rfq->update([
+            'delivery_address_id' => $address->id,
+        ]);
+
+        return back()->with('success', 'Address updated');
     }
 }

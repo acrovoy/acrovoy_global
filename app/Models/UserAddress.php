@@ -8,6 +8,7 @@ class UserAddress extends Model
 {
     protected $fillable = [
         'user_id',
+        'user_type',
         'first_name',
         'last_name',
         'country',
@@ -23,4 +24,16 @@ class UserAddress extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function regionLocation()
+{
+    return $this->belongsTo(Location::class, 'region');
+}
+
+public function country()
+{
+    return $this->belongsTo(Country::class, 'country');
+}
+
+
 }

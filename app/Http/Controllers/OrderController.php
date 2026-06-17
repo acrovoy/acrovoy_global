@@ -55,7 +55,7 @@ class OrderController extends Controller
     // Переход на страницу чекаута
     public function checkout()
 {
-    $user = auth()->user();
+    
 
     $cartItems = CartItem::where('buyer_type', ActiveContext::type())
         ->where('buyer_id', ActiveContext::id())
@@ -84,7 +84,11 @@ class OrderController extends Controller
         
 
     // Получаем все адресные шаблоны пользователя (по убыванию даты)
-    $savedAddresses = $user->addresses()->orderByDesc('updated_at')->get();
+    
+    $savedAddresses = UserAddress::query()
+    ->where('user_id', ActiveContext::id())
+    ->where('user_type', ActiveContext::type())
+    ->orderByDesc('updated_at')->get();
 
     // Берём последний сохранённый шаблон
     $lastAddress = $savedAddresses->first();
@@ -124,6 +128,11 @@ if ($lastAddress && $lastAddress->country) {
     // Сохраняем данные чекаута
     public function store(Request $request)
 {
+
+
+$buyer_type = ActiveContext::type();
+$buyer_id  = ActiveContext::id();
+
 
 
     $user = auth()->user();
@@ -181,9 +190,11 @@ $formAddress = [
 $selectedAddress = null;
 
 if ($request->filled('saved_address_id')) {
-    $selectedAddress = $user->addresses()
-        ->where('id', $request->saved_address_id)
-        ->firstOrFail();
+    $selectedAddress = UserAddress::query()
+    ->where('id', $request->saved_address_id)
+    ->where('user_id', ActiveContext::id())
+    ->where('user_type', ActiveContext::type())
+    ->firstOrFail();
 }
 
 /**
@@ -192,7 +203,8 @@ if ($request->filled('saved_address_id')) {
 if ($request->boolean('save_as_new')) {
 
     UserAddress::firstOrCreate(
-        ['user_id' => $user->id] + $formAddress,
+        ['user_id' => ActiveContext::id(),
+        'user_type' => ActiveContext::type()] + $formAddress,
         ['is_default' => false]
     );
 
@@ -200,7 +212,8 @@ if ($request->boolean('save_as_new')) {
 
     // пользователь не выбирал адрес → первый checkout
     UserAddress::firstOrCreate(
-        ['user_id' => $user->id] + $formAddress,
+        ['user_id' => ActiveContext::id(),
+        'user_type' => ActiveContext::type()] + $formAddress,
         ['is_default' => false]
     );
 }
@@ -257,13 +270,17 @@ if ($shippingTemplate?->logistic_company_id) {
         $cityId,
         $providerType,
         $providerId,
-        &$order
+        &$order,
+        $buyer_type,
+        $buyer_id,
     ) {
+
+    
 
         // 1️⃣ Создаём заказ
         $order = Order::create([
-            'buyer_type' => ActiveContext::type(),
-            'buyer_id'   => ActiveContext::id(),
+            'buyer_type' => $buyer_type,
+            'buyer_id'   => $buyer_id,
             'created_by' => auth()->id(),
             'status' => 'pending',
             'type' => 'product',
@@ -360,9 +377,7 @@ public function show(Order $order)
 
     $user = auth()->user();
     // Проверяем, что заказ принадлежит текущему пользователю
-    if ($order->user_id !== auth()->id()) {
-        abort(403);
-    }
+    
 
     $order->load([
         'items.product.images',
@@ -378,7 +393,10 @@ public function show(Order $order)
     ->orderBy('name')->get();
 
     // Получаем все адресные шаблоны пользователя (по убыванию даты)
-    $savedAddresses = $user->addresses()->orderByDesc('updated_at')->get();
+    $savedAddresses = UserAddress::query()
+    ->where('user_id', ActiveContext::id())
+    ->where('user_type', ActiveContext::type())
+    ->orderByDesc('updated_at')->get();
 
     // Берём последний сохранённый шаблон
     $lastAddress = $savedAddresses->first();
@@ -455,7 +473,11 @@ public function edit(int $id)
         $availableStatuses = OrderStatusService::availableStatuses($order->status);
 
         // Получаем все сохранённые адреса пользователя
-        $savedAddresses = auth()->user()->addresses()->orderByDesc('updated_at')->get();
+        
+        $savedAddresses = UserAddress::query()
+    ->where('user_id', ActiveContext::id())
+    ->where('user_type', ActiveContext::type())
+    ->orderByDesc('updated_at')->get();
 
         // Опционально: последний использованный адрес
         $lastAddress = $savedAddresses->first();
