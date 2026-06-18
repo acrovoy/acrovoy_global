@@ -36,6 +36,7 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WarehouseController;
 
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
@@ -167,7 +168,28 @@ Route::prefix('supplier')->group(function () {
 
     Route::post('/offers/{offer}/reject', [RfqOfferController::class, 'reject'])
         ->name('supplier.offers.reject');
+
+    
+    
+
 });
+
+Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
+
+    Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
+    Route::get('/warehouses/create', [WarehouseController::class, 'create'])->name('warehouses.create');
+    Route::post('/warehouses', [WarehouseController::class, 'store'])->name('warehouses.store');
+
+    Route::get('/warehouses/{warehouse}/edit', [WarehouseController::class, 'edit'])->name('warehouses.edit');
+    Route::put('/warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('warehouses.update');
+
+    Route::delete('/warehouses/{warehouse}', [WarehouseController::class, 'destroy'])->name('warehouses.destroy');
+});
+
+Route::get('/locations/search', [LocationController::class, 'search']);
+Route::post('/warehouses/attach-location', [WarehouseController::class, 'attachLocation'])->name('supplier.warehouses.attach-location');
+
+
 
 Route::post('/products/{product}/attach-attributes', [ProductController::class, 'attachAttributes'])->name('products.attach-attributes');
 

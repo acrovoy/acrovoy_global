@@ -6,18 +6,27 @@
     {{-- Header --}}
     <div class="flex justify-between items-center">
         <div>
-            <h2 class="text-2xl font-semibold text-gray-900">Shipping Templates</h2>
+            <h2 class="text-2xl font-semibold text-gray-900">Shipping Center</h2>
             <p class="text-sm text-gray-500">
                 Manage all your shipping templates and assign countries, prices and delivery times
             </p>
         </div>
 
-        
+        <div class="flex items-center gap-3">
+            <a href="{{ route('supplier.warehouses.index') }}"
+               class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                Manage warehouses
+            </a>
 
-        <a href="{{ route('supplier.shipping-templates.create') }}"
+            <a href="{{ route('supplier.shipping-templates.create') }}"
                class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
                 + Add New Template
             </a>
+        </div>
+
+
+
+       
 
     </div>
 

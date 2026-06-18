@@ -200,4 +200,52 @@ class LocationController extends Controller
 
         return response()->json($locations);
     }
+
+    public function search(Request $request)
+{
+    $q = $request->get('q');
+
+    if (!$q || mb_strlen($q) < 3) {
+        return response()->json([]);
+    }
+
+    $locations = Location::with(['country', 'parent'])
+        ->whereHas('translations', function ($query) use ($q) {
+            $query->where('name', 'like', "%{$q}%");
+        })
+        ->orWhere('name', 'like', "%{$q}%")
+        ->limit(15)
+        ->get()
+        ->map(function ($location) {
+
+            return [
+                'id' => $location->id,
+                'name' => $this->formatLocationPath($location),
+            ];
+        });
+
+    return response()->json($locations);
+}
+
+
+private function formatLocationPath($location)
+{
+    $parts = [];
+
+    // 1. ЛОКАЦИЯ (самая нижняя)
+    $parts[] = $location->name;
+
+    // 2. РЕГИОН (parent)
+    if ($location->parent) {
+        $parts[] = $location->parent->name;
+    }
+
+    // 3. СТРАНА
+    if ($location->country) {
+        $parts[] = $location->country->name;
+    }
+
+    return implode(' / ', $parts);
+}
+
 }
