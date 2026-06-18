@@ -177,6 +177,7 @@
         Delivery Address For This RFQ
     </h3>
 </div>
+@if($isBuyer ?? false)
                 <div class="text-sm">
 
                     <div class="text-xs text-gray-500 uppercase tracking-wide">
@@ -189,12 +190,12 @@
                     </div>
 
                 </div>
-
+@endif
                 <div class="mt-3 grid grid-cols-[90px_1fr] gap-y-1 text-sm">
-
+@if($isBuyer ?? false)
                     <div class="text-gray-500">Street</div>
                     <div>{{ $rfq->deliveryAddress->street }}</div>
-
+@endif
                     <div class="text-gray-500">City</div>
                     <div>{{ $rfq->deliveryAddress->city }}</div>
 
@@ -203,19 +204,19 @@
 
                     <div class="text-gray-500">Country</div>
                     <div> {{ \App\Models\Country::find($rfq->deliveryAddress->country)?->name ?? '—' }}</div>
-
+@if($isBuyer ?? false)
                     <div class="text-gray-500">Phone</div>
                     <div>{{ $rfq->deliveryAddress->phone }}</div>
-
+@endif
                 </div>
             </div>
-
+@if($isBuyer ?? false)
             <button type="button"
                 onclick="openAddressDrawer()"
                 class="shrink-0 px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
                 Change Delivery Address and Contact
             </button>
-
+@endif
         </div>
 
     </div>
