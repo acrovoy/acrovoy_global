@@ -51,7 +51,9 @@ use App\Models\ProductVariantGroup;
 use App\Models\ProductVariantItem;
 use App\Models\Attribute;
 use App\Models\AttributeGroup;
+use App\Models\Warehouse;
 use App\Models\ProductAttributeValue;
+use App\Models\ProductWarehouseStock;
 
 use App\Models\Country;
 use App\Models\Language;
@@ -89,8 +91,16 @@ class ProductController extends Controller
             $request->only(['sort', 'status', 'user'])
         );
 
+        $warehouses = Warehouse::where('provider_id', $this->activeContext->id())
+        ->where('provider_type', $this->activeContext->type())
+        ->get();
+        
+
+        
+
         return view('dashboard.supplier.products', [
             'products' => $products,
+            'warehouses' => $warehouses,
             'sort' => $request->sort,
             'status' => $request->status,
             'userFilter' => $request->user,
@@ -884,31 +894,42 @@ class ProductController extends Controller
     }
 
 
-    public function updateStock(
-        Request $request,
-        Product $product,
+    public function updateStock(Request $request, Product $product)
+{
+    $request->validate([
+        'stocks' => ['required', 'array'],
+        'stocks.*' => ['nullable', 'integer', 'min:0'],
+    ]);
 
-    ) {
+    $ActiveContext = $this->activeContext;
 
-        $request->validate([
-            'stock' => ['required', 'integer', 'min:0'],
-        ]);
+    abort_if($product->supplier_id !== $ActiveContext->id(), 403);
 
-        $ActiveContext = $this->activeContext;
+    DB::transaction(function () use ($request, $product) {
 
+        foreach ($request->stocks as $warehouseId => $quantity) {
 
+            ProductWarehouseStock::updateOrCreate(
+                [
+                    'product_id' => $product->id,
+                    'warehouse_id' => $warehouseId,
+                ],
+                [
+                    'quantity' => (int) $quantity,
+                ]
+            );
+        }
+    });
 
-        abort_if($product->supplier_id !== $ActiveContext->id(), 403);
+    // пересчёт общего стока (если нужно вернуть в UI)
+    $totalStock = ProductWarehouseStock::where('product_id', $product->id)
+        ->sum('quantity');
 
-        $product->stock()->update([
-            'quantity' => $request->stock
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'stock' => $request->stock,
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'stock' => $totalStock,
+    ]);
+}
 
     public function destroy(Product $product, DeleteProductAction $action)
     {

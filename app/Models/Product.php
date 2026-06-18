@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Domain\Media\Models\Media;
 
+use App\Models\Warehouse;
+use App\Models\ProductWarehouseStock;
+
 class Product extends Model
 {
     use HasFactory;
@@ -42,6 +45,10 @@ class Product extends Model
             ]);
         });
     }
+
+    protected $appends = [
+    'warehouse_stocks'
+];
 
     public function category()
     {
@@ -136,10 +143,7 @@ public function supplierName(): ?string
         return $this->belongsTo(User::class);
     }
 
-    public function stocks()
-    {
-        return $this->hasMany(ProductStock::class);
-    }
+   
 
     public function shippingTemplates()
     {
@@ -339,8 +343,36 @@ public function supplierName(): ?string
     }
 
 
+public function warehouses()
+{
+    return $this->belongsToMany(
+        Warehouse::class,
+        'product_warehouse_stocks'
+    )
+    ->withPivot(['quantity', 'reserved_quantity'])
+    ->withTimestamps();
+}
 
+public function stocks()
+{
+    return $this->hasMany(ProductWarehouseStock::class);
+}
 
+public function getWarehouseStocksAttribute()
+{
+    return $this->warehouses->map(function ($warehouse) {
+        return [
+            'id' => $warehouse->id,
+            'name' => $warehouse->name,
+            'quantity' => $warehouse->pivot->quantity ?? 0,
+            'reserved_quantity' => $warehouse->pivot->reserved_quantity ?? 0,
+        ];
+    });
+}
 
+public function getTotalStockAttribute()
+{
+    return $this->warehouses->sum(fn ($w) => $w->pivot->quantity ?? 0);
+}
 
 }

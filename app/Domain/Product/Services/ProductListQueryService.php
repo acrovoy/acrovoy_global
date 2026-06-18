@@ -17,6 +17,9 @@ class ProductListQueryService
                 'category',
                 'images',
                 'priceTiers',
+                'warehouses' => function ($q) {
+        $q->withPivot('quantity');
+    },
             ])
             ->where('supplier_id', $supplierId)
             ->where('supplier_type', $supplierType);

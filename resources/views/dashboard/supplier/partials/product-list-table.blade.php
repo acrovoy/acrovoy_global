@@ -54,11 +54,12 @@
 
                     <td class="px-4 py-2">
                         <button class="stock-button text-blue-600 hover:underline"
-                                data-product-id="{{ $product->id }}"
-                                data-product-name="{{ $product->name }}"
-                                data-product-stock="{{ $product->stock->quantity ?? 0 }}">
-                            {{ $product->stock->quantity ?? 0 }}
-                        </button>
+        data-product-id="{{ $product->id }}"
+        data-product-name="{{ $product->name }}"
+        data-product-warehouses='@json($product->warehouses)'
+>
+    {{ $product->warehouses->sum(fn($w) => $w->pivot->quantity ?? 0) }}
+</button>
                     </td>
 
                     <td class="px-4 py-2">
@@ -106,33 +107,136 @@
 </div>
 
 {{-- Stock Drawer --}}
-<div id="stock-drawer-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50"></div>
-<div id="stock-drawer" class="fixed right-0 top-0 h-full w-96 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50 p-6">
-    <h3 class="text-xl font-bold mb-4">Edit Stock</h3>
-    <p class="mb-2" id="stock-product-name"></p>
-    <form id="stock-form">
+<div id="stock-drawer-overlay"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 transition-opacity">
+</div>
+
+<div id="stock-drawer"
+     class="fixed right-0 top-0 h-full w-[440px] bg-white shadow-2xl
+            transform translate-x-full transition-transform duration-300
+            z-50 flex flex-col">
+
+    {{-- Header --}}
+    <div class="px-6 py-5 border-b bg-gray-50">
+        <h3 class="text-lg font-semibold text-gray-900">
+            Stock management
+        </h3>
+
+        <p class="text-sm text-gray-500 mt-1" id="stock-product-name"></p>
+    </div>
+
+    {{-- Body --}}
+    <form id="stock-form" class="flex flex-col flex-1">
+
         <input type="hidden" name="product_id" id="stock-product-id">
-        <label class="block mb-2">Stock:</label>
-        <input type="number" name="stock" id="stock-input" class="w-full p-2 border rounded mb-4" min="0">
-        <div class="flex justify-end gap-2">
-            <button type="submit" class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">Save</button>
-            <button type="button" id="stock-cancel" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+
+        {{-- Warehouses --}}
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-3">
+
+            <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                Warehouses
+            </div>
+
+            <div id="warehouse-stock-list" class="space-y-3">
+                {{-- JS inject --}}
+            </div>
         </div>
+
+        {{-- Footer --}}
+        <div class="border-t bg-white px-6 py-4 flex items-center justify-between">
+
+            <div class="text-xs text-gray-400">
+                Changes apply immediately after saving
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button"
+                        id="stock-cancel"
+                        class="px-4 py-2 text-sm rounded-lg border border-gray-200
+                               text-gray-600 hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                               hover:bg-gray-800 transition shadow-sm">
+                    Save changes
+                </button>
+            </div>
+        </div>
+
     </form>
 </div>
 
 {{-- Price Drawer --}}
-<div id="price-drawer-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50"></div>
-<div id="price-drawer" class="fixed right-0 top-0 h-full w-96 bg-white shadow-lg transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto p-6">
-    <h3 class="text-xl font-bold mb-4">Edit Price Tiers</h3>
-    <div id="drawer-notification-block" class="mb-4"></div>
-    <form id="price-form">
-        <div id="drawer-price-tiers" class="space-y-3"></div>
-        <button type="button" onclick="addDrawerPriceTier()" class="text-sm mt-4 text-gray-500 hover:text-gray-700 flex items-center gap-1">+ Add price tier</button>
-        <div class="mt-4 flex justify-end gap-2">
-            <button type="submit" class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">Save</button>
-            <button type="button" id="price-cancel" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+<div id="price-drawer-overlay"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 transition-opacity">
+</div>
+
+<div id="price-drawer"
+     class="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl
+            transform translate-x-full transition-transform duration-300 z-50
+            flex flex-col">
+
+    {{-- Header --}}
+    <div class="px-6 py-5 border-b bg-gray-50">
+        <h3 class="text-lg font-semibold text-gray-900">
+            Price tiers
+        </h3>
+
+        <p class="text-sm text-gray-500 mt-1">
+            Configure quantity-based pricing
+        </p>
+    </div>
+
+    {{-- Body --}}
+    <form id="price-form" class="flex flex-col flex-1">
+
+        {{-- Notifications --}}
+        <div id="drawer-notification-block" class="px-6 pt-4"></div>
+
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+
+            <div class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                Tiers
+            </div>
+
+            <div id="drawer-price-tiers" class="space-y-3">
+                {{-- JS inject --}}
+            </div>
+
+            <button type="button"
+                    onclick="addDrawerPriceTier()"
+                    class="mt-2 text-sm text-gray-500 hover:text-gray-800
+                           flex items-center gap-1 transition">
+                + Add price tier
+            </button>
         </div>
+
+        {{-- Footer --}}
+        <div class="border-t bg-white px-6 py-4 flex items-center justify-between">
+
+            <div class="text-xs text-gray-400">
+                Changes apply after saving
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button"
+                        id="price-cancel"
+                        class="px-4 py-2 text-sm rounded-lg border border-gray-200
+                               text-gray-600 hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                               hover:bg-gray-800 transition shadow-sm">
+                    Save changes
+                </button>
+            </div>
+
+        </div>
+
     </form>
 </div>
 
@@ -143,30 +247,102 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     /* ===========================
-       STOCK DRAWER
+       STOCK DRAWER (WAREHOUSES)
     =========================== */
-    const stockDrawer = document.getElementById('stock-drawer');
+
+     const stockDrawer = document.getElementById('stock-drawer');
     const stockOverlay = document.getElementById('stock-drawer-overlay');
     const stockCancelBtn = document.getElementById('stock-cancel');
+
     const productNameEl = document.getElementById('stock-product-name');
     const productIdInput = document.getElementById('stock-product-id');
-    const stockInput = document.getElementById('stock-input');
+    const warehouseList = document.getElementById('warehouse-stock-list');
     const stockForm = document.getElementById('stock-form');
 
-    document.querySelectorAll('.stock-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const productId = btn.dataset.productId;
-            const productName = btn.dataset.productName ?? '';
-            const productStock = btn.dataset.productStock ?? 0;
+    const allWarehouses = @json($warehouses);
 
-            productNameEl.textContent = productName;
-            productIdInput.value = productId;
-            stockInput.value = productStock;
+    /* ===========================
+       OPEN
+    =========================== */
 
-            stockDrawer.classList.remove('translate-x-full');
-            stockOverlay.classList.remove('hidden');
-        });
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.stock-button');
+        if (!btn) return;
+
+        const productId = btn.dataset.productId;
+        const productName = btn.dataset.productName ?? '';
+
+        const productWarehouses = JSON.parse(btn.dataset.productWarehouses || '[]');
+
+        productNameEl.textContent = productName;
+        productIdInput.value = productId;
+
+        renderWarehouses(allWarehouses, productWarehouses);
+
+        openStockDrawer();
     });
+
+    /* ===========================
+       RENDER (MAIN FIX)
+    =========================== */
+
+    function renderWarehouses(allWarehouses, productWarehouses) {
+
+        warehouseList.innerHTML = '';
+
+        allWarehouses.forEach(wh => {
+
+            const match = productWarehouses.find(w => w.id === wh.id);
+
+            const qty = match?.pivot?.quantity ?? 0;
+
+            warehouseList.insertAdjacentHTML('beforeend', `
+    <div class="group flex items-center justify-between gap-4
+                px-4 py-3 rounded-lg border border-gray-200
+                bg-white hover:bg-gray-50 transition">
+
+        <div class="flex flex-col">
+            <span class="text-sm font-medium text-gray-900">
+                ${wh.name}
+            </span>
+
+            <span class="text-xs text-gray-400">
+                Stock quantity
+            </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+
+            <input
+                type="number"
+                name="stocks[${wh.id}]"
+                value="${qty}"
+                min="0"
+                class="w-24 px-3 py-1.5 text-sm text-right
+                       border border-gray-200 rounded-md
+                       bg-white text-gray-900
+                       focus:outline-none focus:ring-2 focus:ring-gray-900/10
+                       focus:border-gray-400
+                       transition"
+            />
+
+            <span class="text-xs text-gray-400">
+                pcs
+            </span>
+        </div>
+    </div>
+`);
+        });
+    }
+
+    /* ===========================
+       OPEN / CLOSE
+    =========================== */
+
+    function openStockDrawer() {
+        stockDrawer.classList.remove('translate-x-full');
+        stockOverlay.classList.remove('hidden');
+    }
 
     function closeStockDrawer() {
         stockDrawer.classList.add('translate-x-full');
@@ -176,10 +352,24 @@ document.addEventListener('DOMContentLoaded', function () {
     stockOverlay.addEventListener('click', closeStockDrawer);
     stockCancelBtn.addEventListener('click', closeStockDrawer);
 
-    stockForm.addEventListener('submit', function(e) {
+    /* ===========================
+       SUBMIT
+    =========================== */
+
+    stockForm.addEventListener('submit', function (e) {
         e.preventDefault();
+
         const productId = productIdInput.value;
-        const newStock = stockInput.value;
+
+        const formData = new FormData(stockForm);
+        const stocks = {};
+
+        for (const [key, value] of formData.entries()) {
+            if (key.startsWith('stocks[')) {
+                const warehouseId = key.match(/\[(\d+)\]/)[1];
+                stocks[warehouseId] = value === '' ? 0 : parseInt(value, 10);
+            }
+        }
 
         fetch(`/dashboard/supplier/products/${productId}/update-stock`, {
             method: 'POST',
@@ -188,13 +378,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({ stock: newStock })
+            body: JSON.stringify({ stocks })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                document.querySelector(`.stock-button[data-product-id="${productId}"]`).textContent = data.stock;
-                closeStockDrawer();
+                location.reload();
             } else {
                 alert(data.message || 'Failed to update stock');
             }
@@ -220,20 +409,35 @@ document.addEventListener('DOMContentLoaded', function () {
             const productId = btn.dataset.productId;
             const tiers = JSON.parse(btn.dataset.productPriceTiers || '[]');
 
-            if (tiers.length) {
-                tiers.forEach((tier, index) => {
-                    drawerTiers.insertAdjacentHTML('beforeend', `
-                        <div class="grid grid-cols-4 gap-4 mb-2 items-center" data-index="${index}">
-                            <input type="number" class="input p-2 border rounded text-xs" value="${tier.min_qty || ''}" placeholder="Min Qty">
-                            <input type="number" class="input p-2 border rounded text-xs" value="${tier.max_qty || ''}" placeholder="Max Qty">
-                            <input type="number" class="input p-2 border rounded text-xs" value="${tier.price || ''}" placeholder="Unit Price $">
-                            ${index === tiers.length - 1 ? '<button type="button" class="text-red-600 remove-tier">&times;</button>' : ''}
-                        </div>
-                    `);
-                });
-            } else {
-                addDrawerPriceTier();
-            }
+           if (tiers && tiers.length > 0) {
+    tiers.forEach((tier, index) => {
+        drawerTiers.insertAdjacentHTML('beforeend', `
+            <div class="grid grid-cols-4 gap-3 mb-2 items-center p-2 border rounded-lg bg-gray-50">
+                <input type="number"
+                       class="p-2 border rounded text-sm w-full"
+                       value="${tier.min_qty ?? ''}"
+                       placeholder="Min">
+
+                <input type="number"
+                       class="p-2 border rounded text-sm w-full"
+                       value="${tier.max_qty ?? ''}"
+                       placeholder="Max">
+
+                <input type="number"
+                       class="p-2 border rounded text-sm w-full"
+                       value="${tier.price ?? ''}"
+                       placeholder="Price">
+
+                ${index === tiers.length - 1 && tiers.length > 1
+                    ? '<button type="button" class="text-red-500 hover:text-red-700 text-lg remove-tier">×</button>'
+                    : ''
+                }
+            </div>
+        `);
+    });
+} else {
+    window.addDrawerPriceTier?.();
+}
 
             drawer.dataset.productId = productId;
             drawer.classList.remove('translate-x-full');
