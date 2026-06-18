@@ -288,52 +288,90 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderWarehouses(allWarehouses, productWarehouses) {
 
-        warehouseList.innerHTML = '';
+    warehouseList.innerHTML = '';
 
-        allWarehouses.forEach(wh => {
+    // EMPTY STATE
+    if (!allWarehouses || allWarehouses.length === 0) {
+        warehouseList.innerHTML = `
+            <div class="flex flex-col items-start gap-3 p-5 rounded-xl
+                        border border-gray-200 bg-gray-50">
 
-            const match = productWarehouses.find(w => w.id === wh.id);
+                <div class="flex items-center gap-2 text-gray-900 font-medium text-sm">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 9v2m0 4h.01M10.29 3.86l-8 14A2 2 0 004 21h16a2 2 0 001.71-3.14l-8-14a2 2 0 00-3.42 0z"/>
+                    </svg>
 
-            const qty = match?.pivot?.quantity ?? 0;
+                    No warehouses found
+                </div>
 
-            warehouseList.insertAdjacentHTML('beforeend', `
-    <div class="group flex items-center justify-between gap-4
-                px-4 py-3 rounded-lg border border-gray-200
-                bg-white hover:bg-gray-50 transition">
+                <p class="text-xs text-gray-500 leading-relaxed">
+                    Before you can manage stock, you need to create at least one warehouse.
+                </p>
 
-        <div class="flex flex-col">
-            <span class="text-sm font-medium text-gray-900">
-                ${wh.name}
-            </span>
+                <a href="{{ route('supplier.warehouses.index') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 text-sm
+                          bg-gray-900 text-white rounded-lg
+                          hover:bg-gray-800 transition shadow-sm">
 
-            <span class="text-xs text-gray-400">
-                Stock quantity
-            </span>
-        </div>
+                    Create warehouse
 
-        <div class="flex items-center gap-2">
-
-            <input
-                type="number"
-                name="stocks[${wh.id}]"
-                value="${qty}"
-                min="0"
-                class="w-24 px-3 py-1.5 text-sm text-right
-                       border border-gray-200 rounded-md
-                       bg-white text-gray-900
-                       focus:outline-none focus:ring-2 focus:ring-gray-900/10
-                       focus:border-gray-400
-                       transition"
-            />
-
-            <span class="text-xs text-gray-400">
-                pcs
-            </span>
-        </div>
-    </div>
-`);
-        });
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+        `;
+        return;
     }
+
+    // NORMAL STATE
+    allWarehouses.forEach(wh => {
+
+        const match = productWarehouses.find(w => w.id === wh.id);
+        const qty = match?.pivot?.quantity ?? 0;
+
+        warehouseList.insertAdjacentHTML('beforeend', `
+            <div class="group flex items-center justify-between gap-4
+                        px-4 py-3 rounded-lg border border-gray-200
+                        bg-white hover:bg-gray-50 transition">
+
+                <div class="flex flex-col">
+                    <span class="text-sm font-medium text-gray-900">
+                        ${wh.name}
+                    </span>
+
+                    <span class="text-xs text-gray-400">
+                        Stock quantity
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+
+                    <input
+                        type="number"
+                        name="stocks[${wh.id}]"
+                        value="${qty}"
+                        min="0"
+                        class="w-24 px-3 py-1.5 text-sm text-right
+                               border border-gray-200 rounded-md
+                               bg-white text-gray-900
+                               focus:outline-none focus:ring-2 focus:ring-gray-900/10
+                               focus:border-gray-400
+                               transition"
+                    />
+
+                    <span class="text-xs text-gray-400">
+                        pcs
+                    </span>
+                </div>
+            </div>
+        `);
+    });
+}
 
     /* ===========================
        OPEN / CLOSE

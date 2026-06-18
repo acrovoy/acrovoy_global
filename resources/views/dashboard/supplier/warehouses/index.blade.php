@@ -8,7 +8,7 @@
         </a>
 
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col">
 
 
     {{-- Header --}}
@@ -25,8 +25,18 @@
             
 
             <button onclick="openCreateWarehouseDrawer()"
-        class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
-    + Add New Warehouse
+        class="inline-flex items-center gap-2 mt-3 px-4 py-2
+           text-sm font-medium text-gray-700
+           bg-white border border-gray-200
+           rounded-lg
+           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
+
+           <span class="text-lg leading-none">+</span>
+    <span>Add New Warehouse</span>
+
+   
 </button>
 
         </div>
@@ -94,14 +104,16 @@
 
             @else
             <div>
-
+<button
+                onclick="openAttachLocationDrawer({{ $warehouse->id }})"
+                class="text-blue-500">
             @if($warehouse->location)
                 {{ $warehouse->location->name }} / 
             @endif
 
             {{ $warehouse->country?->name ?? '-' }}
 
-            
+            </button>
         </div>
 
         @endif
