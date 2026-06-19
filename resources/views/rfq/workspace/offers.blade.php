@@ -3,13 +3,13 @@
 @section('dashboard-content')
 
 {{-- BACK --}}
-    <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
+<a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
     class="text-sm text-gray-500 hover:text-gray-900 transition">
-    
-        ← Back to RFQ Overview
-    </a>
 
-    
+    ← Back to RFQ Overview
+</a>
+
+
 <x-alerts />
 
 
@@ -126,90 +126,77 @@
 
                         </div>
 
-                        <div class="font-medium mb-3">
+                        <div class="font-medium">
                             General conditions
                         </div>
-
-                        @foreach($rfq->attributeValues as $value)
-
-                            @include('rfq.workspace.components.supplier-offer', [
-                            'value' => $value,
-                            'itemsByAttribute' => $itemsByAttribute,
-                            'isReadonly' => true,
-                            'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
-                            ])
-
-                        @endforeach
-
-                    </div>
-
-                    {{-- ATTACHMENTS --}}
-                    <div class="border rounded-lg p-4 mb-6">
-
-                        <div class="font-medium mb-2">
-                            Attachments
-                        </div>
-
                         <div class="text-xs text-gray-500 mb-3">
                             Supplier uploaded files and technical documents
                         </div>
 
-                        <div class="flex items-center gap-3">
+                        @foreach($rfq->attributeValues as $value)
 
-                            <div class="w-12 h-12 border rounded flex items-center justify-center text-gray-400">
-                                📎
+                        @include('rfq.workspace.components.supplier-offer', [
+                        'value' => $value,
+                        'itemsByAttribute' => $itemsByAttribute,
+                        'isReadonly' => true,
+                        'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
+                        ])
+
+                        @endforeach
+
+
+
+                        {{-- ATTACHMENTS --}}
+
+                        <div class="font-medium">
+                            Attachments
+                        </div>
+                        <div class="text-xs text-gray-500 mb-3">
+                            Supplier uploaded files and technical documents
+                        </div>
+                        <div class="border rounded-lg p-4 mb-6 bg-gray-50">
+
+                            <div class="flex items-center gap-3">
+
+                                <div class="w-12 h-12 border rounded flex items-center justify-center text-gray-400">
+                                    +
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Delivery --}}
+                        <div class="font-medium">
+                            Delivery Service from Supplier
+                        </div>
+                        <div class="text-xs text-gray-500 mb-3">
+                            Supplier uploaded files and technical documents
+                        </div>
+
+                        <div class="border rounded-lg p-4 mb-6 bg-gray-50">
+
+
+
+                            <div class="flex items-center gap-3">
+
+
+
                             </div>
 
                         </div>
 
                     </div>
 
-                    {{-- DELIVERY --}}
-                    <div>
 
-                        <div class="font-medium mb-3">
-                            Delivery Services
-                        </div>
 
-                        <div class="flex gap-2 mb-4">
 
-                            <input
-                                type="text"
-                                value="Buenos Aires, Argentina"
-                                class="border p-2 rounded w-full bg-gray-50"
-                                readonly>
 
-                            <input
-                                type="text"
-                                value="Buenos Aires, Argentina"
-                                class="border p-2 rounded w-full bg-gray-50"
-                                readonly>
 
-                        </div>
 
-                        <div class="grid grid-cols-2 gap-4">
 
-                            @for($k = 0; $k < 2; $k++)
 
-                                <div class="border rounded-lg p-4">
-
-                                <div class="font-medium mb-1">
-                                    Delivery by Acrovoy
-                                </div>
-
-                                <div class="text-sm text-gray-500 mb-3">
-                                    Delivery handled by platform
-                                </div>
-
-                                <div class="bg-blue-100 text-blue-700 px-3 py-2 rounded w-fit">
-                                    Price: $0.00
-                                </div>
-
-                        </div>
-
-                        @endfor
-
-                    </div>
 
                 </div>
 
@@ -219,14 +206,12 @@
 
     </div>
 
-</div>
+    {{-- RIGHT SIDEBAR --}}
+    <div class="col-span-4">
 
-{{-- RIGHT SIDEBAR --}}
-<div class="col-span-4">
+        @include('rfq.partials.buyer-offer-history-panel')
 
-    @include('rfq.partials.buyer-offer-history-panel')
-
-</div>
+    </div>
 
 </div>
 

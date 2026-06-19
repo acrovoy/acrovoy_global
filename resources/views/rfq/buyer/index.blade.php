@@ -43,7 +43,7 @@
             
             <th class="px-4 py-2 text-left font-medium">Deadline</th>
             <th class="px-4 py-2 text-left font-medium">Status</th>
-            <th class="px-4 py-2 text-right font-medium">Actions</th>
+            
         </tr>
         </thead>
 
@@ -51,7 +51,8 @@
         <tbody class="divide-y divide-gray-100">
 
         @foreach($rfqs as $rfq)
-            <tr class="hover:bg-gray-50 transition">
+            <tr class="hover:bg-gray-50 transition cursor-pointer"
+                onclick="window.location='{{ route('rfqs.workspace', $rfq->id) }}'">
 
                 {{-- ID --}}
                 <td class="px-4 py-2 font-mono text-gray-800">
@@ -100,15 +101,7 @@
 
                 </td>
 
-                {{-- ACTIONS --}}
-                <td class="px-4 py-2 text-right space-x-2">
-
-                    <a href="{{ route('rfqs.workspace', $rfq->id) }}"
-                       class="text-blue-600 hover:underline text-sm">
-                        Open Workspace
-                    </a>
-
-                </td>
+                
 
             </tr>
         @endforeach

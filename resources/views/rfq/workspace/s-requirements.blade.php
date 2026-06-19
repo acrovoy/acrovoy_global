@@ -28,10 +28,10 @@
                             {{ $rfq->title }}
                             <div class="text-red-500 text-xs">Awaiting your reply for supplier's offer</div>
                         </div>
-                    
-                        
+
+
                     </div>
-                     
+
                 </div>
 
                 <div class="p-5 bg-white">
@@ -147,23 +147,23 @@
                             <div class="uppercase"> Supplier Proposal
                             </div>
 
-                             {{-- FINAL CHECKBOX --}}
-        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            {{-- FINAL CHECKBOX --}}
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
 
-            <input
-                type="checkbox"
-                name="is_final"
-                value="1"
-                @checked($offerVersion?->is_final)
-                class="w-4 h-4 rounded border-gray-300
-                       text-gray-900 focus:ring-0 focus:outline-none"
-            >
+                                <input
+                                    type="checkbox"
+                                    name="is_final"
+                                    value="1"
+                                    @checked($offerVersion?->is_final)
+                                class="w-4 h-4 rounded border-gray-300
+                                text-gray-900 focus:ring-0 focus:outline-none"
+                                >
 
-            <span class="text-[11px] text-gray-600">
-                Mark as Final Offer
-            </span>
+                                <span class="text-[11px] text-gray-600">
+                                    Mark as Final Offer
+                                </span>
 
-        </label>
+                            </label>
 
 
                         </div>
@@ -186,75 +186,59 @@
 
                         @endforeach
 
-                    </div>
 
-                    {{-- ATTACHMENTS --}}
-                    <div class="border rounded-lg p-4 mb-6">
 
-                        <div class="font-medium mb-2">Attachments</div>
 
-                        <div class="text-xs text-gray-500 mb-3">
-                            Upload relevant files including technical drawings...
+                        {{-- ATTACHMENTS --}}
+
+                        <div class="font-medium">
+                            Attachments
                         </div>
+                        <div class="text-xs text-gray-500 mb-3">
+                            Supplier uploaded files and technical documents
+                        </div>
+                        <div class="border rounded-lg p-4 mb-6 bg-gray-50 hover:bg-white transition">
 
-                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3">
 
-                            <div class="w-12 h-12 border-dashed border rounded flex items-center justify-center text-gray-400">
-                                +
+                                <div class="w-12 h-12 border rounded flex items-center justify-center text-gray-400">
+                                    +
+                                </div>
+
                             </div>
 
                         </div>
 
-                    </div>
 
-                    {{-- DELIVERY --}}
-                    <div>
+                        {{-- Delivery --}}
+                        <div class="font-medium">
+                            Delivery Service
+                        </div>
+                        <div class="text-xs text-gray-500 mb-3">
+                            Supplier uploaded files and technical documents
+                        </div>
 
-                        <div class="font-medium mb-3">Delivery Services</div>
+                        <div class="border rounded-lg p-4 mb-6 bg-gray-50 hover:bg-white transition">
 
-                        <div class="flex gap-2 mb-4">
 
-                            <input
-                                type="text"
-                                name="delivery[from]"
-                                data-autosave
-                                data-requirement-id="delivery_from"
-                                value="Buenos Aires, Argentina"
-                                class="border p-2 rounded w-full">
 
-                            <input
-                                type="text"
-                                name="delivery[to]"
-                                data-autosave
-                                data-requirement-id="delivery_to"
-                                value="Buenos Aires, Argentina"
-                                class="border p-2 rounded w-full">
+                            <div class="flex items-center gap-3">
+
+
+
+                            </div>
 
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
 
-                            @for($k = 0; $k < 2; $k++)
 
-                                <div class="border rounded-lg p-4">
 
-                                <div class="font-medium mb-1">
-                                    Delivery by Acrovoy
-                                </div>
-
-                                <div class="text-sm text-gray-500 mb-3">
-                                    Delivery handled by platform
-                                </div>
-
-                                <div class="bg-blue-100 text-blue-700 px-3 py-2 rounded w-fit">
-                                    Price: $0.00
-                                </div>
-
-                        </div>
-
-                        @endfor
 
                     </div>
+
+                   
+
+                    
 
                 </div>
 
@@ -264,14 +248,12 @@
 
     </div>
 
-</div>
+    {{-- RIGHT SIDEBAR --}}
+    <div class="col-span-4">
 
-{{-- RIGHT SIDEBAR --}}
-<div class="col-span-4">
+        @include('rfq.partials.offer-history-panel')
 
-    @include('rfq.partials.offer-history-panel')
-
-</div>
+    </div>
 
 </div>
 

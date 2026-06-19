@@ -178,7 +178,18 @@ class RfqController extends Controller
             $rfq->loadMissing([
                 'attributeValues.attribute.options',
                 'attributeValues.options',
+                'hiddenAttributes',
             ]);
+
+            $hiddenIds = $rfq->hiddenAttributes->pluck('id')->toArray();
+
+            $rfq->setRelation(
+                'attributeValues',
+                $rfq->attributeValues->reject(function ($value) use ($hiddenIds) {
+                    return in_array($value->attribute_id, $hiddenIds);
+                })
+            );
+
 
             $supplier = $this->context->supplier();
 

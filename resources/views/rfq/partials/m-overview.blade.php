@@ -173,11 +173,11 @@
 
             <div>
                 <div class="mb-2">
-    <h3 class="text-sm font-semibold text-gray-900 tracking-wide">
-        Delivery Address For This RFQ
-    </h3>
-</div>
-@if($isBuyer ?? false)
+                    <h3 class="text-sm font-semibold text-gray-900 tracking-wide">
+                        Delivery Address For This RFQ
+                    </h3>
+                </div>
+                @if($isBuyer ?? false)
                 <div class="text-sm">
 
                     <div class="text-xs text-gray-500 uppercase tracking-wide">
@@ -190,12 +190,12 @@
                     </div>
 
                 </div>
-@endif
+                @endif
                 <div class="mt-3 grid grid-cols-[90px_1fr] gap-y-1 text-sm">
-@if($isBuyer ?? false)
+                    @if($isBuyer ?? false)
                     <div class="text-gray-500">Street</div>
                     <div>{{ $rfq->deliveryAddress->street }}</div>
-@endif
+                    @endif
                     <div class="text-gray-500">City</div>
                     <div>{{ $rfq->deliveryAddress->city }}</div>
 
@@ -204,20 +204,79 @@
 
                     <div class="text-gray-500">Country</div>
                     <div> {{ \App\Models\Country::find($rfq->deliveryAddress->country)?->name ?? '—' }}</div>
-@if($isBuyer ?? false)
+                    @if($isBuyer ?? false)
                     <div class="text-gray-500">Phone</div>
                     <div>{{ $rfq->deliveryAddress->phone }}</div>
-@endif
+                    @endif
                 </div>
             </div>
-@if($isBuyer ?? false)
+            @if($isBuyer ?? false)
             <button type="button"
                 onclick="openAddressDrawer()"
-                class="shrink-0 px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
+                class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition">
                 Change Delivery Address and Contact
             </button>
-@endif
+            
+            @endif
         </div>
+
+
+@if($isBuyer ?? false)
+@else
+@if($rfq->deliveryAddress)
+
+<div class="mb-3 p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm mt-3">
+
+    <div class="flex items-start justify-between">
+
+        {{-- текущий код адреса --}}
+
+    </div>
+
+    {{-- SHIPPING TEMPLATES --}}
+    <div class="">
+
+        <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-semibold text-gray-900">
+                Available Shipping Templates 
+            </h4>
+            <div class="text-gray-400 text-[12px]">Optional setup for suppliers offering delivery services.</div>
+        </div>
+
+        @if(!$rfq->deliveryAddress)
+            <div class="space-y-2">
+
+                
+
+            </div>
+        @else
+
+            <div class="rounded-lg border border-dashed border-gray-300 bg-white p-4 text-center">
+
+                <div class="text-sm text-gray-500">
+                    No matching shipping templates found for this destination.
+                </div>
+
+                @if(!$isBuyer)
+                    <div class="mt-2">
+                        <a href="{{ route('supplier.shipping-templates.create') }}"
+                           class="text-sm text-blue-600 hover:underline">
+                            Create Shipping Template for this Destination
+                        </a>
+                    </div>
+                @endif
+
+            </div>
+
+        @endif
+
+    </div>
+
+</div>
+
+@endif
+@endif
+
 
     </div>
 
@@ -246,7 +305,7 @@
 
 
 
-    
+
 </div>
 
 <div id="rfq-drawer-overlay" class="fixed inset-0 bg-black/40 hidden z-50"></div>
