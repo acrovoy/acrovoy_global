@@ -155,11 +155,7 @@ public function supplierName(): ?string
         return $this->belongsTo(Country::class);
     }
 
-    public function stock()
-    {
-        return $this->hasOne(ProductStock::class);
-    }
-
+    
     // Отзывы на этот продукт
     public function reviews()
     {
