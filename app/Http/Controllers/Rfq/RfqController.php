@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\UserAddress;
 use App\Models\Country;
+use App\Models\ShippingTemplate;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
 use App\Models\Supplier;
 use App\Models\Attribute;
@@ -534,6 +535,25 @@ class RfqController extends Controller
         |--------------------------------------------------------------------------
         */
 
+ 
+
+    $addressa = UserAddress::where('id', $rfq->delivery_address_id)
+                ->first();
+
+            $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                    ->where('parent_id', $addressa->region)
+                    ->first();
+            $cityId = $eexistingLocation->id;
+        
+$shippingTemplates = ShippingTemplate::with('translations', 'locations')
+    ->where('provider_type', $ownerType)
+    ->where('provider_id', $ownerId)
+    ->whereHas('locations', function ($q) use ($cityId) {
+        $q->where('locations.id', $cityId);
+    })
+    ->get();
+
+
         $countries = Country::withCurrentTranslation()
             ->orderBy('name')->get();
 
@@ -598,6 +618,7 @@ class RfqController extends Controller
             'currentSavedAddress' => $currentSavedAddress,
             'currentAddressId' => $currentAddressId,
             'countries' => $countries,
+            'shippingTemplates' => $shippingTemplates,
             'selectedCategoryIds' => $selectedCategoryIds,
             'offerVersion' => $offerVersion,
             'isReadonly' => $isReadonly,

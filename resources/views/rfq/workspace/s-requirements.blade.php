@@ -2,7 +2,13 @@
 
 @section('dashboard-content')
 
-<div class="grid grid-cols-12 gap-6">
+{{-- BACK --}}
+    <a href="{{ route('supplier.rfqs.index') }}"
+        class="text-sm text-gray-400 hover:text-gray-700 transition">
+        ← Back to RFQs
+    </a>
+
+<div class="grid grid-cols-12 gap-6 mt-3">
 
     {{-- LEFT BIG BLOCK --}}
     <div class="col-span-8">

@@ -225,7 +225,7 @@
 @else
 @if($rfq->deliveryAddress)
 
-<div class="mb-3 p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm mt-3">
+<div class="mb-3 p-3 border border-gray-200 rounded-lg bg-gray-100 text-sm mt-3">
 
     <div class="flex items-start justify-between">
 
@@ -243,10 +243,76 @@
             <div class="text-gray-400 text-[12px]">Optional setup for suppliers offering delivery services.</div>
         </div>
 
-        @if(!$rfq->deliveryAddress)
+        @if($shippingTemplates->count())
             <div class="space-y-2">
 
-                
+                @foreach($shippingTemplates as $template)
+
+    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
+
+        <div class="flex items-start justify-between gap-4">
+
+            <div class="flex-1">
+
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Shipping Template
+                    </span>
+
+                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
+                        {{ $template->title }}
+                    </span>
+                </div>
+
+                @if(!empty($template->description))
+                    <p class="text-gray-700 text-sm">
+                        {{ $template->description }}
+                    </p>
+                @endif
+
+                <div class="mt-3 flex flex-wrap gap-2">
+
+                    @if(!empty($template->delivery_time))
+                        <div class="inline-flex items-center gap-2
+                            bg-blue-50 border border-blue-100
+                            px-3 py-1.5 rounded-lg">
+
+                            <span class="text-sm text-blue-900 font-medium">
+                                Delivery Time
+                            </span>
+
+                            <span class="font-semibold text-blue-900">
+                                {{ $template->delivery_time }} days
+                            </span>
+
+                        </div>
+                    @endif
+
+                    @if(!empty($template->price))
+                        <div class="inline-flex items-center gap-2
+                            bg-green-50 border border-green-100
+                            px-3 py-1.5 rounded-lg">
+
+                            <span class="text-sm text-green-900 font-medium">
+                                Price
+                            </span>
+
+                            <span class="font-semibold text-green-900">
+                                ${{ number_format($template->price, 2) }}
+                            </span>
+
+                        </div>
+                    @endif
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+@endforeach
 
             </div>
         @else
