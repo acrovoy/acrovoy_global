@@ -41,7 +41,7 @@ class Warehouse extends Model
     // Локация (город/регион)
     public function location()
     {
-        return $this->belongsTo(Location::class);
+        return $this->belongsTo(Location::class, 'location_id');
     }
 
     /*

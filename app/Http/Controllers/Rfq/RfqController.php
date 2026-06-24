@@ -11,6 +11,7 @@ use App\Models\UserAddress;
 use App\Models\Country;
 use App\Models\ShippingTemplate;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
+use App\Domain\RFQ\Enums\RfqStatus;
 use App\Models\Supplier;
 use App\Models\Attribute;
 use App\Models\AttributeGroup;
@@ -63,11 +64,18 @@ class RfqController extends Controller
         */
 
         $rfq->loadMissing([
+            'offers' => function ($q) {
+        $q->whereHas('latestVersion', function ($version) {
+            $version->where('status', 'submitted');
+        });
+    },
             'participants.participant',
             'visibilityCategories',
             'deliveryAddress.regionLocation',
             'deliveryAddress.country',
         ]);
+
+       
 
         /*
         |--------------------------------------------------------------------------
@@ -173,6 +181,11 @@ class RfqController extends Controller
         $isReadonly = true;
         $isCounter = false;
         $supplierOfferVersionToCounter = null;
+        $shippingTemplates = collect();
+        $requirementsCompleted = null;
+        $participantsCompleted = null;
+        $deliveryCompleted = null;
+        $canPublish = null;
 
         if ($activeTab === 's-requirements') {
 
@@ -359,11 +372,47 @@ class RfqController extends Controller
 
         if ($activeTab === 'offers') {
 
+
+
             $rfq->loadMissing([
                 'offers.participant',
                 'offers.latestVersion',
                 'offers.versions.items.options',
             ]);
+
+            $addressa = UserAddress::find($rfq->delivery_address_id);
+
+            if (!$addressa) {
+                $cityId = null;
+            } else {
+
+                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                    ->where('parent_id', $addressa->region)
+                    ->first();
+
+                $cityId = $eexistingLocation?->id;
+            }
+
+            $supplierOffer = $rfq->offers->first();
+            $supplierType = $supplierOffer->participant_type;
+            $supplierId = $supplierOffer->participant_id;
+
+            $shippingTemplates = collect();
+
+            if ($cityId) {
+                $shippingTemplates = \App\Models\ShippingTemplate::with([
+                    'translations',
+                    'warehouse',
+                    'warehouse.location.parent',
+                ])
+                    ->where('is_active', 1)
+                    ->where('provider_type', $supplierType)
+                    ->where('provider_id', $supplierId)
+                    ->whereHas('locations', function ($q) use ($cityId) {
+                        $q->where('locations.id', $cityId);
+                    })
+                    ->get();
+            }
 
             $offers = $rfq->offers;
 
@@ -498,6 +547,7 @@ class RfqController extends Controller
                             'rfq' => $rfq->id,
                             'offer' => $offer->id,
                             'version' => $existingDraftCounter->id,
+                            'shippingTemplates' => $shippingTemplates,
                             'counterVersion' => $counterVersion,
                             'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
                             'supplierOfferVersion' => $supplierOfferVersion,
@@ -523,10 +573,54 @@ class RfqController extends Controller
 
         if ($activeTab === 'overview') {
 
+
+        
             $rfq->loadMissing([
                 'attributeValues.attribute.options.translations',
                 'attributeValues.options',
             ]);
+
+            $addressa = UserAddress::find($rfq->delivery_address_id);
+
+            if (!$addressa) {
+                $cityId = null;
+            } else {
+
+                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                    ->where('parent_id', $addressa->region)
+                    ->first();
+
+                $cityId = $eexistingLocation?->id;
+            }
+
+            $shippingTemplates = ShippingTemplate::with('translations', 'locations')
+                ->where('provider_type', $ownerType)
+                ->where('provider_id', $ownerId)
+                ->where('is_active', true)
+                ->whereHas('locations', function ($q) use ($cityId) {
+                    $q->where('locations.id', $cityId);
+                })
+                ->get();
+
+
+            // Флаги заполененности
+            $requirementsCompleted = $rfq->attributeValues()->exists();
+
+            $participantsCompleted = $rfq->participants()
+                ->whereIn('status', ['invited', 'accepted'])
+                ->exists();
+
+            $deliveryCompleted = !empty($rfq->delivery_address_id);
+
+            $canPublish =
+                $requirementsCompleted &&
+                $participantsCompleted &&
+                $deliveryCompleted;
+            // Флаги заполененности
+
+
+
+
         }
 
         /*
@@ -535,23 +629,9 @@ class RfqController extends Controller
         |--------------------------------------------------------------------------
         */
 
- 
 
-    $addressa = UserAddress::where('id', $rfq->delivery_address_id)
-                ->first();
 
-            $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
-                    ->where('parent_id', $addressa->region)
-                    ->first();
-            $cityId = $eexistingLocation->id;
-        
-$shippingTemplates = ShippingTemplate::with('translations', 'locations')
-    ->where('provider_type', $ownerType)
-    ->where('provider_id', $ownerId)
-    ->whereHas('locations', function ($q) use ($cityId) {
-        $q->where('locations.id', $cityId);
-    })
-    ->get();
+
 
 
         $countries = Country::withCurrentTranslation()
@@ -654,6 +734,11 @@ $shippingTemplates = ShippingTemplate::with('translations', 'locations')
 
             'isBuyer' => $this->isBuyer($rfq),
             'isSupplier' => $this->isSupplierParticipant($rfq),
+            // Флаги заполененности
+            'requirementsCompleted' => $requirementsCompleted,
+            'participantsCompleted' => $participantsCompleted,
+            'deliveryCompleted' => $deliveryCompleted,
+            'canPublish' => $canPublish,
         ]);
     }
 
@@ -769,5 +854,46 @@ $shippingTemplates = ShippingTemplate::with('translations', 'locations')
         ]);
 
         return back()->with('success', 'Address updated');
+    }
+
+    public function publish(Rfq $rfq)
+    {
+        // безопасность: публикуем только draft
+        if (!$rfq->status->canPublish()) {
+            return back()->with('error', 'RFQ cannot be published.');
+        }
+
+        // можно добавить финальную проверку readiness
+        $completed =
+            $rfq->attributeValues()->exists() &&
+            $rfq->participants()->exists() &&
+            !empty($rfq->delivery_address_id);
+
+        if (!$completed) {
+            return back()->with('error', 'RFQ is not complete.');
+        }
+
+        $rfq->update([
+            'status' => RfqStatus::PUBLISHED,
+            'published_at' => now(),
+        ]);
+
+        return back()->with('success', 'RFQ published successfully.');
+    }
+
+
+    public function close(Rfq $rfq)
+    {
+        // можно закрывать только опубликованные / в переговорах
+        if (!$rfq->status->canClose()) {
+            return back()->with('error', 'RFQ cannot be closed in current status.');
+        }
+
+        $rfq->update([
+            'status' => RfqStatus::CLOSED,
+            'closed_at' => now(),
+        ]);
+
+        return back()->with('success', 'RFQ closed successfully.');
     }
 }

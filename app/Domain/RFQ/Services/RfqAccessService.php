@@ -3,9 +3,11 @@
 namespace App\Domain\RFQ\Services;
 
 use App\Domain\RFQ\Models\Rfq;
+use App\Domain\RFQ\Enums\RfqStatus;
 use App\Domain\RFQ\Models\RfqParticipant;
 use App\Services\Company\ActiveContextService;
 use App\Models\Supplier;
+use App\Domain\RFQ\Enums\RfqVisibilityType;
 
 class RfqAccessService
 {
@@ -31,7 +33,7 @@ class RfqAccessService
     }
 
     // 3. public
-    if ($rfq->visibility_type === 'public') {
+    if ($rfq->visibility_type === 'platform') {
         return true;
     }
 
@@ -48,33 +50,44 @@ class RfqAccessService
      */
    public function getAvailableRfqsForSupplier()
 {
-    if (!$this->context->isCompany()) {
-        return collect();
-    }
+
+
+    
 
     $supplierId = $this->context->supplierId();
+    $supplierType = $this->context->type();
 
-    if (!$supplierId) {
-        return collect();
-    }
+       
 
     return Rfq::query()
-        ->where('visibility_type', 'public')
-        ->orWhereHas('participants', function ($q) use ($supplierId) {
+    ->where('status', RfqStatus::PUBLISHED)
+    ->where(function ($q) use ($supplierId, $supplierType) {
 
-            $q->where('participant_type', Supplier::class)
+        $q->whereIn('visibility_type', [
+            RfqVisibilityType::OPEN,
+            RfqVisibilityType::PLATFORM,
+        ])
+
+        ->orWhereHas('participants', function ($q) use ($supplierId, $supplierType) {
+
+            $q->where('participant_type', $supplierType)
               ->where('participant_id', $supplierId)
               ->whereIn('status', ['invited', 'accepted']);
-        })
-        ->latest()
-        ->get();
+        });
+
+    })
+    ->latest()
+    ->get();
 }
+
+
     /**
      * CHECK PARTICIPATION
      */
     private function isSupplierParticipant(Rfq $rfq): bool
 {
     $supplierId = $this->context->supplierId();
+    $supplierType = $this->context->type();
 
     if (!$supplierId) {
         return false;
@@ -82,7 +95,7 @@ class RfqAccessService
 
     return RfqParticipant::query()
         ->where('rfq_id', $rfq->id)
-        ->where('participant_type', Supplier::class)
+        ->where('participant_type', $supplierType)
         ->where('participant_id', $supplierId)
         ->whereIn('status', ['invited', 'accepted'])
         ->exists();

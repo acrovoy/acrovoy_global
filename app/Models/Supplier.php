@@ -108,9 +108,14 @@ class Supplier extends Model
     }
 
     public function shippingTemplates()
-    {
-        return $this->hasMany(\App\Models\ShippingTemplate::class, 'manufacturer_id');
-    }
+{
+    return $this->morphMany(
+        ShippingTemplate::class,
+        'provider',
+        'provider_type',
+        'provider_id'
+    )->where('is_active', 1);
+}
 
     public function supplierTypes()
     {
@@ -224,5 +229,7 @@ public function users()
 {
     return $this->morphMany(CompanyUser::class, 'company');
 }
+
+
 
 }

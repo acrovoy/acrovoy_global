@@ -12,9 +12,11 @@ class ShippingTemplate extends Model
 {
     use HasFactory;
 
+
     protected $fillable = [
         'provider_id',
         'provider_type',
+        'warehouse_id',
         'created_by',
         'updated_by',
         'title',
@@ -22,18 +24,21 @@ class ShippingTemplate extends Model
         'price',
         'price_unit',
         'delivery_time',
+        'is_active',
     ];
 
     // Связь с пользователем
-    public function manufacturer()
-    {
-        return $this->belongsTo(Supplier::class, 'manufacturer_id');
-    }
-
+    
 
     public function locations()
 {
-    return $this->belongsToMany(Location::class, 'shipping_template_location');
+    return $this->belongsToMany(Location::class, 'shipping_template_location')
+        ->wherePivot('location_type', 'delivery');
+}
+
+public function warehouse()
+{
+    return $this->belongsTo(Warehouse::class, 'warehouse_id');
 }
 
 public function translations()
@@ -70,6 +75,11 @@ public function getPriceUnitLabelAttribute()
         'per_cubic_meter' => 'per m³',
         'flat' => 'flat rate',
     };
+}
+
+public function provider()
+{
+    return $this->morphTo();
 }
 
 }

@@ -1,4 +1,8 @@
 
+@php
+    $isClosed = $rfq->status->isClosed();
+@endphp
+
 {{-- BACK --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
     class="text-sm text-gray-500 hover:text-gray-900 transition">
@@ -17,6 +21,7 @@
     {{-- HEADER --}}
     <div class="">
 
+    
         <div class="text-sm text-gray-500">
             RFQ Participants
         </div>
@@ -24,6 +29,7 @@
         <div class="text-lg font-semibold text-gray-900">
             Manage suppliers invited to this RFQ
         </div>
+        
 
         <div class="text-xs text-gray-500 mt-1">
             Invite suppliers and track their participation status
@@ -31,13 +37,29 @@
 
     </div>
 
+    @if($isClosed)
+
+<div class="mt-4 mb-4 p-3 rounded-lg border border-red-200 bg-red-50">
+
+    <div class="text-sm font-medium text-red-700">
+        RFQ Closed
+    </div>
+
+    <div class="text-xs text-red-600 mt-1">
+        Participants, visibility settings and invitations are locked.
+    </div>
+
+</div>
+
+@endif
+
 
     <div class="bg-white p-4 mb-3">
 
         <div class="font-semibold mb-3">
             Visibility
         </div>
-
+@if(!$isClosed)
         <form method="POST"
             action="{{ route('buyer.rfq.visibility.update', $rfq) }}">
 
@@ -71,16 +93,37 @@
             </select>
 
         </form>
+        @else
+
+<div class="w-full border border-gray-200 bg-gray-100 rounded px-3 py-2 text-sm text-gray-600">
+    {{ $rfq->visibility_type->label() }}
+</div>
+
+@endif
 
     </div>
 
-
+@if(!$isClosed)
    @include('rfq.workspace.components.participants-invite-panel', [
     'rfq' => $rfq,
     'suppliers' => $suppliers,
     'visibility' => $rfq->visibility_type->value,
 ])
+@else
 
+<div class="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+
+    <div class="text-sm font-medium text-gray-700">
+        RFQ Closed
+    </div>
+
+    <div class="text-xs text-gray-500 mt-1">
+        New suppliers can no longer be invited.
+    </div>
+
+</div>
+
+@endif
     {{-- LIST --}}
     <div class="space-y-3 mt-4">
 
@@ -115,7 +158,7 @@
     <span class="{{ $participant->status->badge() }}">
     {{ $participant->status->label() }}
 </span>
-
+@if(!$isClosed)
     <form
     method="POST"
     action="{{ route('buyer.rfq.participants.remove', [$rfq, $participant]) }}"
@@ -130,7 +173,7 @@
         Remove
     </button>
 </form>
-
+@endif
 </div>
 
         </div>

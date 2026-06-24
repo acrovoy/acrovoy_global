@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Buyer;
 use App\Http\Controllers\Controller;
 use App\Domain\RFQ\Models\Rfq;
 
+use App\Domain\RFQ\Enums\RfqStatus;
+
 use Illuminate\Http\Request;
 
 use App\Domain\RFQ\DTO\CreateRfqData;
@@ -139,6 +141,13 @@ class BuyerRfqController extends Controller
 )
 {
     $this->authorizeAccess($rfq, $context);
+
+
+    if ($rfq->status->isPublished()) {
+
+    return back()->with('error', 'Published RFQ cannot be edited.');
+}
+
 
     $dto = UpdateRfqData::fromArray(
         $request->validated()

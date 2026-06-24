@@ -169,4 +169,14 @@ public function deliveryAddress()
     return $this->belongsTo(UserAddress::class, 'delivery_address_id');
 }
 
+public function isPublished(): bool
+{
+    return $this->status === RfqStatus::PUBLISHED;
+}
+
+public function isLocked(): bool
+{
+    return $this->status !== RfqStatus::DRAFT;
+}
+
 }

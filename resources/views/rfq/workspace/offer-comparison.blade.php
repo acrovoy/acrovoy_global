@@ -15,42 +15,42 @@
 
 
 {{-- BACK --}}
-    <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
+<a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
     class="text-sm text-gray-500 hover:text-gray-900 transition">
-    
-        ← Back to RFQ Overview
-    </a>
 
-    
+    ← Back to RFQ Overview
+</a>
+
+
 <x-alerts />
 
 
 <div class="mb-6">
 
-    
 
-        <div class="flex items-start justify-between gap-6">
 
-            {{-- LEFT --}}
-            <div class="flex-1 min-w-0">
+    <div class="flex items-start justify-between gap-6">
 
-                <!-- <div class="text-xs text-gray-500 mb-1">
+        {{-- LEFT --}}
+        <div class="flex-1 min-w-0">
+
+            <!-- <div class="text-xs text-gray-500 mb-1">
                     RFQ Comparison
                 </div> -->
 
-                <h1 class="text-xl font-semibold text-gray-900">
-                    Supplier Offers Comparison
-                </h1>
+            <h1 class="text-xl font-semibold text-gray-900">
+                Supplier Offers Comparison
+            </h1>
 
-                <div class="text-sm text-gray-500 mt-1">
-                    Compare prices, terms and supplier responses
-                </div>
-
+            <div class="text-sm text-gray-500 mt-1">
+                Compare prices, terms and supplier responses
             </div>
 
         </div>
 
-    
+    </div>
+
+
 
 </div>
 
@@ -158,74 +158,74 @@
                     {{-- REQUIREMENT --}}
                     <td class="sticky left-0 z-10 px-4 py-4 border-r bg-gray-50/60 backdrop-blur-sm w-[100px] min-w-[100px]">
 
-    {{-- ATTRIBUTE NAME --}}
-    <div class="text-sm font-semibold text-gray-900 leading-snug">
-        {{ $attribute->name }}
-    </div>
+                        {{-- ATTRIBUTE NAME --}}
+                        <div class="text-sm font-semibold text-gray-900 leading-snug">
+                            {{ $attribute->name }}
+                        </div>
 
-    {{-- VALUE + OPTIONS --}}
-    <div class="mt-2 text-xs text-gray-600 space-y-2">
+                        {{-- VALUE + OPTIONS --}}
+                        <div class="mt-2 text-xs text-gray-600 space-y-2">
 
-        {{-- VALUE --}}
-        <div class="text-gray-700 font-medium">
-            {{ $value->value_text
+                            {{-- VALUE --}}
+                            <div class="text-gray-700 font-medium">
+                                {{ $value->value_text
                 ?? $value->value_number
                 ?? $value->value_date
                 ?? '—' }}
-        </div>
+                            </div>
 
-        {{-- SELECT --}}
-        @if($attribute->type === 'select')
+                            {{-- SELECT --}}
+                            @if($attribute->type === 'select')
 
-            <div class="flex flex-wrap gap-1">
+                            <div class="flex flex-wrap gap-1">
 
-                @foreach($attribute->options as $option)
+                                @foreach($attribute->options as $option)
 
-                    <span class="px-2 py-0.5 text-[11px] rounded-md
+                                <span class="px-2 py-0.5 text-[11px] rounded-md
                         {{ (int)$value->attribute_option_id === (int)$option->id
                             ? 'bg-blue-100 text-blue-700 font-medium'
                             : 'bg-gray-100 text-gray-500'
                         }}">
-                        {{ $option->translatedValue() }}
-                    </span>
+                                    {{ $option->translatedValue() }}
+                                </span>
 
-                @endforeach
+                                @endforeach
 
-            </div>
+                            </div>
 
-        @endif
+                            @endif
 
-        {{-- MULTISELECT --}}
-        @if($attribute->type === 'multiselect')
+                            {{-- MULTISELECT --}}
+                            @if($attribute->type === 'multiselect')
 
-            @php
-                $selectedIds = $value->options?->pluck('id')->toArray() ?? [];
-            @endphp
+                            @php
+                            $selectedIds = $value->options?->pluck('id')->toArray() ?? [];
+                            @endphp
 
-            <div class="flex flex-wrap gap-1">
+                            <div class="flex flex-wrap gap-1">
 
-                @foreach($attribute->options as $option)
+                                @foreach($attribute->options as $option)
 
-                    @php
-                        $isSelected = in_array($option->id, $selectedIds);
-                    @endphp
+                                @php
+                                $isSelected = in_array($option->id, $selectedIds);
+                                @endphp
 
-                    <span class="px-2 py-0.5 text-[11px] rounded-md
+                                <span class="px-2 py-0.5 text-[11px] rounded-md
                         {{ $isSelected
                             ? 'bg-blue-100 text-blue-700 font-medium'
                             : 'bg-gray-100 text-gray-400'
                         }}">
-                        {{ $option->translatedValue() }}
-                    </span>
+                                    {{ $option->translatedValue() }}
+                                </span>
 
-                @endforeach
+                                @endforeach
 
-            </div>
+                            </div>
 
-        @endif
+                            @endif
 
-    </div>
-</td>
+                        </div>
+                    </td>
 
                     {{-- OFFERS --}}
                     @foreach($offers as $offer)
@@ -291,8 +291,79 @@
 
                 </tr>
 
+
+
+
                 @endforeach
 
+                <tr class="border-b bg-gray-50">
+
+                    <td class="sticky left-0 z-10 px-4 py-4 border-r bg-gray-50 text-sm font-semibold text-gray-900 leading-snug">
+                        Delivery
+                    </td>
+
+                    @foreach($offers as $offer)
+
+                    <td class="px-5 py-4 border-r align-top">
+
+                        @php
+                         $addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
+
+            if (!$addressa) {
+                $cityId = null;
+            } else {
+
+                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                    ->where('parent_id', $addressa->region)
+                    ->first();
+
+                $cityId = $eexistingLocation?->id;
+            }
+
+                        $shippingTemplates = $offer->participant->shippingTemplates
+                        ->filter(fn ($template) =>
+                        $template->locations->contains('id', $cityId)
+                        );
+                        @endphp
+
+                        @forelse($shippingTemplates as $shippingTemplate)
+
+                        <div class="px-2 border-b last:border-0">
+
+                            <div class="text-sm font-medium text-gray-900 mt-3">
+                                {{ $shippingTemplate->title }}
+                            </div>
+                            <div class="text-[12px] text-gray-600 ">
+
+                                <span class="text-[12px] text-gray-400 font-medium">
+                                    Delivery Time
+                                </span>
+
+                                <span class="font-semibold text-gray-400">
+                                    {{ $shippingTemplate->delivery_time }} days
+                                </span>
+
+                            </div>
+
+                            <div class="text-sm text-gray-500 mb-3">
+                                ${{ number_format($shippingTemplate->price, 2) }}
+                            </div>
+
+                        </div>
+
+                        @empty
+
+                        <span class="text-gray-400">
+                            No delivery options
+                        </span>
+
+                        @endforelse
+
+                    </td>
+
+                    @endforeach
+
+                </tr>
             </tbody>
 
         </table>

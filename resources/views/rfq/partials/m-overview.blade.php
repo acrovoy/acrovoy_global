@@ -33,13 +33,14 @@
                 </div>
 
                 {{-- TITLE --}}
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 mb-4">
 
                     <h1 class="text-xl font-semibold text-gray-900 leading-tight">
                         {{ $rfq->title }}
                     </h1>
 
                     @if($isBuyer ?? false)
+                    @if($rfq->status->isDraft())
                     <button onclick="console.log('CLICK'); openRfqDrawer('title')"
                         class="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
                         title="Edit title">
@@ -52,9 +53,129 @@
                         </svg>
 
                     </button>
+                    @else
+                        <div class="text-xs text-gray-400">
+                            
+                        </div>
+                    @endif
                     @endif
 
                 </div>
+
+                @php
+                    $completed =
+                    ($requirementsCompleted ? 1 : 0) +
+                    ($participantsCompleted ? 1 : 0) +
+                    ($deliveryCompleted ? 1 : 0);
+
+                    $percent = ($completed / 3) * 100;
+                    @endphp
+
+                    @if($isBuyer ?? false)
+
+                    {{-- RFQ READY CARD --}}
+                    <div class="w-full bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+
+                        <div class="flex items-center justify-between mb-3">
+
+                            <div>
+                                <div class="text-[11px] uppercase tracking-[0.15em] text-gray-400">
+                                    RFQ Readiness
+                                </div>
+
+                                <div class="text-sm font-semibold text-gray-900">
+                                    Completion Status
+                                </div>
+                            </div>
+
+                            <div class="text-sm font-semibold text-gray-900">
+                                {{ $completed }}/3
+                            </div>
+
+                        </div>
+
+                        {{-- PROGRESS --}}
+                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+                            <div
+                                class="h-full bg-gray-900 transition-all duration-500"
+                                style="width: {{ $percent }}%">
+                            </div>
+                        </div>
+
+                        {{-- ITEMS --}}
+                        <div class="space-y-2">
+
+                            <div class="flex items-center justify-between">
+
+                                <div class="flex items-center gap-2">
+
+                                    @if($requirementsCompleted)
+                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                    @else
+                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                    @endif
+
+                                    <span class="text-sm text-gray-700">
+                                        Requirements
+                                    </span>
+
+                                </div>
+
+                                <span class="text-xs font-medium {{ $requirementsCompleted ? 'text-green-600' : 'text-red-500' }}">
+                                    {{ $requirementsCompleted ? 'Completed' : 'Missing' }}
+                                </span>
+
+                            </div>
+
+                            <div class="flex items-center justify-between">
+
+                                <div class="flex items-center gap-2">
+
+                                    @if($participantsCompleted)
+                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                    @else
+                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                    @endif
+
+                                    <span class="text-sm text-gray-700">
+                                        Participants
+                                    </span>
+
+                                </div>
+
+                                <span class="text-xs font-medium {{ $participantsCompleted ? 'text-green-600' : 'text-red-500' }}">
+                                    {{ $participantsCompleted ? 'Completed' : 'Missing' }}
+                                </span>
+
+                            </div>
+
+                            <div class="flex items-center justify-between">
+
+                                <div class="flex items-center gap-2">
+
+                                    @if($deliveryCompleted)
+                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                    @else
+                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                    @endif
+
+                                    <span class="text-sm text-gray-700">
+                                        Delivery Address
+                                    </span>
+
+                                </div>
+
+                                <span class="text-xs font-medium {{ $deliveryCompleted ? 'text-green-600' : 'text-red-500' }}">
+                                    {{ $deliveryCompleted ? 'Completed' : 'Missing' }}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    @endif
 
 
 
@@ -77,18 +198,23 @@
                         </div>
 
                         @if($isBuyer ?? false)
-                        <button onclick="openRfqDrawer('deadline')"
-                            class="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
-                            title="Edit deadline">
+                        
+                            @if($rfq->status->isLocked())
+                            
+                            @else
+                                <button onclick="openRfqDrawer('deadline')"
+                                    class="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                                    title="Edit deadline">
 
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                class="w-4 h-4">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213 3 21l1.787-4.5 12.075-12.075z" />
-                            </svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                        class="w-4 h-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213 3 21l1.787-4.5 12.075-12.075z" />
+                                    </svg>
 
-                        </button>
+                                </button>
+                            @endif
                         @endif
 
                     </div>
@@ -98,35 +224,74 @@
                 </div>
 
                 {{-- ACTIONS --}}
-                <div class="flex gap-2">
+                <div class="flex flex-col items-end gap-4 min-w-[340px]">
 
-                    @if($isBuyer ?? false)
+                    
 
-                    @if($rfq->status->canPublish())
-                    <button class="px-3 py-1.5 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-800">
-                        Publish
-                    </button>
-                    @endif
+                    {{-- BUTTONS --}}
+                    <div class="flex flex-wrap justify-end gap-2">
 
-                    @if($rfq->status->isPublished())
-                    <button class="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-                        Invite
-                    </button>
-                    @endif
+                        @if($isBuyer ?? false)
 
-                    @if($rfq->status->canClose())
-                    <button class="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">
-                        Close
-                    </button>
-                    @endif
+                            @if($rfq->status->canPublish())
 
-                    @else
+                                @if($canPublish)
 
-                    <button class="px-3 py-1.5 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-800">
-                        See Requirements
-                    </button>
+                                <form method="POST" action="{{ route('buyer.rfqs.publish', $rfq) }}">
+                                    @csrf
 
-                    @endif
+                                    <button
+                                        class="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-black transition shadow-sm">
+                                        Publish RFQ
+                                    </button>
+                                </form>
+
+                                @else
+
+                                <button
+                                    disabled
+                                    class="px-5 py-2.5 text-sm font-medium bg-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
+                                    Publish RFQ
+                                </button>
+
+                                @endif
+
+                            @endif
+
+                            @if($rfq->status->isPublished())
+
+                           <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants']) }}">
+                                <button
+                                    class="px-5 py-2.5 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                                    Invite
+                                </button>
+                            </a>
+
+                            @endif
+
+                            @if($rfq->status->canClose())
+
+                           <form method="POST" action="{{ route('buyer.rfqs.close', $rfq) }}">
+                                @csrf
+
+                                <button
+                                    class="px-5 py-2.5 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition">
+                                    Close
+                                </button>
+                            </form>
+
+                            @endif
+
+                        @else
+
+                        <button
+                            class="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-black transition">
+                            See Requirements
+                        </button>
+
+                        @endif
+
+                    </div>
 
                 </div>
 
@@ -146,6 +311,7 @@
         {!! nl2br(e($rfq->description)) !!}
 
         @if($isBuyer ?? false)
+        @if($rfq->status->isDraft())
         <button onclick="openRfqDrawer('description')"
             class="mt-2 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
             title="Edit description">
@@ -158,6 +324,11 @@
             </svg>
 
         </button>
+        @else
+        <div class="text-xs text-gray-400">
+            
+        </div>
+    @endif
         @endif
 
     </div>
@@ -211,143 +382,145 @@
                 </div>
             </div>
             @if($isBuyer ?? false)
+            @if($rfq->status->isDraft())
             <button type="button"
                 onclick="openAddressDrawer()"
                 class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition">
                 Change Delivery Address and Contact
             </button>
-            
+            @else
+            @endif
             @endif
         </div>
 
 
-@if($isBuyer ?? false)
-@else
-@if($rfq->deliveryAddress)
+        @if($isBuyer ?? false)
+        @else
+        @if($rfq->deliveryAddress)
 
-<div class="mb-3 p-3 border border-gray-200 rounded-lg bg-gray-100 text-sm mt-3">
+        <div class="mb-3 p-3 border border-gray-200 rounded-lg bg-gray-100 text-sm mt-3">
 
-    <div class="flex items-start justify-between">
+            <div class="flex items-start justify-between">
 
-        {{-- текущий код адреса --}}
+                {{-- текущий код адреса --}}
 
-    </div>
+            </div>
 
-    {{-- SHIPPING TEMPLATES --}}
-    <div class="">
+            {{-- SHIPPING TEMPLATES --}}
+            <div class="">
 
-        <div class="flex items-center justify-between mb-3">
-            <h4 class="text-sm font-semibold text-gray-900">
-                Available Shipping Templates 
-            </h4>
-            <div class="text-gray-400 text-[12px]">Optional setup for suppliers offering delivery services.</div>
-        </div>
-
-        @if($shippingTemplates->count())
-            <div class="space-y-2">
-
-                @foreach($shippingTemplates as $template)
-
-    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
-
-        <div class="flex items-start justify-between gap-4">
-
-            <div class="flex-1">
-
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
-                        Shipping Template
-                    </span>
-
-                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
-                        {{ $template->title }}
-                    </span>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-semibold text-gray-900">
+                        Available Shipping Templates
+                    </h4>
+                    <div class="text-gray-400 text-[12px]">Optional setup for suppliers offering delivery services.</div>
                 </div>
 
-                @if(!empty($template->description))
-                    <p class="text-gray-700 text-sm">
-                        {{ $template->description }}
-                    </p>
-                @endif
+                @if($shippingTemplates->count())
+                <div class="space-y-2">
 
-                <div class="mt-3 flex flex-wrap gap-2">
+                    @foreach($shippingTemplates as $template)
 
-                    @if(!empty($template->delivery_time))
-                        <div class="inline-flex items-center gap-2
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
+
+                        <div class="flex items-start justify-between gap-4">
+
+                            <div class="flex-1">
+
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Shipping Template
+                                    </span>
+
+                                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
+                                        {{ $template->title }}
+                                    </span>
+                                </div>
+
+                                @if(!empty($template->description))
+                                <p class="text-gray-700 text-sm">
+                                    {{ $template->description }}
+                                </p>
+                                @endif
+
+                                <div class="mt-3 flex flex-wrap gap-2">
+
+                                    @if(!empty($template->delivery_time))
+                                    <div class="inline-flex items-center gap-2
                             bg-blue-50 border border-blue-100
                             px-3 py-1.5 rounded-lg">
 
-                            <span class="text-sm text-blue-900 font-medium">
-                                Delivery Time
-                            </span>
+                                        <span class="text-sm text-blue-900 font-medium">
+                                            Delivery Time
+                                        </span>
 
-                            <span class="font-semibold text-blue-900">
-                                {{ $template->delivery_time }} days
-                            </span>
+                                        <span class="font-semibold text-blue-900">
+                                            {{ $template->delivery_time }} days
+                                        </span>
 
-                        </div>
-                    @endif
+                                    </div>
+                                    @endif
 
-                    @if(!empty($template->price))
-                        <div class="inline-flex items-center gap-2
+                                    @if(!empty($template->price))
+                                    <div class="inline-flex items-center gap-2
                             bg-green-50 border border-green-100
                             px-3 py-1.5 rounded-lg">
 
-                            <span class="text-sm text-green-900 font-medium">
-                                Price
-                            </span>
+                                        <span class="text-sm text-green-900 font-medium">
+                                            Price
+                                        </span>
 
-                            <span class="font-semibold text-green-900">
-                                ${{ number_format($template->price, 2) }}
-                            </span>
+                                        <span class="font-semibold text-green-900">
+                                            ${{ number_format($template->price, 2) }}
+                                        </span>
+
+                                    </div>
+                                    @endif
+
+                                </div>
+
+                            </div>
 
                         </div>
+
+                    </div>
+
+                    @endforeach
+
+                </div>
+                @else
+
+                <div class="rounded-lg border border-dashed border-gray-300 bg-white p-4 text-center">
+
+                    <div class="text-sm text-gray-500">
+                        No matching shipping templates found for this destination.
+                    </div>
+
+                    @if(!$isBuyer)
+                    <div class="mt-2">
+                        <a href="{{ route('supplier.shipping-templates.create') }}"
+                            class="text-sm text-blue-600 hover:underline">
+                            Create Shipping Template for this Destination
+                        </a>
+                    </div>
                     @endif
 
                 </div>
+
+                @endif
 
             </div>
 
         </div>
 
-    </div>
-
-@endforeach
-
-            </div>
-        @else
-
-            <div class="rounded-lg border border-dashed border-gray-300 bg-white p-4 text-center">
-
-                <div class="text-sm text-gray-500">
-                    No matching shipping templates found for this destination.
-                </div>
-
-                @if(!$isBuyer)
-                    <div class="mt-2">
-                        <a href="{{ route('supplier.shipping-templates.create') }}"
-                           class="text-sm text-blue-600 hover:underline">
-                            Create Shipping Template for this Destination
-                        </a>
-                    </div>
-                @endif
-
-            </div>
-
         @endif
-
-    </div>
-
-</div>
-
-@endif
-@endif
+        @endif
 
 
     </div>
 
     @else
-
+    @if($isBuyer)
     <div class="mb-3 p-3 border border-yellow-200 bg-yellow-50 rounded-lg">
 
         <div class="flex items-center justify-between gap-4">
@@ -365,7 +538,7 @@
         </div>
 
     </div>
-
+    @endif
     @endif
 
 

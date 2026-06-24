@@ -30,6 +30,13 @@ class CreateCounterOfferAction
         $supplierOfferVersion = $this->resolver
             ->lastSupplierSubmittedVersion($offer);
 
+
+
+
+
+
+
+
         if (!$supplierVersion) {
             abort(404, 'No submitted supplier version found.');
         }

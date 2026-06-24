@@ -21,6 +21,7 @@
         @php
         $supplier = $offer->participant;
         $isReadonly = true;
+        $isClosed = $rfq->status->isClosed();
 
         /*
         |---------------------------------------------
@@ -88,27 +89,31 @@
                     <div class="flex justify-end gap-3 mb-4 text-sm">
 
 
-                        @if($activeVersion->id === $lastsubmittedVersion->id && !$existingDraftCounter)
+                        @if(
+    !$rfq->status->isClosed() &&
+    $activeVersion->id === $lastsubmittedVersion->id &&
+    !$existingDraftCounter
+)
+
+    <a
+        href=""
+        class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
+        Close negotiation
+    </a>
+
+    <a
+        href="{{ route('buyer.rfqs.counter-offer.create', [
+            'rfq' => $rfq->id,
+            'offer' => $offer->id,
+            'create' => true,
+        ]) }}"
+        class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
+        Create Counter Offer
+    </a>
+
+@endif
 
 
-                        <a
-                            href=""
-                            class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-                            Close negotiation
-                        </a>
-
-
-
-                        <a
-                            href="{{ route('buyer.rfqs.counter-offer.create', [
-                                'rfq' => $rfq->id,
-                                'offer' => $offer->id,
-                                'create' => true,
-                            ]) }}"
-                            class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-                            Create Counter Offer
-                        </a>
-                        @endif
                     </div>
 
                     {{-- REQUIREMENTS --}}
@@ -178,12 +183,58 @@
                         <div class="border rounded-lg p-4 mb-6 bg-gray-50">
 
 
+                        @php
+$addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
 
-                            <div class="flex items-center gap-3">
+            if (!$addressa) {
+                $cityId = null;
+            } else {
+
+                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                    ->where('parent_id', $addressa->region)
+                    ->first();
+
+                $cityId = $eexistingLocation?->id;
+            }
+
+$shippingTemplates = $offer->participant->shippingTemplates
+    ->filter(fn ($template) =>
+        $template->locations->contains('id', $cityId)
+    );
+@endphp
+                            @forelse($shippingTemplates as $template)
 
 
+
+
+
+                            <div class="flex items-center justify-between px-2 border-b last:border-0">
+
+                                <div class="mb-2 mt-2">
+                                    <div class="font-medium text-gray-900">
+                                        {{ $template->title }}
+                                    </div>
+
+                                    <div class="text-xs text-gray-500">
+                                        {{ $template->description }}
+
+
+                                    </div>
+                                </div>
+
+                                <div class="text-sm font-semibold text-gray-900">
+                                    ${{ number_format($template->price, 2) }}
+                                </div>
 
                             </div>
+
+                            @empty
+
+                            <div class="text-xs text-gray-500">
+                                No delivery options available for this location
+                            </div>
+
+                            @endforelse
 
                         </div>
 

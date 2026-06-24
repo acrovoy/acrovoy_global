@@ -54,4 +54,6 @@ class RfqOffer extends Model
         return $this->hasOne(RfqOfferVersion::class, 'rfq_offer_id')
             ->latestOfMany('version_number');
     }
+
+    
 }

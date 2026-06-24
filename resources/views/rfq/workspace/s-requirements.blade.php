@@ -216,25 +216,7 @@
                         </div>
 
 
-                        {{-- Delivery --}}
-                        <div class="font-medium">
-                            Delivery Service
-                        </div>
-                        <div class="text-xs text-gray-500 mb-3">
-                            Supplier uploaded files and technical documents
-                        </div>
-
-                        <div class="border rounded-lg p-4 mb-6 bg-gray-50 hover:bg-white transition">
-
-
-
-                            <div class="flex items-center gap-3">
-
-
-
-                            </div>
-
-                        </div>
+                        
 
 
 

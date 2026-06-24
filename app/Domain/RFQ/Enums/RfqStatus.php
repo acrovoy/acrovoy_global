@@ -72,5 +72,22 @@ public function isClosed(): bool
     return $this === self::CLOSED;
 }
 
+public function canEditFull(): bool
+{
+    return $this === self::DRAFT;
+}
+
+public function canAddParticipants(): bool
+{
+    return in_array($this, [
+        self::DRAFT,
+        self::PUBLISHED,
+    ]);
+}
+
+public function isLocked(): bool
+{
+    return $this !== self::DRAFT;
+}
 
 }

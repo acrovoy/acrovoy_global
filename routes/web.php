@@ -213,20 +213,14 @@ Route::prefix('dashboard/buyer')
         // RFQ CORE
         // =========================
 
-        Route::get('/rfqs', [BuyerRfqController::class, 'index'])
-            ->name('rfqs.index');
+        Route::get('/rfqs', [BuyerRfqController::class, 'index'])->name('rfqs.index');
+        Route::get('/rfqs/create', [BuyerRfqController::class, 'create'])->name('rfqs.create');
+        Route::post('/rfqs', [BuyerRfqController::class, 'store'])->name('rfqs.store');
+        Route::get('/rfqs/{rfq}/edit', [BuyerRfqController::class, 'edit'])->name('rfqs.edit');
+        Route::put('/rfqs/{rfq}', [BuyerRfqController::class, 'update'])->name('rfqs.update');
 
-        Route::get('/rfqs/create', [BuyerRfqController::class, 'create'])
-            ->name('rfqs.create');
-
-        Route::post('/rfqs', [BuyerRfqController::class, 'store'])
-            ->name('rfqs.store');
-
-        Route::get('/rfqs/{rfq}/edit', [BuyerRfqController::class, 'edit'])
-            ->name('rfqs.edit');
-
-        Route::put('/rfqs/{rfq}', [BuyerRfqController::class, 'update'])
-            ->name('rfqs.update');
+        Route::post('/rfqs/{rfq}/publish', [RfqController::class, 'publish'])->name('rfqs.publish');
+        Route::post('/rfqs/{rfq}/close', [RfqController::class, 'close'])->name('rfqs.close');
 
 
         // =========================
@@ -336,7 +330,8 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
     });
 
     Route::resource('shipping-templates', ShippingTemplateController::class)->except(['show']);
-
+    Route::post('shipping-templates/{template}/attach-warehouse', [ShippingTemplateController::class, 'attachWarehouse'])->name('shipping-templates.attach-warehouse');
+    Route::post('shipping-templates/{template}/toggle-active',  [ShippingTemplateController::class, 'toggleActive'])->name('shipping-templates.toggle-active');
 
     Route::get('/company-profile/show', [ManufacturerController::class, 'showCompanyProfile'])
         ->name('company.show');

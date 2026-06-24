@@ -1,3 +1,9 @@
+@php
+$rfqStatus = $rfq->status;
+$isReadonly = $rfqStatus->isPublished() || $rfqStatus->isClosed();
+@endphp
+
+
 {{-- BACK --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
     class="text-sm text-gray-500 hover:text-gray-900 transition">
@@ -35,6 +41,7 @@
 
 
      {{-- CATEGORY SELECT (TOP) --}}
+     @if(!$isReadonly)
      <form method="GET" class="mb-6">
 
          <input type="hidden" name="tab" value="requirements">
@@ -59,7 +66,21 @@
          </select>
 
      </form>
+@else
 
+<div class="mb-6">
+
+    <div class="text-xs uppercase tracking-wide text-gray-400 mb-1">
+        Category
+    </div>
+
+    <div class="w-full border border-gray-200 bg-gray-100 rounded-md px-3 py-2 text-sm text-gray-700">
+        {{ $selectedCategory?->name ?? 'Not selected' }}
+    </div>
+
+</div>
+
+@endif
 
      {{-- EMPTY STATE --}}
      @if(!$selectedCategory)
@@ -94,7 +115,7 @@
                 Fill in technical requirements for this category
             </div>
         </div>
-
+@if($rfq->status->isDraft())
         <button
             type="button"
             id="restore-all-attributes"
@@ -102,7 +123,8 @@
         >
             Restore all hidden attributes
         </button>
-
+@else
+@endif
     </div>
 
 </div>
@@ -158,9 +180,24 @@
                  Requirements define what suppliers must respond to
              </div>
 
-             <button class="px-4 py-2 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-800 transition">
-                 Save Requirements
-             </button>
+             @if(!$isReadonly)
+
+<button
+    type="submit"
+    class="px-4 py-2 text-sm bg-gray-900 text-white rounded-md hover:bg-gray-800 transition">
+    Save Requirements
+</button>
+
+@else
+
+<button
+    type="button"
+    disabled
+    class="px-4 py-2 text-sm bg-gray-200 text-gray-400 rounded-md cursor-not-allowed">
+    Requirements Locked
+</button>
+
+@endif
 
          </div>
 

@@ -2,7 +2,8 @@
 
 @php
 $existing = $rfq->customAttributeValues ?? collect();
-
+$rfqStatus = $rfq->status;
+$isReadonly = $rfqStatus->isPublished() || $rfqStatus->isClosed();
 
 @endphp
 
@@ -23,11 +24,17 @@ $existing = $rfq->customAttributeValues ?? collect();
             </div>
         </div>
 
-        <button type="button"
-        onclick="openPickerDrawer()"
-        class="text-sm text-gray-600 hover:text-gray-900">
-    + Attach attribute
-</button>
+        @if(!$isReadonly)
+            <button type="button"
+                onclick="openPickerDrawer()"
+                class="text-sm text-gray-600 hover:text-gray-900">
+                + Attach attribute
+            </button>
+        @else
+            <span class="text-xs text-gray-400">
+                Read-only mode
+            </span>
+        @endif
 
       
 
@@ -49,6 +56,8 @@ $existing = $rfq->customAttributeValues ?? collect();
         <div class="space-y-3">
 
             @foreach($attributes as $attribute)
+
+            
 
                 @include('rfq.workspace.components.attribute-field', [
                     'attribute' => $attribute,
@@ -123,6 +132,8 @@ $existing = $rfq->customAttributeValues ?? collect();
     |--------------------------------------------------------------------------
     */
     function openAttributeDrawer(id = null, btn = null) {
+
+       
 
         closePickerDrawer(); // 👈 ВАЖНО
 

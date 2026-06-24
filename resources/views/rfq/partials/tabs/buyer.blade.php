@@ -38,9 +38,12 @@
         <span>↓</span>
     </div>
 
+
+   
+
     @php
     $offers = $rfq->offers ?? collect();
-    @endphp
+   @endphp
 
     @if($offers->isEmpty())
 
@@ -63,6 +66,7 @@
         @php
         $supplier = $offer->participant;
         $version = $offer->latestVersion;
+        
         @endphp
 
         <a href="{{ route('rfqs.workspace', [

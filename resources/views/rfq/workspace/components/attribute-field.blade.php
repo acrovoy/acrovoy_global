@@ -1,6 +1,8 @@
 @php
 $type = $attribute->type;
-
+$rfqStatus = $rfq->status;
+$isReadonly = $rfqStatus->isPublished() || $rfqStatus->isClosed();
+$disabled = $isReadonly ? 'disabled' : '';
 $isRequired =
 $attribute->pivot->is_required
 ?? $attribute->is_required
@@ -29,7 +31,8 @@ $old = $savedValue;
 
 
 
-<div class="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition">
+<div class="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition
+{{ $isReadonly ? 'opacity-80' : '' }}">
 
     <div class="flex items-start justify-between mb-3 gap-3">
 
@@ -45,11 +48,13 @@ $old = $savedValue;
 
     
 
-       <button type="button"
+       @if(!$isReadonly)
+    <button type="button"
         data-url="{{ route('rfqs.custom-attributes.dettach', [$rfq, $attribute]) }}"
         class="remove-attr inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-red-100 text-xs font-medium text-red-600 transition">
-    ✕
-</button>
+        ✕
+    </button>
+@endif
 
  
 
@@ -63,8 +68,10 @@ $old = $savedValue;
         type="text"
         name="{{ $name }}"
         value="{{ old($name, $savedValue) }}"
+        {{ $disabled }}
         class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900
+                   {{ $isReadonly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}"
         {{ $isRequired ? 'required' : '' }}>
 
 
@@ -75,8 +82,10 @@ $old = $savedValue;
         type="number"
         name="{{ $name }}"
         value="{{ old($name, $savedValue) }}"
+        {{ $disabled }}
         class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900
+                   {{ $isReadonly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}"
         {{ $isRequired ? 'required' : '' }}>
 
 
@@ -88,8 +97,10 @@ $old = $savedValue;
         step="0.01"
         name="{{ $name }}"
         value="{{ old($name, $savedValue) }}"
+        {{ $disabled }}
         class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900
+                   {{ $isReadonly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}"
         {{ $isRequired ? 'required' : '' }}>
 
 
@@ -103,6 +114,7 @@ $old = $savedValue;
             name="{{ $name }}"
             value="1"
             @checked(old($name, $savedValue))
+            {{ $disabled }}
             class="rounded border-gray-300 text-gray-900 focus:ring-gray-900">
 
         Yes / No
@@ -126,6 +138,7 @@ $old = $savedValue;
                 name="{{ $name }}"
                 value="{{ $option->id }}"
                 @checked(old($name, $savedValue)==$option->id)
+                {{ $disabled }}
             class="text-gray-900 focus:ring-gray-900"
             {{ $isRequired ? 'required' : '' }}
             >
@@ -142,8 +155,10 @@ $old = $savedValue;
 
 <select
     name="{{ $name }}"
+    {{ $disabled }}
     class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                       focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900
+                       {{ $isReadonly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '' }}"
     {{ $isRequired ? 'required' : '' }}>
 
     <option value="">Select option</option>
@@ -195,7 +210,9 @@ $oldValues = is_array($oldValues) ? $oldValues : [];
             name="{{ $name }}[]"
             value="{{ $option->id }}"
             @checked(in_array($option->id, $oldValues))
+            {{ $disabled }}
         class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+        
         >
 
         <span>{{ $option->translatedValue() }}</span>

@@ -433,6 +433,12 @@ public function comparison(Rfq $rfq)
         'attributeValues.attribute.options',
         'attributeValues.options',
         'offers.participant',
+        'offers.participant.shippingTemplates',
+        'offers.participant.shippingTemplates.locations',
+        'offers.participant.shippingTemplates.warehouse',
+        'offers.participant.shippingTemplates.warehouse.location',
+        'offers.participant.shippingTemplates.warehouse.location.parent',
+
         'offers.versions.items.options',
     ]);
 

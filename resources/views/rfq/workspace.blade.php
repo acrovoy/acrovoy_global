@@ -57,6 +57,8 @@ $itemsByAttribute = $offerVersion?->items
     @include('rfq.workspace.participants')
     @break
 
+
+
    @case('offers')
 @include('rfq.workspace.offers', [
     'offer' => $offer ?? null,
@@ -64,6 +66,7 @@ $itemsByAttribute = $offerVersion?->items
     'counterItemsByAttribute' => $counterItemsByAttribute ?? collect(),
     'itemsByAttribute' => $itemsByAttribute ?? collect(),
     'existingDraftCounter' => $existingDraftCounter,
+    'shippingTemplates' => $shippingTemplates,
 ])
 @break
 
