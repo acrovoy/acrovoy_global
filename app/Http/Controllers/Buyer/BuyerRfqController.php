@@ -59,9 +59,13 @@ class BuyerRfqController extends Controller
      */
    
 
-    $rfqs = $this->listBuyerRfqsAction->execute($context);
-     
-    return view('rfq.buyer.index', compact('rfqs'));
+    $result = $this->listBuyerRfqsAction->execute($context);
+
+        
+    return view('rfq.buyer.index', [
+        'rfqs' => $result['active'],
+        'closedRfqs' => $result['closed'],
+    ]);
 }
 
     /**

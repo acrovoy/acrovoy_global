@@ -142,4 +142,112 @@
 
 @endif
 
+
+{{-- CLOSED RFQS --}}
+@if($closedRfqs->isNotEmpty())
+
+<div class="mt-10">
+
+    <div class="mb-4">
+
+        <h2 class="text-2xl font-semibold text-gray-800">
+            Closed RFQs
+        </h2>
+
+        <p class="text-sm text-gray-500 mt-1">
+            RFQs that have already been closed.
+        </p>
+
+    </div>
+
+    <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm border-collapse">
+
+            <thead class="bg-gray-50 border-b">
+
+                <tr>
+
+                    <th class="px-4 py-3 text-left font-medium text-gray-500">
+                        RFQ
+                    </th>
+
+                    <th class="px-4 py-3 text-left font-medium text-gray-500">
+                        Title
+                    </th>
+
+                    <th class="px-4 py-3 text-left font-medium text-gray-500">
+                        Closed At
+                    </th>
+
+                    <th class="px-4 py-3 text-left font-medium text-gray-500">
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody class="divide-y divide-gray-100">
+
+                @foreach($closedRfqs as $rfq)
+
+                <tr class="hover:bg-gray-50 transition cursor-pointer"
+                    onclick="window.location='{{ route('rfqs.workspace', $rfq->id) }}'">
+
+                    {{-- RFQ ID --}}
+                    <td class="px-4 py-4 font-mono text-gray-600 text-xs">
+                        {{ $rfq->public_id }}
+                    </td>
+
+                    {{-- TITLE --}}
+                    <td class="px-4 py-4">
+
+                        <div class="text-sm font-medium text-gray-900">
+                            {{ $rfq->title }}
+                        </div>
+
+                        <div class="text-xs text-gray-500 mt-0.5">
+                            {{ $rfq->category->name ?? 'General RFQ' }}
+                        </div>
+
+                    </td>
+
+                    {{-- CLOSED DATE --}}
+                    <td class="px-4 py-4 text-sm text-gray-500">
+
+                        @if($rfq->updated_at)
+                            {{ $rfq->updated_at->format('d.m.Y') }}
+                        @else
+                            —
+                        @endif
+
+                    </td>
+
+                    {{-- STATUS --}}
+                    <td class="px-4 py-4">
+
+                        <span class="inline-flex items-center px-2.5 py-1 text-[11px] font-medium rounded-full bg-red-100 text-red-700">
+                            CLOSED
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                @endforeach
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+@endif
+
+
+
+
 @endsection

@@ -107,19 +107,24 @@
                         @endif
 
                         {{-- =========================================
-                            CREATE NEW VERSION (REVISION)
-                        ========================================= --}}
-                        @if($canCreateRevision)
-                        <form method="POST"
-                            action="{{ route('supplier.rfq.offer.create-revision', $rfq) }}">
-                            @csrf
+    CREATE NEW VERSION (REVISION)
+========================================= --}}
 
-                            <button type="submit"
-                                class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-                                Create New Version
-                            </button>
-                        </form>
-                        @endif
+@php
+    $isReadonly = $rfq->status->isClosed();
+@endphp
+
+@if($canCreateRevision && !$isReadonly)
+    <form method="POST"
+        action="{{ route('supplier.rfq.offer.create-revision', $rfq) }}">
+        @csrf
+
+        <button type="submit"
+            class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
+            Create New Version
+        </button>
+    </form>
+@endif
 
                     </div>
 

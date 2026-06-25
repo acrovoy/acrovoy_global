@@ -94,13 +94,14 @@
     $activeVersion->id === $lastsubmittedVersion->id &&
     !$existingDraftCounter
 )
-
-    <a
-        href=""
-        class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-        Close negotiation
-    </a>
-
+@if(!$rfq->status->isClosed())
+    <button
+    type="button"
+    onclick="openCloseNegotiationDrawer()"
+    class="px-4 py-1 border rounded bg-white hover:bg-gray-50 transition">
+    Close negotiation
+</button>
+@endif
     <a
         href="{{ route('buyer.rfqs.counter-offer.create', [
             'rfq' => $rfq->id,
@@ -265,5 +266,144 @@ $shippingTemplates = $offer->participant->shippingTemplates
     </div>
 
 </div>
+
+
+{{-- CLOSE NEGOTIATION DRAWER --}}
+<div id="close-negotiation-overlay"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 transition-opacity">
+</div>
+
+<div id="close-negotiation-drawer"
+     class="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl
+            transform translate-x-full transition-transform duration-300 z-50
+            flex flex-col">
+
+    {{-- Header --}}
+    <div class="px-6 py-5 border-b bg-gray-50">
+        <h3 class="text-lg font-semibold text-gray-900">
+            Close negotiation
+        </h3>
+
+        <p class="text-sm text-gray-500 mt-1">
+            Finalize this RFQ negotiation with supplier
+        </p>
+    </div>
+
+    {{-- Body --}}
+    <form method="POST"
+          action=""
+          class="flex flex-col flex-1">
+
+        @csrf
+        @method('PATCH')
+
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+            <div class="text-sm text-gray-700">
+                Are you sure you want to close this negotiation?
+                This action will:
+            </div>
+
+            <ul class="text-xs text-gray-500 space-y-2 list-disc pl-4">
+                <li>Lock all offers and versions</li>
+                <li>Prevent new counter-offers</li>
+                <li>Mark RFQ as closed</li>
+            </ul>
+
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+    <div class="text-sm text-gray-700">
+        Choose how you want to finalize this negotiation:
+    </div>
+
+    {{-- WARNING --}}
+    <div class="p-3 rounded-lg bg-yellow-50 border border-yellow-100 text-xs text-yellow-800">
+        ⚠️ Accepting this offer will automatically mark all other supplier offers as <b>Rejected</b>.
+    </div>
+
+    <div class="p-3 rounded-lg bg-red-50 border border-red-100 text-xs text-red-800">
+        ❌ Rejecting will exclude this supplier from further consideration.
+    </div>
+
+    {{-- ACTION TYPE --}}
+    <input type="hidden" name="decision" id="close-decision" value="accept">
+
+    {{-- NOTE --}}
+    <div>
+        <label class="text-xs text-gray-500 uppercase tracking-wide">
+            Closing note (optional)
+        </label>
+
+        <textarea name="close_note"
+                  rows="4"
+                  class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-gray-900/10"></textarea>
+    </div>
+
+</div>
+
+
+            
+        </div>
+
+        {{-- Footer --}}
+        <div class="border-t bg-white px-6 py-4 flex items-center justify-between gap-2">
+
+    <button type="button"
+            onclick="closeCloseNegotiationDrawer()"
+            class="px-4 py-2 text-sm rounded-lg border border-gray-200
+                   text-gray-600 hover:bg-gray-50 transition">
+        Cancel
+    </button>
+
+    <div class="flex gap-2">
+
+        {{-- REJECT --}}
+        <button type="submit"
+                onclick="document.getElementById('close-decision').value='reject'"
+                class="px-4 py-2 text-sm rounded-lg border border-red-200
+                       text-red-600 hover:bg-red-50 transition">
+            Reject
+        </button>
+
+        {{-- ACCEPT --}}
+        <button type="submit"
+                onclick="document.getElementById('close-decision').value='accept'"
+                class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                       hover:bg-gray-800 transition shadow-sm">
+            Accept & Close
+        </button>
+
+    </div>
+
+</div>
+
+    </form>
+</div>
+
+
+<script>
+function openCloseNegotiationDrawer() {
+    document.getElementById('close-negotiation-overlay')
+        .classList.remove('hidden');
+
+    document.getElementById('close-negotiation-drawer')
+        .classList.remove('translate-x-full');
+}
+
+function closeCloseNegotiationDrawer() {
+    document.getElementById('close-negotiation-overlay')
+        .classList.add('hidden');
+
+    document.getElementById('close-negotiation-drawer')
+        .classList.add('translate-x-full');
+}
+
+// click outside
+document.getElementById('close-negotiation-overlay')
+    .addEventListener('click', closeCloseNegotiationDrawer);
+</script>
+
+
 
 @endsection

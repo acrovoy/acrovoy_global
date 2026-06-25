@@ -2,6 +2,10 @@
 
 @section('dashboard-content')
 
+@php
+use App\Domain\RFQ\Enums\RfqStatus;
+@endphp
+
 <div class="mb-6">
 
     {{-- HEADER --}}
@@ -16,8 +20,16 @@
         </div>
 
         <a href="{{ route('buyer.rfqs.create') }}"
-           class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition text-sm">
-            + Create RFQ
+           class="inline-flex items-center gap-2 mt-3 px-4 py-2
+           text-sm font-medium text-gray-700
+           bg-white border border-gray-200
+           rounded-lg
+           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
+
+           <span class="text-lg leading-none">+</span>
+            Create RFQ
         </a>
     </div>
 
@@ -74,30 +86,30 @@
                
 
                 {{-- DEADLINE --}}
-                <td class="px-4 py-2 text-gray-700">
-                    {{ $rfq->deadline
-                        ? \Carbon\Carbon::parse($rfq->deadline)->format('M d, Y H:i')
+                <td class="px-4 py-2 text-gray-500 text-xs">
+                    {{ $rfq->closed_at
+                        ? \Carbon\Carbon::parse($rfq->closed_at)->format('M d, Y H:i')
                         : '-' }}
                 </td>
 
                 {{-- STATUS --}}
                 <td class="px-4 py-2">
 
-                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full
-                        @if($rfq->status === 'draft')
-                            bg-gray-100 text-gray-600
-                        @elseif($rfq->status === 'published')
-                            bg-blue-100 text-blue-700
-                        @elseif($rfq->status === 'in_negotiation')
-                            bg-yellow-100 text-yellow-800
-                        @elseif($rfq->status === 'closed')
-                            bg-green-100 text-green-700
-                        @else
-                            bg-gray-100 text-gray-600
-                        @endif
-                    ">
-                        {{ $rfq->status->label() }}
-                    </span>
+                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg
+    @if($rfq->status === RfqStatus::DRAFT)
+        bg-gray-100 text-gray-600
+    @elseif($rfq->status === RfqStatus::PUBLISHED)
+        bg-blue-100 text-blue-700
+    @elseif($rfq->status === RfqStatus::IN_NEGOTIATION)
+        bg-yellow-100 text-yellow-800
+    @elseif($rfq->status === RfqStatus::CLOSED)
+        bg-green-100 text-green-700
+    @else
+        bg-gray-100 text-gray-600
+    @endif
+">
+    {{ $rfq->status->label() }}
+</span>
 
                 </td>
 
@@ -113,5 +125,77 @@
 </div>
 
 @endif
+
+
+{{-- CLOSED RFQs --}}
+@if($closedRfqs->isNotEmpty())
+
+<div class="mt-10">
+
+    <h2 class="text-xl font-semibold text-gray-800">
+        Closed RFQs
+    </h2>
+<p class="text-sm text-gray-500 mb-6">
+    Archived procurement requests that have been completed or closed.
+</p>
+
+    <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+
+        <table class="w-full text-sm border-collapse">
+
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="px-4 py-2 text-left font-medium">ID</th>
+                    <th class="px-4 py-2 text-left font-medium">Title</th>
+                    <th class="px-4 py-2 text-left font-medium">Category</th>
+                    <th class="px-4 py-2 text-left font-medium">Closed</th>
+                    <th class="px-4 py-2 text-left font-medium">Status</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-gray-100">
+
+                @foreach($closedRfqs as $rfq)
+
+                <tr class="hover:bg-gray-50 transition cursor-pointer"
+                    onclick="window.location='{{ route('rfqs.workspace', $rfq->id) }}'">
+
+                    <td class="px-4 py-2 font-mono text-gray-800">
+                        {{ $rfq->public_id }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        {{ $rfq->title }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        {{ $rfq->category->name ?? '-' }}
+                    </td>
+
+                    <td class="px-4 py-2 text-gray-500">
+                        {{ $rfq->updated_at?->format('M d, Y') }}
+                    </td>
+
+                    <td class="px-4 py-2">
+                        <span class="px-2 py-1 text-xs rounded-lg bg-red-100 text-red-700">
+                            Closed
+                        </span>
+                    </td>
+
+                </tr>
+
+                @endforeach
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+@endif
+
+
 
 @endsection

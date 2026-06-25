@@ -1,5 +1,9 @@
 <div class="mb-6">
 
+@php
+    $isReadonly = $rfq->status->isClosed();
+@endphp
+
     {{-- BACK --}}
     <a href="
         @if($isBuyer ?? false)
@@ -407,49 +411,49 @@
             </div>
 
             {{-- SHIPPING TEMPLATES --}}
-            <div class="">
+            <div class="{{ $isReadonly ? 'opacity-60 pointer-events-none select-none' : '' }}">
 
-                <div class="flex items-center justify-between mb-3">
-                    <h4 class="text-sm font-semibold text-gray-900">
-                        Available Shipping Templates
-                    </h4>
-                    <div class="text-gray-400 text-[12px]">Optional setup for suppliers offering delivery services.</div>
-                </div>
+    <div class="flex items-center justify-between mb-3">
+        <h4 class="text-sm font-semibold text-gray-900">
+            Available Shipping Templates
+        </h4>
 
-                @if($shippingTemplates->count())
-                <div class="space-y-2">
+        <div class="text-gray-400 text-[12px]">
+            Optional setup for suppliers offering delivery services.
+        </div>
+    </div>
 
-                    @foreach($shippingTemplates as $template)
+    @if($shippingTemplates->count())
+        <div class="space-y-2">
 
-                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
+            @foreach($shippingTemplates as $template)
 
-                        <div class="flex items-start justify-between gap-4">
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
 
-                            <div class="flex-1">
+                    <div class="flex items-start justify-between gap-4">
 
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                        Shipping Template
-                                    </span>
+                        <div class="flex-1">
 
-                                    <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
-                                        {{ $template->title }}
-                                    </span>
-                                </div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                    Shipping Template
+                                </span>
 
-                                @if(!empty($template->description))
+                                <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
+                                    {{ $template->title }}
+                                </span>
+                            </div>
+
+                            @if(!empty($template->description))
                                 <p class="text-gray-700 text-sm">
                                     {{ $template->description }}
                                 </p>
-                                @endif
+                            @endif
 
-                                <div class="mt-3 flex flex-wrap gap-2">
+                            <div class="mt-3 flex flex-wrap gap-2">
 
-                                    @if(!empty($template->delivery_time))
-                                    <div class="inline-flex items-center gap-2
-                            bg-blue-50 border border-blue-100
-                            px-3 py-1.5 rounded-lg">
-
+                                @if(!empty($template->delivery_time))
+                                    <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
                                         <span class="text-sm text-blue-900 font-medium">
                                             Delivery Time
                                         </span>
@@ -457,15 +461,11 @@
                                         <span class="font-semibold text-blue-900">
                                             {{ $template->delivery_time }} days
                                         </span>
-
                                     </div>
-                                    @endif
+                                @endif
 
-                                    @if(!empty($template->price))
-                                    <div class="inline-flex items-center gap-2
-                            bg-green-50 border border-green-100
-                            px-3 py-1.5 rounded-lg">
-
+                                @if(!empty($template->price))
+                                    <div class="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-1.5 rounded-lg">
                                         <span class="text-sm text-green-900 font-medium">
                                             Price
                                         </span>
@@ -473,11 +473,8 @@
                                         <span class="font-semibold text-green-900">
                                             ${{ number_format($template->price, 2) }}
                                         </span>
-
                                     </div>
-                                    @endif
-
-                                </div>
+                                @endif
 
                             </div>
 
@@ -485,31 +482,33 @@
 
                     </div>
 
-                    @endforeach
-
-                </div>
-                @else
-
-                <div class="rounded-lg border border-dashed border-gray-300 bg-white p-4 text-center">
-
-                    <div class="text-sm text-gray-500">
-                        No matching shipping templates found for this destination.
-                    </div>
-
-                    @if(!$isBuyer)
-                    <div class="mt-2">
-                        <a href="{{ route('supplier.shipping-templates.create') }}"
-                            class="text-sm text-blue-600 hover:underline">
-                            Create Shipping Template for this Destination
-                        </a>
-                    </div>
-                    @endif
-
                 </div>
 
-                @endif
+            @endforeach
 
+        </div>
+    @else
+
+        <div class="rounded-lg border border-dashed border-gray-300 bg-white p-4 text-center">
+
+            <div class="text-sm text-gray-500">
+                No matching shipping templates found for this destination.
             </div>
+
+            @if(!$isBuyer && !$isReadonly)
+                <div class="mt-2">
+                    <a href="{{ route('supplier.shipping-templates.create') }}"
+                       class="text-sm text-blue-600 hover:underline">
+                        Create Shipping Template for this Destination
+                    </a>
+                </div>
+            @endif
+
+        </div>
+
+    @endif
+
+</div>
 
         </div>
 

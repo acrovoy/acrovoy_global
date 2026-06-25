@@ -18,7 +18,10 @@ class SupplierRfqController extends Controller
 ) {
     $rfqs = $access->getAvailableRfqsForSupplier();
 
-    return view('rfq.supplier.index', compact('rfqs'));
+     $closedRfqs = $access->getClosedRfqsForSupplier();
+
+    return view('rfq.supplier.index', compact('rfqs',
+        'closedRfqs'));
 }
 
     /**

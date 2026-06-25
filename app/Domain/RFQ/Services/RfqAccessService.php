@@ -80,6 +80,35 @@ class RfqAccessService
     ->get();
 }
 
+/**
+ * CLOSED RFQs FOR SUPPLIER
+ */
+public function getClosedRfqsForSupplier()
+{
+    $supplierId = $this->context->supplierId();
+    $supplierType = $this->context->type();
+
+    return Rfq::query()
+        ->where('status', RfqStatus::CLOSED)
+        ->where(function ($q) use ($supplierId, $supplierType) {
+
+            $q->whereIn('visibility_type', [
+                RfqVisibilityType::OPEN,
+                RfqVisibilityType::PLATFORM,
+            ])
+
+            ->orWhereHas('participants', function ($q) use ($supplierId, $supplierType) {
+
+                $q->where('participant_type', $supplierType)
+                  ->where('participant_id', $supplierId)
+                  ->whereIn('status', ['invited', 'accepted']);
+            });
+
+        })
+        ->latest()
+        ->get();
+}
+
 
     /**
      * CHECK PARTICIPATION

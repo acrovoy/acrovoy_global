@@ -82,62 +82,127 @@
                     ->where('status', 'submitted')
                     ->sortByDesc('id')
                     ->first();
+                    $level = $product->supplier->level ?? 'Basic';
                     @endphp
 
-                    <th class="min-w-[150px] px-5 py-4 border-r align-top">
+                    <th class="min-w-[220px] px-5 py-5 border-r align-top bg-white">
 
-                        <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full gap-3">
 
-                            {{-- TOP CONTENT --}}
-                            <div>
+        {{-- SUPPLIER HEADER --}}
+        <div class="flex items-start gap-3">
 
-                                <div class="text-sm font-semibold text-gray-900 truncate whitespace-nowrap overflow-hidden max-w-[180px]"
-                                    title="{{ $supplier?->name }}">
-                                    {{ $supplier?->name }}
-                                </div>
+            {{-- LOGO --}}
+            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
+                @if($supplier->catalog_preview)
 
-                                <div class="text-xs text-gray-500 mt-0.5">
-                                    v{{ $version?->version_number }}
-                                </div>
+                    @if($supplier->catalog_preview?->cdn_url)
+                        <img src="{{ $supplier->catalog_preview->cdn_url }}"
+                            class="w-full h-full object-cover">
+                    @endif
 
-                                <div class="text-[11px] text-gray-400 mt-0.5">
-                                    {{ $version?->created_at?->format('M d, H:i') }}
-                                </div>
+                @else
 
-                            </div>
+                    <div class="w-full h-[200px] rounded-t-xl flex items-center justify-center
+                                bg-gradient-to-br from-gray-100 to-gray-200">
 
-                            {{-- ACTIONS (BOTTOM LEFT) --}}
-                            <div class="mt-auto pt-3 flex items-center justify-start gap-2">
+                        <span class="text-xs font-semibold text-gray-500">
+                            {{ strtoupper(substr($supplier->name, 0, 1)) }}
+                        </span>
 
-                                {{-- ACCEPT --}}
-                                <form method="POST" action="">
-                                    @csrf
+                    </div>
 
-                                    <button type="submit"
-                                        class="px-2.5 py-1 text-[11px] font-medium rounded-md
-                               border border-green-200 text-green-700
-                               bg-green-50 hover:bg-green-100 transition">
-                                        Accept
-                                    </button>
-                                </form>
+                @endif
+            </div>
 
-                                <!-- {{-- REJECT --}}
-                                <form method="POST" action="">
-                                    @csrf
+            
 
-                                    <button type="submit"
-                                        class="px-2.5 py-1 text-[11px] font-medium rounded-md
-                               border border-gray-200 text-gray-700
-                               bg-gray-50 hover:bg-gray-100 transition">
-                                        Close negotiation
-                                    </button>
-                                </form> -->
+            {{-- NAME + META --}}
+            <div class="min-w-0">
 
-                            </div>
+                <div class="text-sm font-semibold text-gray-900 truncate">
+                    {{ $supplier?->name }}
+                </div>
 
-                        </div>
+            {{-- TRUST BADGES --}}
+<div class="flex flex-wrap items-center gap-1">
 
-                    </th>
+    @if($supplier?->is_verified)
+        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-100 rounded">
+            VERIFIED
+        </span>
+    @endif
+
+    @if($supplier?->is_trusted)
+        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-green-50 text-green-700 border border-green-100 rounded">
+            TRUSTED
+        </span>
+    @endif
+
+    @if($supplier?->is_premium)
+        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-purple-50 text-purple-700 border border-purple-100 rounded">
+            PREMIUM
+        </span>
+    @endif
+
+    @if($supplier?->level)
+
+        @php
+            $level = strtoupper($supplier->level);
+        @endphp
+
+        <span class="px-1.5 py-[2px] text-[9px] font-semibold uppercase rounded
+            @if($level === 'PLATINUM')
+                bg-gray-900 text-white
+            @elseif($level === 'GOLD')
+                bg-amber-100 text-amber-700 border border-amber-200
+            @elseif($level === 'SILVER')
+                bg-gray-100 text-gray-700 border border-gray-200
+            @else
+                bg-white text-gray-500 border border-gray-300
+            @endif
+        ">
+            {{ $supplier->level }}
+        </span>
+
+    @endif
+
+</div>
+    
+                <div class="text-[11px] text-gray-400 mt-3">
+                    Version {{ $version?->version_number }}
+                </div>
+
+                <div class="text-[11px] text-gray-400">
+                    {{ $version?->created_at?->format('M d, H:i') }}
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+              
+
+        {{-- ACTIONS --}}
+        <div class="mt-auto pt-2 flex gap-2">
+
+            <form method="POST" action="">
+                @csrf
+                <button type="submit"
+                    class="px-3 py-1 text-[11px] font-medium rounded-md
+                           border border-green-200 text-green-700
+                           bg-green-50 hover:bg-green-100 transition">
+                    Accept
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+
+</th>
 
                     @endforeach
 
@@ -353,7 +418,7 @@
 
                         @empty
 
-                        <span class="text-gray-400">
+                        <span class="text-gray-400 text-sm">
                             No delivery options
                         </span>
 
