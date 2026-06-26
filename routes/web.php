@@ -291,14 +291,11 @@ Route::prefix('dashboard/buyer')
 
             Route::get('/{offer}/counter-offer/create', [RfqOfferController::class, 'createCounterOffer'])->name('rfqs.counter-offer.create');
 
-            Route::get('/', [RfqOfferController::class, 'index'])
-                ->name('rfqs.offers.index');
+            Route::get('/', [RfqOfferController::class, 'index'])->name('rfqs.offers.index');
 
-            Route::get('/{offer}', [RfqOfferController::class, 'show'])
-                ->name('rfqs.offers.show');
+            Route::get('/{offer}', [RfqOfferController::class, 'show'])->name('rfqs.offers.show');
 
-            Route::post('/{offer}/versions/{version}/accept', [RfqOfferController::class, 'accept'])
-                ->name('rfqs.offers.versions.accept');
+            Route::post('/{offer}/versions/{version}/accept', [RfqOfferController::class, 'accept'])->name('rfqs.offers.versions.accept');
 
             Route::post('/{offer}/reject', [RfqOfferController::class, 'reject'])
                 ->name('rfqs.offers.reject');

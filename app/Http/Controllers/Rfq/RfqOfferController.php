@@ -44,27 +44,51 @@ class RfqOfferController extends Controller
      * BUYER: accept specific OFFER VERSION (NOT offer itself)
      */
     public function accept(
-        RfqOfferVersion $version,
-        OfferDecisionService $service,
-        ActiveContextService $context
+         Rfq $rfq,
+        RfqOffer $offer,
+    RfqOfferVersion $version,
+    OfferDecisionService $service,
+    ActiveContextService $context
     ) {
-
-
-        $buyerType = $context->isPersonal()
-            ? \App\Models\User::class
-            : \App\Models\Buyer::class;
-
-        $buyer = $context->isPersonal()
-            ? auth()->user()->id
-            : $context->company()->id;
-
-        $service->accept(
-            $version,
-            $buyer
-        );
-
-        return back()->with('success', 'Offer version accepted');
+    
+ /**
+     * 1. CHECK RFQ OWNERSHIP (SECURITY)
+     */
+    if (
+        $rfq->buyer_type !== $context->type() ||
+        $rfq->buyer_id !== $context->id()
+    ) {
+        abort(403, 'Unauthorized RFQ access');
     }
+
+    /**
+     * 2. CHECK OFFER BELONGS TO RFQ
+     */
+    if ($offer->rfq_id !== $rfq->id) {
+        abort(404, 'Offer does not belong to RFQ');
+    }
+
+    /**
+     * 3. CHECK VERSION BELONGS TO OFFER
+     */
+    if ($version->	rfq_offer_id !== $offer->id) {
+        abort(404, 'Version does not belong to Offer');
+    }
+
+    /**
+     * 4. BUSINESS LOGIC
+     */
+    $service->accept(
+        $version,
+        auth()->id()
+    );
+
+    return redirect()
+    ->route('buyer.rfqs.offer-comparison', [
+        'rfq' => $rfq->id
+    ])
+    ->with('success', 'Offer version accepted');
+}
 
     /**
      * BUYER: reject whole offer (all versions)

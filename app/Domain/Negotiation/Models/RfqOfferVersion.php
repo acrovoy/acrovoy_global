@@ -19,6 +19,7 @@ class RfqOfferVersion extends Model
         'owner_type',
         'owner_id',
         'accepted_at',
+        'accepted_by',
         'status',
     ];
 

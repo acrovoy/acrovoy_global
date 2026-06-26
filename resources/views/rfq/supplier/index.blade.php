@@ -143,6 +143,12 @@
 @endif
 
 
+
+    @php
+    use App\Facades\ActiveContext;
+    
+@endphp
+
 {{-- CLOSED RFQS --}}
 @if($closedRfqs->isNotEmpty())
 
@@ -191,9 +197,41 @@
             <tbody class="divide-y divide-gray-100">
 
                 @foreach($closedRfqs as $rfq)
+@php
+ $supplierId = ActiveContext::id();
+        $supplierType = ActiveContext::type();
+$offer = $rfq->offers
+            ->where('participant_type', $supplierType)
+            ->where('participant_id', $supplierId)
+            ->sortByDesc('id')
+            ->first();
 
-                <tr class="hover:bg-gray-50 transition cursor-pointer"
-                    onclick="window.location='{{ route('rfqs.workspace', $rfq->id) }}'">
+        $status = $offer?->status;
+@endphp
+@php
+    $rowClass = match($status) {
+        'accepted' => 'bg-green-50 hover:bg-green-100',
+        'rejected' => 'bg-red-50 hover:bg-red-100',
+        default => 'hover:bg-gray-50'
+    };
+
+    $badgeClass = match($status) {
+        'accepted' => 'bg-green-100 text-green-700',
+        'rejected' => 'bg-red-100 text-red-700',
+        default => 'bg-gray-100 text-gray-600'
+    };
+
+    $badgeText = match($status) {
+        'accepted' => 'ACCEPTED',
+        'rejected' => 'REJECTED',
+        default => 'CLOSED'
+    };
+
+    
+@endphp
+
+                <tr class="{{ $rowClass }} transition cursor-pointer"
+    onclick="window.location='{{ route('rfqs.workspace', $rfq->id) }}'">
 
                     {{-- RFQ ID --}}
                     <td class="px-4 py-4 font-mono text-gray-600 text-xs">
@@ -227,9 +265,11 @@
                     {{-- STATUS --}}
                     <td class="px-4 py-4">
 
-                        <span class="inline-flex items-center px-2.5 py-1 text-[11px] font-medium rounded-full bg-red-100 text-red-700">
-                            CLOSED
-                        </span>
+                        <span class="inline-flex items-center px-2.5 py-1 text-[11px] font-medium rounded-full {{ $badgeClass }}">
+        {{ $badgeText }}
+        
+    </span>
+    
 
                     </td>
 

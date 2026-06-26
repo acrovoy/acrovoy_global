@@ -66,7 +66,7 @@ class RfqController extends Controller
         $rfq->loadMissing([
             'offers' => function ($q) {
         $q->whereHas('latestVersion', function ($version) {
-            $version->where('status', 'submitted');
+            $version->where('status', '!=', 'draft');
         });
     },
             'participants.participant',

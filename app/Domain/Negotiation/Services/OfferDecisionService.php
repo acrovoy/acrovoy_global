@@ -3,6 +3,7 @@
 namespace App\Domain\Negotiation\Services;
 
 use App\Domain\Negotiation\Models\RfqOffer;
+use App\Domain\RFQ\Enums\RfqStatus;
 use App\Domain\Negotiation\Models\RfqOfferVersion;
 use Illuminate\Support\Facades\DB;
 
@@ -13,23 +14,54 @@ class OfferDecisionService
      */
     public function accept(RfqOfferVersion $version, int $userId): void
     {
+
+
         DB::transaction(function () use ($version, $userId) {
 
-            // 1. помечаем версию как принятую
+            // 1. accept version
             $version->update([
                 'status' => 'accepted',
                 'accepted_by' => $userId,
                 'accepted_at' => now(),
             ]);
 
-            // 2. отклоняем все остальные версии этого offer
-            $this->rejectOtherVersions($version->offer_id, $version->id);
+            // 2. reject other versions of same offer
+            $this->rejectOtherVersions($version->rfq_offer_id, $version->id);
 
-            // 3. фиксируем offer как "accepted"
-            $version->offer->update([
+            // 3. accept offer
+            $offer = $version->offer;
+
+            $offer->update([
                 'status' => 'accepted',
                 'accepted_version_id' => $version->id,
             ]);
+
+            // 4. reject all other offers in RFQ
+            $offer->rfq->offers()
+                ->where('id', '!=', $offer->id)
+                ->update([
+                    'status' => 'rejected',
+
+                ]);
+
+            // 5. reject all versions of other offers in RFQ
+            $offer->rfq->offers()
+                ->where('id', '!=', $offer->id)
+                ->with('versions')
+                ->get()
+                ->each(function ($rejectedOffer) use ($userId) {
+
+                    $rejectedOffer->versions()->update([
+                        'status' => 'rejected',
+                    ]);
+                });
+                
+            // 6. CLOSE RFQ
+                $offer->rfq->update([
+                    'status' => RfqStatus::CLOSED,
+                    'closed_at' => now(),
+                ]);
+
         });
     }
 
@@ -63,8 +95,11 @@ class OfferDecisionService
      */
     private function rejectOtherVersions(int $offerId, int $acceptedVersionId): void
     {
+
+
+
         RfqOfferVersion::query()
-            ->where('offer_id', $offerId)
+            ->where('rfq_offer_id', $offerId)
             ->where('id', '!=', $acceptedVersionId)
             ->update([
                 'status' => 'rejected',

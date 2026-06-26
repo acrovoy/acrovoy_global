@@ -79,7 +79,7 @@
                     @php
                     $supplier = $offer->participant;
                     $version = $offer->versions
-                    ->where('status', 'submitted')
+                    ->where('status', '!=', 'draft')
                     ->sortByDesc('id')
                     ->first();
                     $level = $product->supplier->level ?? 'Basic';
@@ -87,71 +87,71 @@
 
                     <th class="min-w-[220px] px-5 py-5 border-r align-top bg-white">
 
-    <div class="flex flex-col h-full gap-3">
+                        <div class="flex flex-col h-full gap-3">
 
-        {{-- SUPPLIER HEADER --}}
-        <div class="flex items-start gap-3">
+                            {{-- SUPPLIER HEADER --}}
+                            <div class="flex items-start gap-3">
 
-            {{-- LOGO --}}
-            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
-                @if($supplier->catalog_preview)
+                                {{-- LOGO --}}
+                                <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
+                                    @if($supplier->catalog_preview)
 
-                    @if($supplier->catalog_preview?->cdn_url)
-                        <img src="{{ $supplier->catalog_preview->cdn_url }}"
-                            class="w-full h-full object-cover">
-                    @endif
+                                    @if($supplier->catalog_preview?->cdn_url)
+                                    <img src="{{ $supplier->catalog_preview->cdn_url }}"
+                                        class="w-full h-full object-cover">
+                                    @endif
 
-                @else
+                                    @else
 
-                    <div class="w-full h-[200px] rounded-t-xl flex items-center justify-center
+                                    <div class="w-full h-[200px] rounded-t-xl flex items-center justify-center
                                 bg-gradient-to-br from-gray-100 to-gray-200">
 
-                        <span class="text-xs font-semibold text-gray-500">
-                            {{ strtoupper(substr($supplier->name, 0, 1)) }}
-                        </span>
+                                        <span class="text-xs font-semibold text-gray-500">
+                                            {{ strtoupper(substr($supplier->name, 0, 1)) }}
+                                        </span>
 
-                    </div>
+                                    </div>
 
-                @endif
-            </div>
+                                    @endif
+                                </div>
 
-            
 
-            {{-- NAME + META --}}
-            <div class="min-w-0">
 
-                <div class="text-sm font-semibold text-gray-900 truncate">
-                    {{ $supplier?->name }}
-                </div>
+                                {{-- NAME + META --}}
+                                <div class="min-w-0">
 
-            {{-- TRUST BADGES --}}
-<div class="flex flex-wrap items-center gap-1">
+                                    <div class="text-sm font-semibold text-gray-900 truncate">
+                                        {{ $supplier?->name }}
+                                    </div>
 
-    @if($supplier?->is_verified)
-        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-100 rounded">
-            VERIFIED
-        </span>
-    @endif
+                                    {{-- TRUST BADGES --}}
+                                    <div class="flex flex-wrap items-center gap-1">
 
-    @if($supplier?->is_trusted)
-        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-green-50 text-green-700 border border-green-100 rounded">
-            TRUSTED
-        </span>
-    @endif
+                                        @if($supplier?->is_verified)
+                                        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-100 rounded">
+                                            VERIFIED
+                                        </span>
+                                        @endif
 
-    @if($supplier?->is_premium)
-        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-purple-50 text-purple-700 border border-purple-100 rounded">
-            PREMIUM
-        </span>
-    @endif
+                                        @if($supplier?->is_trusted)
+                                        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-green-50 text-green-700 border border-green-100 rounded">
+                                            TRUSTED
+                                        </span>
+                                        @endif
 
-    @if($supplier?->level)
+                                        @if($supplier?->is_premium)
+                                        <span class="px-1.5 py-[2px] text-[9px] font-medium bg-purple-50 text-purple-700 border border-purple-100 rounded">
+                                            PREMIUM
+                                        </span>
+                                        @endif
 
-        @php
-            $level = strtoupper($supplier->level);
-        @endphp
+                                        @if($supplier?->level)
 
-        <span class="px-1.5 py-[2px] text-[9px] font-semibold uppercase rounded
+                                        @php
+                                        $level = strtoupper($supplier->level);
+                                        @endphp
+
+                                        <span class="px-1.5 py-[2px] text-[9px] font-semibold uppercase rounded
             @if($level === 'PLATINUM')
                 bg-gray-900 text-white
             @elseif($level === 'GOLD')
@@ -162,47 +162,78 @@
                 bg-white text-gray-500 border border-gray-300
             @endif
         ">
-            {{ $supplier->level }}
+                                            {{ $supplier->level }}
+                                        </span>
+
+                                        @endif
+
+                                    </div>
+
+                                    <div class="text-[11px] text-gray-400 mt-3">
+                                        Version {{ $version?->version_number }}
+                                    </div>
+
+                                    <div class="text-[11px] text-gray-400">
+                                        {{ $version?->created_at?->format('M d, H:i') }}
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+
+
+                            {{-- ACTIONS --}}
+<div class="mt-auto pt-2 flex gap-2">
+
+    @if($version->status === 'submitted')
+
+        <form method="POST"
+              action="{{ route('buyer.rfqs.offers.versions.accept', [
+                    'rfq' => $rfq->id,
+                    'offer' => $offer->id,
+                    'version' => $version->id,
+              ]) }}">
+            @csrf
+
+            <button type="submit"
+                class="px-3 py-1 text-[11px] font-medium rounded-md
+                       border border-green-200 text-green-700
+                       bg-green-50 hover:bg-green-100 transition">
+                Accept
+            </button>
+        </form>
+
+    @elseif($version->status === 'accepted')
+
+        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                     bg-green-100 text-green-700 border border-green-200">
+            Accepted
+        </span>
+
+    @elseif($version->status === 'rejected')
+
+        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                     bg-gray-100 text-gray-500 border border-gray-200">
+            Rejected
+        </span>
+
+    @else
+
+        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                     bg-gray-50 text-gray-500 border border-gray-200">
+            {{ ucfirst($version->status) }}
         </span>
 
     @endif
 
 </div>
-    
-                <div class="text-[11px] text-gray-400 mt-3">
-                    Version {{ $version?->version_number }}
-                </div>
 
-                <div class="text-[11px] text-gray-400">
-                    {{ $version?->created_at?->format('M d, H:i') }}
-                </div>
+                        </div>
 
-            </div>
-
-        </div>
-
-        
-
-              
-
-        {{-- ACTIONS --}}
-        <div class="mt-auto pt-2 flex gap-2">
-
-            <form method="POST" action="">
-                @csrf
-                <button type="submit"
-                    class="px-3 py-1 text-[11px] font-medium rounded-md
-                           border border-green-200 text-green-700
-                           bg-green-50 hover:bg-green-100 transition">
-                    Accept
-                </button>
-            </form>
-
-        </div>
-
-    </div>
-
-</th>
+                    </th>
 
                     @endforeach
 
@@ -297,7 +328,7 @@
 
                     @php
                     $version = $offer->versions
-                    ->where('status', 'submitted')
+                    ->where('status', '!=', 'draft')
                     ->sortByDesc('id')
                     ->first();
 
@@ -372,18 +403,18 @@
                     <td class="px-5 py-4 border-r align-top">
 
                         @php
-                         $addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
+                        $addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
 
-            if (!$addressa) {
-                $cityId = null;
-            } else {
+                        if (!$addressa) {
+                        $cityId = null;
+                        } else {
 
-                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
-                    ->where('parent_id', $addressa->region)
-                    ->first();
+                        $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                        ->where('parent_id', $addressa->region)
+                        ->first();
 
-                $cityId = $eexistingLocation?->id;
-            }
+                        $cityId = $eexistingLocation?->id;
+                        }
 
                         $shippingTemplates = $offer->participant->shippingTemplates
                         ->filter(fn ($template) =>

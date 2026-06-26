@@ -74,6 +74,22 @@
 
                     $percent = ($completed / 3) * 100;
                     @endphp
+                    @php
+    use App\Facades\ActiveContext;
+
+    $supplierId = ActiveContext::supplierId();
+
+    $offer = $rfq->offers
+        ->where('participant_type', \App\Models\Supplier::class)
+        ->where('participant_id', $supplierId)
+        ->sortByDesc('id')
+        ->first();
+
+    $status = $offer?->status;
+     $isAccepted = $status === 'accepted';
+     $isRejected = $status === 'rejected';
+@endphp
+
 
                     @if($isBuyer ?? false)
 
@@ -306,6 +322,73 @@
     </div>
 </div>
 
+
+@if(!$isBuyer)
+ @if($isAccepted)
+    <div class="mt-3 p-3 rounded-md border border-green-200 bg-green-50 mb-4">
+        
+        <div class="flex items-start justify-between gap-3">
+            
+            <div class="flex-1">
+                <div class="text-sm font-medium text-green-800">
+                    Ваш оффер принят
+                </div>
+
+                <div class="text-xs text-green-700 mt-0.5">
+                    Поставщик подтвердил ваш оффер. Вы можете перейти к заказу.
+                </div>
+            </div>
+
+            <div class="shrink-0">
+                <div class="w-2.5 h-2.5 rounded-full bg-green-500 mt-1"></div>
+            </div>
+
+        </div>
+
+        <div class="mt-3 flex items-center justify-end">
+            <a href=""
+               class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium
+                      bg-green-600 text-white rounded-md
+                      hover:bg-green-700 transition">
+                
+                Открыть ордер
+                
+                <span class="text-[10px] opacity-80">→</span>
+            </a>
+        </div>
+
+    </div>
+@endif
+
+@if($isRejected)
+    <div class="mt-3 p-3 rounded-md border border-red-200 bg-red-50 mb-4">
+        
+        <div class="flex items-start justify-between gap-3">
+            
+            <div class="flex-1">
+                <div class="text-sm font-medium text-red-800">
+                    Ваш оффер отклонён
+                </div>
+
+                <div class="text-xs text-red-700 mt-0.5">
+                    Заказчик не выбрал ваш оффер для этого RFQ.
+                </div>
+            </div>
+
+            <div class="shrink-0">
+                <div class="w-2.5 h-2.5 rounded-full bg-red-500 mt-1"></div>
+            </div>
+
+        </div>
+
+       
+
+    </div>
+@endif
+
+@endif
+
+
 <div>
     {{-- DESCRIPTION --}}
     @if($rfq->description)
@@ -330,9 +413,11 @@
         </button>
         @else
         <div class="text-xs text-gray-400">
-            
-        </div>
+         
+</div>
     @endif
+
+
         @endif
 
     </div>

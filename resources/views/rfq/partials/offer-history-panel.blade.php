@@ -113,9 +113,19 @@
                                             
                                         </div>
 
-                                        <span class="px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-[10px] font-medium">
-                                            {{ ucfirst($version->status) }}
-                                        </span>
+                                        <span class="px-2 py-1 rounded-md text-[10px] font-medium
+    @if($version->status === 'submitted')
+        bg-green-100 text-green-700
+    @elseif($version->status === 'rejected')
+        bg-red-100 text-red-700
+    @elseif($version->status === 'draft')
+        bg-gray-100 text-gray-600
+    @else
+        bg-gray-100 text-gray-600
+    @endif
+">
+    {{ ucfirst($version->status) }}
+</span>
 
                                     </div>
 

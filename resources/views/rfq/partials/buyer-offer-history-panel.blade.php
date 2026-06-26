@@ -175,14 +175,13 @@
 
                                                 
                                             </div>
-
-                                            <span class="px-2 py-1 rounded-md text-[10px] font-medium
-                                                {{ $version->status === 'submitted'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-gray-100 text-gray-600'
-                                                }}">
-                                                {{ ucfirst($version->status) }}
-                                            </span>
+<span class="px-2 py-1 rounded-md text-[10px] font-medium
+    {{ in_array($version->status, ['submitted', 'accepted'])
+        ? 'bg-green-100 text-green-700'
+        : 'bg-gray-100 text-gray-600'
+    }}">
+    {{ ucfirst($version->status) }}
+</span>
 
                                         </div>
                                         @if($isActive)

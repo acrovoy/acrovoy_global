@@ -1,15 +1,34 @@
  {{-- PRODUCTS --}}
  <div class="mt-1">
 
+@php
+    use App\Facades\ActiveContext;
 
+    $supplierId = ActiveContext::supplierId();
+
+    $offer = $rfq->offers
+        ->where('participant_type', \App\Models\Supplier::class)
+        ->where('participant_id', $supplierId)
+        ->sortByDesc('id')
+        ->first();
+
+    $status = $offer?->status;
+@endphp
 
      {{-- ITEM --}}
 
      <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 's-requirements']) }}"
-   class="group flex items-center gap-3 px-3 py-2.5 rounded-md border border-gray-200
+   class="group flex items-center gap-3 px-3 py-2.5 rounded-md border
           transition-all duration-200
           hover:bg-black/5
-          {{ $activeTab === 's-requirements' ? 'bg-black/5' : '' }}">
+          {{ $activeTab === 's-requirements' ? 'bg-black/5' : '' }}
+          @if($status === 'rejected')
+              border-red-300 bg-red-50
+          @elseif($status === 'accepted')
+              border-green-300 bg-green-50
+          @else
+              border-gray-200
+          @endif">
 
     {{-- INDEX --}}
     <div class="text-[11px] text-gray-400 w-4 text-right">

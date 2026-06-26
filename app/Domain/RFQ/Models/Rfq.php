@@ -6,6 +6,7 @@ use App\Domain\RFQ\Enums\RfqStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Domain\RFQ\Models\RfqAttributeValue;
+use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\RFQ\Enums\RfqVisibilityType;
 
 use App\Models\User;
@@ -66,7 +67,7 @@ class Rfq extends Model
     public function offers()
 {
     return $this->hasMany(
-        \App\Domain\Negotiation\Models\RfqOffer::class
+        RfqOffer::class
     );
 }
 

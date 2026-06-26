@@ -66,46 +66,68 @@
         @php
         $supplier = $offer->participant;
         $version = $offer->latestVersion;
+
+        $status = $version?->status;
+
+        $base = 'group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border shadow-sm transition-all duration-200';
+
+    $styles = match ($status) {
+
+        'accepted' => 'bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300',
+
+        'rejected' => 'bg-gray-100 border-gray-200 opacity-60 hover:opacity-80',
+
+        default => 'bg-gradient-to-b from-white via-gray-50 to-gray-100 border-gray-200 hover:bg-black/5 hover:border-gray-300'
+    };
         
         @endphp
 
         <a href="{{ route('rfqs.workspace', [
-            'rfq' => $rfq->id,
-            'tab' => 'offers',
-            'offer' => $offer->id
-        ]) }}"
-            class="group flex items-center justify-between gap-3 px-3 py-2.5
-                  rounded-lg border border-gray-200 bg-gradient-to-b from-white via-gray-50 to-gray-100 shadow-sm
-                  transition-all duration-200
-                  hover:bg-black/5 hover:border-gray-300 hover:shadow">
+        'rfq' => $rfq->id,
+        'tab' => 'offers',
+        'offer' => $offer->id
+    ]) }}"
+   class="{{ $base }} {{ $styles }}">
 
-            {{-- LEFT --}}
-            <div class="flex items-center gap-3 min-w-0">
+    {{-- LEFT --}}
+    <div class="flex items-center gap-3 min-w-0">
 
-                {{-- DOT --}}
-                <div class="w-1.5 h-1.5 rounded-full bg-green-400 group-hover:bg-green-600"></div>
+        {{-- DOT --}}
+        <div class="w-1.5 h-1.5 rounded-full
+            {{ $status === 'accepted'
+                ? 'bg-green-500'
+                : ($status === 'rejected'
+                    ? 'bg-gray-400'
+                    : 'bg-green-400') }}">
+        </div>
 
-                {{-- TEXT --}}
-                <div class="min-w-0">
+        {{-- TEXT --}}
+        <div class="min-w-0">
 
-                    <div class="text-sm text-blue-800 truncate">
-                        {{ $supplier?->name ?? 'Unknown supplier' }}
-                    </div>
-
-                    <div class="text-[11px] text-gray-400 mt-0.5">
-                        Version {{ $version?->version_number ?? '-' }}
-                    </div>
-
-                </div>
-
+            <div class="text-sm truncate
+                {{ $status === 'accepted'
+                    ? 'text-green-800'
+                    : ($status === 'rejected'
+                        ? 'text-gray-500'
+                        : 'text-blue-800') }}">
+                {{ $supplier?->name ?? 'Unknown supplier' }}
             </div>
 
-            {{-- ARROW --}}
-            <div class="text-gray-300 group-hover:text-gray-500 transition">
-                →
+            <div class="text-[11px] text-gray-400 mt-0.5">
+                Version {{ $version?->version_number ?? '-' }}
             </div>
 
-        </a>
+        </div>
+
+    </div>
+
+    {{-- ARROW --}}
+    <div class="transition
+        {{ $status === 'rejected' ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-600' }}">
+        →
+    </div>
+
+</a>
 
         @endforeach
 
