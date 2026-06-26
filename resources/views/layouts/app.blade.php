@@ -104,8 +104,8 @@
     </main>
 
 
-                                                        {{-- ДЕБАГ БАР --}}
-                                                    <x-debug.active-context-panel />
+      {{-- ДЕБАГ БАР --}}
+    <!-- <x-debug.active-context-panel /> -->
 
 
     

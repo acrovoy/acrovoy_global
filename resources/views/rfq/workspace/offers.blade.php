@@ -90,29 +90,29 @@
 
 
                         @if(
-    !$rfq->status->isClosed() &&
-    $activeVersion->id === $lastsubmittedVersion->id &&
-    !$existingDraftCounter
-)
-@if(!$rfq->status->isClosed())
-    <button
-    type="button"
-    onclick="openCloseNegotiationDrawer()"
-    class="px-4 py-1 border rounded bg-white hover:bg-gray-50 transition">
-    Close negotiation
-</button>
-@endif
-    <a
-        href="{{ route('buyer.rfqs.counter-offer.create', [
+                        !$rfq->status->isClosed() &&
+                        $activeVersion->id === $lastsubmittedVersion->id &&
+                        !$existingDraftCounter
+                        )
+                        @if(!$rfq->status->isClosed())
+                        <button
+                            type="button"
+                            onclick="openCloseNegotiationDrawer()"
+                            class="px-4 py-1 border rounded bg-white hover:bg-gray-50 transition">
+                            Close negotiation
+                        </button>
+                        @endif
+                        <a
+                            href="{{ route('buyer.rfqs.counter-offer.create', [
             'rfq' => $rfq->id,
             'offer' => $offer->id,
             'create' => true,
         ]) }}"
-        class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-        Create Counter Offer
-    </a>
+                            class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
+                            Create Counter Offer
+                        </a>
 
-@endif
+                        @endif
 
 
                     </div>
@@ -184,25 +184,36 @@
                         <div class="border rounded-lg p-4 mb-6 bg-gray-50">
 
 
-                        @php
-$addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
+                           @php
+    $addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
 
-            if (!$addressa) {
-                $cityId = null;
-            } else {
+    if (!$addressa) {
+        $cityId = null;
+    } else {
+        $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+            ->where('parent_id', $addressa->region)
+            ->first();
 
-                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
-                    ->where('parent_id', $addressa->region)
-                    ->first();
+        $cityId = $eexistingLocation?->id;
+    }
 
-                $cityId = $eexistingLocation?->id;
-            }
+    $participant = $offer->participant;
 
-$shippingTemplates = $offer->participant->shippingTemplates
-    ->filter(fn ($template) =>
-        $template->locations->contains('id', $cityId)
-    );
+    $shippingTemplates = collect();
+
+   
+
+        $shippingTemplates = collect($participant->shippingTemplates ?? [])
+            ->filter(fn ($template) =>
+                $template->locations?->contains('id', $cityId)
+            );
+
+            
+    
 @endphp
+
+
+
                             @forelse($shippingTemplates as $template)
 
 
@@ -270,11 +281,11 @@ $shippingTemplates = $offer->participant->shippingTemplates
 
 {{-- CLOSE NEGOTIATION DRAWER --}}
 <div id="close-negotiation-overlay"
-     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 transition-opacity">
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 transition-opacity">
 </div>
 
 <div id="close-negotiation-drawer"
-     class="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl
+    class="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl
             transform translate-x-full transition-transform duration-300 z-50
             flex flex-col">
 
@@ -286,16 +297,22 @@ $shippingTemplates = $offer->participant->shippingTemplates
 
         <p class="text-sm text-gray-500 mt-1">
             Finalize this RFQ negotiation with supplier
+
+             
         </p>
     </div>
 
     {{-- Body --}}
     <form method="POST"
-          action=""
-          class="flex flex-col flex-1">
+        action="{{ route('buyer.rfqs.offers.versions.accept', [
+                    'rfq' => $rfq->id,
+                    'offer' => $offer->id,
+                    'version' => $activeVersion->id,
+              ]) }}"
+        class="flex flex-col flex-1">
 
         @csrf
-        @method('PATCH')
+        
 
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
@@ -312,71 +329,71 @@ $shippingTemplates = $offer->participant->shippingTemplates
 
             <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-    <div class="text-sm text-gray-700">
-        Choose how you want to finalize this negotiation:
-    </div>
+                <div class="text-sm text-gray-700">
+                    Choose how you want to finalize this negotiation:
+                </div>
 
-    {{-- WARNING --}}
-    <div class="p-3 rounded-lg bg-yellow-50 border border-yellow-100 text-xs text-yellow-800">
-        ⚠️ Accepting this offer will automatically mark all other supplier offers as <b>Rejected</b>.
-    </div>
+                {{-- WARNING --}}
+                <div class="p-3 rounded-lg bg-yellow-50 border border-yellow-100 text-xs text-yellow-800">
+                    ⚠️ Accepting this offer will automatically mark all other supplier offers as <b>Rejected</b>.
+                </div>
 
-    <div class="p-3 rounded-lg bg-red-50 border border-red-100 text-xs text-red-800">
-        ❌ Rejecting will exclude this supplier from further consideration.
-    </div>
+                <div class="p-3 rounded-lg bg-red-50 border border-red-100 text-xs text-red-800">
+                    ❌ Rejecting will exclude this supplier from further consideration.
+                </div>
 
-    {{-- ACTION TYPE --}}
-    <input type="hidden" name="decision" id="close-decision" value="accept">
+                {{-- ACTION TYPE --}}
+                <input type="hidden" name="decision" id="close-decision" value="accept">
 
-    {{-- NOTE --}}
-    <div>
-        <label class="text-xs text-gray-500 uppercase tracking-wide">
-            Closing note (optional)
-        </label>
+                {{-- NOTE --}}
+                <div>
+                    <label class="text-xs text-gray-500 uppercase tracking-wide">
+                        Closing note (optional)
+                    </label>
 
-        <textarea name="close_note"
-                  rows="4"
-                  class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                    <textarea name="close_note"
+                        rows="4"
+                        class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
                          focus:outline-none focus:ring-2 focus:ring-gray-900/10"></textarea>
-    </div>
+                </div>
 
-</div>
+            </div>
 
 
-            
+
         </div>
 
         {{-- Footer --}}
         <div class="border-t bg-white px-6 py-4 flex items-center justify-between gap-2">
 
-    <button type="button"
-            onclick="closeCloseNegotiationDrawer()"
-            class="px-4 py-2 text-sm rounded-lg border border-gray-200
+            <button type="button"
+                onclick="closeCloseNegotiationDrawer()"
+                class="px-4 py-2 text-sm rounded-lg border border-gray-200
                    text-gray-600 hover:bg-gray-50 transition">
-        Cancel
-    </button>
+                Cancel
+            </button>
 
-    <div class="flex gap-2">
+            <div class="flex gap-2">
 
-        {{-- REJECT --}}
-        <button type="submit"
-                onclick="document.getElementById('close-decision').value='reject'"
-                class="px-4 py-2 text-sm rounded-lg border border-red-200
+                {{-- REJECT --}}
+                <button type="submit"
+                    onclick="document.getElementById('close-decision').value='reject'"
+                    class="px-4 py-2 text-sm rounded-lg border border-red-200
                        text-red-600 hover:bg-red-50 transition">
-            Reject
-        </button>
+                    Reject
+                </button>
 
-        {{-- ACCEPT --}}
-        <button type="submit"
-                onclick="document.getElementById('close-decision').value='accept'"
-                class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                {{-- ACCEPT --}}
+                <button type="submit"
+                    onclick="document.getElementById('close-decision').value='accept'"
+                    class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
                        hover:bg-gray-800 transition shadow-sm">
-            Accept & Close
-        </button>
+                    Accept & Close
+                </button>
 
-    </div>
+            </div>
 
-</div>
+        </div>
 
     </form>
 </div>

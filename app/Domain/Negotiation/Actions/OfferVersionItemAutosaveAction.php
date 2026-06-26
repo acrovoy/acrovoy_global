@@ -6,7 +6,7 @@ use App\Domain\Negotiation\Services\OfferVersionBuilder;
 use App\Domain\RFQ\Models\Rfq;
 use Illuminate\Http\Request;
 use App\Services\Company\ActiveContextService;
-
+use App\Models\User;
 
 class OfferVersionItemAutosaveAction
 {
@@ -19,11 +19,44 @@ class OfferVersionItemAutosaveAction
         Request $request,
         ActiveContextService $context
     ) {
+        /**
+         * =========================
+         * SUPPLIER ACCESS CHECK
+         * =========================
+         */
+        if (!$context->isSupplier()) {
+            abort(403);
+        }
+
+        /**
+         * =========================
+         * UNIFIED IDENTITY
+         * =========================
+         */
+        $identity = [
+            'type' => $context->isCompany()
+                ? $context->type()
+                : User::class,
+
+            'id' => $context->id(),
+        ];
+
+        /**
+         * =========================
+         * GET OR CREATE DRAFT VERSION
+         * =========================
+         */
         $version = $this->builder->getDraftVersion(
             rfqId: $rfq->id,
-            supplierId: $context->supplierId()
+            participantType: $identity['type'],
+            participantId: $identity['id']
         );
 
+        /**
+         * =========================
+         * PAYLOAD
+         * =========================
+         */
         $payload = $this->buildPayload($request);
 
         if (empty($payload)) {
@@ -33,6 +66,11 @@ class OfferVersionItemAutosaveAction
             ]);
         }
 
+        /**
+         * =========================
+         * UPDATE ITEM
+         * =========================
+         */
         $this->builder->updateItem(
             version: $version,
             attributeId: $request->requirement_id,

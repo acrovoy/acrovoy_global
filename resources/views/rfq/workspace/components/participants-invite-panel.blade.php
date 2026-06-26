@@ -1,3 +1,4 @@
+
 <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
 
     <div class="text-sm font-semibold">
@@ -22,19 +23,21 @@
 
     <input type="hidden"
            name="participant_type"
-           value="{{ \App\Models\Supplier::class }}">
+           id="participant_type"
+           value="">
 
     <select name="participant_id"
+            id="participant_id"
             class="border border-gray-300 rounded px-3 py-2 text-sm text-gray-600 w-full"
             required>
 
         <option value="">
-            Select supplier
+            Select participant
         </option>
 
-        @foreach($suppliers ?? [] as $supplier)
-            <option value="{{ $supplier->id }}">
-                {{ $supplier->name }}
+        @foreach($allparticipants as $p)
+            <option value="{{ $p['id'] }}" data-type="{{ $p['type'] }}">
+                {{ $p['label'] }}
             </option>
         @endforeach
 
@@ -109,11 +112,13 @@
                         Select supplier
                     </option>
 
-                    @foreach($suppliers ?? [] as $supplier)
-                        <option value="{{ $supplier->id }}">
-                            {{ $supplier->name }}
-                        </option>
-                    @endforeach
+                    @foreach($allparticipants as $p)
+            <option value="{{ $p['id'] }}" data-type="{{ $p['type'] }}">
+                {{ $p['label'] }}
+            </option>
+        @endforeach
+
+                    
 
                 </select>
 
@@ -167,3 +172,10 @@
     </form>
 
 </div>
+
+<script>
+document.getElementById('participant_id').addEventListener('change', function () {
+    const selected = this.options[this.selectedIndex];
+    document.getElementById('participant_type').value = selected.dataset.type || '';
+});
+</script>

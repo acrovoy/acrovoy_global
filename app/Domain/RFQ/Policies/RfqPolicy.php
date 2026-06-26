@@ -15,59 +15,57 @@ class RfqPolicy
      */
     public function view(User $user, Rfq $rfq): bool
 {
+    $context = app(ActiveContextService::class);
 
-
-    /**
-     * =========================================
-     * BUYER (company ownership, NOT user ownership)
-     * =========================================
-     */
-
-    if ($rfq->buyer_type && $rfq->buyer_id) {
-
-        // если buyer = User напрямую
-        if ($rfq->buyer_type === User::class) {
-            if ($rfq->buyer_id === $user->id) {
-                return true;
-            }
-        }
-
-        // если buyer = Company/Supplier (через members)
-        $buyerClass = $rfq->buyer_type;
-
-        if (method_exists($buyerClass, 'users')) {
-
-            $isBuyerMember = $buyerClass::query()
-                ->where('id', $rfq->buyer_id)
-                ->whereHas('users', function ($q) use ($user) {
-                    $q->where('id', $user->id); // ❗ без users.id
-                })
-                ->exists();
-
-            if ($isBuyerMember) {
-                return true;
-            }
-        }
-    }
-
-   /**
-     * SUPPLIER ACCESS — БЕЗ USER ID ВООБЩЕ
-     */
-
-    $supplier = app(ActiveContextService::class)->supplier();
-
-    if (!$supplier) {
+    if ($context->isGuest()) {
         return false;
     }
 
-    return RfqParticipant::query()
-        ->where('rfq_id', $rfq->id)
-        ->where('participant_type', \App\Models\Supplier::class)
-        ->where('participant_id', $supplier->id)
-        ->whereIn('status', ['invited', 'accepted'])
-        ->exists();
+    /**
+     * =========================================
+     * BUYER ACCESS
+     * =========================================
+     */
+    if ($context->role() === 'buyer') {
 
-    
+        // personal buyer
+        if ($context->isPersonal()) {
+            if ($rfq->buyer_type === User::class) {
+                return $rfq->buyer_id === $user->id;
+            }
+
+            return $rfq->created_by === $user->id;
+        }
+
+        // company buyer
+        if ($context->isCompany()) {
+
+            return $rfq->company_id === $context->id();
+        }
+    }
+
+    /**
+     * =========================================
+     * SUPPLIER ACCESS (morph participants)
+     * =========================================
+     */
+    if ($context->role() === 'supplier') {
+
+        $supplier = $context->supplier();
+
+        if (!$supplier) {
+            return false;
+        }
+
+        return RfqParticipant::query()
+            ->where('rfq_id', $rfq->id)
+            ->where('participant_type', \App\Models\Supplier::class)
+            ->where('participant_id', $supplier->id)
+            ->whereIn('status', ['invited', 'accepted'])
+            ->exists();
+    }
+
+    return false;
 }
 
     /**

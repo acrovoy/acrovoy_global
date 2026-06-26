@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\UserAddress;
 use App\Models\Country;
+use App\Models\User;
 use App\Models\ShippingTemplate;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
 use App\Domain\RFQ\Enums\RfqStatus;
@@ -34,7 +35,7 @@ class RfqController extends Controller
 
     public function show(Request $request, Rfq $rfq)
     {
-        $this->authorize('view', $rfq);
+        
 
 
         $buyerSnapshotMap = $rfq->attributeValues
@@ -205,11 +206,13 @@ class RfqController extends Controller
             );
 
 
-            $supplier = $this->context->supplier();
+            $supplier = $this->context->supplierParticipant();
 
             if (!$supplier) {
                 abort(403);
             }
+
+           
 
             $offer = app(\App\Domain\Negotiation\Actions\CreateRfqOfferAction::class)
                 ->execute(
@@ -263,13 +266,9 @@ class RfqController extends Controller
 
 
 
-        $ownerType = $this->context->isPersonal()
-            ? \App\Models\User::class
-            : \App\Models\Supplier::class;
+        $ownerType = $this->context->type();
 
-        $ownerId = $this->context->isPersonal()
-            ? auth()->user()->id
-            : $this->context->company()->id;
+        $ownerId = $this->context->id();
 
 
 
@@ -350,13 +349,9 @@ class RfqController extends Controller
 
 
 
-        $ownerType = $this->context->isPersonal()
-            ? \App\Models\User::class
-            : \App\Models\Supplier::class;
+        $ownerType = $this->context->type();
 
-        $ownerId = $this->context->isPersonal()
-            ? auth()->user()->id
-            : $this->context->company()->id;
+        $ownerId = $this->context->id();
 
         $groups = AttributeGroup::where('owner_type', $ownerType)
             ->where('owner_id', $ownerId)
@@ -414,7 +409,15 @@ class RfqController extends Controller
                     ->get();
             }
 
-            $offers = $rfq->offers;
+            $offers = $rfq->offers
+    ->filter(function ($offer) {
+        return $offer->latestVersion &&
+            in_array($offer->latestVersion->status, [
+                'submitted',
+                'accepted',
+                'rejected'
+            ]);
+    });
 
             $offerId = request('offer');
 
@@ -656,10 +659,7 @@ class RfqController extends Controller
 
         $currentAddressId = $rfq->delivery_address_id;
 
-        $suppliers = Supplier::query()
-            ->orderBy('name')
-            ->limit(50)
-            ->get();
+        
 
         $allCategories = Category::query()
             ->where('is_selectable', 1)
@@ -679,6 +679,23 @@ class RfqController extends Controller
             ->toArray();
 
 
+        $allparticipants = collect()
+    ->merge(
+        Supplier::where('id', '!=', 1)
+            ->get()
+            ->map(fn($s) => [
+                'id' => $s->id,
+                'type' => Supplier::class,
+                'label' => $s->name,
+            ])
+    )
+    ->merge(
+        User::all()->map(fn($u) => [
+            'id' => $u->id,
+            'type' => User::class,
+            'label' => trim($u->name . ' ' . $u->last_name) . ' (' . $u->email . ')',
+        ])
+    );
 
 
 
@@ -690,7 +707,6 @@ class RfqController extends Controller
             'categories' => $categories,
             'selectedCategory' => $selectedCategory,
             'attributes' => $attributes,
-            'suppliers' => $suppliers,
             'allCategories' => $allCategories,
             'participants' => $participants,
             'savedAddresses' => $savedAddresses,
@@ -737,34 +753,43 @@ class RfqController extends Controller
             // Флаги заполененности
             'requirementsCompleted' => $requirementsCompleted,
             'participantsCompleted' => $participantsCompleted,
+            'allparticipants' => $allparticipants,
             'deliveryCompleted' => $deliveryCompleted,
             'canPublish' => $canPublish,
         ]);
     }
 
     private function isBuyer(Rfq $rfq): bool
-    {
-        if ($this->context->isGuest()) {
-            return false;
-        }
-
-        if ($this->context->isPersonal()) {
-            return $rfq->created_by === $this->context->user()->id;
-        }
-
-        return $this->context->isCompany()
-            && $rfq->company_id === $this->context->id();
+{
+    if ($this->context->isGuest() || $this->context->role() !== 'buyer') {
+        return false;
     }
+
+    return match (true) {
+        $this->context->isPersonal()
+            => $rfq->created_by === $this->context->user()->id,
+
+        $this->context->isCompany()
+            => $rfq->company_id === $this->context->id(),
+
+        default => false,
+    };
+}
 
     private function isSupplierParticipant(Rfq $rfq): bool
-    {
-        if (!$this->context->isCompany()) {
-            return false;
-        }
-
-        return $rfq->participants
-            ->contains('supplier_id', $this->context->id());
+{
+    if ($this->context->isGuest()) {
+        return false;
     }
+
+    if (!$this->context->isSupplier()) {
+        return false;
+    }
+
+    return $rfq->participants()
+        ->where('participant_id', $this->context->id())
+        ->exists();
+}
 
 
 

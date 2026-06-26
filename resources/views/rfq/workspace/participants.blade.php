@@ -106,8 +106,9 @@
 @if(!$isClosed)
    @include('rfq.workspace.components.participants-invite-panel', [
     'rfq' => $rfq,
-    'suppliers' => $suppliers,
+    'suppliers' => $allparticipants,
     'visibility' => $rfq->visibility_type->value,
+    'allparticipants' => $allparticipants,
 ])
 @else
 
@@ -141,8 +142,17 @@
                 <div>
 
                     <div class="text-sm font-medium text-gray-900">
-                        {{ $participant->participant?->name ?? 'Unknown supplier' }}
-                    </div>
+    @php($supplier = $participant->participant)
+
+    @if($supplier instanceof \App\Models\User)
+        {{ trim($supplier->name . ' ' . $supplier->last_name) }}
+        <span class="text-xs text-gray-400">
+            ({{ $supplier->email }})
+        </span>
+    @else
+        {{ $supplier?->name ?? 'Unknown supplier' }}
+    @endif
+</div>
 
                     <div class="text-xs text-gray-500">
                         Invited {{ optional($participant->invited_at)->format('d M Y H:i') ?? '—' }}
@@ -155,9 +165,9 @@
             {{-- RIGHT --}}
             <div class="flex items-center gap-3">
 
-    <span class="{{ $participant->status->badge() }}">
-    {{ $participant->status->label() }}
-</span>
+                <span class="{{ $participant->status->badge() }}">
+                    {{ $participant->status->label() }}
+                </span>
 @if(!$isClosed)
     <form
     method="POST"

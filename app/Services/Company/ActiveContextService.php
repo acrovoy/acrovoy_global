@@ -5,6 +5,7 @@ namespace App\Services\Company;
 use App\Models\CompanyUser;
 use App\Models\Supplier;
 use App\Models\Buyer;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class ActiveContextService
@@ -210,6 +211,21 @@ class ActiveContextService
         return $this->company();
     }
 
+    public function supplierParticipant(): ?array
+{
+    if (!$this->isSupplier()) {
+        return null;
+    }
+
+    return [
+        'type' => $this->isCompany()
+            ? $this->type()          // Supplier::class / Company class
+            : User::class,
+
+        'id' => $this->id(),
+    ];
+}
+
     public function buyer(): ?Buyer
     {
         if (!$this->isCompany()) {
@@ -232,9 +248,21 @@ class ActiveContextService
      * SUPPLIER ID SAFE ACCESS
      */
     public function supplierId(): ?int
-    {
-        return $this->supplier()?->id;
+{
+    if (!$this->isSupplier()) {
+        return null;
     }
+
+    return $this->id();
+}
+
+
+public function supplierType(): string
+{
+    return $this->isCompany()
+        ? $this->type()
+        : User::class;
+}
 
     public function isSupplier(): bool
     {
@@ -266,4 +294,25 @@ class ActiveContextService
             'role' => $personalMode,
         ];
     }
+
+    public function identity(): array
+{
+    return [
+        'user_id' => $this->user()?->id,
+
+        'mode' => $this->mode(),
+
+        'role' => $this->role(),
+
+        'entity_type' => $this->isCompany()
+            ? $this->type()
+            : User::class,
+
+        'entity_id' => $this->isCompany()
+            ? $this->id()
+            : $this->user()?->id,
+    ];
+}
+
+
 }

@@ -21,6 +21,7 @@ use App\Domain\Negotiation\Actions\SubmitOfferVersionAction;
 use App\Domain\Negotiation\Actions\SubmitCounterOfferAction;
 use App\Domain\Negotiation\Actions\DeleteDraftOfferVersionAction;
 use App\Domain\Negotiation\Actions\DeleteCounterOfferDraftAction;
+use App\Models\User;
 
 
 
@@ -170,11 +171,22 @@ class RfqOfferController extends Controller
 
     public function createRevision(Rfq $rfq, ActiveContextService $context)
     {
-        $supplier = $context->supplier();
-
-        if (!$supplier) {
+        if (!$context->isSupplier()) {
             abort(403);
         }
+
+        /**
+         * =========================
+         * UNIFIED IDENTITY
+         * =========================
+         */
+        $identity = [
+            'type' => $context->isCompany()
+                ? $context->type()
+                : User::class,
+
+            'id' => $context->id(),
+        ];
 
         /**
          * =========================================
@@ -183,8 +195,8 @@ class RfqOfferController extends Controller
          */
         $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
             ->where('rfq_id', $rfq->id)
-            ->where('participant_type', get_class($supplier))
-            ->where('participant_id', $supplier->id)
+            ->where('participant_type', $identity['type'])
+            ->where('participant_id', $identity['id'])
             ->firstOrFail();
 
         /**
@@ -210,8 +222,8 @@ class RfqOfferController extends Controller
         $newVersion = $offer->versions()->create([
             'version_number' => null,
             'status' => 'draft',
-            'owner_type' => get_class($supplier),
-            'owner_id' => $supplier->id,
+            'owner_type' => $identity['type'],
+            'owner_id' => $identity['id'],
             'created_by' => $context->user()->id,
         ]);
 
@@ -351,7 +363,7 @@ class RfqOfferController extends Controller
         OfferVersionItemAutosaveAction $action,
         ActiveContextService $context
     ) {
-        abort_if(!$context->supplier(), 403);
+        
 
         return $action->execute(
             rfq: $rfq,
@@ -457,22 +469,15 @@ public function comparison(Rfq $rfq)
         'attributeValues.attribute.options',
         'attributeValues.options',
         'offers.participant',
-        'offers.participant.shippingTemplates',
-        'offers.participant.shippingTemplates.locations',
-        'offers.participant.shippingTemplates.warehouse',
-        'offers.participant.shippingTemplates.warehouse.location',
-        'offers.participant.shippingTemplates.warehouse.location.parent',
-
         'offers.versions.items.options',
     ]);
 
-    $offers = RfqOffer::query()
-    ->with([
-        'versions.items.options'
-    ])
-    ->get();
-    
-    $offers = $rfq->offers;
+    $offers = $rfq->offers->filter(function ($offer) {
+
+        return $offer->versions
+            ->whereIn('status', ['submitted', 'accepted', 'rejected'])
+            ->isNotEmpty();
+    });
 
     return view('rfq.workspace.offer-comparison', [
         'rfq' => $rfq,

@@ -39,11 +39,19 @@
     </div>
 
 
-   
+
 
     @php
-    $offers = $rfq->offers ?? collect();
-   @endphp
+    $offers = ($rfq->offers ?? collect())->filter(function ($offer) {
+    $version = $offer->latestVersion;
+
+    return $version && in_array($version->status, [
+        'submitted',
+        'accepted',
+        'rejected',
+    ]);
+});
+    @endphp
 
     @if($offers->isEmpty())
 
@@ -71,15 +79,15 @@
 
         $base = 'group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border shadow-sm transition-all duration-200';
 
-    $styles = match ($status) {
+        $styles = match ($status) {
 
         'accepted' => 'bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300',
 
         'rejected' => 'bg-gray-100 border-gray-200 opacity-60 hover:opacity-80',
 
         default => 'bg-gradient-to-b from-white via-gray-50 to-gray-100 border-gray-200 hover:bg-black/5 hover:border-gray-300'
-    };
-        
+        };
+
         @endphp
 
         <a href="{{ route('rfqs.workspace', [
@@ -87,63 +95,74 @@
         'tab' => 'offers',
         'offer' => $offer->id
     ]) }}"
-   class="{{ $base }} {{ $styles }}">
+            class="{{ $base }} {{ $styles }}">
 
-    {{-- LEFT --}}
-    <div class="flex items-center gap-3 min-w-0">
+            {{-- LEFT --}}
+            <div class="flex items-center gap-3 min-w-0">
 
-        {{-- DOT --}}
-        <div class="w-1.5 h-1.5 rounded-full
+                {{-- DOT --}}
+                <div class="w-1.5 h-1.5 rounded-full
             {{ $status === 'accepted'
                 ? 'bg-green-500'
                 : ($status === 'rejected'
                     ? 'bg-gray-400'
                     : 'bg-green-400') }}">
-        </div>
+                </div>
 
-        {{-- TEXT --}}
-        <div class="min-w-0">
+                {{-- TEXT --}}
+                <div class="min-w-0">
 
-            <div class="text-sm truncate
+                    <div class="text-sm truncate
                 {{ $status === 'accepted'
                     ? 'text-green-800'
                     : ($status === 'rejected'
                         ? 'text-gray-500'
                         : 'text-blue-800') }}">
-                {{ $supplier?->name ?? 'Unknown supplier' }}
+                        <div class="text-sm font-semibold text-gray-900 truncate">
+    {{ $supplier instanceof \App\Models\User
+        ? trim($supplier->name . ' ' . $supplier->last_name)
+        : ($supplier?->name ?? 'Unknown supplier')
+    }}
+
+    @if($supplier instanceof \App\Models\User && $supplier->email)
+        <span class="text-xs text-gray-400 font-normal">
+            ({{ $supplier->email }})
+        </span>
+    @endif
+</div>
+                    </div>
+
+                    <div class="text-[11px] text-gray-400 mt-0.5">
+                        Version {{ $version?->version_number ?? '-' }}
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="text-[11px] text-gray-400 mt-0.5">
-                Version {{ $version?->version_number ?? '-' }}
-            </div>
-
-        </div>
-
-    </div>
-
-    {{-- ARROW --}}
-    <div class="transition
+            {{-- ARROW --}}
+            <div class="transition
         {{ $status === 'rejected' ? 'text-gray-300' : 'text-gray-400 group-hover:text-gray-600' }}">
-        →
-    </div>
+                →
+            </div>
 
-</a>
+        </a>
 
         @endforeach
 
 
         <div class="flex justify-end mt-3">
 
-    <a
-        href="{{ route('buyer.rfqs.offer-comparison', $rfq->id) }}"
-        class="px-4 py-1.5 text-sm rounded-md
+            <a
+                href="{{ route('buyer.rfqs.offer-comparison', $rfq->id) }}"
+                class="px-4 py-1.5 text-sm rounded-md
                bg-white text-gray-700
                hover:bg-gray-900 hover:text-white hover:border-gray-900
                transition">
-        Compare offers
-    </a>
+                Compare offers
+            </a>
 
-</div>
+        </div>
 
     </div>
 

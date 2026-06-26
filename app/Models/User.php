@@ -173,5 +173,14 @@ public function setSetting(
     );
 }
 
+public function shippingTemplates()
+{
+    return $this->morphMany(
+        ShippingTemplate::class,
+        'provider',
+        'provider_type',
+        'provider_id'
+    )->where('is_active', 1);
+}
 
 }

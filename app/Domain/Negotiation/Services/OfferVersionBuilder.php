@@ -131,16 +131,29 @@ class OfferVersionBuilder
 }
 
 
-    public function getDraftVersion(int $rfqId, int $supplierId): RfqOfferVersion
+    public function getDraftVersion(
+    int $rfqId,
+    string $participantType,
+    int $participantId
+): RfqOfferVersion
 {
+    /**
+     * =========================
+     * FIND OR CREATE OFFER
+     * =========================
+     */
     $offer = RfqOffer::query()
         ->firstOrCreate([
             'rfq_id' => $rfqId,
-            'participant_type' => \App\Models\Supplier::class,
-            'participant_id' => $supplierId,
+            'participant_type' => $participantType,
+            'participant_id' => $participantId,
         ]);
 
-    // ищем последнюю draft версию
+    /**
+     * =========================
+     * FIND DRAFT VERSION
+     * =========================
+     */
     $draft = $offer->versions()
         ->where('status', 'draft')
         ->latest('version_number')
@@ -150,12 +163,18 @@ class OfferVersionBuilder
         return $draft;
     }
 
-    // если нет — создаём одну draft версию
+    /**
+     * =========================
+     * CREATE FIRST DRAFT VERSION
+     * =========================
+     */
     return RfqOfferVersion::create([
         'rfq_offer_id' => $offer->id,
-        'version_number' => $offer->versions()->max('version_number') + 1,
+        'version_number' => ($offer->versions()->max('version_number') ?? 0) + 1,
         'status' => 'draft',
         'created_by' => auth()->id(),
     ]);
 }
+
+
 }

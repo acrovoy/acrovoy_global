@@ -25,6 +25,8 @@
 <x-alerts />
 
 
+
+
 <div class="mb-6">
 
 
@@ -78,10 +80,15 @@
 
                     @php
                     $supplier = $offer->participant;
+                    $isUser = $supplier instanceof \App\Models\User;
+                    $isSupplierCompany = $supplier instanceof \App\Models\Supplier;
                     $version = $offer->versions
                     ->where('status', '!=', 'draft')
                     ->sortByDesc('id')
                     ->first();
+
+                    $version = $version ?? null;
+
                     $level = $product->supplier->level ?? 'Basic';
                     @endphp
 
@@ -94,26 +101,34 @@
 
                                 {{-- LOGO --}}
                                 <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
-                                    @if($supplier->catalog_preview)
 
-                                    @if($supplier->catalog_preview?->cdn_url)
-                                    <img src="{{ $supplier->catalog_preview->cdn_url }}"
-                                        class="w-full h-full object-cover">
-                                    @endif
+    @if($isUser)
 
-                                    @else
+        <img src="{{ $supplier->avatar()?->cdn_url ?? asset('images/default-avatar.png') }}"
+             class="w-full h-full object-cover">
 
-                                    <div class="w-full h-[200px] rounded-t-xl flex items-center justify-center
-                                bg-gradient-to-br from-gray-100 to-gray-200">
+    @elseif($isSupplierCompany)
 
-                                        <span class="text-xs font-semibold text-gray-500">
-                                            {{ strtoupper(substr($supplier->name, 0, 1)) }}
-                                        </span>
+        @if($supplier->catalog_preview?->cdn_url)
+            <img src="{{ $supplier->catalog_preview->cdn_url }}"
+                 class="w-full h-full object-cover">
+        @else
+            <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                <span class="text-xs font-semibold text-gray-500">
+                    {{ strtoupper(substr($supplier->name, 0, 1)) }}
+                </span>
+            </div>
+        @endif
 
-                                    </div>
+    @else
 
-                                    @endif
-                                </div>
+        <div class="w-full h-full flex items-center justify-center bg-gray-200">
+            <span class="text-xs text-gray-500">?</span>
+        </div>
+
+    @endif
+
+</div>
 
 
 
@@ -121,7 +136,7 @@
                                 <div class="min-w-0">
 
                                     <div class="text-sm font-semibold text-gray-900 truncate">
-                                        {{ $supplier?->name }}
+                                        {{ trim($supplier->name . ' ' . $supplier->last_name) }}
                                     </div>
 
                                     {{-- TRUST BADGES --}}
@@ -188,7 +203,7 @@
                             {{-- ACTIONS --}}
 <div class="mt-auto pt-2 flex gap-2">
 
-    @if($version->status === 'submitted')
+    @if(optional($version)->status === 'submitted')
 
         <form method="POST"
               action="{{ route('buyer.rfqs.offers.versions.accept', [
@@ -206,14 +221,14 @@
             </button>
         </form>
 
-    @elseif($version->status === 'accepted')
+    @elseif(optional($version)->status === 'accepted')
 
         <span class="px-3 py-1 text-[11px] font-medium rounded-md
                      bg-green-100 text-green-700 border border-green-200">
             Accepted
         </span>
 
-    @elseif($version->status === 'rejected')
+    @elseif(optional($version)->status === 'rejected')
 
         <span class="px-3 py-1 text-[11px] font-medium rounded-md
                      bg-gray-100 text-gray-500 border border-gray-200">
@@ -224,7 +239,7 @@
 
         <span class="px-3 py-1 text-[11px] font-medium rounded-md
                      bg-gray-50 text-gray-500 border border-gray-200">
-            {{ ucfirst($version->status) }}
+            {{ ucfirst(optional($version)->status) }}
         </span>
 
     @endif
@@ -405,21 +420,30 @@
                         @php
                         $addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
 
-                        if (!$addressa) {
-                        $cityId = null;
-                        } else {
+    if (!$addressa) {
+        $cityId = null;
+    } else {
+        $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+            ->where('parent_id', $addressa->region)
+            ->first();
 
-                        $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
-                        ->where('parent_id', $addressa->region)
-                        ->first();
+        $cityId = $eexistingLocation?->id;
+    }
 
-                        $cityId = $eexistingLocation?->id;
-                        }
+    $participant = $offer->participant;
 
-                        $shippingTemplates = $offer->participant->shippingTemplates
-                        ->filter(fn ($template) =>
-                        $template->locations->contains('id', $cityId)
-                        );
+    $shippingTemplates = collect();
+
+    if ($participant && $cityId && method_exists($participant, 'shippingTemplates')) {
+
+        $shippingTemplates = collect($participant->shippingTemplates ?? [])
+            ->filter(fn ($template) =>
+                $template->locations?->contains('id', $cityId)
+            );
+    }
+
+
+                       
                         @endphp
 
                         @forelse($shippingTemplates as $shippingTemplate)

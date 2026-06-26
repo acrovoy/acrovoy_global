@@ -54,7 +54,7 @@ class RfqAccessService
 
     
 
-    $supplierId = $this->context->supplierId();
+    $supplierId = $this->context->id();
     $supplierType = $this->context->type();
 
        
@@ -85,7 +85,7 @@ class RfqAccessService
  */
 public function getClosedRfqsForSupplier()
 {
-    $supplierId = $this->context->supplierId();
+    $supplierId = $this->context->id();
     $supplierType = $this->context->type();
 
     return Rfq::query()

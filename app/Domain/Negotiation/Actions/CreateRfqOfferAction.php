@@ -9,7 +9,7 @@ class CreateRfqOfferAction
 {
     public function execute(
         Rfq $rfq,
-        $supplier,
+        array $supplier,
         $context
     ): RfqOffer {
         /**
@@ -19,8 +19,8 @@ class CreateRfqOfferAction
          */
         $offer = RfqOffer::firstOrCreate([
             'rfq_id' => $rfq->id,
-            'participant_type' => get_class($supplier),
-            'participant_id' => $supplier->id,
+            'participant_type' => $supplier['type'],
+            'participant_id' => $supplier['id'],
         ]);
 
         /**
@@ -34,8 +34,8 @@ class CreateRfqOfferAction
             $offer->versions()->create([
                 'version_number' => null,
                 'status' => 'draft',
-                'owner_type' => get_class($supplier),
-                'owner_id' => $supplier->id,
+                'owner_type' => $supplier['type'],
+                'owner_id' => $supplier['id'],
                 'created_by' => $context->user()->id,
             ]);
         }

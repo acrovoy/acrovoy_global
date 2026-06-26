@@ -1,3 +1,5 @@
+
+
 <div class="mb-6">
 
 @php
@@ -303,12 +305,16 @@
                             @endif
 
                         @else
-
-                        <button
-                            class="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-black transition">
-                            See Requirements
-                        </button>
-
+<a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 's-requirements']) }}"
+   class="inline-flex items-center gap-2 mt-3 px-4 py-2
+           text-sm font-medium text-gray-700
+           bg-white border border-gray-200
+           rounded-lg
+           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+           active:scale-[0.98]
+           transition-all duration-150 shadow-sm">
+    See Requirements
+</a>
                         @endif
 
                     </div>

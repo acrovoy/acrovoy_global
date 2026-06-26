@@ -55,5 +55,20 @@ class RfqOffer extends Model
             ->latestOfMany('version_number');
     }
 
+    public function shippingTemplates()
+{
+    $participant = $this->participant;
+
+    if (!$participant) {
+        return collect();
+    }
+
+    if (!method_exists($participant, 'shippingTemplates')) {
+        return collect();
+    }
+
+    return $participant->shippingTemplates ?? collect();
+}
+
     
 }
