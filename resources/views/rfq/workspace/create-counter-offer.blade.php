@@ -169,6 +169,88 @@
 
                     </div>
 
+                    {{-- ========================================= --}}
+{{-- GRAND TOTAL --}}
+{{-- ========================================= --}}
+
+<div class="p-4 border border-gray-200 rounded-xl bg-white mb-6 mt-6">
+
+    <div class="text-sm font-semibold text-gray-900 mb-4">
+        Grand Total
+    </div>
+
+    {{-- ========================================= --}}
+    {{-- SUPPLIER OFFER (READ ONLY) --}}
+    {{-- ========================================= --}}
+
+    <div class="mb-4 p-3 bg-gray-200 border border-gray-100 rounded-lg">
+
+        <div class="text-xs text-gray-500 mb-2">
+            Supplier offer
+        </div>
+
+        <div class="flex items-center justify-between">
+
+            <div class="text-sm text-gray-700">
+                Total amount
+            </div>
+
+            <div class="text-base font-semibold text-gray-900">
+                {{ $offerVersion?->total_price
+                    ? number_format($offerVersion->total_price, 2)
+                    : '—'
+                }}
+                <span class="text-xs font-normal text-gray-500">USD</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    {{-- ========================================= --}}
+    {{-- BUYER COUNTER --}}
+    {{-- ========================================= --}}
+
+    <div>
+
+        <div class="text-xs text-blue-600 mb-2">
+            Your counter offer
+        </div>
+
+        <div class="flex items-end justify-between">
+
+            <div class="text-xs text-gray-500">
+                Your proposed total amount
+            </div>
+
+            <div class="flex flex-col items-end">
+
+                <div class="text-[11px] text-gray-400 mb-1">
+                    USD
+                </div>
+
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="total_price"
+                    value="{{ old('total_price', $counterVersion?->total_price) }}"
+                    data-autosave
+                    data-field="total_price"
+                    placeholder="0.00"
+                    class="w-40 border border-blue-200 rounded-lg px-3 py-2 text-sm text-right
+                           focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
                     {{-- ATTACHMENTS --}}
                     <div class="border rounded-xl p-5 mt-6">
 
@@ -237,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const versionId = document.querySelector('[data-offer-version-id]')?.dataset?.offerVersionId;
 
     const fields = document.querySelectorAll(
-        'input[name^="notes"], input[name^="unit_price"], input[name^="option_id"], input[name^="option_ids"]'
+        'input[name="total_price"], input[name^="notes"], input[name^="unit_price"], input[name^="option_id"], input[name^="option_ids"]'
     );
 
     fields.forEach(field => {
@@ -253,6 +335,30 @@ document.addEventListener('DOMContentLoaded', () => {
             autosaveStatus.innerText = 'Saving...';
 
             autosaveTimer = setTimeout(() => {
+
+
+                if (field.name === 'total_price') {
+
+                    fetch(`/dashboard/buyer/rfqs/${rfqId}/offers/${offerId}/versions/${versionId}/autosave`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            total_price: field.value
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        autosaveStatus.innerText = res.ok ? 'Saved' : 'Error';
+                        setTimeout(() => autosaveStatus.innerText = 'Ready', 1200);
+                    });
+
+                    return;
+                }
+
 
                 const wrapper = field.closest('[data-attribute-id]');
                 if (!wrapper) return;

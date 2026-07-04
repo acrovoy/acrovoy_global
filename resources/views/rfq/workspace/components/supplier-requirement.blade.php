@@ -8,16 +8,16 @@ $supplierItem = $supplierOfferVersionToCounter?->items
 ?->firstWhere('attribute_id', $attribute->id);
 
 /**
- * =========================
- * BUYER SNAPSHOT (ONLY SUBMITTED VERSION)
- * =========================
- */
+* =========================
+* BUYER SNAPSHOT (ONLY SUBMITTED VERSION)
+* =========================
+*/
 $buyerValue = $buyerSnapshotMap[$attribute->id] ?? null;
 
 $buyerText = $buyerValue?->value_text
-    ?? $buyerValue?->value_number
-    ?? $buyerValue?->value_date
-    ?? null;
+?? $buyerValue?->value_number
+?? $buyerValue?->value_date
+?? null;
 
 $buyerSelectedOptionId = $buyerValue?->attribute_option_id ?? null;
 
@@ -26,33 +26,33 @@ $buyerOptions = $buyerValue?->options ?? collect();
 $buyerCounterPrice = $item?->unit_price ?? '';
 
 /**
- * =========================
- * SUPPLIER DATA
- * =========================
- */
+* =========================
+* SUPPLIER DATA
+* =========================
+*/
 
 
 if ($isCounter) {
 
-  $selectedValue = $supplierItem?->value_text
-        ?? $supplierItem?->value_number
-        ?? $supplierItem?->value_date
-        ?? null;
+$selectedValue = $supplierItem?->value_text
+?? $supplierItem?->value_number
+?? $supplierItem?->value_date
+?? null;
 
-    $selectedOptionId = $supplierItem?->options?->first()?->id ?? null;
+$selectedOptionId = $supplierItem?->options?->first()?->id ?? null;
 
-    $selectedOptions = $supplierItem?->options?->pluck('id')->toArray() ?? [];
+$selectedOptions = $supplierItem?->options?->pluck('id')->toArray() ?? [];
 
-    $notes = $supplierItem?->notes ?? '';
+$notes = $supplierItem?->notes ?? '';
 
-    $price = $supplierItem?->unit_price ?? '';
+$price = $supplierItem?->unit_price ?? '';
 
 } else {
 
-    $selectedValue = $value->value_text
-    ?? $value->value_number
-    ?? $value->value_date
-    ?? null;
+$selectedValue = $value->value_text
+?? $value->value_number
+?? $value->value_date
+?? null;
 
 $selectedOptionId = $item?->options?->first()?->id ?? null;
 
@@ -70,40 +70,40 @@ $price = $item?->unit_price ?? '';
 
 <div class="p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-white transition mb-3">
 
-   
+
 
 
 
     {{-- LABEL --}}
     <label class="block text-sm font-medium text-gray-800 mb-2">
-       
-       {{ $attribute->name }}:
+
+        {{ $attribute->name }}:
 
         {{-- BUYER SNAPSHOT --}}
         @if($buyerText)
 
-            {{ $buyerText }}
+        {{ $buyerText }}
 
         @endif
 
         {{-- SELECT / MULTISELECT SNAPSHOT --}}
         @if($type === 'select' && $buyerSelectedOptionId)
 
-            <span class="text-xs text-gray-500 mt-1">
+        <span class="text-xs text-gray-500 mt-1">
 
-                {{ $attribute->options->firstWhere('id', $buyerSelectedOptionId)?->translatedValue() }}
+            {{ $attribute->options->firstWhere('id', $buyerSelectedOptionId)?->translatedValue() }}
 
-            </span>
+        </span>
 
         @endif
 
         @if($type === 'multiselect' && $buyerOptions->isNotEmpty())
 
-            <span class="text-xs text-gray-500 mt-1">
+        <span class="text-xs text-gray-500 mt-1">
 
-                {{ $buyerOptions->map(fn ($o) => $o->translatedValue())->implode(', ') }}
+            {{ $buyerOptions->map(fn ($o) => $o->translatedValue())->implode(', ') }}
 
-            </span>
+        </span>
 
         @endif
 
@@ -130,74 +130,72 @@ $price = $item?->unit_price ?? '';
     {{-- SUPPLIER --}}
     <div class="text-xs text-gray-500">
         Your offer
-        
+
     </div>
 
     <textarea
-    name="offer[{{ $attribute->id }}][notes]"
-    data-autosave
-    data-requirement-id="{{ $attribute->id }}"
-    data-field="notes"
-    placeholder="Add your notes..."
-    @if($isReadonly) readonly @endif
-    class="w-full border border-gray-300 rounded-lg p-2 text-sm
+        name="offer[{{ $attribute->id }}][notes]"
+        data-autosave
+        data-requirement-id="{{ $attribute->id }}"
+        data-field="notes"
+        placeholder="Add your notes..."
+        @if($isReadonly) readonly @endif
+        class="w-full border border-gray-300 rounded-lg p-2 text-sm
         {{ $isReadonly
             ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
             : 'focus:outline-none focus:ring-0 focus:border-blue-500'
-        }}"
->{{ $notes }}</textarea>
+        }}">{{ $notes }}</textarea>
 
-{{-- BUYER NOTES --}}
+    {{-- BUYER NOTES --}}
 
-@if($isCounter)
- <div class="text-xs text-yellow-500 mb-1">
+    @if($isCounter)
+    <div class="text-xs text-yellow-500 mb-1">
         Buyer proposal
-        
+
     </div>
 
     <textarea
-    name="offer[{{ $attribute->id }}][notes]"
-    data-autosave
-    data-requirement-id="{{ $attribute->id }}"
-    data-field="notes"
-    placeholder="Add your notes..."
-    @if($isReadonly) readonly @endif
-    class="w-full border border-yellow-300 rounded-lg p-2 mb-3 text-sm
+        name="offer[{{ $attribute->id }}][notes]"
+        data-autosave
+        data-requirement-id="{{ $attribute->id }}"
+        data-field="notes"
+        placeholder="Add your notes..."
+        @if($isReadonly) readonly @endif
+        class="w-full border border-yellow-300 rounded-lg p-2 mb-3 text-sm
         {{ $isReadonly
             ? 'bg-yellow-50 text-yellow-700 cursor-default yellow-gray-200'
             : 'focus:outline-none focus:ring-0 focus:border-blue-500'
-        }}"
->{{ $item?->notes ?? '' }}</textarea>
-@endif
+        }}">{{ $item?->notes ?? '' }}</textarea>
+    @endif
 
     {{-- SELECT --}}
     @if($type === 'select')
 
-        <div class="space-y-2 mb-3">
+    <div class="space-y-2 mb-3">
 
-            @foreach($attribute->options as $option)
+        @foreach($attribute->options as $option)
 
-                <label class="flex items-center gap-2 text-sm text-gray-700">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
 
-                    <input
-                        type="radio"
-                        name="offer[{{ $attribute->id }}][value]"
-                        value="{{ $option->id }}"
-                        data-autosave
-                        data-requirement-id="{{ $attribute->id }}"
-                        data-field="select"
-                        @checked((int)$selectedOptionId === (int)$option->id)
-                        @disabled($isReadonly)
-                        class="{{ $isReadonly ? 'text-gray-500' : 'text-gray-900' }} focus:ring-gray-900"
-                    >
+            <input
+                type="radio"
+                name="offer[{{ $attribute->id }}][value]"
+                value="{{ $option->id }}"
+                data-autosave
+                data-requirement-id="{{ $attribute->id }}"
+                data-field="select"
+                @checked((int)$selectedOptionId===(int)$option->id)
+            @disabled($isReadonly)
+            class="{{ $isReadonly ? 'text-gray-500' : 'text-gray-900' }} focus:ring-gray-900"
+            >
 
-                    <span>{{ $option->translatedValue() }}</span>
+            <span>{{ $option->translatedValue() }}</span>
 
-                </label>
+        </label>
 
-            @endforeach
+        @endforeach
 
-        </div>
+    </div>
 
     @endif
 
@@ -205,31 +203,31 @@ $price = $item?->unit_price ?? '';
     {{-- MULTISELECT --}}
     @if($type === 'multiselect')
 
-        <div class="space-y-2 mb-3">
+    <div class="space-y-2 mb-3">
 
-            @foreach($attribute->options as $option)
+        @foreach($attribute->options as $option)
 
-                <label class="flex items-center gap-2 text-sm text-gray-700">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
 
-                    <input
-                        type="checkbox"
-                        name="offer[{{ $attribute->id }}][values][]"
-                        value="{{ $option->id }}"
-                        data-autosave
-                        data-requirement-id="{{ $attribute->id }}"
-                        data-field="multiselect"
-                        @checked(in_array($option->id, $selectedOptions))
-                        @disabled($isReadonly)
-                        class="{{ $isReadonly ? 'text-gray-500' : 'text-gray-900' }} rounded focus:ring-gray-900"
-                    >
+            <input
+                type="checkbox"
+                name="offer[{{ $attribute->id }}][values][]"
+                value="{{ $option->id }}"
+                data-autosave
+                data-requirement-id="{{ $attribute->id }}"
+                data-field="multiselect"
+                @checked(in_array($option->id, $selectedOptions))
+            @disabled($isReadonly)
+            class="{{ $isReadonly ? 'text-gray-500' : 'text-gray-900' }} rounded focus:ring-gray-900"
+            >
 
-                    <span>{{ $option->translatedValue() }}</span>
+            <span>{{ $option->translatedValue() }}</span>
 
-                </label>
+        </label>
 
-            @endforeach
+        @endforeach
 
-        </div>
+    </div>
 
     @endif
 
@@ -239,31 +237,31 @@ $price = $item?->unit_price ?? '';
 
         @if(!$isReadonly)
 
-            <div class="w-12 h-12 border-dashed border rounded-lg flex items-center justify-center text-gray-400">
-                +
-            </div>
+        <div class="w-12 h-12 border-dashed border rounded-lg flex items-center justify-center text-gray-400">
+            +
+        </div>
 
         @else
 
-            <div class="text-xs text-gray-500">
-                Attachments submitted
-            </div>
+        <div class="text-xs text-gray-500">
+            Attachments submitted
+        </div>
 
         @endif
 
 
-       
 
-        
+
+
 
         <div class="flex flex-col items-end">
 
             <div class="text-[11px] text-gray-400 mb-1">
                 USD
             </div>
-{{-- Supplier --}}
-            
-                <input
+            {{-- Supplier --}}
+
+            <input
                 type="number"
                 step="0.01"
                 min="0"
@@ -278,12 +276,11 @@ $price = $item?->unit_price ?? '';
                     {{ $isReadonly
                         ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
                         : 'focus:outline-none focus:ring-0 focus:border-blue-500'
-                    }}"
-            >
+                    }}">
 
             {{-- Buyer --}}
 
-@if($isCounter)
+            @if($isCounter)
             <div class="text-xs text-yellow-500 mb-1 mt-1">
                 Buyer proposed price
             </div>
@@ -302,13 +299,12 @@ $price = $item?->unit_price ?? '';
                     {{ $isReadonly
                         ? 'bg-yellow-50 text-yellow-700 cursor-default border-yellow-200'
                         : 'focus:outline-none focus:ring-0 focus:border-blue-500'
-                    }}"
-            >
-@endif
-             
-             </div>
-             </div>
-        
+                    }}">
+            @endif
+
+        </div>
+    </div>
+
 
 </div>
 

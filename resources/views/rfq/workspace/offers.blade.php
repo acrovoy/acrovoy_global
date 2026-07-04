@@ -149,7 +149,65 @@
                         ])
 
                         @endforeach
+@php
 
+
+    $supplierTotalPrice = $supplierOfferVersion?->total_price;
+$isCounter  = $activeVersion->is_counter ?? false;
+@endphp
+
+                   {{-- GRAND TOTAL --}}
+
+                    <div class="border border-gray-200 rounded-xl bg-gray-50 p-5 mb-6">
+
+                        <div class="flex items-center justify-between">
+
+                            <div>
+                                <div class="text-base font-semibold text-gray-900">
+                                    Grand Total
+                                </div>
+
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Total amount
+                                </div>
+                            </div>
+
+                            <div>
+
+                                {{-- Supplier total --}}
+                                <div class="border border-gray-200 rounded px-4 py-2 bg-gray-50 text-gray-700 text-xl font-semibold min-w-[150px] text-right">
+
+                                    @if($supplierTotalPrice)
+                                        ${{ number_format((float)$supplierTotalPrice, 2) }}
+                                    @else
+                                        —
+                                    @endif
+
+                                </div>
+
+                               @if($isCounter)
+
+                                    <div class="text-xs text-yellow-600 mb-1 mt-2">
+                                        Your proposed total price
+                                    </div>
+
+                                    <div class="border border-yellow-200 rounded px-4 py-2 bg-yellow-50 text-yellow-700 text-xl font-semibold min-w-[150px] text-right">
+
+                                        @if($offerVersion->total_price)
+                                            ${{ number_format((float)$offerVersion->total_price, 2) }}
+                                        @else
+                                            —
+                                        @endif
+
+                                    </div>
+
+                                @endif
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
 
                         {{-- ATTACHMENTS --}}

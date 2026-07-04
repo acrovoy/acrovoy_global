@@ -4,6 +4,7 @@
 
 @php
     $isReadonly = $rfq->status->isClosed();
+    $isLocked = $rfq->status->isLocked();
 @endphp
 
     {{-- BACK --}}
@@ -77,127 +78,130 @@
                     $percent = ($completed / 3) * 100;
                     @endphp
                     @php
-    use App\Facades\ActiveContext;
+                        use App\Facades\ActiveContext;
 
-    $supplierId = ActiveContext::supplierId();
+                        $supplierId = ActiveContext::supplierId();
 
-    $offer = $rfq->offers
-        ->where('participant_type', \App\Models\Supplier::class)
-        ->where('participant_id', $supplierId)
-        ->sortByDesc('id')
-        ->first();
+                        $offer = $rfq->offers
+                            ->where('participant_type', \App\Models\Supplier::class)
+                            ->where('participant_id', $supplierId)
+                            ->sortByDesc('id')
+                            ->first();
 
-    $status = $offer?->status;
-     $isAccepted = $status === 'accepted';
-     $isRejected = $status === 'rejected';
-@endphp
+                        $status = $offer?->status;
+                        $isAccepted = $status === 'accepted';
+                        $isRejected = $status === 'rejected';
+                    @endphp
 
 
                     @if($isBuyer ?? false)
 
-                    {{-- RFQ READY CARD --}}
-                    <div class="w-full bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+@php
+    $lockedClass = $isLocked
+        ? 'opacity-50 grayscale pointer-events-none'
+        : '';
+@endphp
 
-                        <div class="flex items-center justify-between mb-3">
+{{-- RFQ READY CARD --}}
+<div class="w-full bg-white border border-gray-200 rounded-xl p-4 shadow-sm transition-all duration-300 {{ $lockedClass }}">
 
-                            <div>
-                                <div class="text-[11px] uppercase tracking-[0.15em] text-gray-400">
-                                    RFQ Readiness
-                                </div>
+    <div class="flex items-center justify-between mb-3">
 
-                                <div class="text-sm font-semibold text-gray-900">
-                                    Completion Status
-                                </div>
-                            </div>
+        <div>
+            <div class="text-[11px] uppercase tracking-[0.15em] text-gray-400">
+                RFQ Readiness
+            </div>
 
-                            <div class="text-sm font-semibold text-gray-900">
-                                {{ $completed }}/3
-                            </div>
+            <div class="text-sm font-semibold text-gray-900">
+                Completion Status
+            </div>
+        </div>
 
-                        </div>
+        <div class="text-sm font-semibold text-gray-900">
+            {{ $completed }}/3
+        </div>
 
-                        {{-- PROGRESS --}}
-                        <div class="h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
-                            <div
-                                class="h-full bg-gray-900 transition-all duration-500"
-                                style="width: {{ $percent }}%">
-                            </div>
-                        </div>
+    </div>
 
-                        {{-- ITEMS --}}
-                        <div class="space-y-2">
+    {{-- PROGRESS --}}
+    <div class="h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+        <div
+            class="h-full bg-gray-900 transition-all duration-500"
+            style="width: {{ $percent }}%">
+        </div>
+    </div>
 
-                            <div class="flex items-center justify-between">
+    {{-- ITEMS --}}
+    <div class="space-y-2">
 
-                                <div class="flex items-center gap-2">
+        <div class="flex items-center justify-between">
 
-                                    @if($requirementsCompleted)
-                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                                    @else
-                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                                    @endif
+            <div class="flex items-center gap-2">
 
-                                    <span class="text-sm text-gray-700">
-                                        Requirements
-                                    </span>
+                <span class="w-2.5 h-2.5 rounded-full
+                    {{ $requirementsCompleted ? 'bg-green-500' : 'bg-red-500' }}">
+                </span>
 
-                                </div>
+                <span class="text-sm text-gray-700">
+                    Requirements
+                </span>
 
-                                <span class="text-xs font-medium {{ $requirementsCompleted ? 'text-green-600' : 'text-red-500' }}">
-                                    {{ $requirementsCompleted ? 'Completed' : 'Missing' }}
-                                </span>
+            </div>
 
-                            </div>
+            <span class="text-xs font-medium
+                {{ $requirementsCompleted ? 'text-green-600' : 'text-red-500' }}">
+                {{ $requirementsCompleted ? 'Completed' : 'Missing' }}
+            </span>
 
-                            <div class="flex items-center justify-between">
+        </div>
 
-                                <div class="flex items-center gap-2">
+        <div class="flex items-center justify-between">
 
-                                    @if($participantsCompleted)
-                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                                    @else
-                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                                    @endif
+            <div class="flex items-center gap-2">
 
-                                    <span class="text-sm text-gray-700">
-                                        Participants
-                                    </span>
+                <span class="w-2.5 h-2.5 rounded-full
+                    {{ $participantsCompleted ? 'bg-green-500' : 'bg-red-500' }}">
+                </span>
 
-                                </div>
+                <span class="text-sm text-gray-700">
+                    Participants
+                </span>
 
-                                <span class="text-xs font-medium {{ $participantsCompleted ? 'text-green-600' : 'text-red-500' }}">
-                                    {{ $participantsCompleted ? 'Completed' : 'Missing' }}
-                                </span>
+            </div>
 
-                            </div>
+            <span class="text-xs font-medium
+                {{ $participantsCompleted ? 'text-green-600' : 'text-red-500' }}">
+                {{ $participantsCompleted ? 'Completed' : 'Missing' }}
+            </span>
 
-                            <div class="flex items-center justify-between">
+        </div>
 
-                                <div class="flex items-center gap-2">
+        <div class="flex items-center justify-between">
 
-                                    @if($deliveryCompleted)
-                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                                    @else
-                                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                                    @endif
+            <div class="flex items-center gap-2">
 
-                                    <span class="text-sm text-gray-700">
-                                        Delivery Address
-                                    </span>
+                <span class="w-2.5 h-2.5 rounded-full
+                    {{ $deliveryCompleted ? 'bg-green-500' : 'bg-red-500' }}">
+                </span>
 
-                                </div>
+                <span class="text-sm text-gray-700">
+                    Delivery Address
+                </span>
 
-                                <span class="text-xs font-medium {{ $deliveryCompleted ? 'text-green-600' : 'text-red-500' }}">
-                                    {{ $deliveryCompleted ? 'Completed' : 'Missing' }}
-                                </span>
+            </div>
 
-                            </div>
+            <span class="text-xs font-medium
+                {{ $deliveryCompleted ? 'text-green-600' : 'text-red-500' }}">
+                {{ $deliveryCompleted ? 'Completed' : 'Missing' }}
+            </span>
 
-                        </div>
+        </div>
 
-                    </div>
+    </div>
 
-                    @endif
+</div>
+
+@endif
 
 
 
@@ -221,7 +225,7 @@
 
                         @if($isBuyer ?? false)
                         
-                            @if($rfq->status->isLocked())
+                            @if($isLocked)
                             
                             @else
                                 <button onclick="openRfqDrawer('deadline')"

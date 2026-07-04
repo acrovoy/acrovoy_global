@@ -13,7 +13,6 @@ $counterItem  = $counterItemsByAttribute[$attribute->id] ?? null;
 */
 
 $item = $itemsByAttribute[$attribute->id] ?? null;
-
 $supplierNotes = $item?->notes;
 $supplierPrice = $item?->unit_price;
 
@@ -65,6 +64,8 @@ $counterSelectedOptions = old(
     "{$attribute->id}.option_ids",
     $item?->options?->pluck('id')->toArray() ?? $supplierSelectedOptions
 );
+
+
 @endphp
 
 
@@ -113,14 +114,14 @@ $counterSelectedOptions = old(
     {{-- SUPPLIER OFFER (READ ONLY BLOCK) --}}
     {{-- ========================================= --}}
 
-    <div class="mb-4 p-3 bg-gray-50 border border-gray-100 rounded-lg">
+    <div class="mb-4 p-3 bg-gray-200 border border-gray-100 rounded-lg">
 
         <div class="text-xs text-gray-500 mb-2">
             Supplier offer
         </div>
 
         <div class="text-sm text-gray-800 mb-2 min-h-[20px]">
-            {{ $supplierNotes ?? '—' }}
+            {{ $supplierNotes  }}
         </div>
 
         {{-- SELECT --}}
@@ -205,7 +206,7 @@ $counterSelectedOptions = old(
         <input
             type="text"
             name="notes[{{ $attribute->id }}]"
-            
+            value="{{ $counterNotes }}"            
             class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm
                    focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Add your counter notes..."

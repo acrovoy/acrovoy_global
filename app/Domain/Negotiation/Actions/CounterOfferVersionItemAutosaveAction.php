@@ -21,6 +21,25 @@ class CounterOfferVersionItemAutosaveAction
     ) {
         Log::info('BUYER COUNTER AUTOSAVE', $request->all());
 
+        /**
+         * =========================
+         * UPDATE TOTAL PRICE
+         * =========================
+         */
+        if ($request->has('total_price')) {
+
+            $version->update([
+                'total_price' => $request->input('total_price') !== ''
+                    ? $request->input('total_price')
+                    : null,
+            ]);
+
+            return response()->json([
+                'ok' => true,
+            ]);
+        }
+
+
         $payload = $this->buildPayload($request);
 
         if (empty($payload)) {
@@ -29,6 +48,7 @@ class CounterOfferVersionItemAutosaveAction
                 'message' => 'Payload empty',
             ]);
         }
+
 
         $this->builder->updateItem(
             version: $version,
@@ -49,6 +69,6 @@ class CounterOfferVersionItemAutosaveAction
             'unit_price' => $request->input('unit_price'),
             'option_id' => $request->input('option_id'),
             'option_ids' => $request->input('option_ids', []),
-        ], fn ($v) => $v !== null);
+        ], fn($v) => $v !== null);
     }
 }

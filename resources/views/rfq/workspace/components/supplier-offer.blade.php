@@ -98,7 +98,7 @@ if ($isCounter) {
         @if($buyerValue)
 
         <div class="text-xs text-gray-500 mt-1">
-            Buyer requirement:
+            Buyer initial requirement:
             <span class="text-gray-700">
                 {{ $buyerValue }}
             </span>
@@ -110,7 +110,7 @@ if ($isCounter) {
         @if($type === 'select' && $buyerSelectedOptionId)
 
         <div class="text-xs text-gray-500 mt-1">
-            Buyer requirement:
+            Buyer initial requirement:
             <span class="text-gray-700">
                 {{ $attribute->options
                         ->firstWhere('id', $buyerSelectedOptionId)
@@ -124,7 +124,7 @@ if ($isCounter) {
         @if($type === 'multiselect' && $buyerOptions->isNotEmpty())
 
         <div class="text-xs text-gray-500 mt-1">
-            Buyer requirement:
+            Buyer initial requirement:
             <span class="text-gray-700">
                 {{ $buyerOptions
                         ->map(fn ($o) => $o->translatedValue())

@@ -54,6 +54,24 @@ class OfferVersionItemAutosaveAction
 
         /**
          * =========================
+         * UPDATE VERSION TOTAL PRICE
+         * =========================
+         */
+        if ($request->has('total_price')) {
+
+            $version->update([
+                'total_price' => $request->total_price !== ''
+                    ? $request->total_price
+                    : null,
+            ]);
+
+            return response()->json(['ok' => true]);
+        }
+
+
+
+        /**
+         * =========================
          * PAYLOAD
          * =========================
          */
@@ -88,6 +106,6 @@ class OfferVersionItemAutosaveAction
             'unit_price' => $request->unit_price,
             'option_id' => $request->option_id,
             'option_ids' => $request->option_ids,
-        ], fn ($v) => $v !== null);
+        ], fn($v) => $v !== null);
     }
 }

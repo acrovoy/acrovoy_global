@@ -117,7 +117,7 @@ class CreateCounterOfferAction
             'mode' => 'created',
             'offerVersion' => $supplierVersion,
             'counterVersion' => $newVersion,
-            'itemsByAttribute' => $newVersion->items->keyBy('attribute_id'),
+            'itemsByAttribute' => $supplierVersion->items->load('options')->keyBy('attribute_id'),
             'counterItemsByAttribute' => $newVersion->items->load('options')->keyBy('attribute_id'),
             'versions' => $this->getVersions($offer),
         ];

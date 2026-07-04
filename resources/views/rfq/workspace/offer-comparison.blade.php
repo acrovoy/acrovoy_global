@@ -109,8 +109,8 @@
 
     @elseif($isSupplierCompany)
 
-        @if($supplier->catalog_preview?->cdn_url)
-            <img src="{{ $supplier->catalog_preview->cdn_url }}"
+        @if($supplier->logo?->cdn_url)
+            <img src="{{ $supplier->logo->cdn_url }}"
                  class="w-full h-full object-cover">
         @else
             <div class="w-full h-full flex items-center justify-center bg-gray-200">
@@ -402,10 +402,48 @@
 
                 </tr>
 
-
-
-
+                
                 @endforeach
+
+
+
+
+                <tr class="border-b bg-gray-50">
+
+    <td class="sticky left-0 z-10 px-4 py-4 border-r bg-gray-50 text-sm font-semibold text-gray-900 leading-snug">
+        Grand Total
+    </td>
+
+    @foreach($offers as $offer)
+
+        @php
+            $version = $offer->versions
+                ->where('status', '!=', 'draft')
+                ->sortByDesc('id')
+                ->first();
+        @endphp
+
+        <td class="px-5 py-4 border-r align-middle">
+
+            @if($version?->total_price)
+
+                <div class="text-lg font-semibold text-gray-900">
+                    ${{ number_format((float)$version->total_price, 2) }}
+                </div>
+
+            @else
+
+                <span class="text-gray-400">—</span>
+
+            @endif
+
+        </td>
+
+    @endforeach
+
+</tr>
+
+
 
                 <tr class="border-b bg-gray-50">
 

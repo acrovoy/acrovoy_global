@@ -124,7 +124,7 @@
     <span class="inline-flex items-center px-2.5 py-1 text-[11px] font-medium rounded-full bg-gray-100
     {{ $rfq->status->badgeClasses() }}">
 
-        {{ $rfq->status->label() }}
+        Awaiting offer  
 
     </span>
 

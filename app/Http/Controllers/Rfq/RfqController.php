@@ -22,6 +22,8 @@ use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
 use App\Domain\RFQ\Actions\GetRfqCategoriesAction;
 use App\Domain\RFQ\Services\RfqRequirementsLoader;
 
+use App\Domain\Negotiation\Actions\CreateRfqOfferAction;
+
 use App\Facades\ActiveContext;
 
 
@@ -30,7 +32,7 @@ class RfqController extends Controller
 {
     public function __construct(
         private ActiveContextService $context,
-        private OfferVersionResolver $resolver
+        private OfferVersionResolver $offerVersionResolver,
     ) {}
 
     public function show(Request $request, Rfq $rfq)
@@ -212,21 +214,22 @@ class RfqController extends Controller
                 abort(403);
             }
 
-           
+              /** @var CreateRfqOfferAction $action */
+            $action = app(CreateRfqOfferAction::class);
 
-            $offer = app(\App\Domain\Negotiation\Actions\CreateRfqOfferAction::class)
-                ->execute(
+            $offer = $action->execute(
                     rfq: $rfq,
                     supplier: $supplier,
                     context: $this->context
                 );
 
-            $resolver = app(OfferVersionResolver::class);
 
-            $offerVersion = $resolver->resolve(
+            $offerVersion = $this->offerVersionResolver->resolve(
                 $offer,
                 request('version')
             );
+
+            
 
             if ($offerVersion->is_counter == 1) {
                 $versionNumberOfCounter = $offerVersion->version_number;
@@ -237,9 +240,10 @@ class RfqController extends Controller
                     ->first();
             }
 
-            $currentDraft = $resolver->currentDraft($offer);
+            $currentDraft = $this->offerVersionResolver->currentDraft($offer);
 
-            $canCreateRevision = $resolver->canCreateRevision($offer, $offerVersion);
+            $canCreateRevision = $this->offerVersionResolver->canCreateRevision($offer, $offerVersion);
+           
 
             $versions = $offer->versions()
                 ->orderByDesc('created_at')

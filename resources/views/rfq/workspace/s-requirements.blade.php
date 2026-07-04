@@ -111,10 +111,12 @@
 ========================================= --}}
 
 @php
-    $isReadonly = $rfq->status->isClosed();
+
+    $isReadonlyBecauseClose = $rfq->status->isClosed();
+   
 @endphp
 
-@if($canCreateRevision && !$isReadonly)
+@if($canCreateRevision)
     <form method="POST"
         action="{{ route('supplier.rfq.offer.create-revision', $rfq) }}">
         @csrf
@@ -198,6 +200,114 @@
                         @endforeach
 
 
+                        <div class="border border-gray-200 rounded-xl bg-gray-50 p-5 mb-6">
+
+
+                        @php
+
+
+    
+$isCounter  = $offerVersion->is_counter ?? false;
+
+if($isCounter) {
+$supplierTotalPrice = $supplierOfferVersionToCounter->total_price;
+}
+else {
+$supplierTotalPrice = $offerVersion->total_price;
+}
+
+@endphp
+
+
+    <div class="flex items-center justify-between">
+
+        <div>
+            <div class="text-base font-semibold text-gray-900">
+                Grand Total
+            </div>
+
+            <div class="text-xs text-gray-500 mt-1">
+                Total amount for this offer
+            </div>
+        </div>
+
+        <div class="flex flex-col items-end gap-4">
+
+            {{-- Supplier --}}
+            <div class="flex flex-col items-end">
+
+                <div class="text-xs uppercase tracking-wide text-gray-500 mb-1">
+                    Supplier Total
+                </div>
+
+                <div class="relative">
+
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        USD
+                    </span>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="total_price"
+                        value="{{ $supplierTotalPrice }}"
+                        data-autosave
+                        data-requirement-id=""
+                        data-field="total_price"
+                        placeholder="0.00"
+                        @if($isReadonly) readonly @endif
+                        class="pl-10 pr-3 py-2 w-36 text-right border rounded-lg text-base
+                            {{ $isReadonly
+                                ? 'bg-gray-100 text-gray-700 cursor-default border-gray-200'
+                                : 'bg-white border-gray-300 focus:outline-none focus:ring-0 focus:border-blue-500'
+                            }}">
+                </div>
+
+            </div>
+
+            {{-- Buyer --}}
+            @if($isCounter)
+
+                <div class="flex flex-col items-end">
+
+                    <div class="text-xs uppercase tracking-wide text-yellow-600 mb-1">
+                        Buyer Counter Total
+                    </div>
+
+                    <div class="relative">
+
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                            USD
+                        </span>
+
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            name="total_price"
+                            value="{{ $offerVersion->total_price !== '' ? number_format((float)$offerVersion->total_price, 2, '.', '') : '' }}"
+                            data-autosave
+                            data-requirement-id=""
+                            data-field="price"
+                            placeholder="0.00"
+                            @if($isReadonly) readonly @endif
+                            class="pl-10 pr-3 py-2 w-36 text-right border rounded-lg text-sm
+                                {{ $isReadonly
+                                    ? 'bg-yellow-50 text-yellow-700 cursor-default border-yellow-200'
+                                    : 'bg-white border-yellow-300 focus:outline-none focus:ring-0 focus:border-blue-500'
+                                }}">
+                    </div>
+
+                </div>
+
+            @endif
+
+        </div>
+
+    </div>
+
+</div>
 
 
                         {{-- ATTACHMENTS --}}
@@ -294,6 +404,15 @@
         const el = e.target;
 
         if (!el.hasAttribute('data-autosave')) return;
+
+        if (el.dataset.field === 'total_price') {
+
+            autosave(el.name, {
+                total_price: el.value
+            });
+
+            return;
+        }
 
         if (el.dataset.field === 'price') {
 

@@ -119,22 +119,36 @@ class OfferVersionResolver
             ->exists();
     }
 
+public function latestVisibleVersion(RfqOffer $offer)
+{
+    return $offer->versions()
+        ->where(function ($q) {
+            $q->where(function ($q) {
+                $q->where('is_counter', 0)
+                  ->where('status', 'submitted');
+            });
+
+            $q->orWhere(function ($q) {
+                $q->where('is_counter', 1)
+                  ->where('status', 'submitted');
+            });
+        })
+        ->latest()
+        ->first();
+}
 
     public function canCreateRevision(
-        RfqOffer $offer,
-        $version
-    ): bool {
+    RfqOffer $offer,
+    $version
+): bool {
 
-        $latestSubmitted = $this->lastSubmitted($offer);
+    $latestVisible = $this->latestVisibleVersion($offer);
 
-        $isLatestSubmitted =
-            $version
-            && $latestSubmitted
-            && $version->id === $latestSubmitted->id;
-
-        return $isLatestSubmitted
-            && !$this->hasDraft($offer);
-    }
+    return $version
+        && $latestVisible
+        && $version->id === $latestVisible->id
+        && !$this->hasDraft($offer);
+}
 
 
     public function lastSupplierVersion(RfqOffer $offer)
