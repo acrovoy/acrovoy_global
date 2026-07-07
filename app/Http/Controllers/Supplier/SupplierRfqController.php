@@ -7,6 +7,8 @@ use App\Domain\RFQ\Models\Rfq;
 use App\Domain\RFQ\Services\RfqAccessService;
 use App\Services\Company\ActiveContextService;
 use App\Domain\Negotiation\Models\RfqOffer;
+use App\Models\ShippingDimensions;
+use Illuminate\Http\Request;
 
 class SupplierRfqController extends Controller
 {
@@ -128,6 +130,42 @@ class SupplierRfqController extends Controller
         'offer',
         'attributes'
     ));
+}
+
+
+public function updateShippingDimensions(Request $request, Rfq $rfq,
+    ActiveContextService $activeContext)
+{
+    
+    $validated = $request->validate([
+        'shipping.length' => ['required', 'numeric', 'min:0'],
+        'shipping.width' => ['required', 'numeric', 'min:0'],
+        'shipping.height' => ['required', 'numeric', 'min:0'],
+        'shipping.weight' => ['required', 'numeric', 'min:0'],
+        'shipping.package_type' => ['required', 'in:box,pallet,set'],
+    ]);
+
+    $shipping = $validated['shipping'];
+
+    $rfq->shippingDimensions()->updateOrCreate(
+    [
+        'dimensionable_type' => $rfq->getMorphClass(),
+        'dimensionable_id'   => $rfq->id,
+        'supplier_type'      => $activeContext->type(),
+        'supplier_id'        => $activeContext->id(),
+    ],
+    [
+        'length'       => $shipping['length'],
+        'width'        => $shipping['width'],
+        'height'       => $shipping['height'],
+        'weight'       => $shipping['weight'],
+        'package_type' => $shipping['package_type'],
+    ]
+);
+
+    
+
+    return back()->with('success', 'Shipping dimensions have been saved.');
 }
 
 

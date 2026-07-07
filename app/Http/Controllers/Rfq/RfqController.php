@@ -58,6 +58,8 @@ class RfqController extends Controller
 
         if (!in_array($activeTab, $allowedTabs)) {
             $activeTab = 'overview';
+
+
         }
 
         /*
@@ -189,6 +191,7 @@ class RfqController extends Controller
         $participantsCompleted = null;
         $deliveryCompleted = null;
         $canPublish = null;
+        $isOrdered = null;
 
         if ($activeTab === 's-requirements') {
 
@@ -585,6 +588,7 @@ class RfqController extends Controller
             $rfq->loadMissing([
                 'attributeValues.attribute.options.translations',
                 'attributeValues.options',
+                
             ]);
 
             $addressa = UserAddress::find($rfq->delivery_address_id);
@@ -625,7 +629,7 @@ class RfqController extends Controller
                 $deliveryCompleted;
             // Флаги заполененности
 
-
+            $isOrdered = !is_null($rfq->accepted_offer_version?->ordered_at);
 
 
         }
@@ -735,6 +739,8 @@ class RfqController extends Controller
             'supplierOfferVersion' => $supplierOfferVersion,
             'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
             'counterItemsByAttribute' => $counterItemsByAttribute,
+
+            'isOrdered' =>$isOrdered,
 
             'itemsByAttribute' => $offerVersion?->items
                 ?->whereNotNull('attribute_id')

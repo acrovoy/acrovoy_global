@@ -300,9 +300,12 @@ public function supplierName(): ?string
     }
 
     public function shippingDimensions()
-    {
-        return $this->hasOne(ProductShippingDimensions::class);
-    }
+{
+    return $this->morphOne(
+        ShippingDimensions::class,
+        'dimensionable'
+    );
+}
 
     public function computeShippingPrice(ShippingTemplate $template): float
     {

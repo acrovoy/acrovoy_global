@@ -165,7 +165,17 @@ use App\Domain\RFQ\Enums\RfqStatus;
                     </td>
 
                     <td class="px-4 py-2">
-                        {{ $rfq->title }}
+                        
+
+                        <div class="justify-between flex items-center">
+                        <div>{{ $rfq->title }}</div>
+                        <div>
+                        @if($rfq->order_id)
+                        @else
+                        <div class="uppercase text-[10px] border border-green-200 bg-green-50 text-green-600 p-1 rounded-md hover:bg-green-100 transition cursor-pointer">create order</div>
+                        @endif
+                        </div>
+                        </div>
                     </td>
 
                     <td class="px-4 py-2">

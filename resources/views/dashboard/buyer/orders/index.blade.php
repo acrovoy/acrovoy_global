@@ -101,8 +101,9 @@
 
                 <td class="px-4 py-2 text-gray-800">
                     <ul class="list-none space-y-0 max-h-40 overflow-y-auto text-xs text-gray-500">
+                        <span class="text-blue-400">{{ $order->type }}</span>
                         @foreach($order->items as $item)
-                            <li>{{ $item->product->name ?? $item->product_name }} ({{ $item->quantity }} pcs)</li>
+                            <li> {{ $item->product->name ?? $item->product_name }} ({{ $item->quantity }} pcs)</li>
                         @endforeach
                     </ul>
                 </td>

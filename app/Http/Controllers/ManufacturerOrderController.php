@@ -35,19 +35,25 @@ class ManufacturerOrderController extends Controller
     public function index()
 {
     $supplierId = ActiveContext::id();
+    $supplierType = ActiveContext::type();
 
     $ordersQuery = OrderItem::query()
-        ->where(function ($q) use ($supplierId) {
+        ->where(function ($q) use ($supplierId, $supplierType) {
 
             // 🟢 Заказы из каталога
-            $q->whereHas('product', function ($q) use ($supplierId) {
-                $q->where('supplier_id', $supplierId);
+            $q->whereHas('product', function ($q) use ($supplierId, $supplierType) {
+                $q->where('supplier_id', $supplierId)
+                  ->where('supplier_type', $supplierType);
             })
 
-            // 🟣 Заказы из RFQ
-            ->orWhereHas('order.rfqOffer', function ($q) use ($supplierId) {
-                $q->where('participant_id', $supplierId);
-            });
+             // 🟣 Заказы из RFQ
+        ->orWhereHas('rfq.offers', function ($q) use ($supplierId, $supplierType) {
+    $q->where('participant_id', $supplierId)
+      ->where('participant_type', $supplierType)
+      ->whereHas('versions', function ($q) {
+          $q->where('status', 'accepted');
+      });
+});
 
         })
         ->with([
@@ -125,6 +131,7 @@ class ManufacturerOrderController extends Controller
 
     
      $supplierId = ActiveContext::id();
+     $supplierType = ActiveContext::type();
 
      
 
@@ -142,35 +149,39 @@ class ManufacturerOrderController extends Controller
     }
         ])->findOrFail($id);
 
-        // ✅ ЕДИНАЯ ПРОВЕРКА ДОСТУПА (каталог + RFQ)
-        $supplier = ActiveContext::company();
-
-abort_if(
-    ! $supplier || ! $access->canAccess($order, $supplier),
-    404
-);
-
+   
 
 
         
 
-        // Показываем только items этого поставщика
-    $orderItems = $order->items->filter(function ($item) use ($supplierId) {
-        // Если это товар из каталога — проверяем supplier_id
-        if ($item->product && $item->product->supplier_id === $supplierId) {
-            return true;
-        }
+        if ($order->type === 'product') {
 
-
-
-
-        // Если это RFQ — проверяем supplier_id в rfqOffer
-        if ($item->order->rfqOffer && $item->order->rfqOffer->supplier_id === $supplierId) {
-            return true;
-        }
-
-        return false;
+    // Показываем только товары каталога этого поставщика
+    $orderItems = $order->items->filter(function ($item) use ($supplierId, $supplierType) {
+        return $item->product
+            && $item->product->supplier_id === $supplierId
+            && $item->product->supplier_type === $supplierType;
     });
+
+} else {
+
+    // Для RFQ
+    $orderItems = $order->items->filter(function ($item) use ($supplierId, $supplierType) {
+        return $item->rfq
+            && $item->rfq->acceptedOfferVersion
+            && $item->rfq->acceptedOfferVersion->offer
+            && $item->rfq->acceptedOfferVersion->offer->participant_id === $supplierId
+            && $item->rfq->acceptedOfferVersion->offer->participant_type === $supplierType;
+    });
+
+}
+
+
+
+
+
+
+
 
 
         $countries = Country::withCurrentTranslation()
@@ -210,7 +221,7 @@ abort_if(
                 // ITEMS
                 'items' => $orderItems->map(fn ($item) => [
                     'product'        => $item->product->name
-                                        ?? $order->rfqOffer?->rfq?->title
+                                        ?? $item->rfq->title
                                         ?? 'RFQ item',
                     'product_object' => $item->product,
                     'image' => $item->thumbnail_url,
@@ -221,7 +232,7 @@ abort_if(
 
                 'total' => $orderItems->sum(fn ($item) => $item->quantity * $item->price),
                 'delivery_price' => $order->delivery_price ?? 0,
-                'delivery_method' => $order->delivery_method ?? 0,
+                'delivery_method' => $order->shippingTemplate->title ?? 0,
                 'tracking_number' => $order->tracking_number,
                 'invoice_file'    => $order->invoice_file,
 

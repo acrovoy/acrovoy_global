@@ -3,8 +3,11 @@
 <div class="mb-6">
 
 @php
+$isClosed = $rfq->status->isClosed();
     $isReadonly = $rfq->status->isClosed();
     $isLocked = $rfq->status->isLocked();
+    $unitPrice = null;
+    $shippingDimensions = $rfq->currentShippingDimensions();
 @endphp
 
     {{-- BACK --}}
@@ -83,14 +86,16 @@
                         $supplierId = ActiveContext::supplierId();
 
                         $offer = $rfq->offers
-                            ->where('participant_type', \App\Models\Supplier::class)
-                            ->where('participant_id', $supplierId)
+                            ->where('participant_type', ActiveContext::type())
+                            ->where('participant_id', ActiveContext::id())
                             ->sortByDesc('id')
                             ->first();
 
                         $status = $offer?->status;
                         $isAccepted = $status === 'accepted';
                         $isRejected = $status === 'rejected';
+                        
+                        
                     @endphp
 
 
@@ -101,7 +106,7 @@
         ? 'opacity-50 grayscale pointer-events-none'
         : '';
 @endphp
-
+@if(!$isClosed)
 {{-- RFQ READY CARD --}}
 <div class="w-full bg-white border border-gray-200 rounded-xl p-4 shadow-sm transition-all duration-300 {{ $lockedClass }}">
 
@@ -200,6 +205,165 @@
     </div>
 
 </div>
+@else
+
+@php
+    $selectedOfferVersion = $rfq->offers
+        ->flatMap->versions
+        ->firstWhere('status', 'accepted');
+
+    $unitPrice = (float) ($selectedOfferVersion?->total_price ?? 0);
+    $quantity = $rfq->quantity ?? 1;
+
+    $acceptedOffer = $rfq->offers->first(function ($offer) {
+        return $offer->versions->contains('status', 'accepted');
+    });
+
+    $supplier = $acceptedOffer?->participant;
+
+    $isOrdered = !is_null($rfq->accepted_offer_version?->ordered_at);
+@endphp
+
+<div class="w-full {{ $isOrdered ? 'bg-[rgb(252,252,252)]' : 'bg-white' }} border border-gray-200 rounded-xl shadow-sm">
+
+    {{-- Header --}}
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+
+        <div>
+            <h3 class="text-base font-semibold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
+               @if($isOrdered)
+               Order Created
+               @else
+            Create Order
+            @endif
+            </h3>
+
+            @if($supplier)
+                <div class="mt-1 text-sm {{ $isOrdered ? 'text-gray-400' : 'text-gray-600' }}">
+                    Supplier :
+                    <span class="p-1 border rounded-md font-semibold
+                        {{ $isOrdered
+                            ? 'border-gray-200 bg-gray-100 text-gray-500'
+                            : 'border-green-200 bg-green-50 text-gray-900' }}">
+                        {{ $supplier->last_name ? $supplier->name .' '. $supplier->last_name : $supplier->name }}
+                    </span>
+                </div>
+            @endif
+
+            <p class="text-sm text-gray-500 mt-2">
+                Review the accepted offer and proceed to checkout.
+            </p>
+        </div>
+
+        @if(!$isOrdered)
+
+            <form method="GET"
+                  action="{{ route('buyer.orders.rfq-checkout', $selectedOfferVersion) }}">
+
+                @csrf
+
+                <input
+                    id="checkout-quantity-hidden"
+                    type="hidden"
+                    name="quantity"
+                    value="{{ $quantity }}">
+
+                <button
+                    type="submit"
+                    class="px-6 h-10 rounded-lg bg-blue-900 text-white text-sm font-medium hover:bg-blue-800 transition">
+                    Checkout
+                </button>
+
+            </form>
+
+        @else
+
+            <a
+                href="{{ route('buyer.orders.show', $rfq->order_id) }}"
+                class="whitespace-nowrap inline-flex items-center px-2 h-10 rounded-lg bg-slate-700 text-white text-xs  hover:bg-slate-800 transition">
+                Open Order
+            </a>
+
+        @endif
+
+    </div>
+
+    {{-- Content --}}
+    <div class="flex items-end justify-between gap-3 px-6 py-5 flex-wrap">
+
+        {{-- Unit price --}}
+        <div class="min-w-[120px]">
+
+            <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
+                Unit Price
+            </div>
+
+            <div class="text-2xl font-semibold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
+                ${{ number_format($unitPrice, 2) }}
+            </div>
+
+        </div>
+
+        {{-- Quantity --}}
+        <div class="min-w-[180px]">
+
+            <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
+                Quantity
+            </div>
+
+            <div class="inline-flex items-center border rounded-lg overflow-hidden
+                {{ $isOrdered ? 'border-gray-200 bg-gray-100' : 'border-gray-300' }}">
+
+                <button
+                    type="button"
+                    id="qty-minus"
+                    class="w-10 h-10 {{ $isOrdered ? 'bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none' : 'bg-gray-50 hover:bg-gray-100 transition' }}">
+                    −
+                </button>
+
+                <input
+                    id="checkout-quantity"
+                    type="number"
+                    min="1"
+                    value="{{ $quantity }}"
+                    class="w-20 h-10 text-center border-x outline-none
+                        {{ $isOrdered
+                            ? 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
+                            : 'border-gray-300' }}"
+                    @disabled($isOrdered)
+                >
+
+                <button
+                    type="button"
+                    id="qty-plus"
+                    class="w-10 h-10 {{ $isOrdered ? 'bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none' : 'bg-gray-50 hover:bg-gray-100 transition' }}">
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+        {{-- Total --}}
+        <div class="min-w-[150px] ml-auto text-right">
+
+            <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
+                Order Total
+            </div>
+
+            <div
+                id="checkout-total"
+                class="text-3xl font-bold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
+                ${{ number_format($unitPrice * $quantity, 2) }}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@endif
 
 @endif
 
@@ -272,6 +436,7 @@
                                     </button>
                                 </form>
 
+                                
                                 @else
 
                                 <button
@@ -282,6 +447,8 @@
 
                                 @endif
 
+                                
+                            
                             @endif
 
                             @if($rfq->status->isPublished())
@@ -356,15 +523,27 @@
         </div>
 
         <div class="mt-3 flex items-center justify-end">
-            <a href=""
-               class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium
-                      bg-green-600 text-white rounded-md
-                      hover:bg-green-700 transition">
-                
-                Открыть ордер
-                
-                <span class="text-[10px] opacity-80">→</span>
-            </a>
+            @if($isOrdered)
+                <a href="{{ route('supplier.orders.show', $rfq->order_id) }}"
+                class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium
+                        bg-green-600 text-white rounded-md
+                        hover:bg-green-700 transition">
+                    
+                    Открыть ордер # {{ $rfq->order_id }}
+                    
+                    <span class="text-[10px] opacity-80">→</span>
+                </a>
+            @else
+
+
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-green-300
+                        bg-green-100 text-green-500 rounded-md">Buyer is not create an order yet</div>
+            @endif
+
+           
+
+
+           
         </div>
 
     </div>
@@ -508,107 +687,254 @@
             {{-- SHIPPING TEMPLATES --}}
             <div class="{{ $isReadonly ? 'opacity-60 pointer-events-none select-none' : '' }}">
 
-    <div class="flex items-center justify-between mb-3">
-        <h4 class="text-sm font-semibold text-gray-900">
-            Available Shipping Templates
-        </h4>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-semibold text-gray-900">
+                        Available Shipping Templates
+                    </h4>
 
-        <div class="text-gray-400 text-[12px]">
-            Optional setup for suppliers offering delivery services.
-        </div>
-    </div>
+                    <div class="text-gray-400 text-[12px]">
+                        Optional setup for suppliers offering delivery services.
+                    </div>
+                </div>
 
-    @if($shippingTemplates->count())
-        <div class="space-y-2">
+                @if($shippingTemplates->count())
+                    <div class="space-y-2">
 
-            @foreach($shippingTemplates as $template)
+                        @foreach($shippingTemplates as $template)
 
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
+                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition bg-white">
 
-                    <div class="flex items-start justify-between gap-4">
+                                <div class="flex items-start justify-between gap-4">
 
-                        <div class="flex-1">
+                                    <div class="flex-1">
 
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
-                                    Shipping Template
-                                </span>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                                                Shipping Template
+                                            </span>
 
-                                <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
-                                    {{ $template->title }}
-                                </span>
+                                            <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-md">
+                                                {{ $template->title }}
+                                            </span>
+                                        </div>
+
+                                        @if(!empty($template->description))
+                                            <p class="text-gray-700 text-sm">
+                                                {{ $template->description }}
+                                            </p>
+                                        @endif
+
+                                        <div class="mt-3 flex flex-wrap gap-2">
+
+                                            @if(!empty($template->delivery_time))
+                                                <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
+                                                    <span class="text-sm text-blue-900 font-medium">
+                                                        Delivery Time
+                                                    </span>
+
+                                                    <span class="font-semibold text-blue-900">
+                                                        {{ $template->delivery_time }} days
+                                                    </span>
+                                                </div>
+                                            @endif
+
+                                            @if(!empty($template->price))
+                                                <div class="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-1.5 rounded-lg">
+                                                    <span class="text-sm text-green-900 font-medium">
+                                                        Price
+                                                    </span>
+
+                                                    <span class="font-semibold text-green-900">
+                                                        ${{ number_format($template->price, 2) }}
+                                                    </span>
+                                                </div>
+                                            @endif
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
                             </div>
 
-                            @if(!empty($template->description))
-                                <p class="text-gray-700 text-sm">
-                                    {{ $template->description }}
-                                </p>
-                            @endif
+                        @endforeach
 
-                            <div class="mt-3 flex flex-wrap gap-2">
+                    </div>
+                @else
 
-                                @if(!empty($template->delivery_time))
-                                    <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
-                                        <span class="text-sm text-blue-900 font-medium">
-                                            Delivery Time
-                                        </span>
+                    <div class="rounded-lg border border-dashed border-gray-300 bg-white p-4 text-center">
 
-                                        <span class="font-semibold text-blue-900">
-                                            {{ $template->delivery_time }} days
-                                        </span>
-                                    </div>
-                                @endif
-
-                                @if(!empty($template->price))
-                                    <div class="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-3 py-1.5 rounded-lg">
-                                        <span class="text-sm text-green-900 font-medium">
-                                            Price
-                                        </span>
-
-                                        <span class="font-semibold text-green-900">
-                                            ${{ number_format($template->price, 2) }}
-                                        </span>
-                                    </div>
-                                @endif
-
-                            </div>
-
+                        <div class="text-sm text-gray-500">
+                            No matching shipping templates found for this destination.
                         </div>
+
+                        @if(!$isBuyer && !$isReadonly)
+                            <div class="mt-2">
+                                <a href="{{ route('supplier.shipping-templates.create') }}"
+                                class="text-sm text-blue-600 hover:underline">
+                                    Create Shipping Template for this Destination
+                                </a>
+                            </div>
+                        @endif
 
                     </div>
 
-                </div>
-
-            @endforeach
+                @endif
 
         </div>
-    @else
 
-        <div class="rounded-lg border border-dashed border-gray-300 bg-white p-4 text-center">
 
-            <div class="text-sm text-gray-500">
-                No matching shipping templates found for this destination.
+
+        <h4 class="mt-4 flex items-center gap-2 text-sm font-semibold {{ $isClosed ? 'text-gray-600' : 'text-gray-900' }}">
+    <span>Shipping Dimensions</span>
+
+    <x-help-tooltip width="w-80">
+        <div class="space-y-2 leading-relaxed">
+            <div class="font-semibold text-white">Shipping Dimensions</div>
+            <div class="text-gray-200 text-sm">
+                Укажите габариты и вес упаковки для расчёта доставки и логистики.
+                Размеры упаковки могут отличаться от реальных размеров самого товара.
+            </div>
+            <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
+                <li>Length — длина упаковки в сантиметрах</li>
+                <li>Width — ширина упаковки в сантиметрах</li>
+                <li>Height — высота упаковки в сантиметрах</li>
+                <li>Weight — вес товара с упаковкой в килограммах</li>
+                <li>Package Type — тип упаковки: коробка, паллет, комплект и т.д.</li>
+            </ul>
+            <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+                Note:
+                <span class="text-white/80">
+                    транспортировочные габариты могут включать упаковку и защитные материалы,
+                    поэтому могут быть больше реальных размеров товара.
+                </span>
+            </div>
+        </div>
+    </x-help-tooltip>
+</h4>
+
+
+
+        {{-- Shipping Dimensions --}}
+<div class="mt-2 {{ $isClosed ? 'bg-[rgb(252,252,252)]' : 'bg-white' }} border rounded-md p-6">
+
+    <div class="flex items-center justify-between mb-4">
+        <div></div>
+        @unless($isClosed)
+            <button
+                type="submit"
+                form="shipping-dimensions-form"
+                class="inline-flex items-center rounded-lg bg-slate-800 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-slate-900 transition-colors"
+            >
+                Save Shipping Dimensions
+            </button>
+        @endunless
+    </div>
+
+    <form
+        id="shipping-dimensions-form"
+        method="POST"
+        action="{{ route('rfq.shipping-dimensions.update', $rfq) }}"
+    >
+        @csrf
+        @method('PUT')
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {{-- Length --}}
+            <div>
+                <label class="block mb-1 font-medium {{ $isClosed ? 'text-gray-400' : 'text-gray-900' }}">Length (cm)</label>
+                <input
+                    type="number"
+                    step="0.001"
+                    name="shipping[length]"
+                    value="{{ old('shipping.length', isset($shippingDimensions->length) ? number_format($shippingDimensions->length, 1, '.', '') : '') }}"
+                    class="input w-full rounded-md {{ $isClosed ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed opacity-75' : 'border-gray-300' }}"
+                    @disabled($isClosed)
+                >
             </div>
 
-            @if(!$isBuyer && !$isReadonly)
-                <div class="mt-2">
-                    <a href="{{ route('supplier.shipping-templates.create') }}"
-                       class="text-sm text-blue-600 hover:underline">
-                        Create Shipping Template for this Destination
-                    </a>
-                </div>
-            @endif
+            {{-- Width --}}
+            <div>
+                <label class="block mb-1 font-medium {{ $isClosed ? 'text-gray-400' : 'text-gray-900' }}">Width (cm)</label>
+                <input
+                    type="number"
+                    step="0.001"
+                    name="shipping[width]"
+                    value="{{ old('shipping.width', $shippingDimensions->width ?? '') }}"
+                    class="input w-full rounded-md {{ $isClosed ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed opacity-75' : 'border-gray-300' }}"
+                    @disabled($isClosed)
+                >
+            </div>
+
+            {{-- Height --}}
+            <div>
+                <label class="block mb-1 font-medium {{ $isClosed ? 'text-gray-400' : 'text-gray-900' }}">Height (cm)</label>
+                <input
+                    type="number"
+                    step="0.001"
+                    name="shipping[height]"
+                    value="{{ old('shipping.height', $shippingDimensions->height ?? '') }}"
+                    class="input w-full rounded-md {{ $isClosed ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed opacity-75' : 'border-gray-300' }}"
+                    @disabled($isClosed)
+                >
+            </div>
+
+            {{-- Weight --}}
+            <div>
+                <label class="block mb-1 font-medium {{ $isClosed ? 'text-gray-400' : 'text-gray-900' }}">Weight (kg)</label>
+                <input
+                    type="number"
+                    step="0.001"
+                    name="shipping[weight]"
+                    value="{{ old('shipping.weight', $shippingDimensions->weight ?? '') }}"
+                    class="input w-full rounded-md {{ $isClosed ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed opacity-75' : 'border-gray-300' }}"
+                    @disabled($isClosed)
+                >
+            </div>
+
+            {{-- Package Type --}}
+            <div>
+                <label class="block mb-1 font-medium {{ $isClosed ? 'text-gray-400' : 'text-gray-900' }}">Package Type</label>
+                <select
+                    name="shipping[package_type]"
+                    class="input w-full rounded-md {{ $isClosed ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed opacity-75' : 'border-gray-300' }}"
+                    @disabled($isClosed)
+                >
+                    <option value="box" {{ old('shipping.package_type', $shippingDimensions->package_type ?? '') == 'box' ? 'selected' : '' }}>
+                        Box
+                    </option>
+
+                    <option value="pallet" {{ old('shipping.package_type', $shippingDimensions->package_type ?? '') == 'pallet' ? 'selected' : '' }}>
+                        Pallet
+                    </option>
+
+                    <option value="set" {{ old('shipping.package_type', $shippingDimensions->package_type ?? '') == 'set' ? 'selected' : '' }}>
+                        Set
+                    </option>
+                </select>
+            </div>
 
         </div>
+    </form>
 
-    @endif
+    <p class="mt-2 text-sm text-gray-500">
+        Укажите габариты и вес упаковки для расчёта доставки и логистики.
+    </p>
 
 </div>
 
-        </div>
 
-        @endif
-        @endif
+
+
+
+
+
+    </div>
+
+    @endif
+    @endif
 
 
     </div>
@@ -823,4 +1149,57 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('address-drawer-overlay')
         ?.addEventListener('click', closeAddressDrawer);
 });
+</script>
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const unitPrice = {{ $unitPrice }};
+
+    const input = document.getElementById('checkout-quantity');
+    const hidden = document.getElementById('checkout-quantity-hidden');
+    const total = document.getElementById('checkout-total');
+
+    document.getElementById('qty-minus').onclick = () => {
+
+        let value = parseInt(input.value || 1);
+
+        if (value > 1) {
+
+            input.value = value - 1;
+            refresh();
+
+        }
+
+    };
+
+    document.getElementById('qty-plus').onclick = () => {
+
+        input.value = parseInt(input.value || 1) + 1;
+        refresh();
+
+    };
+
+    input.addEventListener('input', refresh);
+
+    function refresh() {
+
+        let qty = parseInt(input.value);
+
+        if (isNaN(qty) || qty < 1) {
+            qty = 1;
+            input.value = 1;
+        }
+
+        hidden.value = qty;
+
+        total.textContent = '$' + (qty * unitPrice).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+    }
+
+});
+
 </script>

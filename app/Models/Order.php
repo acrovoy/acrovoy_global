@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 use App\Domain\Negotiation\Models\RfqOffer;
+use App\Domain\Negotiation\Models\RfqOfferVersion;
 
 class Order extends Model
 {
@@ -21,6 +22,7 @@ class Order extends Model
     'total',
     'delivery_price',
     'delivery_method',
+    'shipping_template_id',
     'notes',
     'first_name',
     'last_name',
@@ -33,7 +35,7 @@ class Order extends Model
     'tracking_number',
     'invoice_file',
     'invoice_delivery_file',
-    'rfq_offer_id',
+    'offer_version_id',
     'project_id',
 ];
 
@@ -89,5 +91,14 @@ public function cityRelation()
     return $this->belongsTo(\App\Models\Location::class, 'city_id');
 }
 
+public function shippingTemplate()
+{
+    return $this->belongsTo(ShippingTemplate::class);
+}
+
+public function offerVersion()
+{
+    return $this->belongsTo(RfqOfferVersion::class, 'offer_version_id');
+}
 
 }

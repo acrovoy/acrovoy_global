@@ -20,11 +20,24 @@
     @foreach($order['items'] as $item)
     <div class="py-1 flex justify-between items-center">
         <div class="flex items-center gap-3">
+
+        @if($order['type'] === 'product')
             {{-- Картинка товара --}}
             <img
                 src="{{ $item['image'] }}"
                 alt="{{ $item['product'] }}"
                 class="w-12 h-12 rounded object-contain bg-gray-50 border" />
+
+
+                 @else
+
+                     <img
+                        src="{{ asset('images/furniture_icon.jpg') }}"
+                        class="w-12 h-12 rounded object-contain bg-gray-50 border"
+                    >
+
+                    @endif
+
 
             {{-- Название и количество --}}
             <div class="max-w-xs">

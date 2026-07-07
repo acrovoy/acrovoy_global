@@ -138,6 +138,12 @@ Route::prefix('supplier')->group(function () {
     Route::get('/rfq/{rfq}', [SupplierRfqController::class, 'show'])
         ->name('supplier.rfq.show');
 
+
+    Route::put('/rfq/{rfq}/shipping-dimensions', [SupplierRfqController::class, 'updateShippingDimensions'])->name('rfq.shipping-dimensions.update');
+
+
+
+
     // =========================
     // OFFERS
     // =========================
@@ -652,8 +658,10 @@ Route::middleware(['auth', 'role:buyer'])->prefix('buyer/wishlist')->name('buyer
 
 Route::middleware(['auth', 'role:buyer'])->prefix('buyer/orders')->name('buyer.orders.')->group(function () {
     Route::get('/', [OrderController::class, 'index'])->name('index'); // Список заказов
-    Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout'); // Страница оформления
+    Route::get('/checkout', [OrderController::class, 'checkout'])->name('checkout'); // Страница оформления Product
+    Route::get('/rfq-checkout/{offerVersion}', [OrderController::class, 'rfqCheckout'])->name('rfq-checkout');
     Route::post('/store', [OrderController::class, 'store'])->name('store'); // Создание заказа
+    Route::post('/rfq-store', [OrderController::class, 'storeRfqOrder'])->name('rfq-store'); // Создание RFQ заказа
     Route::get('/{order}', [OrderController::class, 'show'])->name('show'); // Просмотр заказа
     // 🔹 Редактирование заказа
     Route::get('/{id}/edit', [OrderController::class, 'edit'])->name('edit'); // Форма редактирования

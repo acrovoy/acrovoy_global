@@ -731,7 +731,10 @@ class ProductController extends Controller
 
             if (!empty($shippingData)) {
                 $product->shippingDimensions()->updateOrCreate(
-                    [], // Laravel автоматически подставит product_id
+                    [
+                        'dimensionable_type' => Product::class,
+                        'dimensionable_id'   => $product->id,
+                    ], // Laravel автоматически подставит product_id
                     [
                         'length'       => $shippingData['length'] ?? 0,
                         'width'        => $shippingData['width'] ?? 0,

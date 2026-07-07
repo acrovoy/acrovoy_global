@@ -6,11 +6,17 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
 use App\Models\OrderDispute;
+use App\Models\ShippingTemplate;
+use App\Models\LogisticCompany;
+use App\Domain\RFQ\Models\RFQ;
+
+
+use App\Domain\Negotiation\Models\RfqOfferVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\OrderStatusService;
 use App\Models\UserAddress;
-use App\Models\Country;  
+use App\Models\Country;
 use App\Models\Location;
 use App\Facades\ActiveContext;
 
@@ -23,103 +29,198 @@ class OrderController extends Controller
 
 
     public function index(Request $request)
-{
-    $query = Order::where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id());
+    {
+        $query = Order::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id());
 
-    if ($request->filled('status')) {
-        $query->where('status', $request->status);
-    }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-    $orders = $query->orderBy('created_at', 'desc')->get();
+        $orders = $query->orderBy('created_at', 'desc')->get();
 
-    $disputedOrderIds = OrderDispute::whereHas('order', function ($q) {
+        $disputedOrderIds = OrderDispute::whereHas('order', function ($q) {
             $q->where('buyer_type', ActiveContext::type())
-              ->where('buyer_id', ActiveContext::id());
+                ->where('buyer_id', ActiveContext::id());
         })
-        ->whereIn('status', [
-            'pending',
-            'supplier_offer',
-            'rejected',
-            'admin_review'
-        ])
-        ->pluck('order_id')
-        ->toArray();
+            ->whereIn('status', [
+                'pending',
+                'supplier_offer',
+                'rejected',
+                'admin_review'
+            ])
+            ->pluck('order_id')
+            ->toArray();
 
-    return view(
-        'dashboard.buyer.orders.index',
-        compact('orders', 'disputedOrderIds')
-    );
+        return view(
+            'dashboard.buyer.orders.index',
+            compact('orders', 'disputedOrderIds')
+        );
     }
 
     // Переход на страницу чекаута
     public function checkout()
-{
-    
+    {
 
-    $cartItems = CartItem::where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
-        ->with(['product.shippingTemplates.translations'])
-        ->get();
 
-    if ($cartItems->isEmpty()) {
-        return redirect()->route('buyer.cart.index')
-            ->with('error', 'Your cart is empty.');
+        $cartItems = CartItem::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
+            ->with(['product.shippingTemplates.translations'])
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('buyer.cart.index')
+                ->with('error', 'Your cart is empty.');
+        }
+
+        $total = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+
+        // Собираем все шаблоны доставки товаров
+        $allShippingTemplates = $cartItems
+            ->flatMap(function ($item) {
+                return $item->product->shippingTemplates->map(function ($template) use ($item) {
+                    // Добавляем вычисленную цену доставки
+                    $template->computed_price = $item->product->computeShippingPrice($template);
+                    return $template;
+                });
+            })
+            ->unique('id')
+            ->values();
+
+
+
+        // Получаем все адресные шаблоны пользователя (по убыванию даты)
+
+        $savedAddresses = UserAddress::query()
+            ->where('user_id', ActiveContext::id())
+            ->where('user_type', ActiveContext::type())
+            ->orderByDesc('updated_at')->get();
+
+        // Берём последний сохранённый шаблон
+        $lastAddress = $savedAddresses->first();
+
+        $regions = collect(); // пустой по умолчанию
+
+        $countries = Country::withCurrentTranslation()
+            ->orderBy('name')->get();
+
+
+
+        if ($lastAddress && $lastAddress->country) {
+            $regions = Location::whereNull('parent_id')
+                ->where('country_id', $lastAddress->country)
+                ->orderBy('name')
+                ->get();
+        }
+
+
+
+
+        return view('dashboard.buyer.orders.checkout', [
+            'cartItems'        => $cartItems,
+            'total'            => $total,
+            'shippingOptions'  => $allShippingTemplates,
+            'savedAddresses'   => $savedAddresses, // для селекта
+            'lastAddress'      => $lastAddress,    // для предзаполнения формы
+            'countries'        => $countries,
+            'regions'          => $regions,
+        ]);
     }
 
-    $total = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+    public function rfqCheckout(Request $request, RfqOfferVersion $offerVersion)
+    {
 
-    // Собираем все шаблоны доставки товаров
-    $allShippingTemplates = $cartItems
-    ->flatMap(function ($item) {
-        return $item->product->shippingTemplates->map(function ($template) use ($item) {
-            // Добавляем вычисленную цену доставки
-            $template->computed_price = $item->product->computeShippingPrice($template);
-            return $template;
-        });
-    })
-    ->unique('id')
-    ->values();
+        $offerVersion->load([
+            'offer.participant.shippingTemplates.locations',
+            'offer.rfq.deliveryAddress',
+        ]);
 
-        
+        $rfq = $offerVersion->offer->rfq;
+        $participant = $offerVersion->offer->participant;
 
-    // Получаем все адресные шаблоны пользователя (по убыванию даты)
-    
-    $savedAddresses = UserAddress::query()
-    ->where('user_id', ActiveContext::id())
-    ->where('user_type', ActiveContext::type())
-    ->orderByDesc('updated_at')->get();
+        $deliveryAddress = $rfq->deliveryAddress;
 
-    // Берём последний сохранённый шаблон
-    $lastAddress = $savedAddresses->first();
+        $cityId = Location::where('name', $deliveryAddress->city)
+            ->where('parent_id', $deliveryAddress->region)
+            ->value('id');
 
-    $regions = collect(); // пустой по умолчанию
+        $allShippingTemplates = $participant->shippingTemplates
+            ->filter(
+                fn($template) =>
+                $template->locations->contains('id', $cityId)
+            )
+            ->map(function ($template) use ($rfq) {
 
-    $countries = Country::withCurrentTranslation()
-    ->orderBy('name')->get();
+                $template->computed_price = $rfq->computeShippingPrice($template);
 
-    
+                return $template;
+            })
+            ->values();
 
-if ($lastAddress && $lastAddress->country) {
-    $regions = Location::whereNull('parent_id')
-        ->where('country_id', $lastAddress->country)
-        ->orderBy('name')
-        ->get();
-}
+        $defaultTemplate = ShippingTemplate::where('provider_type', LogisticCompany::class)
+            ->where('provider_id', 1)
+            ->where('is_active', 1)
+            ->first();
+
+        if ($defaultTemplate) {
+
+            $defaultTemplate->computed_price =
+                $offerVersion->computeShippingPrice($defaultTemplate);
+
+            // если должен быть первым
+            $allShippingTemplates->prepend($defaultTemplate);
+
+            // если должен быть последним:
+            // $allShippingTemplates->push($defaultTemplate);
+
+            // на случай совпадений
+            $allShippingTemplates = $allShippingTemplates
+                ->unique('id')
+                ->values();
+        }
+
+        $cartItem = new CartItem();
+
+        $cartItem->forceFill([
+            'product_id' => $rfq->id, // или отдельное поле rfq_id, если оно есть
+            'price'      => $offerVersion->total_price,
+            'quantity'   => $request->quantity,
+            'buyer_type' => ActiveContext::type(),
+            'buyer_id'   => ActiveContext::id(),
+            'created_by' => auth()->id(),
+        ]);
+
+        $cartItem->setRelation('rfq', $rfq);
+
+        $total = $offerVersion->total_price * (int) $request->quantity;
+
+        $savedAddresses = UserAddress::query()
+            ->where('user_id', ActiveContext::id())
+            ->where('user_type', ActiveContext::type())
+            ->orderByDesc('updated_at')->get();
+
+        $lastAddress = $deliveryAddress;
+
+        $regions = collect(); // пустой по умолчанию
+
+        $countries = Country::withCurrentTranslation()
+            ->orderBy('name')->get();
+
+        return view('dashboard.buyer.orders.rfq-checkout', [
+            'cartItem'        => $cartItem,
+            'total'            => $total,
+            'shippingOptions'  => $allShippingTemplates,
+            'savedAddresses'   => $savedAddresses, // для селекта
+            'lastAddress'      => $lastAddress,
+            'countries'        => $countries,
+            'regions'          => $regions,
+            'deliveryAddress' => $deliveryAddress,
 
 
+        ]);
+    }
 
 
-    return view('dashboard.buyer.orders.checkout', [
-        'cartItems'        => $cartItems,
-        'total'            => $total,
-        'shippingOptions'  => $allShippingTemplates,
-        'savedAddresses'   => $savedAddresses, // для селекта
-        'lastAddress'      => $lastAddress,    // для предзаполнения формы
-        'countries'        => $countries,
-        'regions'          => $regions,   
-    ]);
-}
 
 
 
@@ -127,362 +228,581 @@ if ($lastAddress && $lastAddress->country) {
 
     // Сохраняем данные чекаута
     public function store(Request $request)
-{
+    {
 
 
-$buyer_type = ActiveContext::type();
-$buyer_id  = ActiveContext::id();
+        $buyer_type = ActiveContext::type();
+        $buyer_id  = ActiveContext::id();
 
 
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    $finalCity = $request->city_manual ?: null;
-    $cityId = null;
+        $finalCity = $request->city_manual ?: null;
+        $cityId = null;
 
-    // 1️⃣ Если пользователь ввёл новый город вручную
-    if ($request->filled('city_manual')) {
-        $existingLocation = \App\Models\Location::where('name', $finalCity)
-                            ->where('parent_id', $request->region)
-                            ->first();
+        // 1️⃣ Если пользователь ввёл новый город вручную
+        if ($request->filled('city_manual')) {
+            $existingLocation = \App\Models\Location::where('name', $finalCity)
+                ->where('parent_id', $request->region)
+                ->first();
 
-        if ($existingLocation) {
-            $cityId = $existingLocation->id;
-        } else {
-            $newLocation = \App\Models\Location::create([
-                'name'       => $finalCity,
-                'parent_id'  => $request->region ?: null,
-                'country_id' => $request->country,
-                'updated_by' => $user->id,
-            ]);
-            $cityId = $newLocation->id;
+            if ($existingLocation) {
+                $cityId = $existingLocation->id;
+            } else {
+                $newLocation = \App\Models\Location::create([
+                    'name'       => $finalCity,
+                    'parent_id'  => $request->region ?: null,
+                    'country_id' => $request->country,
+                    'updated_by' => $user->id,
+                ]);
+                $cityId = $newLocation->id;
+            }
         }
-    }
 
-    // 2️⃣ Если город выбран из списка
-    elseif ($request->filled('city')) {
-        // Здесь важно, чтобы в форме приходил ID выбранного города, а не название
-        $cityId = (int) $request->city;  
-    }
-
-    $cityModel = \App\Models\Location::find($cityId);
-    $finalCity = $cityModel?->name ?? '';
-
-
-
-/**
- * 1️⃣ Адрес из формы (ВСЕГДА снепшот)
- */
-$formAddress = [
-    'first_name'  => $request->first_name,
-    'last_name'   => $request->last_name,
-    'country'     => $request->country,
-    'city'        => $finalCity,
-    'region'      => $request->region,
-    'street'      => $request->street,
-    'postal_code' => $request->postal_code,
-    'phone'       => $request->phone,
-];
-
-/**
- * 2️⃣ Выбранный сохранённый адрес (если есть)
- */
-$selectedAddress = null;
-
-if ($request->filled('saved_address_id')) {
-    $selectedAddress = UserAddress::query()
-    ->where('id', $request->saved_address_id)
-    ->where('user_id', ActiveContext::id())
-    ->where('user_type', ActiveContext::type())
-    ->firstOrFail();
-}
-
-/**
- * 3️⃣ Решаем — сохраняем адрес или нет
- */
-if ($request->boolean('save_as_new')) {
-
-    UserAddress::firstOrCreate(
-        ['user_id' => ActiveContext::id(),
-        'user_type' => ActiveContext::type()] + $formAddress,
-        ['is_default' => false]
-    );
-
-} elseif (!$selectedAddress) {
-
-    // пользователь не выбирал адрес → первый checkout
-    UserAddress::firstOrCreate(
-        ['user_id' => ActiveContext::id(),
-        'user_type' => ActiveContext::type()] + $formAddress,
-        ['is_default' => false]
-    );
-}
-
-
-
-   $cartItems = CartItem::where('buyer_type', ActiveContext::type())
-    ->where('buyer_id', ActiveContext::id())
-    ->with('product')
-    ->get();
-
-if ($cartItems->isEmpty()) {
-    return redirect()->route('buyer.cart.index')
-        ->with('error', 'Your cart is empty.');
-}
-
-    // Сумма товаров
-    $itemsTotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
-
-    // Получаем доставку
-    $shippingTemplate = \App\Models\ShippingTemplate::find($request->delivery_template_id);
-    $shippingPrice = 0;
-
-    if ($shippingTemplate) {
-        // считаем для каждого товара и суммируем
-        foreach ($cartItems as $item) {
-            $shippingPrice += $item->product->computeShippingPrice($shippingTemplate) * $item->quantity;
+        // 2️⃣ Если город выбран из списка
+        elseif ($request->filled('city')) {
+            // Здесь важно, чтобы в форме приходил ID выбранного города, а не название
+            $cityId = (int) $request->city;
         }
-    }
 
-    $providerType = null;
-    $providerId   = null;
-
-if ($shippingTemplate?->manufacturer_id) {
-    $providerType = \App\Models\Supplier::class;
-    $providerId   = $shippingTemplate->manufacturer_id;
-}
-
-if ($shippingTemplate?->logistic_company_id) {
-    $providerType = \App\Models\LogisticCompany::class;
-    $providerId   = $shippingTemplate->logistic_company_id;
-}
-
-    // Общая сумма
-    $total = $itemsTotal + $shippingPrice;
-
-    DB::transaction(function () use (
-        $request,
-        $cartItems,
-        $total,
-        $shippingPrice,
-        $shippingTemplate,
-        $formAddress,
-        $cityId,
-        $providerType,
-        $providerId,
-        &$order,
-        $buyer_type,
-        $buyer_id,
-    ) {
-
-    
-
-        // 1️⃣ Создаём заказ
-        $order = Order::create([
-            'buyer_type' => $buyer_type,
-            'buyer_id'   => $buyer_id,
-            'created_by' => auth()->id(),
-            'status' => 'pending',
-            'type' => 'product',
-            'total' => $total,
-            'delivery_price' => $shippingPrice,
-            'delivery_method' => $shippingTemplate?->title,
-            'first_name'  => $formAddress['first_name'],
-            'last_name'   => $formAddress['last_name'],
-            'country'     => $formAddress['country'],
-            'city'        => $formAddress['city'],
-            'region'      => $formAddress['region'],
-            'street'      => $formAddress['street'],
-            'postal_code' => $formAddress['postal_code'],
-            'phone'       => $formAddress['phone'],
-            'notes' => $request->input('notes'),
-        ]);
-
-        // 2️⃣ ОБЯЗАТЕЛЬНО фиксируем первый статус
-        $order->statusHistory()->create([
-            'status' => 'pending',
-            'comment' => 'Заказ создан покупателем',
-        ]);
-
-        // 3️⃣ Удаляем старые позиции (safety)
-        $order->items()->delete();
-
-        // 4️⃣ Добавляем позиции заказа
-        foreach ($cartItems as $item) {
-
-         $product = $item->product;
-    $dimensions = $product->shippingDimensions;
-
-    $shippingPrice = $product->computeShippingPrice($shippingTemplate);
+        $cityModel = \App\Models\Location::find($cityId);
+        $finalCity = $cityModel?->name ?? '';
 
 
-            $orderItem = OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item->product_id,
-                'product_name' => $item->product?->name ?? 'Product unavailable',
-                'price' => $item->price,
-                'quantity' => $item->quantity,
+
+        /**
+         * 1️⃣ Адрес из формы (ВСЕГДА снепшот)
+         */
+        $formAddress = [
+            'first_name'  => $request->first_name,
+            'last_name'   => $request->last_name,
+            'country'     => $request->country,
+            'city'        => $finalCity,
+            'region'      => $request->region,
+            'street'      => $request->street,
+            'postal_code' => $request->postal_code,
+            'phone'       => $request->phone,
+        ];
+
+        /**
+         * 2️⃣ Выбранный сохранённый адрес (если есть)
+         */
+        $selectedAddress = null;
+
+        if ($request->filled('saved_address_id')) {
+            $selectedAddress = UserAddress::query()
+                ->where('id', $request->saved_address_id)
+                ->where('user_id', ActiveContext::id())
+                ->where('user_type', ActiveContext::type())
+                ->firstOrFail();
+        }
+
+        /**
+         * 3️⃣ Решаем — сохраняем адрес или нет
+         */
+        if ($request->boolean('save_as_new')) {
+
+            UserAddress::firstOrCreate(
+                [
+                    'user_id' => ActiveContext::id(),
+                    'user_type' => ActiveContext::type()
+                ] + $formAddress,
+                ['is_default' => false]
+            );
+        } elseif (!$selectedAddress) {
+
+            // пользователь не выбирал адрес → первый checkout
+            UserAddress::firstOrCreate(
+                [
+                    'user_id' => ActiveContext::id(),
+                    'user_type' => ActiveContext::type()
+                ] + $formAddress,
+                ['is_default' => false]
+            );
+        }
+
+
+
+        $cartItems = CartItem::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
+            ->with('product')
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('buyer.cart.index')
+                ->with('error', 'Your cart is empty.');
+        }
+
+        // Сумма товаров
+        $itemsTotal = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+
+        // Получаем доставку
+        $shippingTemplate = \App\Models\ShippingTemplate::find($request->delivery_template_id);
+        $shippingPrice = 0;
+
+        if ($shippingTemplate) {
+            // считаем для каждого товара и суммируем
+            foreach ($cartItems as $item) {
+                $shippingPrice += $item->product->computeShippingPrice($shippingTemplate) * $item->quantity;
+            }
+        }
+
+        $providerType = null;
+        $providerId   = null;
+
+        if ($shippingTemplate?->manufacturer_id) {
+            $providerType = \App\Models\Supplier::class;
+            $providerId   = $shippingTemplate->manufacturer_id;
+        }
+
+        if ($shippingTemplate?->logistic_company_id) {
+            $providerType = \App\Models\LogisticCompany::class;
+            $providerId   = $shippingTemplate->logistic_company_id;
+        }
+
+        // Общая сумма
+        $total = $itemsTotal + $shippingPrice;
+
+        DB::transaction(function () use (
+            $request,
+            $cartItems,
+            $total,
+            $shippingPrice,
+            $shippingTemplate,
+            $formAddress,
+            $cityId,
+            $providerType,
+            $providerId,
+            &$order,
+            $buyer_type,
+            $buyer_id,
+        ) {
+
+
+
+            // 1️⃣ Создаём заказ
+            $order = Order::create([
+                'buyer_type' => $buyer_type,
+                'buyer_id'   => $buyer_id,
+                'created_by' => auth()->id(),
+                'status' => 'pending',
+                'type' => 'product',
+                'total' => $total,
+                'delivery_price' => $shippingPrice,
+                'delivery_method' => $shippingTemplate?->title,
+                'first_name'  => $formAddress['first_name'],
+                'last_name'   => $formAddress['last_name'],
+                'country'     => $formAddress['country'],
+                'city'        => $formAddress['city'],
+                'region'      => $formAddress['region'],
+                'street'      => $formAddress['street'],
+                'postal_code' => $formAddress['postal_code'],
+                'phone'       => $formAddress['phone'],
+                'notes' => $request->input('notes'),
             ]);
 
-            // 🔥 Создаём shipment для каждого order item
-          
-    \App\Models\OrderItemShipment::create([
-        'order_id'       => $order->id,
-        'shippable_type' => \App\Models\OrderItem::class,
-        'shippable_id'   => $orderItem->id,
+            // 2️⃣ ОБЯЗАТЕЛЬНО фиксируем первый статус
+            $order->statusHistory()->create([
+                'status' => 'pending',
+                'comment' => 'Заказ создан покупателем',
+            ]);
 
+            // 3️⃣ Удаляем старые позиции (safety)
+            $order->items()->delete();
+
+            // 4️⃣ Добавляем позиции заказа
+            foreach ($cartItems as $item) {
+
+                $product = $item->product;
+                $dimensions = $product->shippingDimensions;
+
+                $shippingPrice = $product->computeShippingPrice($shippingTemplate);
+
+
+                $orderItem = OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product?->name ?? 'Product unavailable',
+                    'price' => $item->price,
+                    'quantity' => $item->quantity,
+                ]);
+
+                // 🔥 Создаём shipment для каждого order item
+
+                \App\Models\OrderItemShipment::create([
+                    'order_id'       => $order->id,
+                    'shippable_type' => \App\Models\OrderItem::class,
+                    'shippable_id'   => $orderItem->id,
+
+
+                    'provider_type'  => $providerType,
+                    'provider_id'    => $providerId,
+
+                    'destination_country_id' => (int)$request->country,
+                    'destination_region_id'  => (int)$request->region,
+                    'destination_city_id'    => (int)$cityId,
+                    'destination_address'    => $formAddress['street'],
+                    'destination_contact_name' => $formAddress['first_name'] . ' ' . $formAddress['last_name'],
+                    'destination_contact_phone' => $formAddress['phone'],
+
+
+                    'weight' => $dimensions?->weight,
+                    'length' => $dimensions?->length,
+                    'width'  => $dimensions?->width,
+                    'height' => $dimensions?->height,
+
+                    'shipping_price' => $item->product->computeShippingPrice($shippingTemplate),
+                    'price_unit'     => $shippingTemplate?->price_unit,
+                    'delivery_time'  => $shippingTemplate->delivery_time,
+                    'status'         => 'pending',
+                ]);
+            }
+
+            // 5️⃣ Очищаем корзину
+            CartItem::where('buyer_type', ActiveContext::type())
+                ->where('buyer_id', ActiveContext::id())
+                ->delete();
+        });
+
+        return redirect()->route('buyer.orders.show', $order)
+            ->with('success', 'Order placed successfully!');
+    }
+
+
+    public function storeRfqOrder(Request $request)
+    {
+
+    $rfq = RFQ::find($request->rfq);
+
+    $acceptedVersion = $rfq->accepted_offer_version; // полезный аксессор
+
+  
+       
+        $buyer_type = ActiveContext::type();
+        $buyer_id  = ActiveContext::id();
+        $user = auth()->user();
         
-        'provider_type'  => $providerType,
-        'provider_id'    => $providerId,
+            $selectedAddress = UserAddress::query()
+                ->where('id', $rfq->delivery_address_id)
+                ->where('user_id', ActiveContext::id())
+                ->where('user_type', ActiveContext::type())
+                ->first();
 
-        'destination_country_id' => (int)$request->country,
-        'destination_region_id'  => (int)$request->region,
-        'destination_city_id'    => (int)$cityId, 
-        'destination_address'    => $formAddress['street'],
-        'destination_contact_name' => $formAddress['first_name'] . ' ' . $formAddress['last_name'],
-        'destination_contact_phone' => $formAddress['phone'],
-
+            $first_name = $selectedAddress->first_name;
+            $last_name = $selectedAddress->last_name;
+            $country = $selectedAddress->country;
+            $city = $selectedAddress->city;
+            $region = $selectedAddress->region;
+            $street = $selectedAddress->street;
+            $postal_code = $selectedAddress->postal_code;
+            $phone = $selectedAddress->phone;
         
-        'weight' => $dimensions?->weight,
-        'length' => $dimensions?->length,
-        'width'  => $dimensions?->width,
-        'height' => $dimensions?->height,
 
-        'shipping_price' => $item->product->computeShippingPrice($shippingTemplate),
-        'price_unit'     => $shippingTemplate?->price_unit,
-        'delivery_time'  => $shippingTemplate->delivery_time,
-        'status'         => 'pending',
-    ]);
+     
 
+        // Сумма товаров
+        $itemsTotal = $acceptedVersion->total_price * $request->quantity;
 
+        $dimensions = $rfq->shippingDimensions;
+
+        // Получаем доставку
+        $shippingTemplate = \App\Models\ShippingTemplate::find($request->delivery_template_id);
+        $shippingPrice = 0;
+
+        $origin_country_id = null;
+        $origin_region_id = null;
+        $origin_city_id = null;
+        $origin_address = null;
+        $origin_contact_name = null;
+        $origin_contact_phone = null;
+
+        $origin = $shippingTemplate->warehouse;
+        if($origin){
+            $location = Location::find($origin->location_id);
+            $origin_region = $location->parent;
+
+            $origin_country_id = $origin->country_id;
+            $origin_region_id = $origin_region->id;
+            $origin_city_id = $origin->location_id;
+            $origin_address = $origin->address;
+            $origin_contact_name = $origin->contact_person;
+            $origin_contact_phone = $origin->phone;
         }
 
-        // 5️⃣ Очищаем корзину
-        CartItem::where('buyer_type', ActiveContext::type())
-    ->where('buyer_id', ActiveContext::id())
-    ->delete();
-    });
+        if ($shippingTemplate) {
+            // считаем для каждого товара и суммируем
+            
+                $shippingPrice = $acceptedVersion->offer->computeShippingPrice($shippingTemplate) * $request->quantity;
+            
+                
 
-    return redirect()->route('buyer.orders.show', $order)
-        ->with('success', 'Order placed successfully!');
-}
+        }
+       
+
+        $providerType = null;
+        $providerId   = null;
+
+        
+            $providerType = $shippingTemplate->provider_type;
+            $providerId   = $shippingTemplate->provider_id;
+       
+
+        // Общая сумма
+        $total = $itemsTotal + $shippingPrice;
+
+        DB::transaction(function () use (
+            $request,
+            $rfq,
+            $acceptedVersion,
+            $total,
+            $shippingPrice,
+            $shippingTemplate,
+            $providerType,
+            $providerId,
+            &$order,
+            $buyer_type,
+            $buyer_id,
+            $first_name,
+            $last_name,
+            $country,
+            $city,
+            $region,
+            $street,
+            $postal_code,
+            $phone,
+            $origin_country_id,
+            $origin_region_id,
+            $origin_city_id,
+            $origin_address,
+            $origin_contact_name,
+            $origin_contact_phone,
+        ) {
 
 
 
+            // 1️⃣ Создаём заказ
+            $order = Order::create([
+                'buyer_type' => $buyer_type,
+                'buyer_id'   => $buyer_id,
+                'created_by' => auth()->id(),
+                'status' => 'pending',
+                'type' => 'rfq',
+                'total' => $total,
+                'delivery_price' => $shippingPrice,
+                'shipping_template_id' => $shippingTemplate?->id,
+                'first_name'  => $first_name,
+                'last_name'   => $last_name,
+                'country'     => $country,
+                'city'        => $city,
+                'region'      => $region,
+                'street'      => $street,
+                'postal_code' => $postal_code,
+                'phone'       => $phone,
+                
+                'offer_version_id'       => $acceptedVersion->id,
+                'notes' => $request->input('notes'),
+            ]);
+
+            // 2️⃣ ОБЯЗАТЕЛЬНО фиксируем первый статус
+            $order->statusHistory()->create([
+                'status' => 'pending',
+                'comment' => 'Заказ создан покупателем',
+            ]);
+
+            // 3️⃣ Удаляем старые позиции (safety)
+            $order->items()->delete();
+
+            // 4️⃣ Добавляем позиции заказа
+            
+            $acceptedVersion = $rfq->accepted_offer_version;
+
+                
+                $dimensions = $rfq->shippingDimensions;
+
+                $shippingPrice = $acceptedVersion->offer->computeShippingPrice($shippingTemplate) * $request->quantity;
 
 
+                $orderItem = OrderItem::create([
+                    'order_id' => $order->id,
+                    'rfq_id' => $rfq->id,
+                    'product_name' => $rfq->title ?? 'Name unavailable',
+                    'price' => $acceptedVersion->total_price,
+                    'quantity' => $request->quantity,
+                ]);
 
-public function show(Order $order)
-{
+                $cityId = Location::where('name', $city)
+                    ->where('parent_id', $region)
+                    ->value('id');
 
-    $user = auth()->user();
-    // Проверяем, что заказ принадлежит текущему пользователю
-    
+                // 🔥 Создаём shipment для каждого order item
 
-    $order->load([
-        'items.product.images',
-        'items.shipments',
-        'statusHistory',
-        'user.addresses',
-        'countryRelation',
-        'regionRelation',
-        'cityRelation',
+                \App\Models\OrderItemShipment::create([
+                    'order_id'       => $order->id,
+                    'shippable_type' => \App\Models\OrderItem::class,
+                    'shippable_id'   => $orderItem->id,
+
+
+                    'provider_type'  => $providerType,
+                    'provider_id'    => $providerId,
+
+                    'destination_country_id' => (int)$country,
+                    'destination_region_id'  => (int)$region,
+                    'destination_city_id'    => (int)$cityId,
+                    'destination_address'    =>  $street,
+                    'destination_contact_name' => $first_name . ' ' . $last_name,
+                    'destination_contact_phone' => $phone,
+
+
+                    'origin_country_id' => (int)$origin_country_id,
+                    'origin_region_id'  => (int)$origin_region_id,
+                    'origin_city_id'    => (int)$origin_city_id,
+                    'origin_address'    =>  $origin_address,
+                    'origin_contact_name' => $origin_contact_name,
+                    'origin_contact_phone' => $origin_contact_phone,
+
+                    
+                    'weight' => $dimensions->first()?->weight,
+                    'length' => $dimensions->first()?->length,
+                    'width'  => $dimensions->first()?->width,
+                    'height' => $dimensions->first()?->height,
+
+                    'shipping_price' => $shippingPrice,
+                    'price_unit'     => $shippingTemplate?->price_unit,
+                    'delivery_time'  => $shippingTemplate->delivery_time,
+                    'status'         => 'pending',
+                ]);
+            
+            
+            if ($acceptedVersion) {
+    $acceptedVersion->update([
+        'ordered_at' => now(),
     ]);
-
-    $countries = Country::withCurrentTranslation()
-    ->orderBy('name')->get();
-
-    // Получаем все адресные шаблоны пользователя (по убыванию даты)
-    $savedAddresses = UserAddress::query()
-    ->where('user_id', ActiveContext::id())
-    ->where('user_type', ActiveContext::type())
-    ->orderByDesc('updated_at')->get();
-
-    // Берём последний сохранённый шаблон
-    $lastAddress = $savedAddresses->first();
-
-    $regions = collect(); // пустой по умолчанию
-    
-    
-    // Определяем доступные действия
-    $canCancel = in_array($order->status, ['pending', 'confirmed', 'paid']);
-    $canEditAddress = in_array($order->status, ['pending', 'confirmed', 'paid']);
-    $canTrack = in_array($order->status, ['shipped', 'delivered']);
-
-    return view('dashboard.buyer.orders.show', [
-        'order' => $order,
-        'canCancel' => $canCancel,
-        'canEditAddress' => $canEditAddress,
-        'canTrack' => $canTrack,
-        'countries' => $countries,
-        'lastAddress' => $lastAddress,
-    ]);
 }
+            
+            
+            
+                });
 
-public function cancel(Order $order)
-{
-    if (!in_array($order->status, ['pending', 'paid'])) {
-        return back()->with('error', 'Cannot cancel this order.');
+        return redirect()->route('buyer.orders.show', $order)
+            ->with('success', 'Order placed successfully!');
     }
 
-    \App\Services\OrderStatusService::change($order, 'cancelled', 'Cancelled by buyer');
 
-    return back()->with('success', 'Order cancelled successfully.');
-}
 
-public function editAddress(Order $order)
-{
-    if (!in_array($order->status, ['pending', 'paid'])) {
-        abort(403);
+    public function show(Order $order)
+    {
+
+        $user = auth()->user();
+        // Проверяем, что заказ принадлежит текущему пользователю
+
+
+        $order->load([
+            'items.product.images',
+            'items.shipments',
+            'statusHistory',
+            'user.addresses',
+            'countryRelation',
+            'regionRelation',
+            'cityRelation',
+            'shippingTemplate.translations',
+            'offerVersion',
+        ]);
+
+        $countries = Country::withCurrentTranslation()
+            ->orderBy('name')->get();
+
+        // Получаем все адресные шаблоны пользователя (по убыванию даты)
+        $savedAddresses = UserAddress::query()
+            ->where('user_id', ActiveContext::id())
+            ->where('user_type', ActiveContext::type())
+            ->orderByDesc('updated_at')->get();
+
+        // Берём последний сохранённый шаблон
+        $lastAddress = $savedAddresses->first();
+
+        $regions = collect(); // пустой по умолчанию
+
+
+        // Определяем доступные действия
+        $canCancel = in_array($order->status, ['pending', 'confirmed', 'paid']);
+        $canEditAddress = in_array($order->status, ['pending', 'confirmed', 'paid']);
+        $canTrack = in_array($order->status, ['shipped', 'delivered']);
+
+        return view('dashboard.buyer.orders.show', [
+            'order' => $order,
+            'canCancel' => $canCancel,
+            'canEditAddress' => $canEditAddress,
+            'canTrack' => $canTrack,
+            'countries' => $countries,
+            'lastAddress' => $lastAddress,
+        ]);
     }
 
-    return view('dashboard.buyer.orders.edit-address', compact('order'));
-}
+    public function cancel(Order $order)
+    {
+        if (!in_array($order->status, ['pending', 'paid'])) {
+            return back()->with('error', 'Cannot cancel this order.');
+        }
 
+        \App\Services\OrderStatusService::change($order, 'cancelled', 'Cancelled by buyer');
 
-
-public function track(Order $order)
-{
-    
-
-    if (!$order->tracking_number) {
-        return back()->with('error', 'Tracking not available.');
+        return back()->with('success', 'Order cancelled successfully.');
     }
 
-    // Перенаправление на сайт перевозчика
-    return redirect("https://track.shippingcompany.com/{$order->tracking_number}");
-}
+    public function editAddress(Order $order)
+    {
+        if (!in_array($order->status, ['pending', 'paid'])) {
+            abort(403);
+        }
+
+        return view('dashboard.buyer.orders.edit-address', compact('order'));
+    }
 
 
 
-public function edit(int $id)
+    public function track(Order $order)
+    {
+
+
+        if (!$order->tracking_number) {
+            return back()->with('error', 'Tracking not available.');
+        }
+
+        // Перенаправление на сайт перевозчика
+        return redirect("https://track.shippingcompany.com/{$order->tracking_number}");
+    }
+
+
+
+    public function edit(int $id)
     {
         $order = Order::where('id', $id)
 
-        ->where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
+            ->where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
 
-        ->where('status', 'pending') // только pending
-        ->with('items.product')
-        ->firstOrFail();
+            ->where('status', 'pending') // только pending
+            ->with('items.product')
+            ->firstOrFail();
 
         $countries = Country::withCurrentTranslation()
-    ->orderBy('name')->get();
+            ->orderBy('name')->get();
 
         // Доступные статусы для изменения
         $availableStatuses = OrderStatusService::availableStatuses($order->status);
 
         // Получаем все сохранённые адреса пользователя
-        
+
         $savedAddresses = UserAddress::query()
-    ->where('user_id', ActiveContext::id())
-    ->where('user_type', ActiveContext::type())
-    ->orderByDesc('updated_at')->get();
+            ->where('user_id', ActiveContext::id())
+            ->where('user_type', ActiveContext::type())
+            ->orderByDesc('updated_at')->get();
 
         // Опционально: последний использованный адрес
         $lastAddress = $savedAddresses->first();
 
-        $orderItems = $order->items->load('product.priceTiers')->map(function($item) {
+        $orderItems = $order->items->load('product.priceTiers')->map(function ($item) {
             $product = $item->product;
             return [
                 'id' => $item->id,
@@ -496,7 +816,7 @@ public function edit(int $id)
                         'price' => $tier->price,
                     ])->values()->toArray()
                     : [],
-                
+
             ];
         })->values()->toArray();
 
@@ -509,197 +829,193 @@ public function edit(int $id)
      * Сохранение изменений
      */
     public function update(Request $request, int $id)
-{
+    {
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    $finalCity = $request->city_manual ?: null;
-    $cityId = null;
+        $finalCity = $request->city_manual ?: null;
+        $cityId = null;
 
-    // 1️⃣ Если пользователь ввёл новый город вручную
-    if ($request->filled('city_manual')) {
-        $existingLocation = \App\Models\Location::where('name', $finalCity)
-                            ->where('parent_id', $request->region)
-                            ->first();
-
-        if ($existingLocation) {
-            $cityId = $existingLocation->id;
-        } else {
-            $newLocation = \App\Models\Location::create([
-                'name'       => $finalCity,
-                'parent_id'  => $request->region ?: null,
-                'country_id' => $request->country,
-                'updated_by' => $user->id,
-            ]);
-            $cityId = $newLocation->id;
-        }
-    }
-
-    // 2️⃣ Если город выбран из списка
-    elseif ($request->filled('city')) {
-        // Здесь важно, чтобы в форме приходил ID выбранного города, а не название
-        $cityId = (int) $request->city;  
-    }
-
-    $cityModel = \App\Models\Location::find($cityId);
-    $finalCity = $cityModel?->name ?? '';
-
-
-
-    $order = Order::where('id', $id)
-
-    ->where('buyer_type', ActiveContext::type())
-    ->where('buyer_id', ActiveContext::id())
-
-    ->where('status', 'pending') // только pending
-    ->firstOrFail();
-
-    
-
-    // Обновляем контактные данные
-    $order->update([
-        'first_name' => $request->first_name,
-        'last_name' => $request->last_name,
-        'country' => $request->country,
-        'city' => $finalCity,
-        'region' => $request->region,
-        'street' => $request->street,
-        'postal_code' => $request->postal_code,
-        'phone' => $request->phone,
-    ]);
-
-    // Обновляем товары в заказе
-    foreach ($request->input('items') as $itemData) {
-
-    $orderItem = $order->items()->with('product.priceTiers')->find($itemData['id']);
-    if (!$orderItem) continue;
-
-    $quantity = max(1, intval($itemData['quantity']));
-    $orderItem->quantity = $quantity;
-
-    if ($order->type === 'rfq') {
-        $orderItem->price = $itemData['price'];
-    } else {
-        if ($orderItem->product) {
-
-            $priceTier = $orderItem->product->priceTiers()
-                ->where('min_qty', '<=', $quantity)
-                ->where(function($q) use ($quantity) {
-                    $q->where('max_qty', '>=', $quantity)
-                      ->orWhereNull('max_qty');
-                })
-                ->orderBy('min_qty', 'desc')
+        // 1️⃣ Если пользователь ввёл новый город вручную
+        if ($request->filled('city_manual')) {
+            $existingLocation = \App\Models\Location::where('name', $finalCity)
+                ->where('parent_id', $request->region)
                 ->first();
 
-            $orderItem->price = $priceTier->price
-                ?? $orderItem->product->price
-                ?? 0;
-        } else {
-            $orderItem->price = 0;
-        }
-    }
-
-    $orderItem->save();
-
-    
-$shipment = $orderItem->shipment;
-
-if ($shipment) {
-    $shipment->update([
-        'destination_country_id' => (int)$request->country,
-        'destination_region_id'  => (int)$request->region,
-        'destination_city_id'    => $cityId,
-        'destination_address'    => $request->street,
-        'destination_contact_name' => $request->first_name . ' ' . $request->last_name,
-        'destination_contact_phone' => $request->phone,
-    ]);
-}
-
-
-}
-
-   
-
-    return redirect()
-        ->route('buyer.orders.show', $order->id)
-        ->with('success', 'Заказ успешно обновлён ');
-}
-
-
-public function updateAddress(Request $request, Order $order)
-{
-    $user = auth()->user();
-
-    $finalCity = $request->city_manual ?: null;
-    $cityId = null;
-
-    if ($request->filled('city_manual')) {
-
-        $existingLocation = \App\Models\Location::where('name', $finalCity)
-            ->where('parent_id', $request->region)
-            ->first();
-
-        if ($existingLocation) {
-            $cityId = $existingLocation->id;
-        } else {
-            $newLocation = \App\Models\Location::create([
-                'name'       => $finalCity,
-                'parent_id'  => $request->region ?: null,
-                'country_id' => $request->country,
-                'updated_by' => $user->id,
-            ]);
-
-            $cityId = $newLocation->id;
+            if ($existingLocation) {
+                $cityId = $existingLocation->id;
+            } else {
+                $newLocation = \App\Models\Location::create([
+                    'name'       => $finalCity,
+                    'parent_id'  => $request->region ?: null,
+                    'country_id' => $request->country,
+                    'updated_by' => $user->id,
+                ]);
+                $cityId = $newLocation->id;
+            }
         }
 
-    } elseif ($request->filled('city')) {
-
-        $cityId = (int)$request->city;
-    }
-
-    $cityModel = \App\Models\Location::find($cityId);
-    $finalCity = $cityModel?->name ?? '';
-
-    // Обновляем сам заказ
-    $order->update([
-        'first_name' => $request->first_name,
-        'last_name' => $request->last_name,
-        'country' => $request->country,
-        'city' => $finalCity,
-        'region' => $request->region,
-        'street' => $request->street,
-        'postal_code' => $request->postal_code,
-        'phone' => $request->phone,
-    ]);
-
-    // 🔥 Обновляем shipment каждого айтема
-    foreach ($order->items()->with('shipment')->get() as $orderItem) {
-
-        if ($orderItem->shipment) {
-            $orderItem->shipment->update([
-                'destination_country_id' => (int)$request->country,
-                'destination_region_id'  => (int)$request->region,
-                'destination_city_id'    => $cityId,
-                'destination_address'    => $request->street,
-                'destination_contact_name' => $request->first_name . ' ' . $request->last_name,
-                'destination_contact_phone' => $request->phone,
-            ]);
+        // 2️⃣ Если город выбран из списка
+        elseif ($request->filled('city')) {
+            // Здесь важно, чтобы в форме приходил ID выбранного города, а не название
+            $cityId = (int) $request->city;
         }
+
+        $cityModel = \App\Models\Location::find($cityId);
+        $finalCity = $cityModel?->name ?? '';
+
+
+
+        $order = Order::where('id', $id)
+
+            ->where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
+
+            ->where('status', 'pending') // только pending
+            ->firstOrFail();
+
+
+
+        // Обновляем контактные данные
+        $order->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'country' => $request->country,
+            'city' => $finalCity,
+            'region' => $request->region,
+            'street' => $request->street,
+            'postal_code' => $request->postal_code,
+            'phone' => $request->phone,
+        ]);
+
+        // Обновляем товары в заказе
+        foreach ($request->input('items') as $itemData) {
+
+            $orderItem = $order->items()->with('product.priceTiers')->find($itemData['id']);
+            if (!$orderItem) continue;
+
+            $quantity = max(1, intval($itemData['quantity']));
+            $orderItem->quantity = $quantity;
+
+            if ($order->type === 'rfq') {
+                $orderItem->price = $itemData['price'];
+            } else {
+                if ($orderItem->product) {
+
+                    $priceTier = $orderItem->product->priceTiers()
+                        ->where('min_qty', '<=', $quantity)
+                        ->where(function ($q) use ($quantity) {
+                            $q->where('max_qty', '>=', $quantity)
+                                ->orWhereNull('max_qty');
+                        })
+                        ->orderBy('min_qty', 'desc')
+                        ->first();
+
+                    $orderItem->price = $priceTier->price
+                        ?? $orderItem->product->price
+                        ?? 0;
+                } else {
+                    $orderItem->price = 0;
+                }
+            }
+
+            $orderItem->save();
+
+
+            $shipment = $orderItem->shipment;
+
+            if ($shipment) {
+                $shipment->update([
+                    'destination_country_id' => (int)$request->country,
+                    'destination_region_id'  => (int)$request->region,
+                    'destination_city_id'    => $cityId,
+                    'destination_address'    => $request->street,
+                    'destination_contact_name' => $request->first_name . ' ' . $request->last_name,
+                    'destination_contact_phone' => $request->phone,
+                ]);
+            }
+        }
+
+
+
+        return redirect()
+            ->route('buyer.orders.show', $order->id)
+            ->with('success', 'Заказ успешно обновлён ');
     }
 
-    return redirect()->back()->with('success', 'Address updated successfully!');
-}
+
+    public function updateAddress(Request $request, Order $order)
+    {
+        $user = auth()->user();
+
+        $finalCity = $request->city_manual ?: null;
+        $cityId = null;
+
+        if ($request->filled('city_manual')) {
+
+            $existingLocation = \App\Models\Location::where('name', $finalCity)
+                ->where('parent_id', $request->region)
+                ->first();
+
+            if ($existingLocation) {
+                $cityId = $existingLocation->id;
+            } else {
+                $newLocation = \App\Models\Location::create([
+                    'name'       => $finalCity,
+                    'parent_id'  => $request->region ?: null,
+                    'country_id' => $request->country,
+                    'updated_by' => $user->id,
+                ]);
+
+                $cityId = $newLocation->id;
+            }
+        } elseif ($request->filled('city')) {
+
+            $cityId = (int)$request->city;
+        }
+
+        $cityModel = \App\Models\Location::find($cityId);
+        $finalCity = $cityModel?->name ?? '';
+
+        // Обновляем сам заказ
+        $order->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'country' => $request->country,
+            'city' => $finalCity,
+            'region' => $request->region,
+            'street' => $request->street,
+            'postal_code' => $request->postal_code,
+            'phone' => $request->phone,
+        ]);
+
+        // 🔥 Обновляем shipment каждого айтема
+        foreach ($order->items()->with('shipment')->get() as $orderItem) {
+
+            if ($orderItem->shipment) {
+                $orderItem->shipment->update([
+                    'destination_country_id' => (int)$request->country,
+                    'destination_region_id'  => (int)$request->region,
+                    'destination_city_id'    => $cityId,
+                    'destination_address'    => $request->street,
+                    'destination_contact_name' => $request->first_name . ' ' . $request->last_name,
+                    'destination_contact_phone' => $request->phone,
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Address updated successfully!');
+    }
 
 
-public function confirmDeliveryPrice($orderId)
-{
-    $order = Order::findOrFail($orderId);
+    public function confirmDeliveryPrice($orderId)
+    {
+        $order = Order::findOrFail($orderId);
 
-    // Например, сохраняем флаг, что покупатель подтвердил стоимость доставки
-    $order->delivery_price_confirmed = true; // добавь поле в таблицу orders, если нужно
-    $order->save();
+        // Например, сохраняем флаг, что покупатель подтвердил стоимость доставки
+        $order->delivery_price_confirmed = true; // добавь поле в таблицу orders, если нужно
+        $order->save();
 
-    return redirect()->back()->with('success', 'Delivery price confirmed successfully.');
-}
-
+        return redirect()->back()->with('success', 'Delivery price confirmed successfully.');
+    }
 }

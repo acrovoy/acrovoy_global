@@ -9,11 +9,12 @@
 <div class="flex items-center justify-between">
     <div>
         <h2 class="text-2xl font-semibold">
-            Order #{{ $order->id }}
+            Order #{{ $order->id }} 
         </h2>
         <p class="text-sm text-gray-500 mb-6">
             Review your order information, track status updates, manage disputes, and handle address or invoice details.
         </p>
+       
     </div>
 
     <span class="px-3 py-1 rounded text-sm

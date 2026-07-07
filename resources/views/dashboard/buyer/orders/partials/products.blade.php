@@ -4,7 +4,8 @@
         <h3 class="text-xs uppercase tracking-wide text-gray-500">
             Products in the order:
         </h3>
-
+        
+<div class="text-xs text-gray-400 uppercase tracking-wide"> Supplier: <span class="p-1 border border-green 300 bg-green-100 text-green-600 rounded-md normal-case">{{ $order->offerVersion->owner_name ?? 'N/A' }}</span> </div>
         
     </div>
 
@@ -14,10 +15,21 @@
      
             <div class="py-1 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <img
+                    @if($order->type === 'product')
+                <img
                         src="{{ $item->thumbnail_url }}"
                         class="w-12 h-12 rounded object-contain bg-gray-50 border"
                     >
+
+                    @else
+
+                     <img
+                        src="{{ asset('images/furniture_icon.jpg') }}"
+                        class="w-12 h-12 rounded object-contain bg-gray-50 border"
+                    >
+
+                    @endif
+                    
                     <div>
                         <p class="font-medium text-gray-900">
                             {{ $item->product_name }}
@@ -38,7 +50,7 @@
  {{-- Доставка --}}
     <div class="flex justify-between text-sm text-gray-700 pt-3 mt-6 border-t">
         <span class="text-xs uppercase tracking-wide text-gray-500">
-            DELIVERY: <span class="text-xs text-gray-400">({{ $order->delivery_method ?? '-' }})</span>
+            DELIVERY: <span class="text-xs text-gray-400">({{ $order->shippingTemplate->title ?? '-' }})</span>
         </span>
 
         @if($shipment?->provider_type === \App\Models\LogisticCompany::class)
