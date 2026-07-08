@@ -278,6 +278,8 @@ private static function buyerIndividual($m)
             'route' => 'buyer.rfqs.index',
         ],
 
+        ['type' => 'link', 'label' => 'Projects', 'route' => 'buyer.projects.index'],
+        
         ['type' => 'header', 'label' => 'Shopping'],
         ['type' => 'link', 'label' => 'Cart', 'route' => 'buyer.cart.index'],
         ['type' => 'link', 'label' => 'Wishlist', 'route' => 'buyer.wishlist.index'],

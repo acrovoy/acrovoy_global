@@ -1,102 +1,125 @@
-<div class="bg-black/5 rounded-md">
+@php
+    use App\Models\User;
+    use App\Models\Buyer;
 
+    $buyer = null;
 
+    if ($rfq->buyer_type === User::class) {
+        $buyer = User::find($rfq->buyer_id);
+    } elseif ($rfq->buyer_type === Buyer::class) {
+        $buyer = Buyer::find($rfq->buyer_id);
+    }
 
-    {{-- BADGE --}}
-    <div class="px-4 pt-3">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
-            ACTIVE BUYER
-        </span>
+    $buyerName = '-';
+    $buyerCountry = 'Unknown';
+    $memberSince = '-';
+
+    if ($buyer instanceof User) {
+        $buyerName = trim($buyer->name . ' ' . $buyer->last_name);
+        $buyerCountry = strtoupper($buyer->purchase_country ?? 'Unknown');
+        $memberSince = optional($buyer->created_at)->format('Y');
+    }
+
+    if ($buyer instanceof Buyer) {
+        $buyerName = $buyer->name ?? 'Buyer Company';
+        $buyerCountry = strtoupper($buyer->country_code ?? 'Unknown');
+        $memberSince = optional($buyer->created_at)->format('Y');
+    }
+@endphp
+
+<div class="rounded-md overflow-hidden bg-stone-50 border border-stone-300 shadow-sm">
+
+    {{-- HEADER --}}
+    <div class="relative border-b border-stone-300 bg-gradient-to-b from-stone-100 to-stone-50">
+
+        <div class="px-5 py-2">
+
+            <div class="mt-2 text-center">
+
+                <h3 class="text-lg font-serif text-stone-900 tracking-wide">
+                    {{ $buyerName }}
+                </h3>
+
+                <div class="mt-1 text-[11px] tracking-[0.25em] uppercase text-stone-500">
+                    {{ $buyerCountry }}
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
     {{-- CONTENT --}}
-    <div class="p-4 pt-2 text-center flex flex-col items-center space-y-3">
+    <div class="px-5 py-5">
 
-        {{-- NAME + COUNTRY --}}
-<div class="text-center leading-tight">
+        <div class="space-y-3 text-xs">
 
-    <h3 class="text-base font-semibold text-gray-900 flex items-center justify-center gap-1">
-        Mike Wang
-
-        <!-- <img src="{{ asset('images/icons/verified_icon.png') }}"
-             class="w-3.5 h-3.5"> -->
-    </h3>
-
-    <div class="text-[11px] text-gray-500 mt-0.5">
-        Germany
-    </div>
-
-</div>
-
-        {{-- STATS --}}
-        <div class="w-full text-xs text-gray-600 border-t border-white p-4 pb-6 space-y-2">
-
-            {{-- RFQs --}}
-            <div class="flex justify-between items-center">
-                <span class="flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path d="M4 6h16M4 12h16M4 18h10" />
-                    </svg>
+            <div class="flex justify-between border-b border-stone-200 pb-2">
+                <span class="text-stone-500 tracking-widest uppercase">
                     RFQs
                 </span>
-                <span class="font-medium text-gray-800">24</span>
+
+                <span class="font-semibold text-stone-900">
+                    24
+                </span>
             </div>
 
-            {{-- Orders --}}
-            <div class="flex justify-between items-center">
-                <span class="flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path d="M3 7h18M6 7v13m12-13v13M6 20h12" />
-                    </svg>
+            <div class="flex justify-between border-b border-stone-200 pb-2">
+                <span class="text-stone-500 tracking-widest uppercase">
                     Orders
                 </span>
-                <span class="font-medium text-gray-800">12</span>
-            </div>
 
-            {{-- Avg Deal Size --}}
-            <div class="flex justify-between items-center">
-                <span class="flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path d="M12 8c-2.21 0-4 1.343-4 3s1.79 3 4 3 4 1.343 4 3-1.79 3-4 3m0-14v2m0 10v2" />
-                    </svg>
-                    Avg Deal Size
+                <span class="font-semibold text-stone-900">
+                    12
                 </span>
-                <span class="font-medium text-gray-800">$8.2k</span>
             </div>
 
-            {{-- Response Rate --}}
-            <div class="flex justify-between items-center">
-                <span class="flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path d="M3 12h4l3 8 4-16 3 8h4" />
-                    </svg>
+            <div class="flex justify-between border-b border-stone-200 pb-2">
+                <span class="text-stone-500 tracking-widest uppercase">
+                    Member Since
+                </span>
+
+                <span class="font-semibold text-stone-900">
+                    {{ $memberSince }}
+                </span>
+            </div>
+
+            <div class="flex justify-between border-b border-stone-200 pb-2">
+                <span class="text-stone-500 tracking-widest uppercase">
                     Response Rate
                 </span>
-                <span class="font-medium text-gray-800">92%</span>
+
+                <span class="font-semibold text-stone-900">
+                    92%
+                </span>
             </div>
 
-            {{-- Rating --}}
-            <div class="flex justify-between items-center">
-                <span class="flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
-                    </svg>
+            <div class="flex justify-between">
+                <span class="text-stone-500 tracking-widest uppercase">
                     Rating
                 </span>
-                <span class="font-medium text-gray-800">4.8 / 5</span>
+
+                <span class="font-semibold text-stone-900">
+                    ★ 4.8 / 5
+                </span>
             </div>
 
-
-                
         </div>
 
- 
-   
     </div>
 
     {{-- FOOTER --}}
-    <div class="rounded-b-lg bottom-0 left-0 w-full bg-gray-400 text-white text-sm font-medium tracking-wide text-center py-1.5">
-        STANDARD BUYER
+    <div class="border-t border-stone-300 bg-stone-100 py-3 text-center">
+
+        <div class="text-[10px] uppercase tracking-[0.45em] text-stone-500">
+            BUYER STATUS
+        </div>
+
+        <div class="mt-1 text-sm font-serif text-stone-800">
+            PREMIUM BUYER
+        </div>
+
     </div>
 
 </div>
