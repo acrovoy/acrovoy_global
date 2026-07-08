@@ -3,7 +3,8 @@
 @section('settings-content')
 
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-xl font-semibold text-gray-900">Edit Category</h1>
+    <h1 class="text-xl font-semibold text-gray-900">Edit Category <span class="text-amber-600">{{ $category->name }}</span> <span class="p-1 text-sm text-gray-600 rounded-md border border-gray-900 bg-gray-100">{{ $category->id }}</span>
+    </h1>
 </div>
 
 <x-alerts />
@@ -128,6 +129,18 @@
             <input type="checkbox" name="is_leaf" id="is_leaf" value="1" @checked(old('is_leaf', $category->is_leaf))>
             <label for="is_leaf" class="ml-2 text-gray-700">Is Leaf</label>
         </div>
+        <div class="flex items-center mt-6">
+    <input type="checkbox"
+           name="is_visible"
+           id="is_visible"
+           value="1"
+           @checked(old('is_visible', $category->is_visible))>
+
+    <label for="is_visible" class="ml-2 text-gray-700">
+        Visible
+    </label>
+</div>
+
         <div>
             <label class="block text-gray-700">Sort Order</label>
             <input type="number" name="sort_order" class="mt-1 block border-gray-300 rounded"

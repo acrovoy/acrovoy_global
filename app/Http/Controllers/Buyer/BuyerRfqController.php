@@ -13,6 +13,7 @@ use App\Domain\RFQ\DTO\CreateRfqData;
 use App\Domain\RFQ\DTO\UpdateRfqData;
 
 use App\Domain\RFQ\Actions\Buyer\CreateRfqAction;
+use App\Domain\RFQ\Actions\Buyer\CreateCustomizationRfqAction;
 use App\Domain\RFQ\Actions\Buyer\UpdateRfqAction;
 use App\Domain\RFQ\Actions\Buyer\ListBuyerRfqsAction;
 
@@ -23,11 +24,14 @@ use Illuminate\Support\Facades\Auth;
 
 use App\Services\Company\ActiveContextService;
 
+use App\Models\Product;
+
 class BuyerRfqController extends Controller
 {
     public function __construct(
     private CreateRfqAction $createRfqAction,
     private UpdateRfqAction $updateRfqAction,
+    private CreateCustomizationRfqAction $createCustomizationRfqAction,
     private ListBuyerRfqsAction $listBuyerRfqsAction,
 ) {}
 
@@ -90,13 +94,10 @@ class BuyerRfqController extends Controller
      * RESOLVE BUYER OWNER FROM CONTEXT
      */
 
-    $buyerType = $context->isPersonal() ? 'App\Models\User' : 'company';
+    $buyerType = $context->type();
+    $buyerId = $context->id();
 
-    $buyer = $context->isPersonal()
-        ? auth()->user()
-        : $context->company();
-
-    abort_if(!$buyer, 403);
+    
 
     /**
      * DTO
@@ -112,7 +113,7 @@ class BuyerRfqController extends Controller
 
     $rfq = $this->createRfqAction->execute(
         $dto,
-        $buyer,
+        $buyerId,
         $buyerType,
         auth()->id()
     );
@@ -121,6 +122,50 @@ class BuyerRfqController extends Controller
         ->route('rfqs.workspace', $rfq)
         ->with('success', 'RFQ created successfully');
 }
+
+public function storeCustomization(
+    CreateRfqRequest $request,
+    ActiveContextService $context
+)
+{
+
+    $product = Product::findOrFail($request->product_id);
+
+    /**
+     * RESOLVE BUYER OWNER FROM CONTEXT
+     */
+
+    $buyerType = $context->type();
+    $buyerId = $context->id();
+
+    
+    /**
+     * DTO
+     */
+
+    $dto = CreateRfqData::fromArray(
+        $request->validated()
+    );
+
+    /**
+     * CREATE RFQ
+     */
+
+    $rfq = $this->createCustomizationRfqAction->execute(
+        $dto,
+        $buyerId,
+        $buyerType,
+        auth()->id(),
+        $product->supplier_type,
+        $product->supplier_id,
+        $product->id,
+    );
+
+    return redirect()
+        ->route('rfqs.workspace', $rfq)
+        ->with('success', 'RFQ created successfully');
+}
+
 
     /**
      * EDIT PAGE

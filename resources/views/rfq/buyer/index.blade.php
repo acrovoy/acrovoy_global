@@ -69,6 +69,9 @@ use App\Domain\RFQ\Enums\RfqStatus;
                 {{-- ID --}}
                 <td class="px-4 py-2 font-mono text-gray-800">
                     {{ $rfq->public_id }}
+                     @if($rfq->customization)
+                        <div class="uppercase text-[10px] text-amber-600">customization</div>
+                        @endif
                 </td>
 
                 {{-- TITLE --}}
@@ -162,6 +165,9 @@ use App\Domain\RFQ\Enums\RfqStatus;
 
                     <td class="px-4 py-2 font-mono text-gray-800">
                         {{ $rfq->public_id }}
+                        @if($rfq->customization)
+                        <div class="uppercase text-[10px] text-amber-600">customization</div>
+                        @endif
                     </td>
 
                     <td class="px-4 py-2">

@@ -17,7 +17,7 @@
 
 @php
 $context = app(\App\Services\Company\ActiveContextService::class);
-$mode = $context->role(); // buyer / supplier
+$mode = $context->type(); 
 
 
 

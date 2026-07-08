@@ -12,13 +12,17 @@ class CatalogMenu extends Component
     public function __construct()
     {
         // Берем верхнеуровневые категории с детьми
-        $categories = Category::with(['children.children'])
+        $categories = Category::visible()
             ->whereNull('parent_id')
-            ->orderBy('sort_order') // <-- сортировка по твоему полю
+            ->with([
+                'children' => fn($q) => $q->visible()->orderBy('sort_order'),
+                'children.children' => fn($q) => $q->visible()->orderBy('sort_order'),
+            ])
+            ->orderBy('sort_order')
             ->get();
 
-// Разбиваем коллекцию на 4 колонки
-$this->catalogColumns = $categories->chunk(ceil($categories->count() / 4));
+        // Разбиваем коллекцию на 4 колонки
+        $this->catalogColumns = $categories->chunk(ceil($categories->count() / 4));
     }
 
     public function render()

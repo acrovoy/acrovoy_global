@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\UserAddress;
 use App\Models\Order;
+use App\Models\Product;
 
 class Rfq extends Model
 {
@@ -32,6 +33,8 @@ class Rfq extends Model
         'created_by',
         'title',
         'description',
+        'customization',
+        'product_id',
         'delivery_address_id',
         'type',
         'status',
@@ -47,6 +50,7 @@ class Rfq extends Model
         'published_at' => 'datetime',
         'closed_at' => 'datetime',
         'visibility_type' => RfqVisibilityType::class,
+        'customization' => 'boolean',
     ];
 
     public function buyer()
@@ -255,5 +259,9 @@ public function getOrderIdAttribute(): ?int
     )->value('id');
 }
 
+public function product()
+{
+    return $this->belongsTo(Product::class);
+}
 
 }

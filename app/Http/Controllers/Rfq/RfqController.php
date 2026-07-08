@@ -37,7 +37,7 @@ class RfqController extends Controller
 
     public function show(Request $request, Rfq $rfq)
     {
-        
+
 
 
         $buyerSnapshotMap = $rfq->attributeValues
@@ -58,8 +58,6 @@ class RfqController extends Controller
 
         if (!in_array($activeTab, $allowedTabs)) {
             $activeTab = 'overview';
-
-
         }
 
         /*
@@ -70,17 +68,17 @@ class RfqController extends Controller
 
         $rfq->loadMissing([
             'offers' => function ($q) {
-        $q->whereHas('latestVersion', function ($version) {
-            $version->where('status', '!=', 'draft');
-        });
-    },
+                $q->whereHas('latestVersion', function ($version) {
+                    $version->where('status', '!=', 'draft');
+                });
+            },
             'participants.participant',
             'visibilityCategories',
             'deliveryAddress.regionLocation',
             'deliveryAddress.country',
         ]);
 
-       
+
 
         /*
         |--------------------------------------------------------------------------
@@ -217,14 +215,14 @@ class RfqController extends Controller
                 abort(403);
             }
 
-              /** @var CreateRfqOfferAction $action */
+            /** @var CreateRfqOfferAction $action */
             $action = app(CreateRfqOfferAction::class);
 
             $offer = $action->execute(
-                    rfq: $rfq,
-                    supplier: $supplier,
-                    context: $this->context
-                );
+                rfq: $rfq,
+                supplier: $supplier,
+                context: $this->context
+            );
 
 
             $offerVersion = $this->offerVersionResolver->resolve(
@@ -232,7 +230,7 @@ class RfqController extends Controller
                 request('version')
             );
 
-            
+
 
             if ($offerVersion->is_counter == 1) {
                 $versionNumberOfCounter = $offerVersion->version_number;
@@ -246,7 +244,7 @@ class RfqController extends Controller
             $currentDraft = $this->offerVersionResolver->currentDraft($offer);
 
             $canCreateRevision = $this->offerVersionResolver->canCreateRevision($offer, $offerVersion);
-           
+
 
             $versions = $offer->versions()
                 ->orderByDesc('created_at')
@@ -417,14 +415,14 @@ class RfqController extends Controller
             }
 
             $offers = $rfq->offers
-    ->filter(function ($offer) {
-        return $offer->latestVersion &&
-            in_array($offer->latestVersion->status, [
-                'submitted',
-                'accepted',
-                'rejected'
-            ]);
-    });
+                ->filter(function ($offer) {
+                    return $offer->latestVersion &&
+                        in_array($offer->latestVersion->status, [
+                            'submitted',
+                            'accepted',
+                            'rejected'
+                        ]);
+                });
 
             $offerId = request('offer');
 
@@ -584,11 +582,11 @@ class RfqController extends Controller
         if ($activeTab === 'overview') {
 
 
-        
+
             $rfq->loadMissing([
                 'attributeValues.attribute.options.translations',
                 'attributeValues.options',
-                
+
             ]);
 
             $addressa = UserAddress::find($rfq->delivery_address_id);
@@ -623,15 +621,19 @@ class RfqController extends Controller
 
             $deliveryCompleted = !empty($rfq->delivery_address_id);
 
-            $canPublish =
-                $requirementsCompleted &&
-                $participantsCompleted &&
-                $deliveryCompleted;
+            if ($rfq->customization) {
+                $canPublish =
+                    $requirementsCompleted &&
+                    $deliveryCompleted;
+            } else {
+                $canPublish =
+                    $requirementsCompleted &&
+                    $participantsCompleted &&
+                    $deliveryCompleted;
+            }
             // Флаги заполененности
 
             $isOrdered = !is_null($rfq->accepted_offer_version?->ordered_at);
-
-
         }
 
         /*
@@ -667,7 +669,7 @@ class RfqController extends Controller
 
         $currentAddressId = $rfq->delivery_address_id;
 
-        
+
 
         $allCategories = Category::query()
             ->where('is_selectable', 1)
@@ -688,22 +690,22 @@ class RfqController extends Controller
 
 
         $allparticipants = collect()
-    ->merge(
-        Supplier::where('id', '!=', 1)
-            ->get()
-            ->map(fn($s) => [
-                'id' => $s->id,
-                'type' => Supplier::class,
-                'label' => $s->name,
-            ])
-    )
-    ->merge(
-        User::all()->map(fn($u) => [
-            'id' => $u->id,
-            'type' => User::class,
-            'label' => trim($u->name . ' ' . $u->last_name) . ' (' . $u->email . ')',
-        ])
-    );
+            ->merge(
+                Supplier::where('id', '!=', 1)
+                    ->get()
+                    ->map(fn($s) => [
+                        'id' => $s->id,
+                        'type' => Supplier::class,
+                        'label' => $s->name,
+                    ])
+            )
+            ->merge(
+                User::all()->map(fn($u) => [
+                    'id' => $u->id,
+                    'type' => User::class,
+                    'label' => trim($u->name . ' ' . $u->last_name) . ' (' . $u->email . ')',
+                ])
+            );
 
 
 
@@ -740,7 +742,7 @@ class RfqController extends Controller
             'supplierOfferVersionToCounter' => $supplierOfferVersionToCounter,
             'counterItemsByAttribute' => $counterItemsByAttribute,
 
-            'isOrdered' =>$isOrdered,
+            'isOrdered' => $isOrdered,
 
             'itemsByAttribute' => $offerVersion?->items
                 ?->whereNotNull('attribute_id')
@@ -758,7 +760,7 @@ class RfqController extends Controller
             'context_mode' => $this->context->mode(),
             'context_role' => $this->context->role(),
 
-            'isBuyer' => $this->isBuyer($rfq),
+            'isBuyer' => $this->context->isBuyer(),
             'isSupplier' => $this->isSupplierParticipant($rfq),
             // Флаги заполененности
             'requirementsCompleted' => $requirementsCompleted,
@@ -769,37 +771,22 @@ class RfqController extends Controller
         ]);
     }
 
-    private function isBuyer(Rfq $rfq): bool
-{
-    if ($this->context->isGuest() || $this->context->role() !== 'buyer') {
-        return false;
-    }
-
-    return match (true) {
-        $this->context->isPersonal()
-            => $rfq->created_by === $this->context->user()->id,
-
-        $this->context->isCompany()
-            => $rfq->company_id === $this->context->id(),
-
-        default => false,
-    };
-}
+    
 
     private function isSupplierParticipant(Rfq $rfq): bool
-{
-    if ($this->context->isGuest()) {
-        return false;
-    }
+    {
+        if ($this->context->isGuest()) {
+            return false;
+        }
 
-    if (!$this->context->isSupplier()) {
-        return false;
-    }
+        if (!$this->context->isSupplier()) {
+            return false;
+        }
 
-    return $rfq->participants()
-        ->where('participant_id', $this->context->id())
-        ->exists();
-}
+        return $rfq->participants()
+            ->where('participant_id', $this->context->id())
+            ->exists();
+    }
 
 
 

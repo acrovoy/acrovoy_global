@@ -8,6 +8,7 @@ use App\Domain\Media\Models\Media;
 
 use App\Models\Warehouse;
 use App\Models\ProductWarehouseStock;
+use App\Domain\RFQ\Models\Rfq;
 
 class Product extends Model
 {
@@ -372,6 +373,11 @@ public function getWarehouseStocksAttribute()
 public function getTotalStockAttribute()
 {
     return $this->warehouses->sum(fn ($w) => $w->pivot->quantity ?? 0);
+}
+
+public function rfqs()
+{
+    return $this->hasMany(Rfq::class);
 }
 
 }

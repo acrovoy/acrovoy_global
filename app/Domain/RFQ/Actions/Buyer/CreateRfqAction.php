@@ -10,13 +10,13 @@ use Illuminate\Support\Str;
 
 class CreateRfqAction
 {
-    public function execute(CreateRfqData $data, $buyer, $buyerType, int $createdBy): Rfq
+    public function execute(CreateRfqData $data, $buyerId, $buyerType, int $createdBy): Rfq
 {
 
 
     return Rfq::create([
         'buyer_type' => $buyerType,
-        'buyer_id'   => $buyer->id,
+        'buyer_id'   => $buyerId,
 
         'created_by' => $createdBy,
         'title' => $data->title,

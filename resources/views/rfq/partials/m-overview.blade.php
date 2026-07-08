@@ -10,6 +10,8 @@ $isClosed = $rfq->status->isClosed();
     $shippingDimensions = $rfq->currentShippingDimensions();
 @endphp
 
+
+
     {{-- BACK --}}
     <a href="
         @if($isBuyer ?? false)
@@ -46,11 +48,18 @@ $isClosed = $rfq->status->isClosed();
                 <div class="flex items-center gap-2 mb-4">
 
                     <h1 class="text-xl font-semibold text-gray-900 leading-tight">
+                    @if($rfq->customization)
+                    <span class="uppercase text-sm text-amber-600">Customization</span>
+                    @else
+                    @endif    
                         {{ $rfq->title }}
                     </h1>
 
                     @if($isBuyer ?? false)
                     @if($rfq->status->isDraft())
+                    @if($rfq->customization)
+                    
+                    @else
                     <button onclick="console.log('CLICK'); openRfqDrawer('title')"
                         class="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
                         title="Edit title">
@@ -63,6 +72,7 @@ $isClosed = $rfq->status->isClosed();
                         </svg>
 
                     </button>
+                    @endif
                     @else
                         <div class="text-xs text-gray-400">
                             
@@ -73,12 +83,24 @@ $isClosed = $rfq->status->isClosed();
                 </div>
 
                 @php
+                if(!$rfq->customization){
                     $completed =
                     ($requirementsCompleted ? 1 : 0) +
                     ($participantsCompleted ? 1 : 0) +
                     ($deliveryCompleted ? 1 : 0);
 
                     $percent = ($completed / 3) * 100;
+
+                    }
+else {
+$completed =
+                    ($requirementsCompleted ? 1 : 0) +
+                    ($deliveryCompleted ? 1 : 0);
+
+                    $percent = ($completed / 2) * 100;
+
+}
+
                     @endphp
                     @php
                         use App\Facades\ActiveContext;
@@ -121,10 +143,16 @@ $isClosed = $rfq->status->isClosed();
                 Completion Status
             </div>
         </div>
-
+@if(!$rfq->customization)
         <div class="text-sm font-semibold text-gray-900">
             {{ $completed }}/3
         </div>
+        @else
+
+        <div class="text-sm font-semibold text-gray-900">
+            {{ $completed }}/2
+        </div>
+        @endif
 
     </div>
 
@@ -159,7 +187,7 @@ $isClosed = $rfq->status->isClosed();
             </span>
 
         </div>
-
+@if(!$rfq->customization)
         <div class="flex items-center justify-between">
 
             <div class="flex items-center gap-2">
@@ -180,7 +208,9 @@ $isClosed = $rfq->status->isClosed();
             </span>
 
         </div>
+@else
 
+@endif
         <div class="flex items-center justify-between">
 
             <div class="flex items-center gap-2">
@@ -452,14 +482,14 @@ $isClosed = $rfq->status->isClosed();
                             @endif
 
                             @if($rfq->status->isPublished())
-
+@if(!$rfq->customization)
                            <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants']) }}">
                                 <button
                                     class="px-5 py-2.5 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
                                     Invite
                                 </button>
                             </a>
-
+@endif
                             @endif
 
                             @if($rfq->status->canClose())
@@ -579,37 +609,39 @@ $isClosed = $rfq->status->isClosed();
 
 
 <div>
+    @if(!$rfq->customization)
     {{-- DESCRIPTION --}}
-    @if($rfq->description)
+        @if($rfq->description)
 
-    <div class="text-sm text-gray-600 leading-relaxed max-w-2xl px-4 pb-4">
+            <div class="text-sm text-gray-600 leading-relaxed max-w-2xl px-4 pb-4">
 
-        {!! nl2br(e($rfq->description)) !!}
+                {!! nl2br(e($rfq->description)) !!}
 
-        @if($isBuyer ?? false)
-        @if($rfq->status->isDraft())
-        <button onclick="openRfqDrawer('description')"
-            class="mt-2 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
-            title="Edit description">
+                @if($isBuyer ?? false)
+                @if($rfq->status->isDraft())
+                <button onclick="openRfqDrawer('description')"
+                    class="mt-2 p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                    title="Edit description">
 
-            <svg xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                class="w-4 h-4">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213 3 21l1.787-4.5 12.075-12.075z" />
-            </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                        class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M16.862 3.487a2.25 2.25 0 113.182 3.182L7.5 19.213 3 21l1.787-4.5 12.075-12.075z" />
+                    </svg>
 
-        </button>
-        @else
-        <div class="text-xs text-gray-400">
-         
-</div>
-    @endif
+                </button>
+                @else
+                    <div class="text-xs text-gray-400"></div>
+                @endif
 
+
+                @endif
+
+            </div>
 
         @endif
-
-    </div>
+    @else
 
     @endif
 

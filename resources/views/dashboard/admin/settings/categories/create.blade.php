@@ -122,6 +122,18 @@
             <input type="checkbox" name="is_leaf" id="is_leaf" value="1" @checked(old('is_leaf'))>
             <label for="is_leaf" class="ml-2 text-gray-700">Is Leaf</label>
         </div>
+        <div class="flex items-center mt-6">
+    <input type="checkbox"
+           name="is_visible"
+           id="is_visible"
+           value="1"
+           @checked(old('is_visible', true))>
+
+    <label for="is_visible" class="ml-2 text-gray-700">
+        Visible
+    </label>
+</div>
+
         <div>
             <label class="block text-gray-700">Sort Order</label>
             <input type="number" name="sort_order" class="mt-1 block border-gray-300 rounded"

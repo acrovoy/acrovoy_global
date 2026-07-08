@@ -55,6 +55,7 @@ class CategoryController extends Controller
         'slug' => 'required|string|max:255|unique:categories,slug',
         'parent_id' => 'nullable|exists:categories,id',
         'name.*' => 'required|string|max:255',
+        'is_visible' => 'nullable|boolean',
 
         // NEW
         'types' => 'nullable|array',
@@ -79,6 +80,7 @@ class CategoryController extends Controller
 
             'is_selectable' => $request->has('is_selectable') ? 1 : 0,
             'is_leaf' => $request->has('is_leaf') ? 1 : 0,
+            'is_visible' => $request->has('is_visible') ? 1 : 0,
             'sort_order' => $request->input('sort_order', 0),
         ]);
 
@@ -127,6 +129,7 @@ class CategoryController extends Controller
         'is_selectable' => 'nullable|boolean',
         'is_leaf' => 'nullable|boolean',
         'sort_order' => 'nullable|integer|min:0',
+        'is_visible' => 'nullable|boolean',
         'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
         'parent_id' => 'nullable|exists:categories,id',
         'name.*' => 'required|string|max:255',
@@ -154,6 +157,7 @@ class CategoryController extends Controller
 
             'is_selectable' => $request->has('is_selectable') ? 1 : 0,
             'is_leaf' => $request->has('is_leaf') ? 1 : 0,
+            'is_visible' => $request->has('is_visible') ? 1 : 0,
             'sort_order' => $request->input('sort_order', 0),
         ]);
 

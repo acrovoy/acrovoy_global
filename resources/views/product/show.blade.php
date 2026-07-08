@@ -5,7 +5,7 @@
     <div class="container mx-auto px-6">
 
 
-    
+
 
         {{-- Breadcrumb --}}
         <div class="text-sm text-gray-600 mb-6 flex flex-wrap gap-1">
@@ -37,16 +37,17 @@
             </div>
 
 
-             @php
-                        $reviewsCount = $product1->reviews->count();
-                        $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
-                        $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
-                        $inWishlist = in_array($product1->id, $wishlistIds);
-                        @endphp
+            @php
+            $reviewsCount = $product1->reviews->count();
+            $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
+            $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
+            $inWishlist = in_array($product1->id, $wishlistIds);
+            @endphp
 
 
             {{-- Info --}}
-            <div class="rounded-xl shadow p-6" x-data="{ showProjectBox: false }">
+            <div class="rounded-xl shadow p-6" x-data="{ showProjectBox: false,
+        showCustomizationBox: false }">
 
                 <div class="flex flex-col lg:flex-row lg:items-start gap-4">
 
@@ -56,37 +57,37 @@
                         {{-- Title --}}
                         <div class="flex items-center gap-3">
 
-                        
-                           <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight inline-flex items-center gap-2">
-    
-    {{ $product1->name }}
 
-    {{-- Wishlist --}}
-    <button
-        class="wishlist-toggle text-gray-400 hover:text-red-500 transition"
-        data-product-id="{{ $product1->id }}"
-        title="Wishlist">
+                            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight inline-flex items-center gap-2">
 
-        <svg xmlns="http://www.w3.org/2000/svg"
-     class="w-6 h-6 wishlist-icon transition {{ $inWishlist ? 'text-red-500' : 'text-gray-500' }}"
-     viewBox="0 0 24 24"
-     fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
-     stroke="currentColor"
-     stroke-width="2">
+                                {{ $product1->name }}
 
-            <path stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
+                                {{-- Wishlist --}}
+                                <button
+                                    class="wishlist-toggle text-gray-400 hover:text-red-500 transition"
+                                    data-product-id="{{ $product1->id }}"
+                                    title="Wishlist">
+
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="w-6 h-6 wishlist-icon transition {{ $inWishlist ? 'text-red-500' : 'text-gray-500' }}"
+                                        viewBox="0 0 24 24"
+                                        fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
+                                        stroke="currentColor"
+                                        stroke-width="2">
+
+                                        <path stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
                      l1.318-1.318a4.5 4.5 0 016.364 6.364
-                     L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z"/>
-        </svg>
+                     L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+                                    </svg>
 
-    </button>
+                                </button>
 
-</h1>
+                            </h1>
 
 
-                   
+
 
 
                         </div>
@@ -96,7 +97,7 @@
                         </p>
 
                         {{-- ⭐ Rating --}}
-                       
+
 
                         <div class="flex flex-wrap items-center text-gray-600 text-xs mb-4 gap-y-1">
 
@@ -330,29 +331,29 @@
                     <ul class="divide-y divide-gray-200 text-gray-700 mt-2">
                         {{-- Атрибуты --}}
 
-                        
-                       @foreach($product1->attributeValues as $attrValue)
 
-                     
-    <li class="flex justify-between py-2">
-        <span class="text-gray-600">
-            {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
-        </span>
+                        @foreach($product1->attributeValues as $attrValue)
 
-        <span class="font-medium text-gray-900">
 
-            @php
-                $unit = $attrValue->attribute->unit ? ' ' . $attrValue->attribute->unit : '';
-            @endphp
+                        <li class="flex justify-between py-2">
+                            <span class="text-gray-600">
+                                {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
+                            </span>
 
-            {{ $attrValue->display_value}}{{ $unit }}
+                            <span class="font-medium text-gray-900">
 
-        </span>
-    </li>
+                                @php
+                                $unit = $attrValue->attribute->unit ? ' ' . $attrValue->attribute->unit : '';
+                                @endphp
 
-@endforeach
+                                {{ $attrValue->display_value}}{{ $unit }}
 
-                       
+                            </span>
+                        </li>
+
+                        @endforeach
+
+
                     </ul>
                 </div>
                 @endif
@@ -379,69 +380,58 @@
                             </p>
                         </div>
                         <div>
+
+                            @if($product1->customization)
+                            <button
+    @click="showCustomizationBox = !showCustomizationBox"
+    title="Need Customization"
+    class="w-full flex items-center justify-center gap-2
+           px-4 py-2
+           rounded-lg
+           bg-gray-500 text-white
+           text-sm font-semibold
+           shadow-sm
+           hover:bg-gray-700 hover:shadow
+           transition">
+
+    <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"/>
+        </svg>
+    </span>
+
+    <span class="truncate">Request for customization</span>
+
+</button>
+                            @else
                             <p class="text-gray-500">{{ __('product/product_show.customization') }}</p>
                             <p class="font-semibold text-gray-900">
-                                {{ $product1->customization ? 'Available' : 'Not available' }}
+                                Not available
+                            </p>
+                            
+                            @endif
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {{-- Заказать кастомизацию --}}
-                @if($product1->customization)
 
-                {{-- Customization order panel --}}
-                <div class="mt-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm mb-6">
 
-                    <h4 class="text-base font-semibold text-gray-900 mb-1">
-                        Request product customization
-                    </h4>
 
-                    <p class="text-sm text-gray-500 mb-4">
-                        Create a dedicated project for customized production of this product.
-                    </p>
 
-                    {{-- Instruction --}}
-                    <div class="mb-4 rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">
-                        <p class="font-medium mb-1">How it works:</p>
-                        <ul class="list-disc list-inside space-y-1 text-gray-600">
-                            <li>A new project will be created automatically</li>
-                            <li>All product data will be copied into the project</li>
-                            <li>You can edit specifications and send RFQ back to supplier</li>
-                        </ul>
-                    </div>
 
-                    @auth
-                    <form action="{{ route('buyer.custom-orders.store') }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="product_id" value="{{ $product1->id }}">
+                @include('product.partials.customization')
 
-                        <button
-                            type="submit"
-                            class="w-full bg-indigo-300 hover:bg-indigo-400 text-white py-3 rounded-lg
-                       text-sm font-semibold tracking-wide transition shadow-md">
-                            Order the customization of this product
-                        </button>
-                    </form>
-                    @endauth
 
-                    @guest
-                    <div class="text-center py-4">
-                        <p class="text-sm text-gray-500 mb-2">
-                            Only registered users can request product customization.
-                        </p>
-                        <button
-                            disabled
-                            class="w-full bg-gray-400 text-white py-3 rounded-lg
-                       text-sm font-semibold cursor-not-allowed">
-                            Order the customization of this product
-                        </button>
-                    </div>
-                    @endguest
 
-                </div>
 
-                @endif
 
 
 
@@ -457,17 +447,17 @@
 
                 {{-- CTA Panel --}}
                 <div class="mt-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
-                    
-                    <form method="POST" action="{{ route('buyer.cart.add.redirect', $product1->id) }}">
-    @csrf
 
-    <button
-        type="submit"
-        class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
+                    <form method="POST" action="{{ route('buyer.cart.add.redirect', $product1->id) }}">
+                        @csrf
+
+                        <button
+                            type="submit"
+                            class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
                text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
-        {{ __('product/product_show.checkout') }}
-    </button>
-</form>
+                            {{ __('product/product_show.checkout') }}
+                        </button>
+                    </form>
 
                     <div class="grid grid-cols-2 gap-4">
                         <button id="contactSupplierBtn"
@@ -523,17 +513,17 @@
                     @endphp
 
                     @if($supplier)
-                                        @php
-                                            $name = $supplier instanceof \App\Models\Supplier
-                                                ? $supplier->name
-                                                : trim(($supplier->name ?? '') . ' ' . ($supplier->last_name ?? ''));
-                                        
-@endphp
-                                    <span class="font-medium text-gray-900">
-                                        {{ $name }}
-                                    </span>
+                    @php
+                    $name = $supplier instanceof \App\Models\Supplier
+                    ? $supplier->name
+                    : trim(($supplier->name ?? '') . ' ' . ($supplier->last_name ?? ''));
+
+                    @endphp
+                    <span class="font-medium text-gray-900">
+                        {{ $name }}
+                    </span>
                     @else
-                                        <span class="text-gray-400">—</span>
+                    <span class="text-gray-400">—</span>
                     @endif
                 </div>
 

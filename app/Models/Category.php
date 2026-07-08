@@ -9,6 +9,13 @@ class Category extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+    'is_selectable' => 'boolean',
+    'is_leaf' => 'boolean',
+    'is_visible' => 'boolean',
+    'attributes_loaded' => 'boolean',
+];
+
     protected $fillable = [
 
         'slug',
@@ -25,6 +32,7 @@ class Category extends Model
         'children_count',
 
         'sort_order',
+        'is_visible',
     ];
 
 
@@ -208,5 +216,11 @@ public function isProduct()
 {
     return $this->types->contains('type', 'product');
 }
+
+public function scopeVisible($query)
+{
+    return $query->where('is_visible', true);
+}
+
 
 }

@@ -222,6 +222,7 @@ Route::prefix('dashboard/buyer')
         Route::get('/rfqs', [BuyerRfqController::class, 'index'])->name('rfqs.index');
         Route::get('/rfqs/create', [BuyerRfqController::class, 'create'])->name('rfqs.create');
         Route::post('/rfqs', [BuyerRfqController::class, 'store'])->name('rfqs.store');
+        Route::post('/rfqs/customization', [BuyerRfqController::class, 'storeCustomization'])->name('rfqs.customization.store');
         Route::get('/rfqs/{rfq}/edit', [BuyerRfqController::class, 'edit'])->name('rfqs.edit');
         Route::put('/rfqs/{rfq}', [BuyerRfqController::class, 'update'])->name('rfqs.update');
 

@@ -2,7 +2,8 @@
 
     @php
     $context = app(\App\Services\Company\ActiveContextService::class);
-    $mode = $context->role(); // buyer / supplier
+    $mode = $context->type(); 
+    $role = $context->role(); 
     @endphp
 
 
@@ -68,8 +69,12 @@
 
                     </div>
 
-                    <div class="text-sm text-gray-600 mt-2">
-                        {{ $rfq->title }}
+                    <div class="text-xs uppercase text-amber-600 mt-2">
+                    @if(!$rfq->customization)
+                    @else
+                    Castomization: 
+                    @endif   
+                    <span class="text-gray-600 normal-case">{{ $rfq->title }}</span>
                     </div>
 
                     <div class="text-gray-800/50 text-xs mt-3 flex justify-between pb-1">
@@ -94,7 +99,7 @@
 
             {{-- MENU --}}
             {{-- 🔥 ROLE-AWARE TABS --}}
-            @if($mode === 'buyer')
+            @if($mode === \App\Models\Buyer::class || $role === 'buyer')
             @include('rfq.partials.tabs.buyer', [
             'rfq' => $rfq,
             'activeTab' => $activeTab

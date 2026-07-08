@@ -270,7 +270,7 @@ public function supplierType(): string
             return $this->type() === \App\Models\Supplier::class;
         }
 
-        return auth()->user()?->setting('platform_mode') === 'supplier';
+        return auth()->user()?->setting('platform_mode') === 'suppliera';
     }
 
     public function isBuyer(): bool

@@ -35,6 +35,6 @@
 </div>
 
  {{-- BUTTON --}}
- <button class="w-full mt-3 border border-gray-300 rounded-lg py-2 text-sm text-gray-600 hover:bg-gray-50">
+ <!-- <button class="w-full mt-3 border border-gray-300 rounded-lg py-2 text-sm text-gray-600 hover:bg-gray-50">
      + Add from catalog
- </button>
+ </button> -->

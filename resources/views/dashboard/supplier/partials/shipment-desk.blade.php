@@ -1,7 +1,7 @@
 <div x-data="shipmentPage()" x-cloak>
     {{-- SHIPMENTS --}}
 
-    
+   
     <div class="bg-white border border-gray-200 rounded-xl p-5">
         <h3 class="font-medium mb-2 text-xs uppercase tracking-wide text-gray-500 border-b pb-2">
             Order Shipments (Per Item)
@@ -120,7 +120,10 @@
                                 Shipping Price
                             </div>
                             <div class="text-sm font-semibold text-gray-900">
-                                {{ number_format($shipment->shipping_price, 2) * $item->quantity }}$ <span class="text-[10px] text-gray-300">({{ number_format($shipment->shipping_price, 2)}}$ per unit)</span>
+                                {{ number_format($shipment->shipping_price * $item->quantity, 2) }}$
+<span class="text-[10px] text-gray-300">
+    ({{ number_format($shipment->shipping_price, 2) }}$ per unit)
+</span>
                             </div>
                         </div>
 

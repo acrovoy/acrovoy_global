@@ -34,7 +34,11 @@
 
     {{-- SUPPLIER OFFERS --}}
     <div class="border-t border-gray-100 py-3 px-2 flex justify-between items-center text-gray-700">
+        @if(!$rfq->customization)
         <span class="uppercase">Supplier’s offers</span>
+        @else
+        <span class="uppercase">Supplier’s offer</span>
+        @endif
         <span>↓</span>
     </div>
 
@@ -54,7 +58,7 @@
     @endphp
 
     @if($offers->isEmpty())
-
+@if(!$rfq->customization)
     <div class="mt-3 mx-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
         <div class="text-xs text-gray-500 leading-relaxed">
             No offers yet
@@ -64,7 +68,17 @@
             Suppliers will appear here once they submit proposals
         </div>
     </div>
+@else
+<div class="mt-3 mx-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
+        <div class="text-xs text-gray-500 leading-relaxed">
+            No offer yet
+        </div>
 
+        <div class="text-[11px] text-gray-400 mt-1">
+            Supplier will appear here once they submit proposal
+        </div>
+    </div>
+@endif
     @else
 
     <div class="mt-3 space-y-2">
@@ -187,7 +201,7 @@
     'activeTab' => $activeTab
     ])
 
-
+@if(!$rfq->customization)
 
     {{-- PARTICIPANTS --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants']) }}"
@@ -205,6 +219,6 @@
             →
         </span>
     </a>
-
+@endif
 
 </div>
