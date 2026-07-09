@@ -21,7 +21,7 @@
 
         <ul class="list-disc list-inside space-y-2 text-sm text-gray-600">
             <li>A new RFQ will be created using this product as a starting point.</li>
-            <li>The product specifications will be copied automatically.</li>
+            <li>The product specifications will be copied automatically to the RFQ.</li>
             <li>You can modify the requirements to match your project.</li>
             <li>When you're ready, simply publish the RFQ, and it will be sent to the supplier.</li>
         </ul>
