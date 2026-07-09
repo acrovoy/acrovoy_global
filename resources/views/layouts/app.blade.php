@@ -192,6 +192,10 @@
 })();
 </script>
 
+
+<x-ui.modal.confirm />
+
+
 </body>
 </html>
 

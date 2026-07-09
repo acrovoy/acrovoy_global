@@ -165,18 +165,22 @@
         Edit
     </a>
 
-    {{-- DELETE --}}
-    <form action="{{ route('supplier.shipping-templates.destroy', $template) }}"
-          method="POST"
-          class="inline"
-          onsubmit="return confirm('Are you sure you want to delete this template?')">
-        @csrf
-        @method('DELETE')
+   {{-- DELETE --}}
+<form action="{{ route('supplier.shipping-templates.destroy', $template) }}"
+      method="POST"
+      class="inline delete-template-form">
 
-        <button class="text-sm text-red-600 hover:underline ml-2">
-            Delete
-        </button>
-    </form>
+    @csrf
+    @method('DELETE')
+
+    <button
+        type="submit"
+        class="text-sm text-red-600 hover:underline ml-2"
+    >
+        Delete
+    </button>
+
+</form>
 
 </td>
                 </tr>
@@ -428,6 +432,56 @@ function loadWarehouses(templateId) {
 `);
     });
 }
+
+</script>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+
+    document.querySelectorAll('.delete-template-form')
+        .forEach(form => {
+
+
+            form.addEventListener('submit', function (event) {
+
+                event.preventDefault();
+
+
+                const currentForm = this;
+
+
+                confirmModal.open({
+
+                    type: 'danger',
+
+                    title: 'Delete Shipping Template',
+
+                    message: 'Are you sure you want to delete this template?',
+
+                    description: 'This action cannot be undone.',
+
+                    confirmText: 'Delete Template',
+
+                    cancelText: 'Cancel',
+
+                    onConfirm: () => {
+
+                        currentForm.submit();
+
+                    }
+
+                });
+
+
+            });
+
+
+        });
+
+
+});
 
 </script>
 

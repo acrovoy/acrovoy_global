@@ -31,3 +31,5 @@ Alpine.data('charCounter', (max = 28) => ({
 Alpine.start();
 
 import './catalog.js';
+
+import './ui/modal/confirm';

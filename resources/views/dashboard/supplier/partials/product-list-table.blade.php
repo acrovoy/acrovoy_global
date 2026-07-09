@@ -93,8 +93,7 @@
                             <button
                                 type="button"
                                 class="text-red-600 hover:underline delete-product"
-                                data-id="{{ $product->id }}"
-                                onclick="return confirm('Are you sure you want to delete this product? This action cannot be undone.')">
+                                data-id="{{ $product->id }}">
                                 Delete
                             </button>
                         @endif
@@ -719,32 +718,75 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
     document.querySelectorAll('.delete-product').forEach(btn => {
+
         btn.addEventListener('click', function () {
+
             const productId = this.dataset.id;
+            const row = this.closest('tr');
 
-            if (!confirm('Are you sure you want to delete this product?')) return;
+            confirmModal.open({
 
-            fetch(`/dashboard/manufacturer/products/${productId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                title: 'Delete Product',
+
+                message: 'Are you sure you want to delete this product?',
+
+                description: 'This action cannot be undone.',
+
+                confirmText: 'Delete Product',
+
+                cancelText: 'Cancel',
+
+                onConfirm: () => {
+
+                    fetch(`/dashboard/manufacturer/products/${productId}`, {
+
+                        method: 'DELETE',
+
+                        headers: {
+                            'X-CSRF-TOKEN': document
+                                .querySelector('meta[name="csrf-token"]')
+                                .getAttribute('content'),
+
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+
+                    })
+
+                    .then(res => res.json())
+
+                    .then(data => {
+
+                        if (data.success) {
+
+                            row.remove();
+
+                        } else {
+
+                            alert(data.message || 'Failed to delete product.');
+
+                        }
+
+                    })
+
+                    .catch(error => {
+
+    console.error(error);
+
+    alert('An unexpected error occurred. Please try again.');
+
+});
+
                 }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    this.closest('tr').remove();
-                } else {
-                    alert(data.message || 'Failed to delete product.');
-                }
-            })
-            .catch(err => console.error(err));
+
+            });
+
         });
+
     });
+
 });
 </script>
 

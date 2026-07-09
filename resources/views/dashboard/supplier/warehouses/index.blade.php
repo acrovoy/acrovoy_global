@@ -144,11 +144,11 @@
 </button>
 
                             <form action="{{ route('supplier.warehouses.destroy', $warehouse) }}"
-                                  method="POST"
-                                  class="inline"
-                                  onsubmit="return confirm('Are you sure you want to delete this warehouse?')">
-                                @csrf
-                                @method('DELETE')
+      method="POST"
+      class="inline delete-warehouse-form">
+
+    @csrf
+    @method('DELETE')
 
                                 <button class="text-sm text-red-600 hover:underline">
                                     Delete
@@ -324,7 +324,55 @@ function openAttachLocationDrawer(warehouseId) {
 }
 </script>
 
+<script>
 
+document.addEventListener('DOMContentLoaded', function () {
+
+
+    document.querySelectorAll('.delete-warehouse-form')
+        .forEach(form => {
+
+
+            form.addEventListener('submit', function (event) {
+
+                event.preventDefault();
+
+
+                const currentForm = this;
+
+
+                confirmModal.open({
+
+                    type: 'danger',
+
+                    title: 'Delete Warehouse',
+
+                    message: 'Are you sure you want to delete this warehouse?',
+
+                    description: 'All related warehouse data may be affected.',
+
+                    confirmText: 'Delete Warehouse',
+
+                    cancelText: 'Cancel',
+
+                    onConfirm: () => {
+
+                        currentForm.submit();
+
+                    }
+
+                });
+
+
+            });
+
+
+        });
+
+
+});
+
+</script>
 
 
 @endsection
