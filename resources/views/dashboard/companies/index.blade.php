@@ -16,9 +16,18 @@
         </div>
 
         <a href="{{ route('dashboard.companies.create') }}"
-            class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
-            + Add New Company
-        </a>
+   class="inline-flex items-center gap-2 px-4 py-2
+          text-sm font-medium text-gray-700
+          bg-white border border-gray-200
+          rounded-lg
+          hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+          active:scale-[0.98]
+          transition-all duration-150 shadow-sm">
+
+    <span class="text-lg leading-none">+</span>
+    <span>Add New Company</span>
+
+</a>
     </div>
 
     <x-alerts />
@@ -182,13 +191,17 @@
 </div>
 
 {{-- ================= OWNER DRAWER ================= --}}
-<div id="owner-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50"></div>
+<div id="owner-overlay"
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 transition-opacity">
+</div>
 
 <div id="owner-drawer"
-    class="fixed right-0 top-0 h-full w-[420px] bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50">
+    class="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl
+           transform translate-x-full transition-transform duration-300 z-50
+           flex flex-col">
 
     {{-- HEADER --}}
-    <div class="p-6 border-b border-gray-100">
+    <div class="px-6 py-5 border-b bg-gray-50">
         <h3 class="text-lg font-semibold text-gray-900">
             Transfer Ownership
         </h3>
@@ -198,71 +211,67 @@
         </p>
     </div>
 
-    {{-- CONTENT --}}
-    <div class="p-6 space-y-5">
+    {{-- FORM --}}
+    <form id="owner-form" method="POST" class="flex flex-col flex-1">
+        @csrf
 
-        {{-- INFO BLOCK --}}
-        <div class="bg-gray-50 border border-gray-100 rounded-lg p-4 text-sm text-gray-600 leading-relaxed">
-            <p class="mb-2">
-                <span class="font-semibold text-gray-800">What happens when you transfer ownership?</span>
-            </p>
-
-            <ul class="list-disc pl-5 space-y-1">
-                <li>The selected user becomes the <b>primary owner</b></li>
-                <li>Your role will be downgraded to <b>member/admin</b> (depending on system rules)</li>
-                <li>Only the new owner can delete or fully manage the company</li>
-            </ul>
-        </div>
-
-        {{-- FORM --}}
-        <form id="owner-form" method="POST" class="space-y-4">
-            @csrf
+        {{-- CONTENT --}}
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
             <input type="hidden" name="user_id" id="owner-user-id">
 
+            {{-- INFO BLOCK --}}
+            <div class="p-4 rounded-lg bg-yellow-50 border border-yellow-100 text-sm text-yellow-800 leading-relaxed">
+                <p class="mb-2 font-semibold">
+                    What happens when you transfer ownership?
+                </p>
+
+                <ul class="list-disc pl-5 space-y-1">
+                    <li>The selected user becomes the <b>primary owner</b></li>
+                    <li>Your role will be downgraded to <b>member/admin</b> (depending on system rules)</li>
+                    <li>Only the new owner can delete or fully manage the company</li>
+                </ul>
+            </div>
+
             <div>
-                <label class="block mb-2 text-sm font-medium text-gray-700">
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
                     New owner email
                 </label>
 
                 <input type="email"
                     name="email"
                     id="owner-email"
-                    class="w-full border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                     placeholder="example@email.com"
                     required>
 
                 <p id="owner-email-result" class="text-xs mt-2 text-gray-500"></p>
             </div>
 
+        </div>
 
+        {{-- FOOTER --}}
+        <div class="border-t bg-white px-6 py-4 flex items-center justify-between gap-2">
 
+            <button type="button"
+                onclick="closeOwnerDrawer()"
+                class="px-4 py-2 text-sm rounded-lg border border-gray-200
+                       text-gray-600 hover:bg-gray-50 transition">
+                Cancel
+            </button>
 
-            {{-- FOOTER ACTIONS --}}
-            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+            <button type="submit"
+                id="owner-confirm-transfer"
+                class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                       hover:bg-gray-800 transition shadow-sm disabled:opacity-50"
+                disabled>
+                Confirm Transfer
+            </button>
 
-                <button type="button"
-                    onclick="closeOwnerDrawer()"
-                    class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                    Cancel
-                </button>
+        </div>
 
-                <button type="submit" id="owner-confirm-transfer"
-                    class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-50"
-                    disabled>
-                    Confirm Transfer
-                </button>
-
-            </div>
-
-
-
-
-
-
-
-        </form>
-    </div>
+    </form>
 </div>
 
 {{-- ================= SCRIPT ================= --}}

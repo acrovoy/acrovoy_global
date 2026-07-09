@@ -87,10 +87,16 @@
 
                         @if($product->status !== 'pending')
                             <a href="{{ route('supplier.products.edit-step', [$product->id, 1]) }}"
-   class="text-blue-600 hover:underline">
-    Edit
-</a>
-                            <button type="button" class="text-red-600 hover:underline delete-product" data-id="{{ $product->id }}">Delete</button>
+                            class="text-blue-600 hover:underline">
+                                Edit
+                            </a>
+                            <button
+                                type="button"
+                                class="text-red-600 hover:underline delete-product"
+                                data-id="{{ $product->id }}"
+                                onclick="return confirm('Are you sure you want to delete this product? This action cannot be undone.')">
+                                Delete
+                            </button>
                         @endif
                     </td>
                 </tr>

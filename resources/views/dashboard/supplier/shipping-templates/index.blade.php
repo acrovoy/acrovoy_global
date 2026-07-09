@@ -14,14 +14,31 @@
 
         <div class="flex items-center gap-3">
             <a href="{{ route('supplier.warehouses.index') }}"
-                class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                Manage warehouses
-            </a>
+   class="inline-flex items-center gap-2 px-4 py-2
+          text-sm font-medium text-gray-700
+          bg-white border border-gray-200
+          rounded-lg
+          hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+          active:scale-[0.98]
+          transition-all duration-150 shadow-sm">
+
+    <span>Manage warehouses</span>
+
+</a>
 
             <a href="{{ route('supplier.shipping-templates.create') }}"
-                class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
-                + Add New Template
-            </a>
+   class="inline-flex items-center gap-2 px-4 py-2
+          text-sm font-medium text-gray-700
+          bg-white border border-gray-200
+          rounded-lg
+          hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+          active:scale-[0.98]
+          transition-all duration-150 shadow-sm">
+
+    <span class="text-lg leading-none">+</span>
+    <span>Add New Template</span>
+
+</a>
         </div>
 
 
@@ -183,7 +200,7 @@
 </div>
 
 <div id="warehouse-drawer"
-     class="fixed right-0 top-0 h-full w-[440px] bg-white shadow-2xl
+     class="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl
             transform translate-x-full transition-transform duration-300
             z-50 flex flex-col">
 
@@ -199,8 +216,11 @@
     </div>
 
     {{-- Form --}}
-    <form method="POST" id="warehouse-form" action="">
-    @csrf
+    <form method="POST"
+          id="warehouse-form"
+          action=""
+          class="flex flex-col flex-1">
+        @csrf
 
         <input type="hidden" name="template_id" id="warehouse-template-id">
 
@@ -218,24 +238,31 @@
         </div>
 
         {{-- Footer --}}
-        <div class="border-t bg-white px-6 py-4 flex items-center justify-between">
+        <div class="border-t bg-white px-6 py-4 flex items-center justify-between gap-4">
 
-            <div class="text-xs text-gray-400">
-                Saved immediately on submit
-            </div>
+            {{-- Left --}}
+            <button type="button"
+                    id="warehouse-cancel"
+                    class="px-4 py-2 text-sm rounded-lg border border-gray-200
+                           text-gray-600 hover:bg-gray-50 transition">
+                Cancel
+            </button>
 
-            <div class="flex gap-2">
-                <button type="button"
-                        id="warehouse-cancel"
-                        class="px-4 py-2 text-sm rounded-lg border text-gray-600 hover:bg-gray-50 transition">
-                    Cancel
-                </button>
+            {{-- Right --}}
+            <div class="flex items-center gap-3">
+
+                <div class="text-xs text-gray-400 whitespace-nowrap">
+                    Saved immediately on submit
+                </div>
 
                 <button type="submit"
-                        class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition">
+                        class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                               hover:bg-gray-800 transition shadow-sm">
                     Save
                 </button>
+
             </div>
+
         </div>
 
     </form>
