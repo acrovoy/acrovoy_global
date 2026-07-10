@@ -5,7 +5,7 @@ namespace App\Domain\Product\Services;
 use App\Facades\ActiveContext;
 
 use App\Models\Product;
-use App\Models\Project;
+use App\Domain\Project\Models\Project;
 use Illuminate\Support\Facades\Auth;
 
 class ProductViewQueryService
@@ -44,7 +44,8 @@ class ProductViewQueryService
         $projects = collect();
 
         if ($user) {
-            $projects = Project::where('buyer_id', $user->id)
+            $projects = Project::where('buyer_type', ActiveContext::type())
+        ->where('buyer_id', ActiveContext::id())
                 ->where('status', 'draft')
                 ->orderByDesc('created_at')
                 ->get();

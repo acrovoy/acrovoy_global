@@ -152,7 +152,7 @@
 
             {{-- CTA --}}
             <div class="flex gap-3">
-                <a href="{{ route('buyer.projects.index') }}"
+                <a href=""
                    class="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition">
                     Create Project
                 </a>

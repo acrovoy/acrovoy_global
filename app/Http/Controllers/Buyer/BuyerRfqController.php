@@ -44,25 +44,14 @@ class BuyerRfqController extends Controller
      * CONTEXT OWNER
      */
 
-    
-
-    if ($context->isPersonal()) {
-
-        $buyerType = auth()->user()::class;
-        $buyerId   = auth()->id();
-
-    } else {
-
         $buyerType = $context->type();
         $buyerId   = $context->id();
 
-    }
 
     /**
      * LOAD RFQs
      */
    
-
     $result = $this->listBuyerRfqsAction->execute($context);
 
         

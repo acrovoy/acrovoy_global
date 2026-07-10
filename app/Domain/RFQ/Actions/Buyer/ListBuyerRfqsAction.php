@@ -12,15 +12,10 @@ class ListBuyerRfqsAction
 {
     $query = Rfq::query()
         ->with(['category']);
-
-    if ($context->isPersonal()) {
-        $query->where('buyer_type', auth()->user()::class)
-              ->where('buyer_id', auth()->id());
-    } else {
+    
         $query->where('buyer_type', $context->type())
               ->where('buyer_id', $context->id());
-    }
-
+    
     $all = $query->latest()->get();
 
     return [

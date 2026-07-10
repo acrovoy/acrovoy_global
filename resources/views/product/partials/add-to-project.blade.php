@@ -25,7 +25,7 @@
 
     @auth
         {{-- Для авторизованных пользователей --}}
-        <form action="{{ route('buyer.project-items.store') }}" method="POST">
+        <form action="" method="POST">
             @csrf
             <input type="hidden" name="product_id" value="{{ $product1->id }}">
 

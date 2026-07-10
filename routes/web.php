@@ -47,11 +47,13 @@ use App\Http\Controllers\Buyer\RfqParticipantController;
 use App\Http\Controllers\Buyer\RfqAuditController;
 use App\Http\Controllers\Buyer\RfqVisibilityController;
 
-use App\Http\Controllers\Buyer\BuyerProjectController;
+use App\Http\Controllers\Project\Buyer\BuyerProjectController;
 use App\Http\Controllers\Buyer\ProjectItemController;
 
 use App\Http\Controllers\Rfq\RfqController;
 use App\Http\Controllers\Rfq\RfqOfferController;
+
+
 
 
 use App\Http\Controllers\Admin\AdminProductController;
@@ -315,8 +317,25 @@ Route::prefix('dashboard/buyer')
         // AUDIT
         // =========================
 
-        Route::get('/rfqs/{rfq}/audit', [RfqAuditController::class, 'index'])
-            ->name('rfqs.audit.index');
+        Route::get('/rfqs/{rfq}/audit', [RfqAuditController::class, 'index'])->name('rfqs.audit.index');
+
+
+
+
+        // =========================
+        // PROJECT BUYER
+        // =========================
+        // Список проектов
+        Route::get('/projects', [BuyerProjectController::class, 'index'])->name('projects.index');
+        Route::get('/projects/create', [BuyerProjectController::class, 'create'])->name('projects.create');
+        Route::post('/projects', [BuyerProjectController::class, 'store'])->name('projects.store');
+        Route::get('/projects/{project}/edit', [BuyerProjectController::class, 'edit'])->name('projects.edit');
+        Route::put('/projects/{project}', [BuyerProjectController::class, 'update'])->name('projects.update');
+
+        Route::get('/projects/{project}', [BuyerProjectController::class, 'show'])->name('projects.show');
+        Route::delete('/projects/{project}', [BuyerProjectController::class, 'destroy'])->name('projects.destroy');
+
+
     });
 
 
@@ -607,21 +626,7 @@ Route::middleware('auth')->group(function () {
 Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {
 
     Route::put('disputes/{dispute}/accept', [OrderDisputeController::class, 'accept'])->name('buyer.disputes.accept');
-
-    //Projects
-    Route::resource('projects', BuyerProjectController::class)->names([
-        'index' => 'buyer.projects.index',
-        'create' => 'buyer.projects.create',
-        'store' => 'buyer.projects.store',
-        'show' => 'buyer.projects.show',
-        'edit' => 'buyer.projects.edit',
-        'update' => 'buyer.projects.update',
-        'destroy' => 'buyer.projects.destroy',
-    ]);
-
-    Route::post('project-items', [ProjectItemController::class, 'store'])->name('buyer.project-items.store');
-
-    Route::post('custom-orders', [BuyerProjectController::class, 'storeCustomization'])->name('buyer.custom-orders.store');
+    
 });
 
 
