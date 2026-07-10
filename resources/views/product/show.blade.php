@@ -407,7 +407,7 @@
         </svg>
     </span>
 
-    <span class="truncate">Request for customization</span>
+    <span class="truncate">Customization</span>
 
 </button>
                             @else

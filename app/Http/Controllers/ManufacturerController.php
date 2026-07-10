@@ -28,7 +28,7 @@ class ManufacturerController extends Controller
  */
 public function showCompanyProfile(ActiveContextService $context)
 {
-    abort_if(!$context->isCompany(), 403);
+    
 
     $company = $context->company();
 
@@ -61,7 +61,7 @@ public function showCompanyProfile(ActiveContextService $context)
      */
     public function companyProfile(ActiveContextService $context)
     {
-        abort_if(!$context->isCompany(), 403);
+        
 
     $company = $context->company();
 
@@ -116,10 +116,10 @@ $selectedmanufacturingCapabilities =
      */
     public function updateCompany(Request $request, MediaService $mediaService, ActiveContextService $context)
     {
-         abort_if(!$context->isCompany(), 403);
+       
 
     $company = $context->company();
-
+ 
         if (!$company) {
             return back()->withErrors('Supplier not found');
         }
