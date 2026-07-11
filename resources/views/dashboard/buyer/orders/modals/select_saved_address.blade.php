@@ -1,163 +1,233 @@
-<div id="address-drawer-overlay" class="fixed inset-0 bg-black/40 hidden z-50"></div>
+<div id="address-drawer-overlay"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50"
+     onclick="closeAddressDrawer()"></div>
 
 <div id="address-drawer"
-     class="fixed right-0 top-0 h-full w-[520px] bg-white shadow-xl transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto p-6">
+     class="fixed right-0 top-0 h-screen w-[520px]
+            bg-white shadow-2xl
+            transform translate-x-full transition-transform duration-300
+            z-50 flex flex-col overflow-hidden">
 
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold">Доставка и контакт</h3>
-
-        <button type="button" onclick="closeAddressDrawer()"
-                class="text-gray-400 hover:text-gray-700">
-            ✕
-        </button>
-    </div>
-
-   
-    <div>
-
-
-    <form method="POST" action="{{ route('buyer.rfqs.attach.address', $rfq) }}" id="address-form">
-    @csrf
-
-
-{{-- Селект с сохранёнными адресами --}}
-    <div class="bg-white p-4 rounded-lg mb-6 border border-gray-200">
-        <h3 class="font-semibold mb-4">Выберите сохранённый адрес</h3>
-
-        <select id="saved-addresses" name="saved_address_id" class="w-full border rounded p-2">
-            <option value="">-- Выберите адрес --</option>
-            @foreach($savedAddresses as $address)
-                <option value="{{ $address->id }}"
-                        data-first_name="{{ $address->first_name }}"
-                        data-last_name="{{ $address->last_name }}"
-                        data-country="{{ $address->country }}"
-                        data-city="{{ $address->city }}"
-                        data-region="{{ $address->region }}"
-                        data-street="{{ $address->street }}"
-                        data-postal_code="{{ $address->postal_code }}"
-                        data-phone="{{ $address->phone }}"
-                        {{ $currentAddressId == $address->id ? 'selected' : '' }}>
-                    {{ $address->first_name }} {{ $address->last_name ?? '' }}, {{ $address->street }}, {{ $address->city }}
-                </option>
-            @endforeach
-        </select>
-    </div>
-
-
-    <input type="hidden" name="address_modified" id="address_modified" value="0">
-
-    
-
-
-    {{-- Контакты и адрес --}}
-    <div class="bg-white p-4 rounded-lg mb-6 border border-gray-200">
-        <h3 class="font-semibold mb-4">Контактные данные</h3>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {{-- Имя --}}
+    {{-- HEADER --}}
+    <div class="px-6 py-5 border-b bg-gray-50">
+        <div class="flex items-start justify-between">
             <div>
-                <label class="text-sm text-gray-600">Имя</label>
-                <input type="text"
-                       name="first_name"
-                       id="first_name"
-                       value="{{ $currentSavedAddress->first_name ?? auth()->user()->first_name ?? '' }}"
-                       class="w-full border rounded p-2">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Доставка и контакт
+                </h3>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    Выберите сохранённый адрес или заполните новый адрес доставки.
+                </p>
             </div>
 
-            {{-- Фамилия --}}
-            <div>
-                <label class="text-sm text-gray-600">Фамилия</label>
-                <input type="text"
-                       name="last_name"
-                       id="last_name"
-                       value="{{ $currentSavedAddress->last_name ?? old('last_name') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
-
-            {{-- Телефон --}}
-            <div class="sm:col-span-2">
-                <label class="text-sm text-gray-600">Телефон</label>
-                <input type="text"
-                       name="phone"
-                       id="phone"
-                       value="{{ $currentSavedAddress->phone ?? old('phone') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
-
-          
-            
+            <button type="button"
+                    onclick="closeAddressDrawer()"
+                    class="text-gray-400 hover:text-gray-700 transition">
+                ✕
+            </button>
         </div>
     </div>
 
+    <form method="POST"
+      action="{{ route('buyer.rfqs.attach.address', $rfq) }}"
+      id="address-form"
+      class="flex flex-col flex-1 min-h-0">
 
+        @csrf
 
-    <div class="bg-white p-4 rounded-lg mb-6 border border-gray-200">
-    <h3 class="font-semibold mb-4">Адрес доставки</h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {{-- Страна --}}
-        <div>
-            <label class="text-sm text-gray-600">Страна</label>
-            <select name="country" id="country" class="w-full border rounded p-2">
-                <option value="">Выберите страну</option>
-                @foreach($countries as $country)
-                    <option value="{{ $country->id }}"
-                        {{ $currentSavedAddress && $currentSavedAddress->country == $country->id ? 'selected' : '' }}>
-                        {{ $country->name }}
-                    </option>
-                @endforeach
-            </select>
+        <div class="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
+
+            {{-- Селект с сохранёнными адресами --}}
+            <div class="border border-gray-200 rounded-xl p-5">
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-800 mb-5">
+                    Выберите сохранённый адрес
+                </h3>
+
+                <select id="saved-addresses"
+                        name="saved_address_id"
+                        class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    <option value="">-- Выберите адрес --</option>
+
+                    @foreach($savedAddresses as $address)
+                        <option value="{{ $address->id }}"
+                                data-first_name="{{ $address->first_name }}"
+                                data-last_name="{{ $address->last_name }}"
+                                data-country="{{ $address->country }}"
+                                data-city="{{ $address->city }}"
+                                data-region="{{ $address->region }}"
+                                data-street="{{ $address->street }}"
+                                data-postal_code="{{ $address->postal_code }}"
+                                data-phone="{{ $address->phone }}"
+                                {{ $currentAddressId == $address->id ? 'selected' : '' }}>
+                            {{ $address->first_name }} {{ $address->last_name ?? '' }}, {{ $address->street }}, {{ $address->city }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <input type="hidden" name="address_modified" id="address_modified" value="0">
+
+            {{-- Контакты --}}
+            <div class="border border-gray-200 rounded-xl p-5">
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-800 mb-5">
+                    Контактные данные
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Имя
+                        </label>
+
+                        <input type="text"
+                               name="first_name"
+                               id="first_name"
+                               value="{{ $currentSavedAddress->first_name ?? auth()->user()->first_name ?? '' }}"
+                               class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Фамилия
+                        </label>
+
+                        <input type="text"
+                               name="last_name"
+                               id="last_name"
+                               value="{{ $currentSavedAddress->last_name ?? old('last_name') ?? '' }}"
+                               class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Телефон
+                        </label>
+
+                        <input type="text"
+                               name="phone"
+                               id="phone"
+                               value="{{ $currentSavedAddress->phone ?? old('phone') ?? '' }}"
+                               class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- Адрес --}}
+            <div class="border border-gray-200 rounded-xl p-5">
+
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-800 mb-5">
+                    Адрес доставки
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Страна
+                        </label>
+
+                        <select name="country"
+                                id="country"
+                                class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                            <option value="">Выберите страну</option>
+
+                            @foreach($countries as $country)
+                                <option value="{{ $country->id }}"
+                                    {{ $currentSavedAddress && $currentSavedAddress->country == $country->id ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Регион / Область
+                        </label>
+
+                        <select name="region"
+                                id="region"
+                                disabled
+                                class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                            <option value="">Выберите регион</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Город
+                        </label>
+
+                        <select name="city"
+                                id="city"
+                                class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                            <option value="">Выберите город</option>
+                        </select>
+
+                        <small class="text-gray-500 block mt-2">
+                            Если не нашли свой город или локацию, заполните поле ниже
+                        </small>
+
+                        <input type="text"
+                               name="city_manual"
+                               id="city_manual"
+                               placeholder="Введите свой город"
+                               class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Улица, дом, квартира
+                        </label>
+
+                        <input type="text"
+                               name="street"
+                               id="street"
+                               value="{{ $currentSavedAddress->street ?? '' }}"
+                               class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-500 uppercase tracking-wide">
+                            Почтовый индекс
+                        </label>
+
+                        <input type="text"
+                               name="postal_code"
+                               id="postal_code"
+                               value="{{ $currentSavedAddress->postal_code ?? '' }}"
+                               class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+                    </div>
+
+                </div>
+            </div>
+
+            <input type="hidden" name="saved_address_id" id="saved_address_id">
+
         </div>
 
-        {{-- Регион / область --}}
-        
-<div>
-    <label class="text-sm text-gray-600">Регион / Область</label>
-    <select name="region" id="region" class="w-full border rounded p-2" disabled>
-        <option value="">Выберите регион</option>
-    </select>
-</div>
+        {{-- FOOTER --}}
+        <div class="border-t bg-white px-6 py-4 flex items-center justify-between gap-2">
 
-        {{-- Город --}}
-<div>
-    <label class="text-sm text-gray-600">Город</label>
-    <select name="city" id="city" class="w-full border rounded p-2">
-        <option value="">Выберите город</option>
-    </select>
-    <small class="text-gray-500 block mt-1">
-        Если не нашли свой город или локацию, заполните поле ниже
-    </small>
-    <input type="text" name="city_manual" id="city_manual"
-           placeholder="Введите свой город"
-           class="w-full border rounded p-2 mt-1">
-</div>
+            <button type="button"
+                    onclick="closeAddressDrawer()"
+                    class="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">
+                Cancel
+            </button>
 
-        {{-- Улица --}}
-        <div class="sm:col-span-2">
-            <label class="text-sm text-gray-600">Улица, дом, квартира</label>
-            <input type="text" name="street" id="street"
-                   value="{{ $currentSavedAddress->street ?? '' }}"
-                   class="w-full border rounded p-2">
+            <button type="submit"
+                    class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition shadow-sm">
+                Сохранить адрес
+            </button>
+
         </div>
 
-        {{-- Почтовый индекс --}}
-        <div>
-            <label class="text-sm text-gray-600">Почтовый индекс</label>
-            <input type="text" name="postal_code" id="postal_code"
-                   value="{{ $currentSavedAddress->postal_code ?? '' }}"
-                   class="w-full border rounded p-2">
-        </div>
-    </div>
+    </form>
+
 </div>
-<input type="hidden" name="saved_address_id" id="saved_address_id">
-
-
-<button type="submit"
-        class="w-full mt-4 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
-    Сохранить адрес
-</button>
-
-
-</form>
 
 
 <script>

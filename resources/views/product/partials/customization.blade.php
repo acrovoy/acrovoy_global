@@ -35,11 +35,11 @@
                 type="hidden"
                 name="product_id"
                 value="{{ $product1->id }}">
-                <input
+            <input
                 type="hidden"
                 name="type"
                 value="product">
-                <input
+            <input
                 type="hidden"
                 name="title"
                 value="{{ $product1->name }}">

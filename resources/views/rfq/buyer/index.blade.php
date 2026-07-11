@@ -98,19 +98,7 @@ use App\Domain\RFQ\Enums\RfqStatus;
                 {{-- STATUS --}}
                 <td class="px-4 py-2">
 
-                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg
-    @if($rfq->status === RfqStatus::DRAFT)
-        bg-gray-100 text-gray-600
-    @elseif($rfq->status === RfqStatus::PUBLISHED)
-        bg-blue-100 text-blue-700
-    @elseif($rfq->status === RfqStatus::IN_NEGOTIATION)
-        bg-yellow-100 text-yellow-800
-    @elseif($rfq->status === RfqStatus::CLOSED)
-        bg-green-100 text-green-700
-    @else
-        bg-gray-100 text-gray-600
-    @endif
-">
+                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg {{ $rfq->status->badgeIndexClasses() }}">
     {{ $rfq->status->label() }}
 </span>
 

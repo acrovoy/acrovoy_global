@@ -75,8 +75,8 @@
 
                     <input
                         type="datetime-local"
-                        name="deadline"
-                        value="{{ old('deadline') }}"
+                        name="closed_at"
+                        value="{{ old('closed_at') }}"
                         class="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm
                                focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
 

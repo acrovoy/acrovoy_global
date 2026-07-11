@@ -25,9 +25,11 @@
 
     @auth
         {{-- Для авторизованных пользователей --}}
-        <form action="" method="POST">
+        <form action="{{ route('buyer.rfqs.customization.store') }}" method="POST">
             @csrf
             <input type="hidden" name="product_id" value="{{ $product1->id }}">
+            <input type="hidden" name="type" value="product">
+            <input type="hidden" name="title" value="{{ $product1->name }}">
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">

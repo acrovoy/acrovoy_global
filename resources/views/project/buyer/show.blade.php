@@ -219,55 +219,99 @@
 
 
 
-<div id="rfq-drawer-overlay" class="fixed inset-0 bg-black/40 hidden z-50"></div>
+<div id="rfq-drawer-overlay"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50"
+     onclick="closeRfqDrawer()"></div>
 
 <div id="rfq-drawer"
-    class="fixed right-0 top-0 h-full w-[420px] bg-white shadow-xl transform translate-x-full transition-transform duration-300 z-[60] p-6">
+     class="fixed right-0 top-0 h-full w-[460px]
+            bg-white shadow-2xl
+            transform translate-x-full transition-transform duration-300
+            z-[60] flex flex-col">
 
-    <h3 class="text-lg font-semibold mb-4" id="drawer-title">Edit</h3>
+    {{-- HEADER --}}
+    <div class="px-6 py-5 border-b bg-gray-50">
+        <h3 class="text-lg font-semibold text-gray-900" id="drawer-title">
+            Edit
+        </h3>
 
-    <form method="POST" action="">
+        <p class="text-sm text-gray-500 mt-1">
+            Update the selected RFQ information.
+        </p>
+    </div>
+
+    <form method="POST"
+          action="{{ route('buyer.projects.update.field', $project) }}"
+          class="flex flex-col flex-1">
+
         @csrf
         @method('PATCH')
 
         <input type="hidden" name="field" id="drawer-field">
 
-        {{-- TITLE --}}
-        <div id="field-title" class="hidden">
-            <label class="text-sm text-gray-600">Title</label>
-            <input type="text" name="title"
-                value="{{ $project->title }}"
-                class="w-full mt-1 border rounded-lg px-3 py-2 text-sm">
+        {{-- BODY --}}
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+            {{-- TITLE --}}
+            <div id="field-title" class="hidden">
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Title
+                </label>
+
+                <input type="text"
+                       name="title"
+                       value="{{ $project->title }}"
+                       class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                              focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+            </div>
+
+            {{-- DESCRIPTION --}}
+            <div id="field-description" class="hidden">
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Description
+                </label>
+
+                <textarea name="description"
+                          rows="6"
+                          class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                                 focus:outline-none focus:ring-2 focus:ring-gray-900/10">{{ $project->description }}</textarea>
+            </div>
+
+            {{-- DEADLINE --}}
+            <div id="field-deadline" class="hidden">
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Deadline
+                </label>
+
+                <input type="datetime-local"
+                       name="closed_at"
+                       value="{{ optional($project->closed_at)->format('Y-m-d\TH:i') }}"
+                       class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                              focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+            </div>
+
         </div>
 
-        {{-- DESCRIPTION --}}
-        <div id="field-description" class="hidden">
-            <label class="text-sm text-gray-600">Description</label>
-            <textarea name="description" rows="6"
-                class="w-full mt-1 border rounded-lg px-3 py-2 text-sm">{{ $project->description }}</textarea>
-        </div>
+        {{-- FOOTER --}}
+        <div class="border-t bg-white px-6 py-4 flex items-center justify-between gap-2">
 
-        {{-- DEADLINE --}}
-        <div id="field-deadline" class="hidden">
-            <label class="text-sm text-gray-600">Deadline</label>
-            <input type="datetime-local" name="closed_at"
-                value="{{ optional($project->closed_at)->format('Y-m-d\TH:i') }}"
-                class="w-full mt-1 border rounded-lg px-3 py-2 text-sm">
-        </div>
-
-        <div class="flex justify-end gap-2 mt-6">
-            <button type="button" onclick="closeRfqDrawer()"
-                class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+            <button type="button"
+                    onclick="closeRfqDrawer()"
+                    class="px-4 py-2 text-sm rounded-lg border border-gray-200
+                           text-gray-600 hover:bg-gray-50 transition">
                 Cancel
             </button>
 
             <button type="submit"
-                class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
+                    class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                           hover:bg-gray-800 transition shadow-sm">
                 Save
             </button>
+
         </div>
 
     </form>
+
 </div>
 
 <script>

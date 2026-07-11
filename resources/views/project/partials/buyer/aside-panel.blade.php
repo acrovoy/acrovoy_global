@@ -83,7 +83,7 @@
         <div class="px-4 pb-4">
 
 
-
+@include('project.partials.tabs.buyer', ['project' => $project])
            
             
 

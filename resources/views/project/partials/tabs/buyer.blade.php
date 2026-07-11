@@ -4,6 +4,8 @@
 <div class="text-[13px] font-medium tracking-wide text-gray-700">
 
     @php
+    $offers = collect();
+    $activeTab = 'overview';
     function tabClass($active) {
     return $active
     ? 'bg-black/5'
@@ -12,7 +14,7 @@
     @endphp
 
     {{-- OVERVIEW --}}
-    <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'overview']) }}"
+    <a href="{{ route('rfqs.workspace', ['rfq' => $project->id, 'tab' => 'overview']) }}"
         class="group relative flex justify-between items-center py-3 px-2 rounded-md
               hover:bg-black/5 transition-all duration-200 {{ tabClass($activeTab === 'overview') }}">
 
@@ -34,31 +36,19 @@
 
     {{-- SUPPLIER OFFERS --}}
     <div class="border-t border-gray-100 py-3 px-2 flex justify-between items-center text-gray-700">
-        @if(!$rfq->customization)
+        
         <span class="uppercase">Supplier’s offers</span>
-        @else
-        <span class="uppercase">Supplier’s offer</span>
-        @endif
+        
         <span>↓</span>
     </div>
 
 
 
 
-    @php
-    $offers = ($rfq->offers ?? collect())->filter(function ($offer) {
-    $version = $offer->latestVersion;
-
-    return $version && in_array($version->status, [
-        'submitted',
-        'accepted',
-        'rejected',
-    ]);
-});
-    @endphp
+    
 
     @if($offers->isEmpty())
-@if(!$rfq->customization)
+
     <div class="mt-3 mx-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
         <div class="text-xs text-gray-500 leading-relaxed">
             No offers yet
@@ -68,17 +58,7 @@
             Suppliers will appear here once they submit proposals
         </div>
     </div>
-@else
-<div class="mt-3 mx-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
-        <div class="text-xs text-gray-500 leading-relaxed">
-            No offer yet
-        </div>
 
-        <div class="text-[11px] text-gray-400 mt-1">
-            Supplier will appear here once they submit proposal
-        </div>
-    </div>
-@endif
     @else
 
     <div class="mt-3 space-y-2">
@@ -104,11 +84,7 @@
 
         @endphp
 
-        <a href="{{ route('rfqs.workspace', [
-        'rfq' => $rfq->id,
-        'tab' => 'offers',
-        'offer' => $offer->id
-    ]) }}"
+        <a href=""
             class="{{ $base }} {{ $styles }}">
 
             {{-- LEFT --}}
@@ -147,7 +123,7 @@
                     </div>
 
                     <div class="text-[11px] text-gray-400 mt-0.5">
-                        Version {{ $version?->version_number ?? '-' }}
+                        Version 
                     </div>
 
                 </div>
@@ -168,7 +144,7 @@
         <div class="flex justify-end mt-3">
 
             <a
-                href="{{ route('buyer.rfqs.offer-comparison', $rfq->id) }}"
+                href=""
                 class="px-4 py-1.5 text-sm rounded-md
                bg-white text-gray-700
                hover:bg-gray-900 hover:text-white hover:border-gray-900
@@ -191,20 +167,89 @@
 
     {{-- REQUIREMENTS --}}
     <div class="py-3 px-2 flex justify-between items-center text-gray-700 border-t border-gray-100 mt-3">
-        <span class="uppercase">Requirements</span>
+        <span class="uppercase">Procurement Items</span>
         <span>↓</span>
     </div>
 
 
-    @include('rfq.partials.aside-products.buyer', [
-    'rfq' => $rfq,
-    'activeTab' => $activeTab
-    ])
 
-@if(!$rfq->customization)
+    @include('project.partials.aside-products.buyer', [ 'project' => $project ])
+
+
+<div
+    x-data="{ open: false }"
+    class="relative mt-3 px-2">
+
+    <button
+        @click="open = !open"
+        class="w-full flex items-center justify-center gap-2
+               rounded-lg border border-gray-200 bg-white
+               px-4 py-2 text-sm font-medium text-gray-700
+               hover:bg-gray-50 hover:border-gray-300
+               transition">
+
+        <span class="text-base leading-none">+</span>
+
+        <span>Add Item</span>
+
+    </button>
+
+    {{-- Dropdown --}}
+    <div
+        x-show="open"
+        @click.outside="open = false"
+        x-transition
+        class="absolute left-2 right-2 mt-2 z-20
+               rounded-xl border border-gray-200 bg-white
+               shadow-xl overflow-hidden">
+
+        <a
+            href="{{ route('catalog.index') }}"
+            class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition">
+
+            <div class="text-lg">📦</div>
+
+            <div>
+                <div class="text-sm font-medium text-gray-900">
+                    Add from Catalog
+                </div>
+
+                <div class="text-xs text-gray-500">
+                    Select an existing product from the marketplace catalog.
+                </div>
+            </div>
+
+        </a>
+
+        <div class="border-t border-gray-100"></div>
+
+        <a
+            href="#"
+            class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition">
+
+            <div class="text-lg">✨</div>
+
+            <div>
+                <div class="text-sm font-medium text-gray-900">
+                    Create and Add New
+                </div>
+
+                <div class="text-xs text-gray-500">
+                    Create a custom RFQ for a product not available in the catalog.
+                </div>
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+    
+
+
 
     {{-- PARTICIPANTS --}}
-    <a href="{{ route('rfqs.workspace', ['rfq' => $rfq->id, 'tab' => 'participants']) }}"
+    <a href=""
         class="border-t border-gray-100 group relative flex justify-between items-center py-3 px-2 mt-4 rounded-md
               hover:bg-black/5 transition-all duration-200 {{ tabClass($activeTab === 'participants') }}">
 
@@ -219,6 +264,6 @@
             →
         </span>
     </a>
-@endif
+
 
 </div>

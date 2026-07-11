@@ -20,8 +20,15 @@ class CreateCustomizationRfqAction
         int $createdBy,
         string $supplierType,
         int $supplierId,
-        int $productId
+        int $productId,
+        ?int $projectId = null,
+
     ): Rfq {
+
+
+
+        $customization = is_null($projectId);
+
         $closedAt = now()->addDays(30);
 
         $rfq = Rfq::create([
@@ -29,11 +36,12 @@ class CreateCustomizationRfqAction
             'buyer_id'      => $buyerId,
             'created_by'    => $createdBy,
 
+            'project_id'    => $projectId,
             'title'         => $data->title,
             'description'   => $data->description,
             'category_id'   => 84, 
             'product_id'    => $productId,
-            'customization' => true,
+            'customization' => $customization,
             'type'          => $data->type,
             'status'        => RfqStatus::DRAFT,
             'closed_at'     => $closedAt,

@@ -9,15 +9,7 @@ enum RfqStatus: string
     case IN_NEGOTIATION = 'in_negotiation';
     case CLOSED = 'closed';
 
-    public function label(): string
-    {
-        return match($this) {
-            self::DRAFT => 'Draft',
-            self::PUBLISHED => 'Published',
-            self::IN_NEGOTIATION => 'In negotiation',
-            self::CLOSED => 'Closed',
-        };
-    }
+    
 
     public function canPublish(): bool
     {
@@ -51,11 +43,31 @@ enum RfqStatus: string
 {
     return match($this) {
         self::DRAFT => 'uppercase text-gray-700',
-        self::PUBLISHED => ' uppercase text-blue-500',
+        self::PUBLISHED => 'uppercase text-blue-500',
         self::IN_NEGOTIATION => 'uppercase text-amber-700',
         self::CLOSED => 'uppercase text-zinc-700',
     };
 }
+
+public function badgeIndexClasses(): string
+{
+    return match($this) {
+        self::DRAFT => 'bg-gray-100 text-gray-600',
+        self::PUBLISHED => 'bg-blue-100 text-blue-700',
+        self::IN_NEGOTIATION => 'bg-yellow-100 text-yellow-800',
+        self::CLOSED => 'bg-green-100 text-green-700',
+    };
+}
+
+public function label(): string
+    {
+        return match($this) {
+            self::DRAFT => 'Draft',
+            self::PUBLISHED => 'Published',
+            self::IN_NEGOTIATION => 'In negotiation',
+            self::CLOSED => 'Closed',
+        };
+    }
 
 public function isDraft(): bool
 {

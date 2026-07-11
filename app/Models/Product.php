@@ -37,15 +37,7 @@ class Product extends Model
     ];
 
 
-    protected static function booted()
-    {
-        static::created(function (Product $product) {
-            $product->stock()->create([
-                'quantity' => 0,
-                'notes' => 'Initial stock',
-            ]);
-        });
-    }
+    
 
     protected $appends = [
     'warehouse_stocks'

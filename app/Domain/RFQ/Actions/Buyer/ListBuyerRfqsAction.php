@@ -14,10 +14,10 @@ class ListBuyerRfqsAction
         ->with(['category']);
     
         $query->where('buyer_type', $context->type())
-              ->where('buyer_id', $context->id());
+              ->where('buyer_id', $context->id())
+              ->whereNull('project_id');
     
-    $all = $query->latest()->get();
-
+    
     return [
     'active' => (clone $query)
         ->where('status', '!=', RfqStatus::CLOSED)

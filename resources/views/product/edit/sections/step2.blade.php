@@ -136,6 +136,8 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
             // Всегда сохраняем выбранную категорию и подгружаем атрибуты
             this.selectedCategory = categoryId;
             await this.loadAttributes(categoryId);
+
+            document.getElementById('step-2-submit').disabled = false;
         },
 
         async loadPath(categoryId) {

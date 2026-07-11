@@ -333,7 +333,11 @@ Route::prefix('dashboard/buyer')
         Route::put('/projects/{project}', [BuyerProjectController::class, 'update'])->name('projects.update');
 
         Route::get('/projects/{project}', [BuyerProjectController::class, 'show'])->name('projects.show');
+        Route::get('/projects/{project}/rfqs/{rfq}', [BuyerProjectController::class, 'requirements'])->name('projects.requirements');
+
         Route::delete('/projects/{project}', [BuyerProjectController::class, 'destroy'])->name('projects.destroy');
+
+        Route::patch('/projects/{project}/field', [BuyerProjectController::class, 'updateField'])->name('projects.update.field');
 
 
     });

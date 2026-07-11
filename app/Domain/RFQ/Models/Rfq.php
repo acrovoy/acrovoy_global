@@ -31,6 +31,7 @@ class Rfq extends Model
         'buyer_id',
         'buyer_type',
         'created_by',
+        'project_id',
         'title',
         'description',
         'customization',

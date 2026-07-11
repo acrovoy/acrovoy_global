@@ -19,7 +19,8 @@ class RfqAttributeValue extends Model
         'value_boolean',
         'value_date',
 
-        'attribute_option_id'
+        'attribute_option_id',
+        'is_source',
 
     ];
 
