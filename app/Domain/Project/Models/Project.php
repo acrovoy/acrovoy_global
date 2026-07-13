@@ -10,6 +10,8 @@ use App\Domain\RFQ\Models\Rfq;
 use App\Models\User;
 use App\Domain\Project\Enums\ProjectStatus;
 use App\Domain\Project\Enums\ProjectVisibilityType;
+use App\Domain\Project\Models\ProjectParticipant;
+use App\Domain\Project\Models\ProjectVisibilityCategory;
 
 class Project extends Model
 {
@@ -63,4 +65,24 @@ class Project extends Model
 {
     return 'PROJECT-' . str_pad($this->id, 5, '0', STR_PAD_LEFT);
 }
+
+/**
+ * Invited suppliers / participants
+ */
+public function participants()
+{
+    return $this->hasMany(ProjectParticipant::class);
+}
+
+/**
+ * Visibility categories
+ */
+public function visibilityCategories()
+{
+    return $this->belongsToMany(
+        \App\Models\Category::class,
+        'project_visibility_categories'
+    );
+}
+
 }

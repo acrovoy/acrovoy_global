@@ -335,9 +335,21 @@ Route::prefix('dashboard/buyer')
         Route::get('/projects/{project}', [BuyerProjectController::class, 'show'])->name('projects.show');
         Route::get('/projects/{project}/rfqs/{rfq}', [BuyerProjectController::class, 'requirements'])->name('projects.requirements');
 
+        Route::get('/projects/{project}/rfqs/{rfq}/offers', [BuyerProjectController::class, 'offers'])->name('projects.offers');
+
+        Route::get('/projects/{project}/participants', [BuyerProjectController::class, 'participants'])->name('projects.participants');
+
         Route::delete('/projects/{project}', [BuyerProjectController::class, 'destroy'])->name('projects.destroy');
 
         Route::patch('/projects/{project}/field', [BuyerProjectController::class, 'updateField'])->name('projects.update.field');
+
+        Route::patch('/projects/{project}/visibility', [BuyerProjectController::class, 'updateVisibility'])->name('projects.visibility.update');
+
+        Route::post('/projects/{project}/participants', [BuyerProjectController::class, 'storeParticipant'])->name('projects.participants.store');
+
+        Route::patch('/projects/{project}/participants/{participant}/remove', [BuyerProjectController::class, 'removeParticipant'])->name('projects.participants.remove');
+
+        Route::patch('/projects/{project}/visibility/categories', [BuyerProjectController::class, 'updateVisibilityCategories'])->name('projects.visibility.category.update');
 
 
     });

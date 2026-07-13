@@ -249,7 +249,7 @@
 
 
     {{-- PARTICIPANTS --}}
-    <a href=""
+    <a href="{{ route('buyer.projects.participants', $project) }}"
         class="border-t border-gray-100 group relative flex justify-between items-center py-3 px-2 mt-4 rounded-md
               hover:bg-black/5 transition-all duration-200 {{ tabClass($activeTab === 'participants') }}">
 
