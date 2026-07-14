@@ -112,37 +112,15 @@ class RfqOfferController extends Controller
 
 
 
-    public function submitOfferVersion(
+   public function submitOfferVersion(
     Rfq $rfq,
     RfqOfferVersion $version,
     ActiveContextService $context,
     SubmitOfferVersionAction $action
 ) {
-
     if ($context->isGuest()) {
         abort(403);
     }
-
-    $user = $context->user();
-
-   
-    /*
-    |--------------------------------------------------------------------------
-    | PERSONAL
-    |--------------------------------------------------------------------------
-    */
-
-   
-
-    /*
-    |--------------------------------------------------------------------------
-    | COMPANY
-    |--------------------------------------------------------------------------
-    */
-
-  
-
-  
 
     if ($version->status !== 'draft') {
         abort(422);
@@ -150,18 +128,42 @@ class RfqOfferController extends Controller
 
     $submittedVersion = $action->execute($version);
 
-    return redirect()->route(
-    'rfqs.workspace',
-    [
-        'rfq' => $rfq->id,
-        'tab' => 's-requirements',
-        'offer' => $version->rfq_offer_id,
-        'version' => $submittedVersion->id,
-    ]
-)->with(
-    'success',
-    'Offer submitted successfully.'
-);
+    /*
+    |--------------------------------------------------------------------------
+    | RFQ belongs to Project
+    |--------------------------------------------------------------------------
+    */
+
+    if ($rfq->project) {
+
+        return redirect()
+            ->route('supplier.projects.rfq.requirements', [
+                'project' => $rfq->project,
+                'rfq'     => $rfq,
+            ])
+            ->with(
+                'success',
+                'Offer submitted successfully.'
+            );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Standalone RFQ
+    |--------------------------------------------------------------------------
+    */
+
+    return redirect()
+        ->route('rfqs.workspace', [
+            'rfq'     => $rfq,
+            'tab'     => 's-requirements',
+            'offer'   => $version->rfq_offer_id,
+            'version' => $submittedVersion->id,
+        ])
+        ->with(
+            'success',
+            'Offer submitted successfully.'
+        );
 }
 
 
@@ -271,11 +273,37 @@ class RfqOfferController extends Controller
          * REDIRECT TO EDITOR
          * =========================================
          */
-        return redirect()->route('rfqs.workspace', [
-            'rfq' => $rfq->id,
-            'tab' => 's-requirements',
-            'version' => $newVersion->id,
-        ]);
+        /*
+|--------------------------------------------------------------------------
+| PROJECT RFQ
+|--------------------------------------------------------------------------
+*/
+
+if ($rfq->project) {
+
+    return redirect()->route(
+        'supplier.projects.rfq.requirements',
+        [
+            'project' => $rfq->project,
+            'rfq'     => $rfq,
+        ]
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| STANDALONE RFQ
+|--------------------------------------------------------------------------
+*/
+
+return redirect()->route(
+    'rfqs.workspace',
+    [
+        'rfq'     => $rfq,
+        'tab'     => 's-requirements',
+        'version' => $newVersion->id,
+    ]
+);
     }
 
 

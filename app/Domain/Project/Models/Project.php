@@ -37,14 +37,7 @@ class Project extends Model
         'visibility_type' => ProjectVisibilityType::class,
     ];
 
-    /**
-     * Владелец проекта (Buyer).
-     */
-    public function buyer()
-    {
-        return $this->morphTo();
-    }
-
+  
     /**
      * Пользователь, создавший проект.
      */
@@ -83,6 +76,11 @@ public function visibilityCategories()
         \App\Models\Category::class,
         'project_visibility_categories'
     );
+}
+
+public function buyer()
+{
+    return $this->morphTo(__FUNCTION__, 'buyer_type', 'buyer_id');
 }
 
 }

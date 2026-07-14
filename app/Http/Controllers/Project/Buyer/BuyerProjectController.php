@@ -113,15 +113,48 @@ class BuyerProjectController extends Controller
 
 
     public function show(Project $project)
-    {
+{
+    $project->load([
 
-        $project->load([
-            'rfqs.product',
-            'rfqs.attributeValues',
-        ]);
+        'buyer',
 
-        return view('project.buyer.show', compact('project'));
-    }
+        'rfqs' => function ($query) {
+
+            $query->with([
+
+                'product',
+
+                'attributeValues.attribute.options',
+                'attributeValues.options',
+
+                'offers' => function ($offerQuery) {
+
+                    $offerQuery->whereHas('latestVersion', function ($version) {
+
+                        $version->where('status', '!=', 'draft');
+
+                    });
+
+                },
+
+                'participants.participant',
+
+                'visibilityCategories',
+
+                'deliveryAddress.regionLocation',
+                'deliveryAddress.country',
+
+            ]);
+
+        },
+
+    ]);
+
+    
+
+
+    return view('project.buyer.show', compact('project'));
+}
 
     public function requirements(Request $request, Project $project,
     Rfq $rfq)

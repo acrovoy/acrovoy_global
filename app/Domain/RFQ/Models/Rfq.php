@@ -9,6 +9,7 @@ use App\Domain\RFQ\Models\RfqAttributeValue;
 use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\RFQ\Enums\RfqVisibilityType;
 use App\Domain\Negotiation\Models\RfqOfferVersion;
+use App\Domain\Project\Models\Project;
 
 use App\Services\Company\ActiveContextService;
 
@@ -264,5 +265,12 @@ public function product()
 {
     return $this->belongsTo(Product::class);
 }
+
+
+public function project()
+{
+    return $this->belongsTo(Project::class);
+}
+
 
 }

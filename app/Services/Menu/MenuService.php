@@ -97,7 +97,7 @@ class MenuService
              [
                 'type' => 'link',
                 'label' => 'Project RFQs',
-                'route' => 'supplier.rfqs.index',
+                'route' => 'supplier.projects.index',
                 'can' => ['salesAccess', User::class],
             ],
 
@@ -216,7 +216,7 @@ class MenuService
         [
             'type' => 'link',
             'label' => 'Project RFQs',
-            'route' => 'supplier.rfqs.index',
+            'route' => 'supplier.projects.index',
         ],
 
         ['type' => 'header', 'label' => 'Products'],

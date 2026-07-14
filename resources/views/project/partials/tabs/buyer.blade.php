@@ -4,14 +4,48 @@
 <div class="text-[13px] font-medium tracking-wide text-gray-700">
 
     @php
-    $offers = collect();
-    $activeTab = 'overview';
-    function tabClass($active) {
-    return $active
-    ? 'bg-black/5'
-    : 'bg-white';
-    }
-    @endphp
+
+$activeTab ??= 'overview';
+
+function tabClass($active)
+{
+    return $active ? 'bg-black/5' : 'bg-white';
+}
+
+/*
+|--------------------------------------------------------------------------
+| ALL SUBMITTED OFFERS FROM PROJECT RFQS
+|--------------------------------------------------------------------------
+*/
+
+$offers = $project->rfqs
+    ->flatMap(function ($rfq) {
+
+        return $rfq->offers;
+
+    })
+
+    ->filter(function ($offer) {
+
+        return $offer->latestVersion
+            && $offer->latestVersion->status !== 'draft';
+
+    })
+
+    /*
+    |--------------------------------------------------------------------------
+    | one card per supplier
+    |--------------------------------------------------------------------------
+    */
+    ->unique(function ($offer) {
+
+        return $offer->participant_type.'_'.$offer->participant_id;
+
+    })
+
+    ->values();
+
+@endphp
 
     {{-- OVERVIEW --}}
     <a href="{{ route('rfqs.workspace', ['rfq' => $project->id, 'tab' => 'overview']) }}"

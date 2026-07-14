@@ -2,13 +2,7 @@
     use App\Models\User;
     use App\Models\Buyer;
 
-    $buyer = null;
-
-    if ($rfq->buyer_type === User::class) {
-        $buyer = User::find($rfq->buyer_id);
-    } elseif ($rfq->buyer_type === Buyer::class) {
-        $buyer = Buyer::find($rfq->buyer_id);
-    }
+    $buyer ??= null;
 
     $buyerName = '-';
     $buyerCountry = 'Unknown';

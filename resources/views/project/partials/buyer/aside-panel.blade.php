@@ -1,6 +1,11 @@
 <aside class="w-full lg:w-1/4 max-w-[320px] flex-shrink-0 ">
+@php
+ use App\Facades\ActiveContext;
+ $isBuyer = ActiveContext::isBuyer();
+ $isSupplier = ActiveContext::isSupplier();
 
- 
+@endphp
+
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm sticky top-20">
         <div class="shadow-lg bg-gradient-to-b from-white via-gray-50 to-gray-100 rounded-lg">
             <div class="pt-4 px-4">
@@ -82,10 +87,11 @@
         </div>
         <div class="px-4 pb-4">
 
-
-@include('project.partials.tabs.buyer', ['project' => $project])
-           
-            
+        @if($isBuyer)
+            @include('project.partials.tabs.buyer', ['project' => $project])
+        @else       
+            @include('project.partials.tabs.supplier', ['project' => $project])
+        @endif      
 
         </div>
     </div>

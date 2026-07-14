@@ -48,7 +48,7 @@ use App\Http\Controllers\Buyer\RfqAuditController;
 use App\Http\Controllers\Buyer\RfqVisibilityController;
 
 use App\Http\Controllers\Project\Buyer\BuyerProjectController;
-use App\Http\Controllers\Buyer\ProjectItemController;
+use App\Http\Controllers\Project\Supplier\SupplierProjectController;
 
 use App\Http\Controllers\Rfq\RfqController;
 use App\Http\Controllers\Rfq\RfqOfferController;
@@ -192,6 +192,21 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
     Route::put('/warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('warehouses.update');
 
     Route::delete('/warehouses/{warehouse}', [WarehouseController::class, 'destroy'])->name('warehouses.destroy');
+    /*
+    |--------------------------------------------------------------------------
+    | PROJECTS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/projects', [SupplierProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/{project}', [SupplierProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/rfq/{rfq}', [SupplierProjectController::class, 'requirements'])->name('projects.rfq.requirements');
+    
+
+    
+
+
+
 });
 
 Route::get('/locations/search', [LocationController::class, 'search']);

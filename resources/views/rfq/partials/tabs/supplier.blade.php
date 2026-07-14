@@ -50,7 +50,7 @@
 
 {{-- ORDERER CARD --}}
 @include('rfq.partials.company-card.buyer', [
-    'supplier' => $rfq->buyer ?? null
+    'buyer' => $rfq->buyer ?? null
 ])
 
 
