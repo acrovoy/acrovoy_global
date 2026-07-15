@@ -460,15 +460,19 @@
                     </form>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <button id="contactSupplierBtn"
-                            class="w-full border border-gray-300 py-3 rounded-xl
+                        <button class="open-conversation w-full border border-gray-300 py-3 rounded-xl
                                    text-gray-800 font-medium shadow-sm
-                                   hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105">
+                                   hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105" data-subject-type="App\Models\Product"
+    data-subject-id="{{ $product1->id }}">
                             {{ __('product/product_show.contact_supllire') }}
                         </button>
 
+                        
 
-
+<x-conversation.drawer
+    subject-type="App\Models\Product"
+    :subject-id="$product1->id"
+/>
 
 
                         <form method="POST" action="{{ route('buyer.cart.add', $product1->id) }}">
@@ -591,145 +595,13 @@
     </div>
 </div>
 
-{{-- JS: AJAX sendMessage --}}
-<script>
-    window.onload = () => {
-        let lastMessageId = null;
-        let onFetchedMessages = false;
-        const onThreadOpen = async () => {
-            if (onFetchedMessages) return;
-            const data = await fetchThread();
-            if (!data) return;
 
-            const {
-                messages,
-                thread
-            } = data;
-
-            lastMessageId = messages ? messages[messages.length - 1]?.id : null;
-
-            if (messages && messages.length > 0)
-                messages.forEach(addMessageElem);
-            createMessageFeature(thread.id);
-
-            setInterval(() => pollMessages(thread.id), 3000)
-            onFetchedMessages = true;
-        }
-
-        document.getElementById('contactSupplierBtn').onclick = onThreadOpen;
-
-        const fetchThread = async () => {
-            const response = await fetch('/product/{{ $product1->id }}/chat', {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const json = await response.json();
-                return json;
-            } else {
-                alert('Failed to create tread.');
-            }
-            return null;
-        }
-
-        const chatMessagesElem = document.getElementById('chatMessages');
-
-        const addMessageElem = (message) => {
-            const text = message.text;
-            const date = new Date(message.created_at).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            })
-
-            const manufacturerMsg = `
-                <div class="flex flex-col">
-                    <div class="bg-gray-100 rounded-lg p-3 max-w-[75%] break-words break-all">
-                        <p class="text-sm">${text}</p>
-                    </div>
-                    <span class="text-xs text-gray-400 mt-1">${date}</span>
-                </div>`;
-
-            const buyerMsg = `
-                <div class="flex flex-col items-end">
-                    <div class="bg-blue-900 text-white rounded-lg p-3 max-w-[75%] break-words break-all">
-                        <p class="text-sm">${text}</p>
-                    </div>
-                    <span class="text-xs text-gray-300 mt-1">${date}</span>
-                </div>`;
-
-            const adminMsg = `
-                <div class="flex flex-col">
-                    <div class="bg-red-100 rounded-lg p-3 max-w-[75%] break-words break-all">
-                        <p class="text-sm">${text}</p>
-                    </div>
-                    <span class="text-sm text-red-400 mt-1">ACROVOY MANAGER</span><span class="text-xs text-gray-400 mt-1">${date}</span>
-                </div>`;
-
-            const elem =
-                message.role == 'buyer' ? buyerMsg :
-                message.role == 'manufacturer' ? manufacturerMsg :
-                message.role == 'admin' ? adminMsg :
-                null;
+<x-conversation.drawer
+    subject-type="App\Models\Product"
+    :subject-id="$product1->id"
+/>
 
 
-            chatMessagesElem.insertAdjacentHTML('beforeend', elem);
-        }
-
-        const createMessageFeature = (threadId) => {
-            document.getElementById('chatForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-
-                const input = this.querySelector('input[name="text"]');
-                const text = input.value.trim();
-                if (!text) return;
-                await pollMessages(threadId);
-                const response = await fetch(`/dashboard/messages/${threadId}/send`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        text
-                    })
-                });
-
-                if (response.ok) {
-                    const msg = await response.json();
-                    lastMessageId = msg.id;
-                    addMessageElem(msg);
-                    chatMessagesElem.scrollTop = chatMessagesElem.scrollHeight;
-                    input.value = '';
-                } else {
-                    alert('Failed to send message.');
-                }
-            });
-        }
-
-
-        const pollMessages = async (threadId) => {
-            if (!lastMessageId) return;
-            onLoadingMessages = true;
-            const response = await fetch(`/dashboard/messages/${threadId}/poll?lastMessage=${lastMessageId}`, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const json = await response.json();
-                const messages = json.messages;
-
-                if (messages && messages.length > 0) {
-                    lastMessageId = messages[messages.length - 1].id;
-                    messages.forEach(addMessageElem)
-                }
-            }
-        }
-    };
-</script>
 
 <script>
     // Если хочешь, можно сделать клик по кнопке для перехода на связанный товар

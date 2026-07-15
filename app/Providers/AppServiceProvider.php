@@ -12,7 +12,10 @@ use App\Models\Category;
 use App\Observers\CategoryObserver;
 use App\Models\Language;
 
+use App\Domain\Conversation\Services\ConversationHeaderService;
 
+use App\Domain\Conversation\Resolvers\ProductHeaderResolver;
+use App\Domain\Conversation\Contracts\ConversationHeaderResolver;
 
 use App\Domain\Media\Services\MediaProcessingService;
 
@@ -27,6 +30,21 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('media.processor', function ($app) {
             return new MediaProcessingService();
     });
+
+    $this->app->singleton(
+        ConversationHeaderService::class,
+        function ($app) {
+
+            return new ConversationHeaderService([
+
+                $app->make(ProductHeaderResolver::class),
+
+            ]);
+
+        }
+    );
+
+    
     }
 
     /**

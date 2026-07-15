@@ -52,9 +52,9 @@
         </li>
 
         <li>
-            <a href="{{ route('admin.messages') }}"
-               class="menu-link {{ request()->routeIs('admin.messages*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Message Center Test
+            <a href="{{ route('admin.messenger.index') }}"
+               class="menu-link {{ request()->routeIs('admin.messenger.index*') ? 'bg-gray-100 font-semibold' : '' }}">
+                Message Center
             </a>
         </li>
 

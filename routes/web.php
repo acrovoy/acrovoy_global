@@ -81,8 +81,14 @@ use App\Http\Controllers\Admin\Settings\AttributeOptionController;
 use App\Http\Controllers\Admin\Settings\AttributeController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
+use App\Http\Controllers\Admin\AdminMessengerController;
+
+use App\Http\Controllers\ConversationController;
 
 use App\Http\Controllers\Api\UserTimezoneController;
+
+use App\Http\Controllers\SupplierMessengerController;
+use App\Http\Controllers\BuyerMessengerController;
 
 use App\Models\Supplier;
 
@@ -109,6 +115,19 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/rfqs/{rfq}', [RfqController::class, 'show'])
     ->name('rfqs.workspace');
+
+
+Route::post('/conversations/open', [ConversationController::class, 'open'])->name('conversations.open');
+Route::post('/conversations/message', [ConversationController::class, 'message'])->name('conversations.message');
+Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'messages'])->name('conversations.messages');
+
+Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
+
+    Route::get('/messenger', [SupplierMessengerController::class, 'index'])->name('messenger.index');
+    Route::get('/messenger/conversations', [SupplierMessengerController::class, 'conversations'])->name('messenger.conversations');
+    Route::get('/messenger/conversations/{conversation}', [SupplierMessengerController::class, 'show'])->name('messenger.show');
+
+});
 
 //main supplier
 Route::prefix('supplier')->group(function () {
@@ -366,6 +385,31 @@ Route::prefix('dashboard/buyer')
 
         Route::patch('/projects/{project}/visibility/categories', [BuyerProjectController::class, 'updateVisibilityCategories'])->name('projects.visibility.category.update');
 
+
+        // =========================
+        // MESSENGER
+        // =========================
+
+        Route::prefix('messenger')
+            ->name('messenger.')
+            ->group(function () {
+
+                Route::get(
+                    '/',
+                    [BuyerMessengerController::class, 'index']
+                )->name('index');
+
+                Route::get(
+                    '/conversations',
+                    [BuyerMessengerController::class, 'conversations']
+                )->name('conversations');
+
+                Route::get(
+                    '/conversations/{conversation}',
+                    [BuyerMessengerController::class, 'show']
+                )->name('show');
+
+            });
 
     });
 
@@ -806,6 +850,30 @@ Route::get('/faq', function () {
 // Admin routes
 
 Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group(function () {
+
+    Route::prefix('messenger')
+        ->name('messenger.')
+        ->group(function () {
+
+            Route::get(
+                '/',
+                [AdminMessengerController::class, 'index']
+            )->name('index');
+
+            Route::get(
+                '/conversations',
+                [AdminMessengerController::class, 'conversations']
+            )->name('conversations');
+
+            Route::get(
+                '/conversations/{conversation}',
+                [AdminMessengerController::class, 'show']
+            )->name('show');
+
+            
+
+        });
+
 
     Route::get('/', function () {
         return view('dashboard.admin.home');

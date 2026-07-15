@@ -47,7 +47,7 @@ class MenuService
             ['type' => 'link', 'label' => 'Wishlist', 'route' => 'buyer.wishlist.index'],
 
             ['type' => 'header', 'label' => 'Communication'],
-            ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messages'],
+            ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messenger.index'],
 
             ['type' => 'header', 'label' => 'Company'],
             ['type' => 'link', 'label' => 'Company Profile', 'route' => 'buyer.messages'],
@@ -153,7 +153,7 @@ class MenuService
             ['type' => 'link', 'label' => 'Company Profile', 'route' => 'supplier.company.show'],
 
             ['type' => 'header', 'label' => 'Communication'],
-            ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messages'],
+            ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messenger.index'],
 
             ['type' => 'header', 'label' => 'Billing'],
             ['type' => 'link', 'label' => 'Premium Plans', 'route' => 'supplier.premium-plans'],
@@ -249,7 +249,7 @@ class MenuService
             ['type' => 'link', 'label' => 'Create Company', 'route' => 'dashboard.companies.create'],
 
         ['type' => 'header', 'label' => 'Communication'],
-        ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messages'],
+        ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messenger.index'],
 
         ['type' => 'header', 'label' => 'Billing'],
         ['type' => 'link', 'label' => 'Premium Plans', 'route' => 'supplier.premium-plans'],
@@ -289,7 +289,7 @@ private static function buyerIndividual($m)
             ['type' => 'link', 'label' => 'Create Company', 'route' => 'dashboard.companies.create'],
 
         ['type' => 'header', 'label' => 'Communication'],
-        ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messages'],
+        ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messenger.index'],
     ];
 }
 

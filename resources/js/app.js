@@ -33,3 +33,7 @@ Alpine.start();
 import './catalog.js';
 
 import './ui/modal/confirm';
+
+import './conversation/index';
+
+import './conversation/messenger/index';
