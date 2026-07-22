@@ -38,6 +38,16 @@ class SupplierConversationsQuery
 
             ->with([
 
+
+                'participant' => function ($query) use ($supplierType, $supplierId) {
+
+                    $query
+                        ->where('context_type', $supplierType)
+                        ->where('context_id', $supplierId);
+
+                },
+
+
                 'participants',
                 'lastMessage',
 
@@ -48,6 +58,10 @@ class SupplierConversationsQuery
                         ->limit(1);
 
                 },
+
+                
+
+                
 
             ])
 

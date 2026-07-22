@@ -4,60 +4,54 @@ namespace App\Domain\Conversation\Resolvers;
 
 use App\Domain\Conversation\Contracts\ConversationHeaderResolver;
 use App\Domain\Conversation\Models\Conversation;
-use App\Models\Product;
 
-class ProductHeaderResolver implements ConversationHeaderResolver
+use App\Domain\Conversation\Enums\ConversationType;
+
+class SupportConversationHeaderResolver implements ConversationHeaderResolver
 {
-    public function supports(Conversation $conversation): bool
-    {
-        return $conversation->subject_type === Product::class;
+    public function supports(
+        Conversation $conversation
+    ): bool {
+
+        return $conversation->conversation_type === ConversationType::SUPPORT;
+
     }
 
-    public function resolve(Conversation $conversation): array
-    {
-        $product = Product::query()
-            ->with([
-                'translations',
-                'images',
-                'supplier',
-            ])
-            ->findOrFail($conversation->subject_id);
+    public function resolve(
+        Conversation $conversation
+    ): array {
 
         return [
 
             /*
             |--------------------------------------------------------------------------
-            | Product
+            | Support Request
             |--------------------------------------------------------------------------
             */
 
-            'title' => $product->name,
+            'title' => $conversation->title,
 
-            'subtitle' => $product->undername,
+            'subtitle' => $conversation->subtitle,
 
-            'avatar' => $product->main_image_url,
+            'avatar' => asset('images/support_avatar.png'),
 
-            'url' => route('product.show', $product->slug),
+            'url' => null,
 
             /*
             |--------------------------------------------------------------------------
-            | Manager
+            | Support Agent
             |--------------------------------------------------------------------------
-            |
-            | TODO:
-            | Получать ответственного менеджера поставщика.
-            |
             */
 
             'manager' => [
 
                 'id' => null,
 
-                'name' => null,
+                'name' => 'Support Team',
 
-                'avatar' => null,
+                'avatar' => asset('images/support_avatar.png'),
 
-                'position' => null,
+                'position' => 'Customer Support',
 
             ],
 
@@ -69,9 +63,9 @@ class ProductHeaderResolver implements ConversationHeaderResolver
 
             'company' => [
 
-                'id' => $product->supplier?->id,
+                'id' => null,
 
-                'name' => $product->supplierName(),
+                'name' => config('app.name'),
 
                 'logo' => null,
 
@@ -83,7 +77,7 @@ class ProductHeaderResolver implements ConversationHeaderResolver
             |--------------------------------------------------------------------------
             */
 
-            'online' => false,
+            'online' => true,
 
             'last_seen' => null,
 

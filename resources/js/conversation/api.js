@@ -87,13 +87,33 @@ export default class ConversationApi
     /**
      * Отметить Conversation прочитанным.
      */
-    async markAsRead(conversationId)
+    async markAsRead(conversationUrl)
     {
         return this.request(
-            `/conversations/${conversationId}/read`,
+            `${conversationUrl}/read`,
             'POST'
         );
     }
+
+    /**
+     * Request Support.
+     */
+    async requestSupport(conversationUrl, reason)
+{
+    return this.request(
+        `${conversationUrl}/support`,
+        'POST',
+        {
+            reason: reason,
+        }
+    );
+}
+
+
+
+
+
+
 
     /**
      * Загрузить вложения.

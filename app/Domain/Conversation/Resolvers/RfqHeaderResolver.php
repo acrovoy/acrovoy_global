@@ -8,9 +8,9 @@ use App\Domain\RFQ\Models\Rfq;
 
 class RfqHeaderResolver implements ConversationHeaderResolver
 {
-    public function supports(string $subjectType): bool
+    public function supports(Conversation $conversation): bool
     {
-        return $subjectType === Rfq::class;
+        return $conversation->subject_type === Rfq::class;
     }
 
     public function resolve(Conversation $conversation): array

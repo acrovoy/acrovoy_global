@@ -38,6 +38,15 @@ class BuyerConversationsQuery
 
             ->with([
 
+
+            'participant' => function ($query) use ($buyerType, $buyerId) {
+
+                    $query
+                        ->where('context_type', $buyerType)
+                        ->where('context_id', $buyerId);
+
+                },
+
                 'participants',
                 'lastMessage',
 

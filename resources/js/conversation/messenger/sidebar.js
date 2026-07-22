@@ -17,10 +17,7 @@ export default class SupplierMessengerSidebar
             'conversation-list'
         );
 
-    console.log(
-        'Conversation list:',
-        this.container
-    );
+    this.activeConversationId = null;
 }
 
 
@@ -79,6 +76,10 @@ export default class SupplierMessengerSidebar
 
         this.bind();
 
+        if (this.activeConversationId) {
+        this.setActive(this.activeConversationId);
+}
+
     }
 
 
@@ -98,6 +99,9 @@ export default class SupplierMessengerSidebar
                     'click',
                     ()=>{
 
+                        this.setActive(
+                            button.dataset.conversationId
+                        );
 
                         this.openCallback(
                             button.dataset.conversationId
@@ -113,98 +117,190 @@ export default class SupplierMessengerSidebar
     }
 
 
+setActive(conversationId)
+{
 
+    this.activeConversationId = conversationId;
+
+    this.container
+        .querySelectorAll('.conversation-item')
+        .forEach(item => {
+
+            item.classList.remove(
+                'bg-stone-100',
+                
+            );
+
+            item.classList.add(
+                
+            );
+        });
+
+    const active = this.container.querySelector(
+        `[data-conversation-id="${conversationId}"]`
+    );
+
+    if (!active) {
+        return;
+    }
+
+    active.classList.remove(
+        'border-l-transparent'
+    );
+
+    active.classList.add(
+        'bg-stone-100',
+        'border-l-stone-900'
+    );
+}
 
     template(conversation)
-    {
+{
+    const unread =
+        (conversation.unread ?? 0) > 0;
 
-        return `
+    return `
 
-        <button
-            data-conversation-id="${conversation.id}"
+    <button
+        data-conversation-id="${conversation.id}"
+        class="
+            conversation-item
+            w-full
+            px-5
+            py-4
+            border-b
+            border-stone-100
+            hover:bg-stone-50
+            text-left
+            flex
+            gap-3
+            transition
+        "
+    >
+
+        <img
+            src="${conversation.header?.avatar ?? '/images/no-image.png'}"
             class="
-                w-full
-                px-5
-                py-4
-                border-b
-                border-stone-100
-                hover:bg-stone-50
-                text-left
-                flex
-                gap-3
+                w-10
+                h-10
+                rounded-full
+                object-cover
+                shrink-0
             "
         >
 
+        <div class="flex-1 min-w-0">
 
-            <img
-    src="${conversation.header?.avatar ?? '/images/no-image.png'}"
-    class="
-        w-10
-        h-10
-        rounded-full
-        object-cover
-    "
->
-
-
-
-            <div
-                class="flex-1 min-w-0"
-            >
-
+            <div class="flex items-start justify-between gap-3">
 
                 <div
                     class="
-                        flex
-                        justify-between
-                    "
-                >
-
-                    <span
-                        class="
-                            text-sm
-                            font-medium
-                            text-stone-900
-                        "
-                    >
-                        ${conversation.header?.title ?? 'Conversation'}
-                    </span>
-
-
-                    <span
-                        class="
-                            text-xs
-                            text-stone-400
-                        "
-                    >
-                        ${conversation.updated_at ?? ''}
-                    </span>
-
-
-                </div>
-
-
-
-                <div
-                    class="
+                        flex-1
+                        min-w-0
                         text-sm
-                        text-stone-500
                         truncate
-                        mt-1
+                        ${unread
+                            ? 'font-semibold text-stone-900'
+                            : 'font-medium text-stone-900'}
                     "
                 >
-                    ${conversation.last_message ?? 'No messages'}
+                    ${conversation.header?.title ?? 'Conversation'}
                 </div>
 
+                <span
+                    class="
+                        shrink-0
+                        text-xs
+                        text-stone-400
+                    "
+                >
+                    ${conversation.updated_at ?? ''}
+                </span>
 
             </div>
 
+            <div
+                class="
+                    mt-1
+                    flex
+                    items-center
+                    gap-2
+                    min-w-0
+                "
+            >
 
-        </button>
+                <span
+                    class="
+                        text-xs
+                        text-stone-500
+                        truncate
+                        flex-1
+                    "
+                >
+                    ${conversation.header?.subtitle ?? 'Conversation'}
+                </span>
 
-        `;
+                ${
+                    conversation.has_support
+                    ? `
+                        <span
+                            class="
+                                inline-flex
+                                items-center
+                                px-2
+                                py-0.5
+                                rounded-full
+                                text-[10px]
+                                font-semibold
+                                bg-amber-100
+                                text-amber-700
+                                shrink-0
+                            "
+                        >
+                            Support
+                        </span>
+                    `
+                    : ''
+                }
 
-    }
+                ${
+                    unread
+                    ? `
+                        <span
+                            class="
+                                w-2
+                                h-2
+                                rounded-full
+                                bg-blue-600
+                                shrink-0
+                            "
+                            title="Unread"
+                        ></span>
+                    `
+                    : ''
+                }
+
+            </div>
+
+            <div
+                class="
+                    mt-2
+                    text-sm
+                    truncate
+                    ${unread
+                        ? 'font-medium text-stone-700'
+                        : 'text-stone-500'}
+                "
+            >
+                ${conversation.last_message ?? 'No messages'}
+            </div>
+
+        </div>
+
+    </button>
+
+    `;
+}
 
 
 }

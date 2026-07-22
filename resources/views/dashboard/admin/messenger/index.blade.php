@@ -4,7 +4,7 @@
 
 <div class="h-[calc(100vh-80px)]">
 
-    <div class="h-full bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex">
+    <div class="h-full min-h-0 bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden flex">
 
 
         {{-- SIDEBAR --}}

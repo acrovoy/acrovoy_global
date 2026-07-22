@@ -9,7 +9,7 @@ interface ConversationHeaderResolver
     /**
      * Может ли Resolver обработать данный Subject.
      */
-    public function supports(string $subjectType): bool;
+    public function supports(Conversation $conversation): bool;
 
     /**
      * Построить Header Conversation.

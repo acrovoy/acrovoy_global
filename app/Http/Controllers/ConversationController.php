@@ -18,12 +18,15 @@ use App\Domain\Conversation\Resolvers\RfqHeaderResolver;
 use App\Domain\Conversation\Resolvers\ProjectHeaderResolver;
 use App\Services\Company\ActiveContextService;
 
+use App\Domain\Conversation\Actions\FormatConversationMessageAction;
+
 class ConversationController extends Controller
 {
     public function __construct(
         private readonly ConversationService $conversationService,
         private ConversationHeaderService $headerService,
         private ActiveContextService $context,
+        private FormatConversationMessageAction $formatMessage,
     ) {
 
     $this->headerService = new ConversationHeaderService();
@@ -156,7 +159,12 @@ class ConversationController extends Controller
             'messages' => $conversation->messages
     ->sortBy('created_at')
     ->values()
-    ->map(fn ($message) => $this->transformMessage($message)),
+    ->map(fn ($message) => $this->formatMessage->execute(
+        $message,
+        auth()->user()->timezone ?? config('app.timezone'),
+        $this->context->type(),
+        $this->context->id(),
+    )),
 
         ]);
     }
@@ -206,9 +214,12 @@ class ConversationController extends Controller
 
     return response()->json([
 
-    'message' =>
-
-        $this->transformMessage($message)
+    'message' => $this->formatMessage->execute(
+    $message,
+    auth()->user()->timezone ?? config('app.timezone'),
+    $this->context->type(),
+    $this->context->id(),
+),
 
 ]);
 }
@@ -222,65 +233,19 @@ public function messages(Conversation $conversation)
 
     return response()->json([
         'messages' => $conversation->messages
-            ->sortBy('created_at')
-            ->values()
-            ->map(fn ($message) => $this->transformMessage($message)),
+    ->sortBy('created_at')
+    ->values()
+    ->map(fn ($message) => $this->formatMessage->execute(
+        $message,
+        auth()->user()->timezone ?? config('app.timezone'),
+        $this->context->type(),
+        $this->context->id(),
+    )),
     ]);
 }
 
 
-private function transformMessage($message): array
-{
 
-$isMine =
-    $message->sender_type === $this->context->type()
-    && (int)$message->sender_id === (int)$this->context->id();
-
-    
-
-    return [
-
-    'id' => $message->id,
-
-    'message' => $message->message,
-
-    'type' => $message->message_type,
-
-    'created_at' => optional($message->created_at)->format('H:i'),
-
-    'is_mine' => $isMine,
-
-    'sender' => [
-
-        'id' => $message->sender?->id,
-
-        'name' => $message->creator?->role === 'admin'
-    ? 'ACROVOY'
-    : match ($message->sender_type) {
-
-        \App\Models\User::class => trim(
-            ($message->sender?->name ?? '') . ' ' .
-            ($message->sender?->last_name ?? '')
-        ),
-
-        default => $message->sender?->name,
-    },
-
-        'avatar' =>
-            $message->creator?->avatar()?->cdn_url
-            ?? asset('images/default-avatar.png'),
-
-        'position' => $message->sender?->position,
-
-        'company' => $message->sender?->company?->name,
-
-    ],
-
-    'attachments' => [],
-
-];
-   
-}
 
 
 }

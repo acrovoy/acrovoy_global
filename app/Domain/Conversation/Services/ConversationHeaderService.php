@@ -43,24 +43,20 @@ class ConversationHeaderService
         Conversation $conversation
     ): array {
 
-   
         foreach ($this->resolvers as $resolver) {
+  
+            if ($resolver->supports($conversation)) {
 
-            if (
-                $resolver->supports(
-                    $conversation->subject_type
-                )
-            ) {
-                return $resolver->resolve(
-                    $conversation
-                );
+                return $resolver->resolve($conversation);
+
             }
+
         }
 
         throw new RuntimeException(
             sprintf(
-                'Conversation Header Resolver not found for subject [%s].',
-                $conversation->subject_type
+                'Conversation Header Resolver not found for conversation [%s].',
+                $conversation->id
             )
         );
     }
@@ -69,12 +65,12 @@ class ConversationHeaderService
      * Есть ли Resolver.
      */
     public function hasResolver(
-        string $subjectType
+        Conversation $conversation
     ): bool {
 
         foreach ($this->resolvers as $resolver) {
 
-            if ($resolver->supports($subjectType)) {
+            if ($resolver->supports($conversation)) {
                 return true;
             }
 

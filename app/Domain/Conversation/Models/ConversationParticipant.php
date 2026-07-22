@@ -46,4 +46,21 @@ class ConversationParticipant extends Model
     {
         return $this->morphTo();
     }
+
+    public function unreadCount(): int
+{
+    return $this->conversation
+        ->messages()
+        ->when($this->last_read_at, function ($query) {
+            $query->where('created_at', '>', $this->last_read_at);
+        })
+        ->where(function ($query) {
+            $query
+                ->where('sender_type', '!=', $this->context_type)
+                ->orWhere('sender_id', '!=', $this->context_id);
+        })
+        ->count();
+}
+
+
 }

@@ -50,7 +50,7 @@ class MenuService
             ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messenger.index'],
 
             ['type' => 'header', 'label' => 'Company'],
-            ['type' => 'link', 'label' => 'Company Profile', 'route' => 'buyer.messages'],
+            ['type' => 'link', 'label' => 'Company Profile', 'route' => 'buyer.messenger.index'],
 
              ['type' => 'header', 'label' => 'Team'],
 

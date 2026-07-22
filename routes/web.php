@@ -83,6 +83,8 @@ use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
 
+use App\Http\Controllers\SupportRequestController;
+
 use App\Http\Controllers\ConversationController;
 
 use App\Http\Controllers\Api\UserTimezoneController;
@@ -126,7 +128,9 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
     Route::get('/messenger', [SupplierMessengerController::class, 'index'])->name('messenger.index');
     Route::get('/messenger/conversations', [SupplierMessengerController::class, 'conversations'])->name('messenger.conversations');
     Route::get('/messenger/conversations/{conversation}', [SupplierMessengerController::class, 'show'])->name('messenger.show');
-
+    Route::post('/messenger/conversations/{conversation}/read', [SupplierMessengerController::class, 'markAsRead'])->name('messenger.read');
+    Route::post('/messenger/conversations/{conversation}/support', [SupplierMessengerController::class, 'requestSupport'])->name('messenger.support');
+    Route::get('/messenger/conversations/{conversation}/messages/new', [SupplierMessengerController::class, 'newMessages']);
 });
 
 //main supplier
@@ -247,9 +251,7 @@ Route::post('/custom-attributes', [ProductController::class, 'storeCustomAttribu
 
 Route::post('/dashboard/supplier/rfqs/{rfq}/offer/create-revision', [RfqOfferController::class, 'createRevision'])->name('supplier.rfq.offer.create-revision');
 
-Route::prefix('dashboard/buyer')
-    ->name('buyer.')
-    ->group(function () {
+Route::prefix('dashboard/buyer')->name('buyer.')->group(function () {
 
         // =========================
         // RFQ CORE
@@ -390,24 +392,13 @@ Route::prefix('dashboard/buyer')
         // MESSENGER
         // =========================
 
-        Route::prefix('messenger')
-            ->name('messenger.')
-            ->group(function () {
-
-                Route::get(
-                    '/',
-                    [BuyerMessengerController::class, 'index']
-                )->name('index');
-
-                Route::get(
-                    '/conversations',
-                    [BuyerMessengerController::class, 'conversations']
-                )->name('conversations');
-
-                Route::get(
-                    '/conversations/{conversation}',
-                    [BuyerMessengerController::class, 'show']
-                )->name('show');
+        Route::prefix('messenger')->name('messenger.')->group(function () {
+                Route::get('/', [BuyerMessengerController::class, 'index'])->name('index');
+                Route::get('/conversations', [BuyerMessengerController::class, 'conversations'])->name('conversations');
+                Route::get('/conversations/{conversation}', [BuyerMessengerController::class, 'show'])->name('show');
+                Route::post('/conversations/{conversation}/read', [BuyerMessengerController::class, 'markAsRead'])->name('read');
+                Route::post('/conversations/{conversation}/support', [BuyerMessengerController::class, 'requestSupport'])->name('support');
+                Route::get('/conversations/{conversation}/messages/new', [BuyerMessengerController::class, 'newMessages']);
 
             });
 
@@ -487,21 +478,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 Route::get('/product/{slug}', [ProductController::class, 'show'])
     ->name('product.show');
 
-Route::get('/product/{product}/chat', [MessageController::class, 'productThread'])
-    ->middleware(['auth', 'role:buyer'])
-    ->name('product.chat');
 
-Route::post('/dashboard/messages/{thread}/send', [MessageController::class, 'sendMessage'])
-    ->middleware(['auth', 'role:buyer,manufacturer'])
-    ->name('messages.send');
-
-Route::get('/dashboard/messages/{thread}/poll', [MessageController::class, 'pollMessages'])
-    ->middleware(['auth', 'role:buyer,manufacturer'])
-    ->name('messages.poll');
-
-// Route::post('/dashboard/messages/send', [MessageController::class, 'sendMessage'])
-//     ->middleware(['auth', 'role:buyer'])
-//     ->name('messages.send.new');
 
 Route::get('/catalog/{category?}', [CatalogController::class, 'index'])->name('catalog.index');
 
@@ -565,8 +542,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
         ->name('orders.show');
 
 
-    // Messages
-    Route::get('/messages', [MessageController::class, 'index'])->name('messages');
+    
 
 
 
@@ -655,7 +631,7 @@ Route::prefix('dashboard/buyer')
 
         Route::put('orders/{order}/update-address', [OrderController::class, 'updateAddress'])->name('orders.update-address');
 
-        Route::get('/messages/', [MessageController::class, 'threadMessages'])->name('messages');
+        
     });
 
 
@@ -851,25 +827,13 @@ Route::get('/faq', function () {
 
 Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group(function () {
 
-    Route::prefix('messenger')
-        ->name('messenger.')
-        ->group(function () {
+    Route::prefix('messenger')->name('messenger.')->group(function () {
 
-            Route::get(
-                '/',
-                [AdminMessengerController::class, 'index']
-            )->name('index');
-
-            Route::get(
-                '/conversations',
-                [AdminMessengerController::class, 'conversations']
-            )->name('conversations');
-
-            Route::get(
-                '/conversations/{conversation}',
-                [AdminMessengerController::class, 'show']
-            )->name('show');
-
+            Route::get('/', [AdminMessengerController::class, 'index'])->name('index');
+            Route::get('/conversations', [AdminMessengerController::class, 'conversations'])->name('conversations');
+            Route::get('/conversations/{conversation}', [AdminMessengerController::class, 'show'])->name('show');
+            Route::get('/conversations/{conversation}/messages/new', [AdminMessengerController::class, 'newMessages']);
+            Route::post('/conversations/{conversation}/read', [AdminMessengerController::class, 'markAsRead'])->name('read');
             
 
         });
@@ -915,8 +879,7 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
     Route::delete('sellers/certificates/{certificate}', [AdminSellersController::class, 'deleteCertificate'])->name('sellers.certificates.delete');
     Route::get('sellers/{seller}/certificates/list', [AdminSellersController::class, 'listCertificates']);
 
-    Route::get('messages', [AdminMessageController::class, 'index'])->name('messages');
-    Route::post('messages/send', [AdminMessageController::class, 'send'])->name('messages.send');
+    
 
     Route::get('orders', [AdminOrdersController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrdersController::class, 'show'])->name('orders.show');
@@ -1034,21 +997,7 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
     });
 
 
-    Route::get('messages', [AdminMessageController::class, 'index'])->name('messages');
-    Route::post('messages/{thread}/send', [AdminMessageController::class, 'send'])->name('send');
-    Route::get('messages/{thread}', [AdminMessageController::class, 'threadMessages'])->name('thread');
-
-    Route::post('messages/{thread}/send', [AdminMessageController::class, 'sendMessage'])
-        ->middleware(['auth', 'role:admin'])
-        ->name('messages.send');
-
-    Route::get('messages/{thread}/poll', [AdminMessageController::class, 'pollMessages'])
-        ->middleware(['auth', 'role:admin'])
-        ->name('messages.poll');
-
-    Route::get('messages/{thread}', [AdminMessageController::class, 'threadMessages'])
-        ->middleware(['auth', 'role:admin'])
-        ->name('messages.thread');
+    
 });
 
 
@@ -1092,6 +1041,9 @@ Route::post('/api/user/timezone', [UserTimezoneController::class, 'update'])->mi
 // Route::get('/dashboard', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
+
+
+Route::post('/dashboard/support/request',[SupportRequestController::class, 'store'])->name('support.request');
 
 
 

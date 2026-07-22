@@ -8,9 +8,9 @@ use App\Domain\Project\Models\Project;
 
 class ProjectHeaderResolver implements ConversationHeaderResolver
 {
-    public function supports(string $subjectType): bool
+    public function supports(Conversation $conversation): bool
     {
-        return $subjectType === Project::class;
+        return $conversation->subject_type === Project::class;
     }
 
     public function resolve(Conversation $conversation): array

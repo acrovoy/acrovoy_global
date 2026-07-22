@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class Conversation extends Model
@@ -16,6 +17,8 @@ class Conversation extends Model
         'conversation_type',
         'subject_type',
         'subject_id',
+        'title',
+        'subtitle',
         'created_by',
         'last_message_id',
         'last_message_at',
@@ -52,6 +55,19 @@ class Conversation extends Model
     {
         return $this->hasMany(ConversationParticipant::class);
     }
+
+    /**
+ * Текущий participant.
+ *
+ * Используется для определения last_read_at.
+ */
+public function participant(): HasOne
+{
+    return $this->hasOne(
+        ConversationParticipant::class
+    );
+}
+
 
     public function messages(): HasMany
     {

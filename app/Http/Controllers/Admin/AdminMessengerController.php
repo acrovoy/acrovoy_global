@@ -6,25 +6,32 @@ use App\Http\Controllers\Controller;
 use App\Domain\Conversation\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 use Illuminate\Support\Facades\Log;
 
 use App\Domain\Conversation\Queries\AdminConversationsQuery;
 use App\Services\Company\ActiveContextService;
 
+use App\Domain\Conversation\Actions\MarkConversationReadAction;
+use App\Domain\Conversation\Actions\LoadNewMessagesAction;
+use App\Services\Date\UserDateFormatter;
+
+
 use App\Domain\Conversation\Services\ConversationHeaderService;
 
 class AdminMessengerController extends Controller
 {
 
-public function __construct(
-    private AdminConversationsQuery $adminConversations,
-    private ActiveContextService $context,
-    private ConversationHeaderService $headerService,
-)
-{
-
-}
+    public function __construct(
+        private AdminConversationsQuery $adminConversations,
+        private ActiveContextService $context,
+        private ConversationHeaderService $headerService,
+        private MarkConversationReadAction $markConversationRead,
+        private LoadNewMessagesAction $loadNewMessages,
+        private UserDateFormatter $dateFormatter,
+        
+    ) {}
     /**
      * Messenger page.
      */
@@ -42,55 +49,77 @@ public function __construct(
      * Sidebar.
      */
     public function conversations()
-{
+    {
 
-    $conversations =
-    $this->adminConversations
-        ->execute()
-        ->get();
+        $conversations =
+            $this->adminConversations
+            ->execute()
+            ->get();
 
 
 
-    return response()->json([
+        return response()->json([
 
-        'conversations' =>
-            $conversations->map(function($conversation){
-
+            'conversations' =>
+            $conversations->map(function ($conversation) {
 
                 $lastMessage = $conversation->lastMessage;
+
+                $adminId = auth()->id();
+
+
+                $participant =
+                    $conversation
+                    ->participants
+                    ->first(function ($participant) use ($adminId) {
+
+                        return
+                            $participant->context_type === User::class
+                            &&
+                            (int)$participant->context_id === (int)$adminId;
+                    });
+
+
+
 
 
 
                 return [
 
-                    'id'=>
-                        $conversation->id,
-                        
+                    'id' =>
+                    $conversation->id,
+
                     'header' =>
-                                $this->headerService
-                                    ->resolve($conversation),
+                    $this->headerService
+                        ->resolve($conversation),
 
-                    'last_message'=>
-                        $lastMessage?->message,
-
-
-                    'updated_at'=>
-                        $conversation
-                        ->updated_at
-                        ?->format('Y-m-d H:i'),
+                    'last_message' =>
+                    $lastMessage?->message,
 
 
-                    'unread'=>
-                        0,
+                    'updated_at' =>
+                    $this->dateFormatter->formatConversation(
+                        $conversation->updated_at,
+                        auth()->user()->timezone ?? config('app.timezone'),
+                    ),
+
+
+                    'unread' =>
+                    $participant?->unreadCount() ?? 0,
+
+                    'has_support' =>
+                    $conversation->participants
+                        ->contains(function ($participant) {
+
+                            return $participant->role === 'support';
+
+                        }),
 
                 ];
-
-
             })
 
-    ]);
-
-}
+        ]);
+    }
 
 
     /**
@@ -99,91 +128,172 @@ public function __construct(
      * Used when click sidebar item.
      */
     public function show(Conversation $conversation)
-{
-    
+    {
 
-    $currentType = $this->context->type();
-$currentId   = $this->context->id();
 
-    $conversation->load([
-        'messages.sender',
-        'messages.creator',
+        $currentType = $this->context->type();
+        $currentId   = $this->context->id();
+
+
+        $participant =
+    $conversation
+        ->participants
+        ->first(function($participant) use ($currentType, $currentId) {
+
+            return
+                $participant->context_type === $currentType
+                &&
+                (int)$participant->context_id === (int)$currentId;
+
+        });
+
+
+if ($participant) {
+
+    $participant->update([
+        'last_read_at' => now(),
     ]);
 
+}
 
 
-    $header = $this->headerService->resolve($conversation);
 
-   
-   
+        $conversation->load([
+            'messages.sender',
+            'messages.creator',
+        ]);
+
+
+
+        $header = $this->headerService->resolve($conversation);
+
+
+
 
         return response()->json([
 
             'conversation' => [
 
                 'id' =>
-                    $conversation->id,
+                $conversation->id,
 
                 'type' =>
-                    $conversation->conversation_type,
+                $conversation->conversation_type,
 
             ],
 
-             'header' => $header,
+            'header' => $header,
 
             'messages' =>
-                $conversation
-                    ->messages
-                    ->sortBy('created_at')
-                    ->map(function ($message) use ($currentType, $currentId) {
+            $conversation
+                ->messages
+                ->sortBy('created_at')
+                ->map(function ($message) use ($currentType, $currentId) {
 
-                        return [
+
+               Log::info('Creator', [
+    'message_id' => $message->id,
+    'creator_by' => $message->created_by,
+    'creator_loaded' => $message->relationLoaded('creator'),
+    'creator' => $message->creator?->id,
+]);
+
+Log::info('Avatar', [
+    'avatar' => $message->creator?->avatar()?->cdn_url,
+]);
+                    return [
+
+                        'id' =>
+                        $message->id,
+
+
+                        'message' =>
+                        $message->message,
+
+
+                        'type' =>
+                        $message->message_type,
+
+
+                        'created_at' =>
+                        $this->dateFormatter->formatConversation(
+                            $message->created_at,
+                            auth()->user()->timezone ?? config('app.timezone'),
+                        ),
+
+
+                        'is_mine' =>
+                        $message->sender_type === $currentType &&
+                            (int)$message->sender_id === (int)$currentId,
+
+
+                        'sender' => [
 
                             'id' =>
-                                $message->id,
+                            $message->sender?->id,
 
+                            'name' =>
+                            $message->sender_type === \App\Models\User::class
+                                ? trim(
+                                    ($message->sender?->name ?? '') . ' ' .
+                                        ($message->sender?->last_name ?? '')
+                                )
+                                : $message->sender?->name,
 
-                            'message' =>
-                                $message->message,
+                            'avatar' =>
+                            $message->creator?->avatar()?->cdn_url
+                                ?? asset('images/default-avatar.png'),
 
+                        ],
 
-                            'type' =>
-                                $message->message_type,
-
-
-                            'created_at' =>
-                                $message->created_at
-                                    ?->format('H:i'),
-
-
-                            'is_mine' =>
-                                $message->sender_type === $currentType &&
-                                (int)$message->sender_id === (int)$currentId,
-
-
-                            'sender' => [
-
-                                'id' =>
-                                    $message->sender?->id,
-
-                                'name' =>
-                                    $message->sender_type === \App\Models\User::class
-                                        ? trim(
-                                            ($message->sender?->name ?? '') . ' ' .
-                                            ($message->sender?->last_name ?? '')
-                                        )
-                                        : $message->sender?->name,
-
-                                'avatar' =>
-                                    $message->creator?->avatar()?->cdn_url
-                                    ?? asset('images/default-avatar.png'),
-
-                            ],
-
-                        ];
-
-                    }),
+                    ];
+                }),
 
         ]);
     }
+
+    public function markAsRead(Conversation $conversation)
+{
+    $this->markConversationRead->execute(
+        $conversation->id,
+        $this->context->type(),
+        $this->context->id()
+    );
+
+    return response()->json([
+        'success' => true,
+    ]);
+}
+
+public function newMessages(
+    Conversation $conversation,
+    Request $request
+) {
+
+Log::info('Polling', [
+    'user' => auth()->id(),
+    'after' => $request->get('after'),
+]);
+
+    return response()->json([
+
+        'messages' =>
+
+            $this->loadNewMessages->execute(
+
+                conversation: $conversation,
+
+                currentType: $this->context->type(),
+
+                currentId: $this->context->id(),
+
+                after: (int) $request->get('after', 0),
+
+            ),
+
+    ]);
+
+}
+
+
 }

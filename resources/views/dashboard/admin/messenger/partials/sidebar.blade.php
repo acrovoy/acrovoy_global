@@ -15,7 +15,7 @@
         </div>
 
 
-        <!-- <button
+        <button
             type="button"
             class="
                 w-9 h-9
@@ -44,15 +44,15 @@
                     d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
             </svg>
-        </button> -->
+        </button>
 
     </div>
 
 
 
-    {{-- SEARCH --}}
+     {{-- SEARCH --}}
 
-    <!-- <div class="mt-4">
+    <div class="mt-4">
 
         <div
             class="
@@ -101,7 +101,7 @@
 
     </div>
 
-</div> -->
+</div> 
 
 
 
@@ -112,7 +112,7 @@
     data-url="/dashboard/admin/messenger/conversations"
     class="
         flex-1
-        overflow-y-auto border-t border-gray-100 mt-4
+        overflow-y-auto mt-1
     "
 >
 </div>

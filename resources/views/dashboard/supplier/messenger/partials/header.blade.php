@@ -117,8 +117,38 @@
 
         </button>
 
+           {{-- Request Support --}}
+
+<button
+    id="conversation-request-support"
+    type="button"
+    class="
+        hidden
+        inline-flex
+        items-center
+        justify-center
+        h-9
+        px-3
+        rounded-lg
+        border
+        border-amber-300
+        bg-amber-50
+        text-xs
+        font-medium
+        text-amber-700
+        hover:bg-amber-100
+        transition
+    "
+>
+    Request Support
+</button>
+
 
     </div>
+
+
+ 
+
 
 
 </div>

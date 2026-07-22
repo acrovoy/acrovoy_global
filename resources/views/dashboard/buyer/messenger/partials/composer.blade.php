@@ -2,7 +2,7 @@
 
 <form
     id="conversation-form"
-    class="flex items-end gap-3"
+    class="flex items-center gap-3"
 >
 
 
@@ -11,7 +11,7 @@
 
     {{-- ATTACHMENT BUTTON --}}
 
-    <button
+    <!-- <button
         type="button"
         id="conversation-attachment"
         class="
@@ -49,7 +49,7 @@
 
         </svg>
 
-    </button>
+    </button> -->
 
 
 
@@ -59,7 +59,7 @@
     <div
         class="
             flex-1
-            relative
+            relative flex
         "
     >
 

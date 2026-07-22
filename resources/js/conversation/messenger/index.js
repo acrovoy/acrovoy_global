@@ -3,6 +3,8 @@ import SupplierMessengerSidebar from './sidebar';
 import ConversationMessages from '../messages';
 import ConversationComposer from '../composer';
 import ConversationApi from '../api';
+import SupportRequestDrawer 
+from '../support-request';
 
 
 
@@ -12,40 +14,68 @@ class SupplierMessenger
     constructor()
     {
         this.api = new ConversationApi();
-
-        this.conversationsUrl =
-    document
-        .getElementById('conversation-list')
+       
+        this.conversationsUrl = document.getElementById('conversation-list')
         .dataset.url;
 
 
         this.sidebar =
-    new SupplierMessengerSidebar(
-        this.api,
-        this.openConversation.bind(this),
-        this.conversationsUrl
-    );
+        new SupplierMessengerSidebar(
+            this.api,
+            this.openConversation.bind(this),
+            this.conversationsUrl
+        );
 
 
-        this.messages =
-            new ConversationMessages(
-                'conversation-messages'
-            );
-
+        this.messages = new ConversationMessages('conversation-messages');
 
         this.composer = new ConversationComposer({
             api: this.api,
             messages: this.messages,
+
+            onMessageSent: (message) => {
+
+                this.lastMessageId = message.id;
+
+                this.sidebar.load();
+
+            },
         });
 
-
+        
         this.currentConversation = null;
+        this.createSupportRequestDrawer =
+    new SupportRequestDrawer(
+        this.api,
+        {
+            onCreated: async (response) => {
+                await this.sidebar.load();
+                await this.openConversation(
+                    response.conversation.id
+                );
+                            }
+        }
+    );
+
+        this.initSupportDrawer();
+
+        this.pollTimer = null;
+        this.lastMessageId = 0;
+
+        window.addEventListener('beforeunload', () => {
+            this.stopPolling();
+        });
+
+      
+
     }
 
 
 
     async init()
     {
+        this.showEmptyHeader();
+
         await this.sidebar.load();
     }
 
@@ -53,6 +83,9 @@ class SupplierMessenger
 
     async openConversation(id)
     {
+
+         this.stopPolling();
+         
 
         try {
 
@@ -62,7 +95,7 @@ class SupplierMessenger
         `${this.conversationsUrl}/${id}`
     );
 
-console.log(response.header);
+
 
             this.currentConversation =
                 response.conversation;
@@ -73,13 +106,37 @@ console.log(response.header);
                 response.messages ?? []
             );
 
+            if (response.messages.length) {
+
+                this.lastMessageId =
+                    response.messages[
+                        response.messages.length - 1
+                    ].id;
+
+            } else {
+
+                this.lastMessageId = 0;
+
+            }
+
             this.updateHeader(
-                response.header
+                response.header,
+                response.has_support
             );
 
 
 
             this.composer.setConversation(id);
+
+            await this.api.markAsRead(
+              `${this.conversationsUrl}/${id}`
+            );
+
+            await this.sidebar.load();
+
+            this.sidebar.setActive(id);
+
+            this.startPolling();
 
 
         } catch(error) {
@@ -88,17 +145,192 @@ console.log(response.header);
 
         }
 
+
+
+
+
     }
 
 
+    initSupportDrawer()
+{
 
-    updateHeader(header)
+    const drawer =
+        document.getElementById(
+            'request-support-drawer'
+        );
+
+    if (!drawer) {
+        return;
+    }
+
+
+    drawer
+        .querySelectorAll('[data-close-support]')
+        .forEach(button => {
+
+            button.onclick = () => {
+
+                drawer.classList.add('hidden');
+
+            };
+
+        });
+
+
+    const submit =
+        document.getElementById(
+            'request-support-submit'
+        );
+
+    if (submit) {
+
+        submit.onclick = async () => {
+
+            const reason =
+                document.getElementById(
+                    'support-reason'
+                ).value;
+
+                console.log('Reason:', reason);
+
+            const response = await this.api.requestSupport(
+                `${this.conversationsUrl}/${this.currentConversation.id}`,
+                reason
+            );
+
+            drawer.classList.add('hidden');
+
+            document.getElementById('support-reason').value = '';
+
+            this.messages.append(response.message);
+
+            this.lastMessageId = response.message.id;
+
+            await this.sidebar.load();
+
+        };
+
+    }
+
+}
+
+ 
+
+
+showEmptyHeader()
+{
+
+    
+
+    const support =
+        document.getElementById(
+            'conversation-request-support'
+        );
+
+         
+
+    if (!support) {
+        return;
+    }
+
+
+    support.classList.remove('hidden');
+
+
+    support.onclick = (event) => {
+
+    
+
+    this.createSupportRequestDrawer.open();
+
+};
+
+
+
+}
+
+
+startPolling()
+{
+
+    if (this.pollTimer) {
+        return;
+    }
+
+    this.pollTimer = setInterval(async () => {
+
+        if (!this.currentConversation) {
+            return;
+        }
+
+        try {
+
+           
+
+            const response =
+                await this.api.request(
+                    `${this.conversationsUrl}/${this.currentConversation.id}/messages/new?after=${this.lastMessageId}`
+                );
+
+            (response.messages ?? []).forEach(message => {
+            
+
+                this.messages.append(message);
+
+                this.lastMessageId = message.id;
+
+            });
+
+        } catch (e) {
+
+            console.error(e);
+
+        }
+
+    }, 3000);
+
+}
+
+stopPolling()
+{
+
+    clearInterval(this.pollTimer);
+
+    this.pollTimer = null;
+
+}
+
+
+
+    updateHeader(header, hasSupport = false)
 {
 
     console.log(header);
 
 
+     const support =
+        document.getElementById(
+            'conversation-request-support'
+        );
+
+
     if (!header) {
+
+
+        if (support) {
+
+            support.classList.remove('hidden');
+
+            support.onclick = () => {
+
+                this.createSupportRequestDrawer.open();
+
+            };
+
+        }
+
+
         return;
     }
 
@@ -163,8 +395,35 @@ console.log(response.header);
             'bg-stone-300',
             !header.contact?.online
         );
+        
+    }
+
+
+    
+
+if (support) {
+
+    if (hasSupport) {
+
+        support.classList.add('hidden');
+
+    } else {
+
+        support.classList.remove('hidden');
+
+        support.onclick = () => {
+
+            document
+                .getElementById('request-support-drawer')
+                ?.classList.remove('hidden');
+
+        };
 
     }
+
+}
+
+
 
     const link = document.getElementById(
     'conversation-header-link'

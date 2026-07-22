@@ -15,6 +15,7 @@ use App\Models\Language;
 use App\Domain\Conversation\Services\ConversationHeaderService;
 
 use App\Domain\Conversation\Resolvers\ProductHeaderResolver;
+use App\Domain\Conversation\Resolvers\SupportConversationHeaderResolver;
 use App\Domain\Conversation\Contracts\ConversationHeaderResolver;
 
 use App\Domain\Media\Services\MediaProcessingService;
@@ -38,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
             return new ConversationHeaderService([
 
                 $app->make(ProductHeaderResolver::class),
+                $app->make(SupportConversationHeaderResolver::class),
 
             ]);
 

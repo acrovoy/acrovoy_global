@@ -99,7 +99,82 @@ export default class ConversationMessages
 messageTemplate(message)
 {
 
-    console.log(message);
+const systemText =
+    (message.message ?? '')
+        .replace(/\n/g, '<br>');
+
+
+    if (message.type === 'system') {
+
+    return `
+        <div
+            class="my-6"
+            data-message-id="${message.id}"
+        >
+
+            <div
+                class="
+                    w-full
+                    rounded-xl
+                    border
+                    border-amber-200
+                    bg-amber-50
+                    px-5
+                    py-4
+                "
+            >
+
+                <div
+                    class="
+                        flex
+                        items-center
+                        justify-between
+                        mb-1
+                    "
+                >
+
+                    <span
+                        class="
+                            text-[11px]
+                            uppercase
+                            tracking-wider
+                            font-semibold
+                            text-amber-700
+                        "
+                    >
+                        Notice
+                    </span>
+
+                    
+
+                </div>
+
+                <div
+                    class="
+                        text-sm
+                        leading-6
+                        whitespace-pre-wrap
+                        text-stone-700
+                    "
+                >
+                    ${systemText}
+                </div>
+
+            </div>
+<span
+                        class="
+                            text-[11px]
+                            text-stone-400
+                        "
+                    >
+                        ${message.created_at ?? ''}
+                    </span>
+        </div>
+    `;
+}
+
+
+    
     const mine = message.is_mine === true;
 
     const sender = message.sender ?? {};

@@ -10,6 +10,8 @@ export default class ConversationComposer
 
     this.drawer = options.drawer ?? null;
 
+    this.onMessageSent = options.onMessageSent ?? null;
+
     this.conversationId = null;
 
     this.form = document.getElementById('conversation-form');
@@ -21,6 +23,8 @@ export default class ConversationComposer
     );
 
     this.bind();
+
+    this.disable();
 }
 
     bind()
@@ -64,6 +68,8 @@ export default class ConversationComposer
 
     async send()
     {
+
+        
         const text = this.input.value.trim();
 
         if (!text) {
@@ -89,6 +95,13 @@ export default class ConversationComposer
             const response =
                 await this.api.sendMessage(conversationId, text);
 
+
+               
+
+                if (this.onMessageSent) {
+    this.onMessageSent(response.message);
+}
+
             /*
              * Очищаем textarea
              */
@@ -110,6 +123,12 @@ export default class ConversationComposer
 
             }
 
+
+            if (this.onMessageSent) {
+                this.onMessageSent(response.message);
+            }
+
+
         }
         catch (e) {
 
@@ -120,30 +139,39 @@ export default class ConversationComposer
         }
         finally {
 
-            this.enable();
+    if (this.conversationId) {
+        this.enable();
+        this.input.focus();
+    }
 
-            this.input.focus();
-
-        }
+}
     }
 
     disable()
-    {
-        if (this.sendButton) {
-
-            this.sendButton.disabled = true;
-
-        }
+{
+    if (this.sendButton) {
+        this.sendButton.disabled = true;
     }
+
+    if (this.input) {
+        this.input.disabled = true;
+        this.input.placeholder =
+            'Select a conversation to start messaging...';
+    }
+}
 
     enable()
-    {
-        if (this.sendButton) {
-
-            this.sendButton.disabled = false;
-
-        }
+{
+    if (this.sendButton) {
+        this.sendButton.disabled = false;
     }
+
+    if (this.input) {
+        this.input.disabled = false;
+        this.input.placeholder =
+            'Write a message...';
+    }
+}
 
     setConversation(conversationId)
 {
@@ -152,6 +180,13 @@ export default class ConversationComposer
     if (this.drawer) {
         this.drawer.dataset.conversationId = conversationId;
     }
+
+    if (conversationId) {
+        this.enable();
+    } else {
+        this.disable();
+    }
+
 }
 
 

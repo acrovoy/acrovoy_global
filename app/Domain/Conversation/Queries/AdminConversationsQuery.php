@@ -8,8 +8,6 @@ class AdminConversationsQuery
 {
     public function execute()
     {
-
-      
         return Conversation::query()
 
             ->with([
@@ -27,6 +25,12 @@ class AdminConversationsQuery
                 },
 
             ])
+
+            ->whereHas('participants', function ($query) {
+
+                $query->where('role', 'support');
+
+            })
 
             ->latest('updated_at');
     }

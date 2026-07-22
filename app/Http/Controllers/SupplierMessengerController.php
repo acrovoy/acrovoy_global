@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use App\Domain\Conversation\Queries\SupplierConversationsQuery;
+
+use App\Domain\Conversation\Actions\RequestSupportAction;
+use App\Domain\Conversation\Actions\MarkConversationReadAction;
+use App\Domain\Conversation\Actions\LoadNewMessagesAction;
+use App\Services\Date\UserDateFormatter;
+
+
 use App\Services\Company\ActiveContextService;
 
 use App\Domain\Conversation\Services\ConversationHeaderService;
@@ -21,6 +28,10 @@ public function __construct(
     private SupplierConversationsQuery $supplierConversations,
     private ActiveContextService $context,
     private ConversationHeaderService $headerService,
+    private MarkConversationReadAction $markConversationRead,
+    private RequestSupportAction $requestSupportAction,
+    private LoadNewMessagesAction $loadNewMessages,
+    private UserDateFormatter $dateFormatter,
 )
 {
 
@@ -47,9 +58,8 @@ public function __construct(
     $supplierId =
         $this->context->id();
 
-        $supplierType =
+    $supplierType =
         $this->context->type();
-
 
 
     $conversations =
@@ -58,41 +68,54 @@ public function __construct(
             ->get();
 
 
-
     return response()->json([
 
         'conversations' =>
-            $conversations->map(function($conversation){
-
+            $conversations->map(function ($conversation) use ($supplierType, $supplierId) {
 
                 $lastMessage = $conversation->lastMessage;
 
+                $participant =
+                    $conversation
+                        ->participants
+                        ->first(function ($participant) use ($supplierType, $supplierId) {
 
+                            return
+                                $participant->context_type === $supplierType
+                                && (int) $participant->context_id === (int) $supplierId;
+
+                        });
 
                 return [
 
-                    'id'=>
+                    'id' =>
                         $conversation->id,
-                        
-                    'header' =>
-                                $this->headerService
-                                    ->resolve($conversation),
 
-                    'last_message'=>
+                    'header' =>
+                        $this->headerService
+                            ->resolve($conversation),
+
+                    'last_message' =>
                         $lastMessage?->message,
 
+                    'updated_at' =>
+                    $this->dateFormatter->formatConversation(
+                        $conversation->updated_at,
+                        auth()->user()->timezone ?? config('app.timezone'),
+                    ),
 
-                    'updated_at'=>
-                        $conversation
-                        ->updated_at
-                        ?->format('Y-m-d H:i'),
+                    'unread' =>
+                        $participant?->unreadCount() ?? 0,
 
+                    'has_support' =>
+                        $conversation->participants
+                            ->contains(function ($participant) {
 
-                    'unread'=>
-                        0,
+                                return $participant->role === 'support';
+
+                            }),
 
                 ];
-
 
             })
 
@@ -113,9 +136,17 @@ public function __construct(
     $currentType = $this->context->type();
 $currentId   = $this->context->id();
 
+
+
+
+
     $conversation->load([
         'messages.sender',
+        'messages.creator',
+        'participants',
     ]);
+
+   
 
 
 
@@ -138,6 +169,11 @@ $currentId   = $this->context->id();
 
              'header' => $header,
 
+             'has_support' =>
+                $conversation->participants()
+                    ->where('role', 'support')
+                    ->exists(),
+
             'messages' =>
                 $conversation
                     ->messages
@@ -159,8 +195,10 @@ $currentId   = $this->context->id();
 
 
                             'created_at' =>
-                                $message->created_at
-                                    ?->format('H:i'),
+                            $this->dateFormatter->formatConversation(
+                                $message->created_at,
+                                auth()->user()->timezone ?? config('app.timezone'),
+                            ),
 
 
                             'is_mine' =>
@@ -193,4 +231,108 @@ $currentId   = $this->context->id();
 
         ]);
     }
+
+    /**
+ * Mark conversation as read.
+ */
+public function markAsRead(Conversation $conversation)
+{
+    $this->markConversationRead->execute(
+        $conversation->id,
+        $this->context->type(),
+        $this->context->id()
+    );
+
+    return response()->json([
+        'success' => true,
+    ]);
+}
+
+public function requestSupport(
+    Request $request,
+    Conversation $conversation
+) {
+
+
+    $request->validate([
+        'reason' => ['nullable', 'string', 'max:1000'],
+    ]);
+
+    $message = $this->requestSupportAction->execute(
+
+        conversation: $conversation,
+
+        requesterType: $this->context->type(),
+
+        requesterId: $this->context->id(),
+
+        reason: $request->input('reason')
+
+    );
+
+    return response()->json([
+
+        'success' => true,
+
+        'message' => [
+
+            'id' => $message->id,
+
+            'message' => $message->message,
+
+            'type' => $message->message_type,
+
+            'created_at' =>
+            $this->dateFormatter->formatConversation(
+                $message->created_at,
+                auth()->user()->timezone ?? config('app.timezone'),
+            ),
+
+            'is_mine' => true,
+
+            'sender' => [
+
+                'id' => auth()->id(),
+
+                'name' => 'Acrovoy System',
+
+                'avatar' => asset('images/support_avatar.png'),
+
+                'position' => 'System',
+
+                'company' => '',
+
+            ],
+
+        ],
+
+    ]);
+
+}
+
+public function newMessages(
+    Conversation $conversation,
+    Request $request
+) {
+
+    return response()->json([
+
+        'messages' =>
+
+            $this->loadNewMessages->execute(
+
+                conversation: $conversation,
+
+                currentType: $this->context->type(),
+
+                currentId: $this->context->id(),
+
+                after: (int) $request->get('after', 0),
+
+            ),
+
+    ]);
+
+}
+
 }
