@@ -110,6 +110,7 @@
 <div
     id="conversation-list"
     data-url="/dashboard/admin/messenger/conversations"
+    data-delete-message-url="{{ route('admin.messenger.messages.destroy', ':id') }}"
     class="
         flex-1
         overflow-y-auto mt-1

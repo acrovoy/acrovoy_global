@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.delete-message-btn {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity .15s ease,
+        visibility .15s ease;
+}
+
+[data-message-id]:hover .delete-message-btn {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}

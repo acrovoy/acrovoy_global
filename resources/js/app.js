@@ -37,3 +37,5 @@ import './ui/modal/confirm';
 import './conversation/index';
 
 import './conversation/messenger/index';
+
+import './dashboard/admin/messenger/tools';

@@ -12,14 +12,22 @@ class SupplierMessenger
 {
 
     constructor()
-    {
-        this.api = new ConversationApi();
-       
-        this.conversationsUrl = document.getElementById('conversation-list')
-        .dataset.url;
+{
+    this.api = new ConversationApi();
+
+    const conversationList =
+        document.getElementById(
+            'conversation-list'
+        );
+
+    this.conversationsUrl =
+        conversationList.dataset.url;
+
+    this.deleteMessageUrl =
+        conversationList.dataset.deleteMessageUrl ?? null;
 
 
-        this.sidebar =
+    this.sidebar =
         new SupplierMessengerSidebar(
             this.api,
             this.openConversation.bind(this),
@@ -27,20 +35,31 @@ class SupplierMessenger
         );
 
 
-        this.messages = new ConversationMessages('conversation-messages');
+    this.messages =
+        new ConversationMessages(
+            'conversation-messages',
+            {
+                isAdmin: !!this.deleteMessageUrl,
 
-        this.composer = new ConversationComposer({
-            api: this.api,
-            messages: this.messages,
+                deleteMessageUrl: this.deleteMessageUrl,
 
-            onMessageSent: (message) => {
+                api: this.api,
+            }
+        );
 
-                this.lastMessageId = message.id;
 
-                this.sidebar.load();
+    this.composer = new ConversationComposer({
+        api: this.api,
+        messages: this.messages,
 
-            },
-        });
+        onMessageSent: (message) => {
+
+            this.lastMessageId = message.id;
+
+            this.sidebar.load();
+
+        },
+    });
 
         
         this.currentConversation = null;
@@ -134,6 +153,9 @@ class SupplierMessenger
             this.setConversationStatus(
                 response.conversation.status
             );
+
+
+            
 
             await this.api.markAsRead(
               `${this.conversationsUrl}/${id}`

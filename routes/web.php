@@ -834,7 +834,9 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
             Route::get('/conversations/{conversation}', [AdminMessengerController::class, 'show'])->name('show');
             Route::get('/conversations/{conversation}/messages/new', [AdminMessengerController::class, 'newMessages']);
             Route::post('/conversations/{conversation}/read', [AdminMessengerController::class, 'markAsRead'])->name('read');
-            
+            Route::delete('/conversations/empty', [AdminMessengerController::class, 'deleteEmptyConversations'])->name('delete-empty');
+            Route::get('/statistics', [AdminMessengerController::class, 'statistics'])->name('statistics');
+            Route::delete('/messages/{message}', [AdminMessengerController::class, 'destroyMessage'])->name('messages.destroy');
 
         });
 

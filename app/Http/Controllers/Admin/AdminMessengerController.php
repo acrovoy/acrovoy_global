@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
+use Illuminate\Http\JsonResponse;
+
 use Illuminate\Support\Facades\Log;
 
 use App\Domain\Conversation\Queries\AdminConversationsQuery;
@@ -17,8 +19,9 @@ use App\Domain\Conversation\Actions\MarkConversationReadAction;
 use App\Domain\Conversation\Actions\LoadNewMessagesAction;
 use App\Services\Date\UserDateFormatter;
 
-
+use App\Domain\Conversation\Services\ConversationService;
 use App\Domain\Conversation\Services\ConversationHeaderService;
+use App\Domain\Conversation\Models\Message;
 
 class AdminMessengerController extends Controller
 {
@@ -30,6 +33,7 @@ class AdminMessengerController extends Controller
         private MarkConversationReadAction $markConversationRead,
         private LoadNewMessagesAction $loadNewMessages,
         private UserDateFormatter $dateFormatter,
+        private ConversationService $conversationService,
         
     ) {}
     /**
@@ -179,6 +183,8 @@ if ($participant) {
 
                 'type' =>
                 $conversation->conversation_type,
+
+                'status' => $conversation->status->value,
                 
 
             ],
@@ -269,10 +275,7 @@ public function newMessages(
     Request $request
 ) {
 
-Log::info('Polling', [
-    'user' => auth()->id(),
-    'after' => $request->get('after'),
-]);
+
 
     return response()->json([
 
@@ -294,5 +297,42 @@ Log::info('Polling', [
 
 }
 
+public function deleteEmptyConversations(
+    
+)
+{
+    $count = $this->conversationService
+        ->deleteEmptyConversations();
+
+
+    return response()->json([
+        'success' => true,
+        'count' => $count,
+    ]);
+}
+
+public function statistics(): JsonResponse
+{
+    $statistics =
+        $this->conversationService
+            ->getConversationStatistics();
+
+    return response()->json([
+        'total' => $statistics['total'],
+        'empty' => $statistics['empty'],
+    ]);
+}
+
+public function destroyMessage(
+    Message $message
+): JsonResponse
+{
+    $this->conversationService
+        ->deleteMessage($message);
+
+    return response()->json([
+        'success' => true,
+    ]);
+}
 
 }

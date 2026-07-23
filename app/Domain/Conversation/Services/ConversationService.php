@@ -16,6 +16,9 @@ use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\Models\ConversationParticipant;
 use App\Domain\Conversation\Models\Message;
 use App\Domain\Conversation\Actions\AddSubjectParticipantsAction;
+use App\Domain\Conversation\Actions\DeleteEmptyConversationsAction;
+use App\Domain\Conversation\Actions\DeleteConversationMessageAction;
+
 
 
 class ConversationService
@@ -23,15 +26,13 @@ class ConversationService
     public function __construct(
 
         private readonly FindConversationAction $findConversation,
-
         private readonly FindOrCreateConversationAction $findOrCreateConversation,
-
         private readonly AddParticipantAction $addParticipant,
-
         private readonly SendMessageAction $sendMessage,
-
         private readonly MarkConversationReadAction $markRead,
         private AddSubjectParticipantsAction $addSubjectParticipants,
+        private readonly DeleteEmptyConversationsAction $deleteEmptyConversations,
+        private readonly DeleteConversationMessageAction $deleteConversationMessageAction,
 
     ) {
     }
@@ -183,4 +184,32 @@ class ConversationService
                 $contextId
             );
     }
+
+    /**
+ * Удалить пустые Conversation.
+ */
+public function deleteEmptyConversations(): int
+{
+    return $this->deleteEmptyConversations
+        ->execute();
+}
+
+public function getConversationStatistics(): array
+{
+    return [
+        'total' => Conversation::has('messages')->count(),
+
+        'empty' => Conversation::doesntHave('messages')->count(),
+    ];
+}
+
+public function deleteMessage(
+    Message $message
+): void
+{
+    $this->deleteConversationMessageAction
+        ->execute($message);
+}
+
+    
 }
