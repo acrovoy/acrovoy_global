@@ -25,17 +25,14 @@ export default class SupplierMessengerSidebar
     async load()
     {
 
-        console.log('Messenger loading');
+        
 
         const response =
     await this.api.request(
         this.conversationsUrl
     );
 
-            console.log(
-        'API response:',
-        response
-    );
+            
     
 
         this.render(

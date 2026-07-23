@@ -28,18 +28,9 @@ public function execute(
 
 ) {
 
-    Log::info('----- CreateSupportRequestAction -----');
+    
 
-    Log::info('Arguments', [
-        'requesterType' => $requesterType,
-        'requesterId' => $requesterId,
-        'requesterPlatformRole' => $requesterPlatformRole,
-        'subject' => $subject,
-        'category' => $category,
-        'description' => $description,
-    ]);
-
-    Log::info('Creating conversation');
+    
 
     $conversation = Conversation::create([
 
@@ -53,11 +44,9 @@ public function execute(
 
     ]);
 
-    Log::info('Conversation created', [
-        'id' => $conversation->id,
-    ]);
+    
 
-    Log::info('Creating requester participant');
+    
 
     ConversationParticipant::create([
 
@@ -71,17 +60,13 @@ public function execute(
 
     ]);
 
-    Log::info('Requester participant created');
-
-    Log::info('Searching admin');
+    
 
     $admin = User::where('role', 'admin')->first();
 
-    Log::info('Admin found', [
-        'id' => $admin?->id,
-    ]);
+    
 
-    Log::info('Creating support participant');
+    
 
     ConversationParticipant::create([
 
@@ -97,9 +82,7 @@ public function execute(
 
     ]);
 
-    Log::info('Support participant created');
-
-    Log::info('Creating first message');
+    
 
     $message = Message::create([
 
@@ -117,11 +100,9 @@ public function execute(
 
     ]);
 
-    Log::info('Message created', [
-        'id' => $message->id,
-    ]);
+    
 
-    Log::info('Updating conversation');
+    
 
     $conversation->update([
 
@@ -131,9 +112,7 @@ public function execute(
 
     ]);
 
-    Log::info('Conversation updated');
-
-    Log::info('----- DONE -----');
+    
 
     return $conversation;
 }

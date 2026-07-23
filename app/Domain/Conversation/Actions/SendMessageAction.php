@@ -8,6 +8,9 @@ use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\Models\Message;
 use Illuminate\Support\Facades\DB;
 
+use App\Domain\Conversation\Enums\ConversationStatus;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+
 class SendMessageAction
 {
     /**
@@ -20,6 +23,19 @@ class SendMessageAction
             $conversation = Conversation::query()
                 ->lockForUpdate()
                 ->findOrFail($data->conversationId);
+
+            $conversation = Conversation::query()
+                ->lockForUpdate()
+                ->findOrFail($data->conversationId);
+
+            if (! $conversation->status->canSendMessages()) {
+
+                throw new HttpException(
+                    422,
+                    'This conversation has been closed.'
+                );
+
+            }
 
 
             /*

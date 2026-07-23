@@ -9,6 +9,7 @@ export default class ConversationDrawer
         this.api = new ConversationApi();
 
         this.drawer = document.getElementById('conversation-drawer');
+        this.conversationsUrl = this.drawer.dataset.messagesUrl;
         this.overlay = document.getElementById('conversation-overlay');
         this.closeButton = document.getElementById('close-conversation');
 
@@ -25,6 +26,14 @@ export default class ConversationDrawer
         });
 
         this.bind();
+
+        this.currentConversation = null;
+        this.pollTimer = null;
+        this.lastMessageId = 0;
+
+        window.addEventListener('beforeunload', () => {
+            this.stopPolling();
+        });
     }
 
     bind()
@@ -69,11 +78,18 @@ export default class ConversationDrawer
     {
         try {
 
+            this.stopPolling();
+
             const data =
                 await this.api.openConversation(
                     subjectType,
                     subjectId
                 );
+
+
+                
+
+            this.currentConversation = data.conversation;
 
             this.drawer.dataset.subjectType = subjectType;
             this.drawer.dataset.subjectId = subjectId;
@@ -84,12 +100,33 @@ export default class ConversationDrawer
 
             this.messages.render(data.messages);
 
+            if (data.messages.length) {
+
+                this.lastMessageId =
+                    data.messages[data.messages.length - 1].id;
+
+            } else {
+
+                this.lastMessageId = 0;
+
+            }
+
+
             this.drawer.classList.remove('translate-x-full');
             this.overlay.classList.remove('hidden');
 
             this.composer.setConversation(
                 data.conversation.id
             );
+
+            this.setConversationStatus(
+                data.conversation.status
+            );
+
+            
+
+
+            this.startPolling();
 
         }
         catch (e) {
@@ -103,9 +140,104 @@ export default class ConversationDrawer
 
     close()
     {
+        this.stopPolling();
+
         this.drawer.classList.add('translate-x-full');
         this.overlay.classList.add('hidden');
+
     }
+
+
+    startPolling()
+    {
+        if (this.pollTimer) {
+            return;
+        }
+
+        this.pollTimer = setInterval(async () => {
+
+            if (!this.currentConversation) {
+                return;
+            }
+
+            try {
+
+                const response =
+                    await this.api.request(
+                        `${this.conversationsUrl}/${this.currentConversation.id}/messages/new?after=${this.lastMessageId}`
+                    );
+
+
+                (response.messages ?? []).forEach(message => {
+
+                    this.messages.append(message);
+
+                    this.lastMessageId = message.id;
+
+                });
+
+
+            } catch (e) {
+
+                console.error(e);
+
+            }
+
+        }, 3000);
+    }
+
+
+    stopPolling()
+    {
+        clearInterval(this.pollTimer);
+
+        this.pollTimer = null;
+    }
+
+
+    setConversationStatus(status)
+    {
+
+        
+
+
+        const input = document.getElementById('conversation-input');
+        const button = document.getElementById('conversation-send');
+
+         
+
+
+        if (!input || !button) {
+            return;
+        }
+
+        const active = status === 'active';
+
+        input.disabled = !active;
+        button.disabled = !active;
+
+        if (active) {
+
+            input.placeholder = 'Write a message...';
+
+            button.classList.remove(
+                'opacity-50',
+                'cursor-not-allowed'
+            );
+
+        } else {
+
+            input.placeholder =
+                'This conversation has been closed.';
+
+            button.classList.add(
+                'opacity-50',
+                'cursor-not-allowed'
+            );
+
+        }
+    }
+
 
     renderHeader(header)
     {

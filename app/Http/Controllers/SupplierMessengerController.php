@@ -16,6 +16,8 @@ use App\Domain\Conversation\Actions\MarkConversationReadAction;
 use App\Domain\Conversation\Actions\LoadNewMessagesAction;
 use App\Services\Date\UserDateFormatter;
 
+use App\Domain\Conversation\Enums\ConversationType;
+
 
 use App\Services\Company\ActiveContextService;
 
@@ -165,6 +167,8 @@ $currentId   = $this->context->id();
                 'type' =>
                     $conversation->conversation_type,
 
+                'status' => $conversation->status->value,
+
             ],
 
              'header' => $header,
@@ -173,6 +177,8 @@ $currentId   = $this->context->id();
                 $conversation->participants()
                     ->where('role', 'support')
                     ->exists(),
+
+            'is_support' => $conversation->conversation_type === ConversationType::PRIVATE,
 
             'messages' =>
                 $conversation

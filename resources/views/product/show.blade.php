@@ -470,8 +470,9 @@
                         
 
 <x-conversation.drawer
-    subject-type="App\Models\Product"
-    :subject-id="$product1->id"
+    subjectType="App\Models\Product"
+    :subjectId="$product1->id"
+    :messagesUrl="url('/dashboard/buyer/messenger/conversations')"
 />
 
 

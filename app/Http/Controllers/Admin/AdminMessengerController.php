@@ -179,6 +179,7 @@ if ($participant) {
 
                 'type' =>
                 $conversation->conversation_type,
+                
 
             ],
 
@@ -198,9 +199,7 @@ if ($participant) {
     'creator' => $message->creator?->id,
 ]);
 
-Log::info('Avatar', [
-    'avatar' => $message->creator?->avatar()?->cdn_url,
-]);
+
                     return [
 
                         'id' =>

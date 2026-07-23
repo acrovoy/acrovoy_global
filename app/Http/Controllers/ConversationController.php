@@ -16,8 +16,11 @@ use App\Domain\Conversation\Services\ConversationHeaderService;
 use App\Domain\Conversation\Resolvers\ProductHeaderResolver;
 use App\Domain\Conversation\Resolvers\RfqHeaderResolver;
 use App\Domain\Conversation\Resolvers\ProjectHeaderResolver;
+use App\Domain\Conversation\Resolvers\UserHeaderResolver;
 use App\Services\Company\ActiveContextService;
 use App\Models\User;
+use App\Domain\Conversation\Enums\ConversationType;
+
 
 use App\Domain\Conversation\Actions\FormatConversationMessageAction;
 
@@ -35,7 +38,8 @@ class ConversationController extends Controller
     $this->headerService
         ->addResolver(new ProductHeaderResolver())
         ->addResolver(new RfqHeaderResolver())
-        ->addResolver(new ProjectHeaderResolver());
+        ->addResolver(new ProjectHeaderResolver())
+        ->addResolver(new UserHeaderResolver());
 
     }
 
@@ -62,7 +66,14 @@ class ConversationController extends Controller
 
         
         $identity = $this->context->identity();
-        
+        $conversationType = null;
+
+if (
+    $data['subject_type'] === User::class &&
+    $identity['platform_role'] === 'admin'
+) {
+    $conversationType = ConversationType::PRIVATE;
+}
 
         /*
         |--------------------------------------------------------------------------
@@ -78,6 +89,7 @@ class ConversationController extends Controller
                 contextType: $identity['entity_type'],
                 contextId: $identity['entity_id'],
                 platformRole: $identity['platform_role'],
+                conversationType: $conversationType,
             );
 
 
@@ -128,6 +140,27 @@ class ConversationController extends Controller
             );
 
 
+            if (
+                    $data['subject_type'] === User::class &&
+                    $identity['platform_role'] === 'admin'
+                ) {
+                    $user = User::findOrFail($data['subject_id']);
+
+                    $this->conversationService->addParticipant(
+                        new AddParticipantData(
+                            conversationId: $conversation->id,
+
+                            actorType: User::class,
+                            actorId: $user->id,
+
+                            contextType: User::class,
+                            contextId: $user->id,
+
+                            platformRole: $user->setting('platform_mode', 'buyer'),
+                        )
+                    );
+                }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -151,6 +184,8 @@ class ConversationController extends Controller
 
                 'type' =>
                     $conversation->conversation_type,
+
+                'status' => $conversation->status->value,
 
             ],
 

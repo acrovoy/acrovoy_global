@@ -99,11 +99,7 @@ export default class SupportRequestDrawer
         const description =
             document.getElementById('support-description').value;
 
-        console.log('Request payload:', {
-            subject,
-            category,
-            description,
-        });
+        
 
         const response = await this.api.request(
             '/dashboard/support/request',
@@ -115,7 +111,7 @@ export default class SupportRequestDrawer
             }
         );
 
-        console.log('API response:', response);
+        
 
         this.close();
 

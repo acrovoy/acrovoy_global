@@ -7,6 +7,8 @@ use App\Domain\Conversation\Events\ConversationCreated;
 use App\Domain\Conversation\Models\Conversation;
 use Illuminate\Support\Facades\DB;
 
+use App\Domain\Conversation\Enums\ConversationStatus;
+
 class CreateConversationAction
 {
     /**
@@ -21,6 +23,7 @@ class CreateConversationAction
                 'subject_type'      => $data->subjectType,
                 'subject_id'        => $data->subjectId,
                 'created_by'        => $data->createdBy,
+                'status'            => ConversationStatus::ACTIVE,
             ]);
 
             event(new ConversationCreated($conversation));

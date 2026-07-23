@@ -17,6 +17,7 @@ use App\Domain\Conversation\Models\ConversationParticipant;
 use App\Domain\Conversation\Models\Message;
 use App\Domain\Conversation\Actions\AddSubjectParticipantsAction;
 
+
 class ConversationService
 {
     public function __construct(
@@ -58,10 +59,13 @@ class ConversationService
         ?string $contextType = null,
         ?int $contextId = null,
         ?string $platformRole = null,
+        ?ConversationType $conversationType = null,
     ): Conversation {
 
+        $conversationType ??= ConversationType::BUSINESS;
+        
         $data = new CreateConversationData(
-            conversationType: ConversationType::BUSINESS,
+            conversationType: $conversationType,
             subjectType: $subjectType,
             subjectId: $subjectId,
             platformRole: $platformRole,

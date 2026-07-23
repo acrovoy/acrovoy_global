@@ -121,12 +121,19 @@ class SupplierMessenger
 
             this.updateHeader(
                 response.header,
-                response.has_support
+                response.has_support,
+                response.conversation.type === 'private'
             );
 
 
 
             this.composer.setConversation(id);
+            
+            
+
+            this.setConversationStatus(
+                response.conversation.status
+            );
 
             await this.api.markAsRead(
               `${this.conversationsUrl}/${id}`
@@ -150,6 +157,47 @@ class SupplierMessenger
 
 
     }
+
+    setConversationStatus(status)
+    {
+        const input = document.getElementById('conversation-input');
+
+        const button =
+            document.querySelector(
+                '#conversation-form button[type="submit"]'
+            );
+
+        if (!input || !button) {
+            return;
+        }
+
+        const active = status === 'active';
+
+        input.disabled = !active;
+        button.disabled = !active;
+
+        if (active) {
+
+            input.placeholder = 'Write a message...';
+
+            button.classList.remove(
+                'opacity-50',
+                'cursor-not-allowed'
+            );
+
+        } else {
+
+            input.placeholder =
+                'This conversation has been closed.';
+
+            button.classList.add(
+                'opacity-50',
+                'cursor-not-allowed'
+            );
+
+        }
+    }
+
 
 
     initSupportDrawer()
@@ -192,7 +240,7 @@ class SupplierMessenger
                     'support-reason'
                 ).value;
 
-                console.log('Reason:', reason);
+                
 
             const response = await this.api.requestSupport(
                 `${this.conversationsUrl}/${this.currentConversation.id}`,
@@ -303,16 +351,17 @@ stopPolling()
 
 
 
-    updateHeader(header, hasSupport = false)
+    updateHeader(header, hasSupport = false, isSupport = false)
 {
 
-    console.log(header);
+    
 
 
      const support =
         document.getElementById(
             'conversation-request-support'
         );
+
 
 
     if (!header) {
@@ -403,7 +452,7 @@ stopPolling()
 
 if (support) {
 
-    if (hasSupport) {
+    if (isSupport || hasSupport) {
 
         support.classList.add('hidden');
 

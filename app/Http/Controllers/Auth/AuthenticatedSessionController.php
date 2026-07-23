@@ -30,6 +30,19 @@ class AuthenticatedSessionController extends Controller
         |--------------------------------------------------------------------------
         */
         if ($user->role === 'admin') {
+
+            // сохраняем последний выбранный режим
+            $user->setSetting('platform_mode', 'admin');
+
+            // создаем активный контекст администратора
+            session([
+                'active_mode' => 'admin',
+                'active_company_type' => null,
+                'active_company_id' => null,
+                'active_company_role' => 'admin',
+                'active_personal_mode' => 'admin',
+            ]);
+
             return redirect()->route('admin.home');
         }
 

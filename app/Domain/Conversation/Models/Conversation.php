@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
+use App\Domain\Conversation\Enums\ConversationStatus;
+
+
 class Conversation extends Model
 {
     protected $fillable = [
@@ -22,11 +25,13 @@ class Conversation extends Model
         'created_by',
         'last_message_id',
         'last_message_at',
+        'status',
     ];
 
     protected $casts = [
         'conversation_type' => ConversationType::class,
         'last_message_at' => 'datetime',
+        'status' => ConversationStatus::class,
     ];
 
     protected static function booted(): void

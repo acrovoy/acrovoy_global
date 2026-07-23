@@ -1,3 +1,11 @@
+@props([
+    'subjectType' => null,
+    'subjectId' => null,
+    'messagesUrl' => null,
+])
+
+
+
 <div
     id="conversation-drawer"
     class="fixed inset-y-0 right-0 h-full w-full max-w-[460px]
@@ -8,6 +16,7 @@
 
     data-subject-type="{{ $subjectType }}"
     data-subject-id="{{ $subjectId }}"
+    data-messages-url="{{ $messagesUrl ?? '' }}"
 >
 
     {{-- HEADER --}}
@@ -90,6 +99,7 @@
             <div class="flex justify-end mt-3">
 
                 <button
+                 id="conversation-send"
                     type="submit"
                     class="px-5 py-2.5
                            bg-gray-900

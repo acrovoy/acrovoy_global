@@ -54,6 +54,12 @@
                         </button>
                     </form>
 
+                    {{-- Private message --}}
+                    <button class="open-conversation text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded" data-subject-type="App\Models\User"
+    data-subject-id="{{ $user->id }}">
+                            Chat
+                        </button>
+
                     {{-- Edit --}}
                     <a href="{{ route('admin.users.edit', $user) }}"
                        class="text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded">
@@ -77,5 +83,11 @@
     </table>
 </div>
 
+
+<x-conversation.drawer
+    subjectType="App\Models\User"
+    :subjectId="$user->id"
+    :messagesUrl="url('/dashboard/admin/messenger/conversations')"
+/>
 
 @endsection

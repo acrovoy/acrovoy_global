@@ -21,100 +21,198 @@
     </div>
 
     {{-- MENU --}}
-    <ul class="space-y-1">
+<ul class="space-y-5">
 
+    {{-- DASHBOARD --}}
     <li>
-    <a href="{{ route('admin.home') }}"
-       class="menu-link {{ request()->routeIs('admin.home') ? 'bg-gray-100 font-semibold' : '' }}">
-        Overview
-    </a>
-</li>
 
-        <li>
-            <a href="{{ route('admin.products.index') }}"
-               class="menu-link {{ request()->routeIs('admin.products.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Products
-            </a>
-        </li>
+        <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+            Dashboard
+        </div>
 
-        <li>
-            <a href="{{ route('admin.users.index') }}"
-               class="menu-link {{ request()->routeIs('admin.users.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Users
-            </a>
-        </li>
+        <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
 
-        <li>
-            <a href="{{ route('admin.sellers.index') }}"
-               class="menu-link {{ request()->routeIs('admin.sellers.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Suppliers
-            </a>
-        </li>
+            <li>
+                <a href="{{ route('admin.home') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.home') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Overview
+                </a>
+            </li>
 
-        <li>
-            <a href="{{ route('admin.messenger.index') }}"
-               class="menu-link {{ request()->routeIs('admin.messenger.index*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Message Center
-            </a>
-        </li>
+        </ul>
 
-        <li>
-            <a href="{{ route('admin.orders.index') }}"
-               class="menu-link {{ request()->routeIs('admin.orders.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Orders & Disputes
-            </a>
-        </li>
+    </li>
 
-        <li>
-            <a href="{{ route('admin.shipping-center.main') }}"
-               class="menu-link {{ request()->routeIs('admin.shipping-center.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Shipping Center
-            </a>
-        </li>
 
-        <li>
-            <a href="{{ route('admin.currencies.index') }}"
-               class="menu-link {{ request()->routeIs('admin.currencies.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Currencies
-            </a>
-        </li>
+    {{-- CATALOG --}}
+    <li>
 
-        <li>
-            <a href="{{ route('admin.banners.index') }}"
-               class="menu-link {{ request()->routeIs('admin.banners.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Banners & Notes
-            </a>
-        </li>
+        <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+            Catalog
+        </div>
 
-        <li>
-            <a href="{{ route('admin.premium-plans.index') }}"
-               class="menu-link {{ request()->routeIs('admin.premium-plans.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Premium Plans
-            </a>
-        </li>
+        <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
 
-        <li>
-            <a href="{{ route('admin.faq.index') }}"
-               class="menu-link {{ request()->routeIs('admin.faq.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                FAQ
-            </a>
-        </li>
+            <li>
+                <a href="{{ route('admin.products.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.products.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Products
+                </a>
+            </li>
 
-        <li>
-            <a href="{{ route('admin.help.index') }}"
-               class="menu-link {{ request()->routeIs('admin.help.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Help Center
-            </a>
-        </li>
+        </ul>
 
-        <li>
-            <a href="{{ route('admin.settings.index') }}"
-               class="menu-link {{ request()->routeIs('admin.settings.*') ? 'bg-gray-100 font-semibold' : '' }}">
-                Settings
-            </a>
-        </li>
+    </li>
 
-    </ul>
+
+    {{-- USERS --}}
+    <li>
+
+        <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+            Users
+        </div>
+
+        <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
+
+            <li>
+                <a href="{{ route('admin.users.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.users.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Users
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.sellers.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.sellers.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Suppliers
+                </a>
+            </li>
+
+        </ul>
+
+    </li>
+
+
+    {{-- MESSAGE CENTER --}}
+    <li>
+
+        <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+            Message Center
+        </div>
+
+        <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
+
+            <li>
+                <a href="{{ route('admin.messenger.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.messenger.index') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Support Requests
+                </a>
+            </li>
+
+            <li>
+                <a href=""
+                   class="block py-1.5 text-sm text-stone-600 hover:text-stone-900 hover:font-medium">
+                    All Messages
+                </a>
+            </li>
+
+            <li>
+                <a href=""
+                   class="block py-1.5 text-sm text-stone-600 hover:text-stone-900 hover:font-medium">
+                    Notice Manager
+                </a>
+            </li>
+
+            
+        </ul>
+
+    </li>
+
+
+    {{-- ORDERS --}}
+    <li>
+
+        <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+            Commerce
+        </div>
+
+        <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
+
+            <li>
+                <a href="{{ route('admin.orders.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.orders.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Orders & Disputes
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.shipping-center.main') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.shipping-center.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Shipping Center
+                </a>
+            </li>
+
+        </ul>
+
+    </li>
+
+
+    {{-- SYSTEM --}}
+    <li>
+
+        <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+            System
+        </div>
+
+        <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
+
+            <li>
+                <a href="{{ route('admin.currencies.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.currencies.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Currencies
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.banners.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.banners.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Banners & Notes
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.premium-plans.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.premium-plans.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Premium Plans
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.faq.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.faq.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    FAQ
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.help.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.help.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Help Center
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.settings.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.settings.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Settings
+                </a>
+            </li>
+
+        </ul>
+
+    </li>
+
+</ul>
 
 </aside>
 
