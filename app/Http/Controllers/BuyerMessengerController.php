@@ -53,17 +53,19 @@ public function __construct(
     public function conversations()
 {
 
-    $buyerId =
-        $this->context->id();
+$identity = $this->context->identity();
 
-    $buyerType =
-        $this->context->type();
+    $buyerId = $identity['entity_id'];
+
+    $buyerType = $identity['entity_type'];
 
 
 
     $conversations =
         $this->buyerConversations
-            ->execute($buyerType, $buyerId)
+            ->execute($identity['entity_type'],
+            $identity['entity_id'],
+            $identity['platform_role'],)
             ->get();
 
 
@@ -256,7 +258,7 @@ public function requestSupport(
         'reason' => ['nullable', 'string', 'max:1000'],
     ]);
 
-    $this->requestSupportAction->execute(
+    $message = $this->requestSupportAction->execute(
         conversation: $conversation,
         requesterType: $this->context->type(),
         requesterId: $this->context->id(),
@@ -264,8 +266,41 @@ public function requestSupport(
     );
 
     return response()->json([
+
         'success' => true,
-        'message' => 'Support request has been submitted.',
+
+        'message' => [
+
+            'id' => $message->id,
+
+            'message' => $message->message,
+
+            'type' => $message->message_type,
+
+            'created_at' =>
+            $this->dateFormatter->formatConversation(
+                $message->created_at,
+                auth()->user()->timezone ?? config('app.timezone'),
+            ),
+
+            'is_mine' => true,
+
+            'sender' => [
+
+                'id' => auth()->id(),
+
+                'name' => 'Acrovoy System',
+
+                'avatar' => asset('images/support_avatar.png'),
+
+                'position' => 'System',
+
+                'company' => '',
+
+            ],
+
+        ],
+
     ]);
 
 }

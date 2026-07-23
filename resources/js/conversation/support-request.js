@@ -84,61 +84,61 @@ export default class SupportRequestDrawer
 
 
 
-    async submit()
-    {
+    async submit() {
 
-       
+    console.group('=== Support Request ===');
 
-
+    try {
 
         const subject =
-            document.getElementById(
-                'support-subject'
-            ).value;
-
-
+            document.getElementById('support-subject').value;
 
         const category =
-            document.getElementById(
-                'support-category'
-            ).value;
-
-
+            document.getElementById('support-category').value;
 
         const description =
-            document.getElementById(
-                'support-description'
-            ).value;
+            document.getElementById('support-description').value;
 
+        console.log('Request payload:', {
+            subject,
+            category,
+            description,
+        });
 
+        const response = await this.api.request(
+            '/dashboard/support/request',
+            'POST',
+            {
+                subject,
+                category,
+                description,
+            }
+        );
 
-             const response = await this.api.request(
-    '/dashboard/support/request',
-    'POST',
-    {
-        subject,
-        category,
-        description,
-    }
-);
-
-
-
-console.log(response);
-
-
-     
+        console.log('API response:', response);
 
         this.close();
 
-         if (this.onCreated) {
-    await this.onCreated(response);
-}
+        if (this.onCreated) {
+            await this.onCreated(response);
+        }
 
-        
+    } catch (error) {
 
+        console.error('Support request failed:', error);
+
+        if (error.response) {
+            console.error('Response:', error.response);
+        }
+
+        throw error;
+
+    } finally {
+
+        console.groupEnd();
 
     }
+}
 
 
 

@@ -20,125 +20,122 @@ class CreateSupportRequestAction
 public function execute(
 
     string $requesterType,
-
     int $requesterId,
-
+    string $requesterPlatformRole,
     string $subject,
-
     ?string $category,
-
     string $description
 
-)
-{
+) {
 
+    Log::info('----- CreateSupportRequestAction -----');
 
+    Log::info('Arguments', [
+        'requesterType' => $requesterType,
+        'requesterId' => $requesterId,
+        'requesterPlatformRole' => $requesterPlatformRole,
+        'subject' => $subject,
+        'category' => $category,
+        'description' => $description,
+    ]);
 
-$conversation = Conversation::create([
+    Log::info('Creating conversation');
 
-'conversation_type' => ConversationType::SUPPORT,
+    $conversation = Conversation::create([
 
-     'title' => $subject,
+        'conversation_type' => ConversationType::SUPPORT,
 
-    'subtitle' => $category,
+        'title' => $subject,
 
-    'created_by' => auth()->id(),
+        'subtitle' => $category,
 
-]);
+        'created_by' => auth()->id(),
 
+    ]);
 
+    Log::info('Conversation created', [
+        'id' => $conversation->id,
+    ]);
 
+    Log::info('Creating requester participant');
 
+    ConversationParticipant::create([
 
-/*
-|--------------------------------------------------------------------------
-| Requester
-|--------------------------------------------------------------------------
-*/
+        'conversation_id' => $conversation->id,
 
+        'context_type' => $requesterType,
 
-ConversationParticipant::create([
+        'context_id' => $requesterId,
 
-    'conversation_id'=>$conversation->id,
+        'platform_role' => $requesterPlatformRole,
 
-    'context_type'=>$requesterType,
+    ]);
 
-    'context_id'=>$requesterId,
+    Log::info('Requester participant created');
 
-    'role'=>'member',
+    Log::info('Searching admin');
 
-]);
+    $admin = User::where('role', 'admin')->first();
 
+    Log::info('Admin found', [
+        'id' => $admin?->id,
+    ]);
 
+    Log::info('Creating support participant');
 
+    ConversationParticipant::create([
 
-/*
-|--------------------------------------------------------------------------
-| Support agent
-|--------------------------------------------------------------------------
-*/
+        'conversation_id' => $conversation->id,
 
+        'context_type' => User::class,
 
-$admin =
-    User::where('role','admin')
-        ->first();
+        'context_id' => $admin->id,
 
+        'platform_role' => 'support',
 
+        'role' => 'support',
 
-ConversationParticipant::create([
+    ]);
 
-    'conversation_id'=>$conversation->id,
+    Log::info('Support participant created');
 
-    'context_type'=>User::class,
+    Log::info('Creating first message');
 
-    'context_id'=>$admin->id,
+    $message = Message::create([
 
-    'role'=>'support',
+        'conversation_id' => $conversation->id,
 
-]);
+        'sender_type' => $requesterType,
 
+        'sender_id' => $requesterId,
 
+        'message_type' => 'text',
 
+        'message' => $description,
 
+        'created_by' => auth()->id(),
 
-/*
-|--------------------------------------------------------------------------
-| First message
-|--------------------------------------------------------------------------
-*/
+    ]);
 
+    Log::info('Message created', [
+        'id' => $message->id,
+    ]);
 
-$message = $description; 
+    Log::info('Updating conversation');
 
+    $conversation->update([
 
-$message = Message::create([
+        'last_message_id' => $message->id,
 
-    'conversation_id'=>$conversation->id,
+        'last_message_at' => $message->created_at,
 
-    'sender_type'=>$requesterType,
+    ]);
 
-    'sender_id'=>$requesterId,
+    Log::info('Conversation updated');
 
-    'message_type'=>'text',
+    Log::info('----- DONE -----');
 
-    'message'=>$message,
-
-    'created_by' => auth()->id(),
-
-]);
-
-
-$conversation->update([
-
-    'last_message_id' => $message->id,
-
-    'last_message_at' => $message->created_at,
-
-]);
-
-return $conversation;
-
-
+    return $conversation;
 }
 
 

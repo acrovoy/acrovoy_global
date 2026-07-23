@@ -17,6 +17,7 @@ use App\Domain\Conversation\Resolvers\ProductHeaderResolver;
 use App\Domain\Conversation\Resolvers\RfqHeaderResolver;
 use App\Domain\Conversation\Resolvers\ProjectHeaderResolver;
 use App\Services\Company\ActiveContextService;
+use App\Models\User;
 
 use App\Domain\Conversation\Actions\FormatConversationMessageAction;
 
@@ -59,9 +60,9 @@ class ConversationController extends Controller
         ]);
 
 
-        $user = Auth::user();
-
-
+        
+        $identity = $this->context->identity();
+        
 
         /*
         |--------------------------------------------------------------------------
@@ -73,9 +74,10 @@ class ConversationController extends Controller
             ->findOrCreateBusinessConversation(
                 subjectType: $data['subject_type'],
                 subjectId: $data['subject_id'],
-                createdBy: $user->id,
-                contextType: $this->context->type(),
-                contextId: $this->context->id(),
+                createdBy: $identity['user_id'],
+                contextType: $identity['entity_type'],
+                contextId: $identity['entity_id'],
+                platformRole: $identity['platform_role'],
             );
 
 
@@ -106,21 +108,21 @@ class ConversationController extends Controller
                         $conversation->id,
 
                     actorType:
-                        get_class($user),
+                        User::class,
 
                     actorId:
-                        $user->id,
+                        $identity['user_id'],
 
 
                     contextType:
-                        $this->context->type(),
+                        $identity['entity_type'],
 
                     contextId:
-                        $this->context->id(),
+                        $identity['entity_id'],
 
 
-                    role:
-                        'member',
+                    platformRole:
+                        $identity['platform_role'],
                 )
 
             );
@@ -162,8 +164,8 @@ class ConversationController extends Controller
     ->map(fn ($message) => $this->formatMessage->execute(
         $message,
         auth()->user()->timezone ?? config('app.timezone'),
-        $this->context->type(),
-        $this->context->id(),
+        $identity['entity_type'],
+        $identity['entity_id'],
     )),
 
         ]);
@@ -174,7 +176,6 @@ class ConversationController extends Controller
     /**
      * Формирование шапки.
      *
-     * Пока заглушка.
      *
      * Позже здесь будет Subject Resolver:
      *

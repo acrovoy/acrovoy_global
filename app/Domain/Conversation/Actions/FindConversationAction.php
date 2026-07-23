@@ -12,6 +12,8 @@ class FindConversationAction
      */
     public function execute(CreateConversationData $data): ?Conversation
     {
+
+    
         $query = Conversation::query()
             ->where('conversation_type', $data->conversationType);
 
@@ -85,9 +87,15 @@ class FindConversationAction
                                 $data->contextId
                             );
 
+                        if ($data->platformRole) {
+
+                            $participantQuery->where(
+                                'platform_role',
+                                $data->platformRole
+                            );
+                        }
                     }
                 );
-
             }
 
 

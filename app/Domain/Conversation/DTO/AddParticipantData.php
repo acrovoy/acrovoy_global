@@ -17,6 +17,8 @@ final class AddParticipantData
 
         public int $actorId,
 
+        public readonly ?string $platformRole,
+
         /**
          * От имени какого контекста ведется переписка.
          *

@@ -3,11 +3,10 @@
 @php
 $user = $user ?? auth()->user();
 
-try {
+
 $ctx = $context ?? app(\App\Services\Company\ActiveContextService::class);
-} catch (\Throwable $e) {
-$ctx = null;
-}
+$identity = $ctx?->identity() ?? [];
+
 
 $rfq = $rfq ?? null;
 $offer = $offer ?? null;
@@ -36,37 +35,49 @@ $offerVersion = $offerVersion ?? null;
     <div id="debug-content" class="p-4 space-y-1" style="display:none">
 
 
-        
 
-        {{-- USER --}}
-        <div>
-            user_id: {{ $user?->id ?? 'guest' }}
-        </div>
-
-        {{-- CONTEXT --}}
-        <div>
-            mode:
-            <span class="text-yellow-300">
-                {{ $ctx?->mode() ?? 'null' }}
-            </span>
-        </div>
 
         <div>
-            company_id: {{ $ctx?->id() ?? 'null' }}
-        </div>
+    mode:
+    <span class="text-yellow-300">
+        {{ $identity['mode'] ?? 'null' }}
+    </span>
+</div>
 
-        <div>
-            company_type:
-            {{ $ctx?->type() ? class_basename($ctx->type()) : 'null' }}
-        </div>
+<div>
+    entity_id:
+    {{ $identity['entity_id'] ?? 'null' }}
+</div>
 
-        <div >
-            role: {{ $ctx?->role() ?? 'null' }}
-        </div>
+<div>
+    entity_type:
+    {{ isset($identity['entity_type'])
+        ? class_basename($identity['entity_type'])
+        : 'null' }}
+</div>
+
+<div>
+    platform_role:
+    <span class="text-cyan-300">
+        {{ $identity['platform_role'] ?? 'null' }}
+    </span>
+</div>
+
+<div>
+    company_role:
+    <span class="text-purple-300">
+        {{ $identity['company_role'] ?? 'null' }}
+    </span>
+</div>
+
+<div>
+    user_id:
+    {{ $identity['user_id'] ?? 'null' }}
+</div>
 
         <hr class="border-gray-700 my-1 mt-2">
 
-<div class="text-white font-bold mt-2">
+        <div class="text-white font-bold mt-2">
             Session RAW
         </div>
 
@@ -78,7 +89,7 @@ $offerVersion = $offerVersion ?? null;
 
         <div>active_personal_mode: {{ session('active_personal_mode') }}</div>
 
-        
+
 
         {{-- POLICY --}}
         @if($product)

@@ -105,7 +105,7 @@
 
 
       {{-- ДЕБАГ БАР --}}
-   <!-- <x-debug.active-context-panel />  -->
+   <x-debug.active-context-panel />
 
 
     

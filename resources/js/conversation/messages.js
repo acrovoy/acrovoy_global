@@ -32,6 +32,10 @@ export default class ConversationMessages
      */
     append(message)
     {
+
+        console.log('APPEND', message);
+
+        
         this.container.insertAdjacentHTML(
             'beforeend',
             this.messageTemplate(message)

@@ -9,29 +9,25 @@ class SupplierConversationsQuery
 {
 
     public function execute(
-        string $supplierType,
-        int $supplierId
+        string $contextType,
+        int $contextId,
+        ?string $platformRole = null,
     ) {
 
         return Conversation::query()
 
             ->whereHas(
                 'participants',
-                function ($query) use ($supplierType, $supplierId) {
+                function ($query) use ($contextType, $contextId, $platformRole) {
 
 
-                    $query->where(
-                        'context_type',
-                        $supplierType
-                    )
+                    $query
+                        ->where('context_type', $contextType)
+                        ->where('context_id', $contextId);
 
-
-                    ->where(
-                        'context_id',
-                        $supplierId
-                    );
-
-
+                    if ($platformRole) {
+                        $query->where('platform_role', $platformRole);
+                    }
                 }
             )
 
@@ -39,36 +35,35 @@ class SupplierConversationsQuery
             ->with([
 
 
-                'participant' => function ($query) use ($supplierType, $supplierId) {
+                'participant' => function ($query) use ($contextType, $contextId, $platformRole) {
 
                     $query
-                        ->where('context_type', $supplierType)
-                        ->where('context_id', $supplierId);
+                        ->where('context_type', $contextType)
+                        ->where('context_id', $contextId);
 
+                    if ($platformRole) {
+                        $query->where('platform_role', $platformRole);
+                    }
                 },
 
 
                 'participants',
                 'lastMessage',
 
-                'messages' => function($query){
+                'messages' => function ($query) {
 
                     $query
                         ->latest()
                         ->limit(1);
-
                 },
 
-                
 
-                
+
+
 
             ])
 
 
             ->latest('updated_at');
-
-
     }
-
 }

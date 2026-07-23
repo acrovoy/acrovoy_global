@@ -55,16 +55,16 @@ public function __construct(
     public function conversations()
 {
 
-    $supplierId =
-        $this->context->id();
-
-    $supplierType =
-        $this->context->type();
-
+ $identity = $this->context->identity();
+    
+$supplierType = $identity['entity_type'];
+$supplierId = $identity['entity_id'];
 
     $conversations =
         $this->supplierConversations
-            ->execute($supplierType, $supplierId)
+            ->execute($identity['entity_type'],
+            $identity['entity_id'],
+            $identity['platform_role'],)
             ->get();
 
 

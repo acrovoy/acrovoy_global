@@ -8,6 +8,9 @@ use App\Domain\Conversation\Models\Message;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
+use App\Models\Supplier;
+use App\Models\Buyer;
+
 class RequestSupportAction
 {
     public function execute(
@@ -60,7 +63,30 @@ class RequestSupportAction
             |--------------------------------------------------------------------------
             */
 
-            $text = class_basename($requesterType) . ' requested support.';
+            $name = match ($requesterType) {
+
+   User::class => tap(
+        User::find($requesterId),
+        fn () => null
+    )
+        ? trim(
+            (User::find($requesterId)?->name ?? '') . ' ' .
+            (User::find($requesterId)?->last_name ?? '')
+        )
+        : 'User',
+
+    Supplier::class =>
+        Supplier::find($requesterId)?->name ?? 'Supplier',
+
+    Buyer::class =>
+        Buyer::find($requesterId)?->name ?? 'Buyer',
+
+    default =>
+        class_basename($requesterType),
+};
+
+
+            $text = "{$name} requested support.";
 
             if ($reason) {
                 $text .= "\nReason: {$reason}";

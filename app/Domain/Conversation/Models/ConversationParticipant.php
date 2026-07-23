@@ -18,6 +18,7 @@ class ConversationParticipant extends Model
         'context_id',
 
         'role',
+        'platform_role',
 
         'last_read_at',
     ];

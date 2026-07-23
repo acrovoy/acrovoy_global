@@ -17,62 +17,74 @@ class SupportRequestController extends Controller
     ) {}
 
     public function store(Request $request)
-    {
+{
+    Log::info('========== SUPPORT REQUEST ==========');
 
+    $identity = $this->context->identity();
 
+    Log::info('Identity', $identity);
 
+    Log::info('Request payload', $request->all());
 
-        $data = $request->validate([
+    $data = $request->validate([
 
-            'subject' => [
-                'required',
-                'string',
-                'max:150',
-            ],
+        'subject' => [
+            'required',
+            'string',
+            'max:150',
+        ],
 
-            'category' => [
-                'nullable',
-                'string',
-            ],
+        'category' => [
+            'nullable',
+            'string',
+        ],
 
-            'description' => [
-                'required',
-                'string',
-                'max:2000',
-            ],
+        'description' => [
+            'required',
+            'string',
+            'max:2000',
+        ],
 
-        ]);
+    ]);
 
-        $conversation = $this->action->execute(
+    Log::info('Validated data', $data);
 
-            requesterType: $this->context->type(),
+    $conversation = $this->action->execute(
 
-            requesterId: $this->context->id(),
+        requesterType: $identity['entity_type'],
+        requesterId: $identity['entity_id'],
+        requesterPlatformRole: $identity['platform_role'],
 
-            subject: $data['subject'],
+        subject: $data['subject'],
+        category: $data['category'] ?? null,
+        description: $data['description'],
 
-            category: $data['category'] ?? null,
+    );
 
-            description: $data['description']
+    Log::info('Conversation created', [
+        'conversation_id' => $conversation->id,
+    ]);
 
-        );
+    $conversation->load([
+        'messages.sender',
+        'messages.creator',
+    ]);
 
-        $conversation->load([
-            'messages.sender',
-            'messages.creator',
-        ]);
+    Log::info('Conversation loaded');
 
-       return response()->json([
-    'success' => true,
+    return response()->json([
 
-    'conversation' => [
-        'id' => $conversation->id,
-    ],
+        'success' => true,
 
-    'header' => app(ConversationHeaderService::class)
-        ->resolve($conversation),
+        'conversation' => [
+            'id' => $conversation->id,
+        ],
 
-    'has_support' => true,
-]);
-    }
+        'header' => app(ConversationHeaderService::class)
+            ->resolve($conversation),
+
+        'has_support' => true,
+
+    ]);
+}
 }

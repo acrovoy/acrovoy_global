@@ -302,8 +302,34 @@ public function supplierType(): string
 
         'mode' => $this->mode(),
 
+         /*
+         |----------------------------------------------------------
+         | Роль на платформе
+         | buyer / supplier
+         |----------------------------------------------------------
+         */
+        'platform_role' => $this->platformRole(),
+
+        /*
+         |----------------------------------------------------------
+         | Роль внутри компании
+         | owner / sales / administrator / ...
+         |----------------------------------------------------------
+         */
+        'company_role' => $this->companyRole(),
+
+        
+        /*
+         | Для обратной совместимости
+         |----------------------------------------------------------
+         */
         'role' => $this->role(),
 
+        /*
+         |----------------------------------------------------------
+         | Представляемый контекст
+         |----------------------------------------------------------
+         */
         'entity_type' => $this->isCompany()
             ? $this->type()
             : User::class,
@@ -313,6 +339,40 @@ public function supplierType(): string
             : $this->user()?->id,
     ];
 }
+
+
+public function platformRole(): ?string
+{
+    if ($this->isCompany()) {
+
+        return match ($this->type()) {
+            Supplier::class => 'supplier',
+            Buyer::class => 'buyer',
+            default => null,
+        };
+    }
+
+
+    $user = $this->user();
+
+    return session(
+        'active_personal_mode',
+        $user?->setting('platform_mode', 'buyer')
+    );
+}
+
+/**
+ * owner / administrator / sales / logistics...
+ */
+public function companyRole(): ?string
+{
+    if (!$this->isCompany()) {
+        return null;
+    }
+
+    return $this->ctx()['role'] ?? null;
+}
+
 
 
 }

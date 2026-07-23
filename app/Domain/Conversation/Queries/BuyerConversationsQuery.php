@@ -9,27 +9,25 @@ class BuyerConversationsQuery
 {
 
     public function execute(
-        string $buyerType,
-        int $buyerId
+        string $contextType,
+        int $contextId,
+        ?string $platformRole = null,
     ) {
 
         return Conversation::query()
 
             ->whereHas(
                 'participants',
-                function ($query) use ($buyerType, $buyerId) {
+                function ($query) use ($contextType, $contextId, $platformRole) {
 
 
-                    $query->where(
-                        'context_type',
-                        $buyerType
-                    )
+                    $query
+                        ->where('context_type', $contextType)
+                        ->where('context_id', $contextId);
 
-
-                    ->where(
-                        'context_id',
-                        $buyerId
-                    );
+                    if ($platformRole) {
+                        $query->where('platform_role', $platformRole);
+                    }
 
 
                 }
@@ -39,11 +37,15 @@ class BuyerConversationsQuery
             ->with([
 
 
-            'participant' => function ($query) use ($buyerType, $buyerId) {
+            'participant' => function ($query) use ($contextType, $contextId, $platformRole) {
 
                     $query
-                        ->where('context_type', $buyerType)
-                        ->where('context_id', $buyerId);
+                        ->where('context_type', $contextType)
+                        ->where('context_id', $contextId);
+
+                    if ($platformRole) {
+                        $query->where('platform_role', $platformRole);
+                    }
 
                 },
 

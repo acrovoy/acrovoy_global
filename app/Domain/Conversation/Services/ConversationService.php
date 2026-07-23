@@ -57,12 +57,14 @@ class ConversationService
         int $createdBy,
         ?string $contextType = null,
         ?int $contextId = null,
+        ?string $platformRole = null,
     ): Conversation {
 
         $data = new CreateConversationData(
             conversationType: ConversationType::BUSINESS,
             subjectType: $subjectType,
             subjectId: $subjectId,
+            platformRole: $platformRole,
             createdBy: $createdBy,
             contextType: $contextType,
             contextId: $contextId,
@@ -87,13 +89,15 @@ class ConversationService
      * Создать личный Conversation.
      */
     public function findOrCreatePrivateConversation(
-        int $createdBy
+        int $createdBy,
+        ?string $platformRole = null,
     ): Conversation {
 
         $data = new CreateConversationData(
             conversationType: ConversationType::PRIVATE,
             subjectType: null,
             subjectId: null,
+            platformRole: $platformRole,
             createdBy: $createdBy,
         );
 

@@ -89,7 +89,7 @@ class AddSubjectParticipantsAction
                     $supplier->id,
 
 
-                role:
+                platformRole:
                     'supplier',
 
             )

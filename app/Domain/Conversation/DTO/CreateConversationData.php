@@ -15,6 +15,15 @@ final class CreateConversationData
         public readonly ?int $subjectId,
 
         /**
+         * Роль участника в данном контексте.
+         *
+         * User context:
+         * buyer / supplier
+       
+         */
+        public readonly ?string $platformRole,
+
+        /**
          * Кто создал Conversation.
          *
          * Это пользователь, который инициировал действие.

@@ -22,11 +22,15 @@ class AddParticipantAction
 
                     'context_type' => $data->contextType,
                     'context_id'   => $data->contextId,
+
+                    'platform_role' => $data->platformRole,
                 ],
                 [
                     'actor_type' => $data->actorType,
                     'actor_id'   => $data->actorId,
                     'role'       => $data->role,
+
+                    
                 ]
             );
 
