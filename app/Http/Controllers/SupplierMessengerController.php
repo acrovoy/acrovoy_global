@@ -10,10 +10,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use App\Domain\Conversation\Queries\SupplierConversationsQuery;
+use App\Domain\Conversation\Queries\NoticeConversationsQuery;
 
 use App\Domain\Conversation\Actions\RequestSupportAction;
 use App\Domain\Conversation\Actions\MarkConversationReadAction;
 use App\Domain\Conversation\Actions\LoadNewMessagesAction;
+
 use App\Services\Date\UserDateFormatter;
 
 use App\Domain\Conversation\Enums\ConversationType;
@@ -28,6 +30,7 @@ class SupplierMessengerController extends Controller
 
 public function __construct(
     private SupplierConversationsQuery $supplierConversations,
+    private NoticeConversationsQuery $noticeConversations,
     private ActiveContextService $context,
     private ConversationHeaderService $headerService,
     private MarkConversationReadAction $markConversationRead,
@@ -58,16 +61,39 @@ public function __construct(
 {
 
  $identity = $this->context->identity();
+
+   $search = request('search');
     
 $supplierType = $identity['entity_type'];
 $supplierId = $identity['entity_id'];
 
-    $conversations =
-        $this->supplierConversations
-            ->execute($identity['entity_type'],
+    
+
+
+$conversations =
+
+    $this->supplierConversations
+        ->execute(
+            $identity['entity_type'],
             $identity['entity_id'],
-            $identity['platform_role'],)
-            ->get();
+            $identity['platform_role'],
+            $search
+        )
+        ->get()
+
+        ->merge(
+
+            $this->noticeConversations
+                ->execute($search)
+                ->get()
+
+        )
+
+        ->sortByDesc('updated_at')
+        ->values();
+
+
+        
 
 
     return response()->json([
@@ -116,6 +142,8 @@ $supplierId = $identity['entity_id'];
                                 return $participant->role === 'support';
 
                             }),
+
+              
 
                 ];
 

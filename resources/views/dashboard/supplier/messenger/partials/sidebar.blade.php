@@ -55,6 +55,7 @@
 
 
             <input
+                id="conversation-search"
                 type="text"
                 placeholder="Search conversations..."
                 class="

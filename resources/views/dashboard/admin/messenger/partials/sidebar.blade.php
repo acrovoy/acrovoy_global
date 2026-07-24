@@ -6,7 +6,7 @@
 
         <div>
             <h2 class="text-lg font-semibold text-stone-900">
-                Message center
+                Support Requests
             </h2>
 
             <p class="text-sm text-stone-500 mt-1">

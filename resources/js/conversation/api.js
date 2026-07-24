@@ -84,6 +84,17 @@ export default class ConversationApi
         );
     }
 
+
+    async createNotice(data)
+{
+    return this.request(
+        '/dashboard/admin/messenger/notices',
+        'POST',
+        data
+    );
+}
+
+
     /**
      * Отметить Conversation прочитанным.
      */

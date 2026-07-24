@@ -18,6 +18,10 @@ use App\Domain\Conversation\Models\Message;
 use App\Domain\Conversation\Actions\AddSubjectParticipantsAction;
 use App\Domain\Conversation\Actions\DeleteEmptyConversationsAction;
 use App\Domain\Conversation\Actions\DeleteConversationMessageAction;
+use App\Domain\Conversation\Actions\CloseConversationAction;
+use App\Domain\Conversation\Actions\ReopenConversationAction;
+use App\Domain\Conversation\Actions\DeleteConversationAction;
+use App\Domain\Conversation\Actions\CreateNoticeConversationAction;
 
 
 
@@ -33,6 +37,10 @@ class ConversationService
         private AddSubjectParticipantsAction $addSubjectParticipants,
         private readonly DeleteEmptyConversationsAction $deleteEmptyConversations,
         private readonly DeleteConversationMessageAction $deleteConversationMessageAction,
+        private readonly CloseConversationAction $closeConversationAction,
+        private readonly ReopenConversationAction $reopenConversationAction,
+        private readonly DeleteConversationAction $deleteConversationAction,
+        private readonly CreateNoticeConversationAction $createNoticeConversationAction,
 
     ) {
     }
@@ -211,5 +219,44 @@ public function deleteMessage(
         ->execute($message);
 }
 
+public function closeConversation(
+    Conversation $conversation
+): Conversation
+{
+    return $this->closeConversationAction
+        ->execute($conversation);
+}
+
+public function reopenConversation(
+    Conversation $conversation
+): Conversation
+{
+    return $this->reopenConversationAction
+        ->execute($conversation);
+}
+
+public function deleteConversation(
+    Conversation $conversation
+): void
+{
+    $this->deleteConversationAction
+        ->execute($conversation);
+}
+
+public function createNotice(
+    string $title,
+    string $subtitle,
+    string $description,
+    int $createdBy,
+): Conversation {
+
+    return $this->createNoticeConversationAction
+        ->execute(
+            $title,
+            $subtitle,
+            $description,
+            $createdBy,
+        );
+}
     
 }

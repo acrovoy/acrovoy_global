@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 use App\Domain\Conversation\Queries\BuyerConversationsQuery;
+use App\Domain\Conversation\Queries\NoticeConversationsQuery;
 use App\Services\Company\ActiveContextService;
 
 use App\Domain\Conversation\Actions\MarkConversationReadAction;
@@ -26,6 +27,7 @@ class BuyerMessengerController extends Controller
 
 public function __construct(
     private BuyerConversationsQuery $buyerConversations,
+    private NoticeConversationsQuery $noticeConversations,
     private ActiveContextService $context,
     private ConversationHeaderService $headerService,
     private MarkConversationReadAction $markConversationRead,
@@ -57,6 +59,8 @@ public function __construct(
 
 $identity = $this->context->identity();
 
+$search = request('search');
+
     $buyerId = $identity['entity_id'];
 
     $buyerType = $identity['entity_type'];
@@ -64,11 +68,26 @@ $identity = $this->context->identity();
 
 
     $conversations =
-        $this->buyerConversations
-            ->execute($identity['entity_type'],
+
+    $this->buyerConversations
+        ->execute(
+            $identity['entity_type'],
             $identity['entity_id'],
-            $identity['platform_role'],)
-            ->get();
+            $identity['platform_role'],
+            $search
+        )
+        ->get()
+
+        ->merge(
+
+            $this->noticeConversations
+                ->execute($search)
+                ->get()
+
+        )
+
+        ->sortByDesc('updated_at')
+        ->values();
 
 
 

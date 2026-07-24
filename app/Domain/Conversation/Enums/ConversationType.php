@@ -16,6 +16,12 @@ enum ConversationType: string
     case BUSINESS = 'business';
 
     /**
+     * Нотисы.
+     */
+    case NOTICE = 'notice';
+
+
+    /**
      * Групповой чат.
      * Зарезервировано на будущее.
      */
@@ -47,6 +53,7 @@ enum ConversationType: string
         return match ($this) {
             self::PRIVATE => 'Private',
             self::BUSINESS => 'Business',
+            self::NOTICE => 'Notice',
             self::GROUP => 'Group',
             self::SYSTEM => 'System',
             self::SUPPORT => 'Support',

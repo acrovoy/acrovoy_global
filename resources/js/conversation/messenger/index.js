@@ -20,6 +20,7 @@ class SupplierMessenger
             'conversation-list'
         );
 
+        console.log(1);
     this.conversationsUrl =
         conversationList.dataset.url;
 
@@ -78,6 +79,10 @@ class SupplierMessenger
 
         this.initSupportDrawer();
 
+        this.initDeleteConversation();
+
+        this.initNoticeDrawer();
+
         this.pollTimer = null;
         this.lastMessageId = 0;
 
@@ -108,6 +113,10 @@ class SupplierMessenger
 
         try {
 
+             console.log('BASE URL =', this.conversationsUrl);
+        console.log('ID =', id);
+        console.log('URL =', `${this.conversationsUrl}/${id}`);
+        
 
             const response =
     await this.api.request(
@@ -141,7 +150,8 @@ class SupplierMessenger
             this.updateHeader(
                 response.header,
                 response.has_support,
-                response.conversation.type === 'private'
+                response.conversation.type === 'private',
+                response.conversation.type
             );
 
 
@@ -155,7 +165,10 @@ class SupplierMessenger
             );
 
 
-            
+            this.renderConversationActions(
+                response.conversation
+            );
+                        
 
             await this.api.markAsRead(
               `${this.conversationsUrl}/${id}`
@@ -180,14 +193,125 @@ class SupplierMessenger
 
     }
 
+    async toggleConversationStatus(conversation)
+{
+    const closing =
+        conversation.status === 'active';
+
+    window.confirmModal.open({
+
+        type: closing ? 'danger' : 'success',
+
+        title: closing
+            ? 'Close conversation'
+            : 'Reopen conversation',
+
+        message: closing
+            ? 'Close this conversation?'
+            : 'Reopen this conversation?',
+
+        description: closing
+            ? 'The conversation will remain in history and can be reopened later.'
+            : 'Participants will be able to send messages again.',
+
+        confirmText: closing
+            ? 'Close'
+            : 'Reopen',
+
+        onConfirm: async () => {
+
+            try {
+
+                const response =
+                    await this.api.request(
+                        `${this.conversationsUrl}/${conversation.id}/${closing ? 'close' : 'reopen'}`,
+                        'POST'
+                    );
+
+                    console.log(response);
+
+                this.currentConversation =
+                    response.conversation;
+
+                this.setConversationStatus(
+                    response.conversation.status
+                );
+
+                this.renderConversationActions(
+                    response.conversation
+                );
+
+                await this.sidebar.load();
+
+            } catch (e) {
+
+                console.error(e);
+
+            }
+
+        }
+
+    });
+}
+
+
     setConversationStatus(status)
     {
         const input = document.getElementById('conversation-input');
+
+        const closeButton =
+            document.getElementById(
+                'conversation-close'
+            );
+
+        if (closeButton) {
+
+            if (status === 'active') {
+
+                closeButton.disabled = false;
+
+                closeButton.classList.remove(
+                    'opacity-50',
+                    'cursor-not-allowed'
+                );
+
+            } else {
+
+                closeButton.disabled = true;
+
+                closeButton.classList.add(
+                    'opacity-50',
+                    'cursor-not-allowed'
+                );
+
+            }
+
+        }
+
 
         const button =
             document.querySelector(
                 '#conversation-form button[type="submit"]'
             );
+
+
+            const form =
+    document.getElementById('conversation-form');
+
+    if (this.currentConversation?.type === 'notice') {
+
+    if (form) {
+        form.classList.add('hidden');
+    }
+
+    return;
+}
+
+if (form) {
+    form.classList.remove('hidden');
+}
+
+
 
         if (!input || !button) {
             return;
@@ -286,7 +410,282 @@ class SupplierMessenger
 }
 
  
+initDeleteConversation()
+{
+    const button =
+        document.getElementById(
+            'conversation-delete'
+        );
 
+    if (!button) {
+        return;
+    }
+
+    button.onclick = () => {
+
+        if (!this.currentConversation) {
+            return;
+        }
+
+        window.confirmModal.open({
+
+            type: 'danger',
+
+            title: 'Delete conversation',
+
+            message:
+                'Delete this conversation?',
+
+            description:
+                'This action is permanent. The conversation, all messages and all participants will be permanently deleted.',
+
+            confirmText:
+                'Delete',
+
+            onConfirm: async () => {
+
+                try {
+
+                    await this.api.request(
+                        `${this.conversationsUrl}/${this.currentConversation.id}`,
+                        'DELETE'
+                    );
+
+                    this.currentConversation = null;
+
+                    this.messages.render([]);
+
+                    this.showEmptyHeader();
+
+                    document.getElementById(
+                        'conversation-header-title'
+                    )?.classList.add('hidden');
+
+                    document.getElementById(
+                        'conversation-header-subtitle'
+                    )?.classList.add('hidden');
+
+                    document.getElementById(
+                        'conversation-header-avatar'
+                    )?.classList.add('hidden');
+
+                    document.getElementById(
+                        'conversation-close'
+                    )?.classList.add('hidden');
+
+                    document.getElementById(
+                        'conversation-toggle-status'
+                    )?.classList.add('hidden');
+
+                    button.classList.add('hidden');
+
+                    await this.sidebar.load();
+
+                } catch (e) {
+
+                    console.error(e);
+
+                }
+
+            }
+
+        });
+
+    };
+}
+
+
+initNoticeDrawer()
+{
+
+      console.log('NOTICE INIT');
+
+    const drawer =
+        document.getElementById(
+            'create-notice-drawer'
+        );
+
+    if (!drawer) {
+        return;
+    }
+
+    const open =
+        document.getElementById(
+            'conversation-create-notice'
+        );
+
+    if (open) {
+
+        open.onclick = () => {
+
+            drawer.classList.remove('hidden');
+
+        };
+
+    }
+
+    drawer
+        .querySelectorAll('[data-close-notice]')
+        .forEach(button => {
+
+            button.onclick = () => {
+
+                drawer.classList.add('hidden');
+
+            };
+
+        });
+
+        const submit =
+    document.getElementById('submit-notice');
+
+if (submit) {
+
+    submit.onclick = async () => {
+
+    const title =
+        document.getElementById('notice-title').value.trim();
+
+    const subtitle =
+        document.getElementById('notice-subtitle').value.trim();
+
+    const description =
+        document.getElementById('notice-description').value.trim();
+
+    if (!title || !description) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await this.api.createNotice({
+
+                title,
+                subtitle,
+                description,
+
+            });
+
+            console.log(response);
+
+        drawer.classList.add('hidden');
+
+        document.getElementById('notice-title').value = '';
+        document.getElementById('notice-subtitle').value = '';
+        document.getElementById('notice-description').value = '';
+
+        await this.sidebar.load();
+
+        await this.openConversation(
+            response.conversation.id
+        );
+
+    } catch (e) {
+
+        console.error(e);
+
+    }
+
+};
+
+}
+
+
+}
+
+renderConversationActions(conversation)
+{
+    const button =
+        document.getElementById(
+            'conversation-toggle-status'
+        );
+
+    if (!button) {
+        return;
+    }
+
+    if (conversation.status === 'active') {
+
+        button.innerHTML = `
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="w-4 h-4"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+>
+    <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M6 18L18 6M6 6l12 12"
+    />
+</svg>
+
+Close conversation
+`;
+
+        button.className = `
+    inline-flex
+    items-center
+    gap-2
+    px-3
+    py-2
+    rounded-lg
+    border
+    border-red-200
+    bg-white
+    text-red-600
+    text-xs
+    font-medium
+    hover:bg-red-50
+    transition
+`;
+
+    } else {
+
+        button.innerHTML = `
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="w-4 h-4"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+>
+    <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M5 13l4 4L19 7"
+    />
+</svg>
+
+Reopen conversation
+`;
+
+        button.className = `
+    inline-flex
+    items-center
+    gap-2
+    px-3
+    py-2
+    rounded-lg
+    border
+    border-green-200
+    bg-white
+    text-green-600
+    text-xs
+    font-medium
+    hover:bg-green-50
+    transition
+`;
+
+    }
+
+    button.onclick = () =>
+        this.toggleConversationStatus(conversation);
+}
 
 showEmptyHeader()
 {
@@ -373,10 +772,15 @@ stopPolling()
 
 
 
-    updateHeader(header, hasSupport = false, isSupport = false)
+    updateHeader(header, hasSupport = false, isSupport = false, conversationType = null)
 {
 
-    
+    console.log('UPDATE HEADER DEBUG', {
+    header,
+    hasSupport,
+    isSupport,
+    conversationType
+});
 
 
      const support =
@@ -414,6 +818,30 @@ stopPolling()
         title.innerText =
             header.title ?? '';
     }
+
+
+    const closeButton =
+        document.getElementById(
+            'conversation-close'
+        );
+
+    if (closeButton) {
+
+        closeButton.classList.remove('hidden');
+
+    }
+
+    const deleteButton =
+    document.getElementById(
+        'conversation-delete'
+    );
+
+if (deleteButton) {
+    deleteButton.classList.remove('hidden');
+}
+
+
+
 
     const subtitle = document.getElementById(
         'conversation-header-subtitle'
@@ -474,7 +902,11 @@ stopPolling()
 
 if (support) {
 
-    if (isSupport || hasSupport) {
+    if (
+        isSupport ||
+        hasSupport ||
+        conversationType === 'notice'
+    ) {
 
         support.classList.add('hidden');
 

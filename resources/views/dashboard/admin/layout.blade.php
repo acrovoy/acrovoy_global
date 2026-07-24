@@ -8,13 +8,7 @@
         <aside class="w-full lg:w-1/4 bg-white border border-gray-200 rounded-xl shadow-sm p-4 self-start">
 
     {{-- HEADER --}}
-    <div class="mb-5">
-        <div class="text-xs text-gray-500 uppercase tracking-wider">Control Panel</div>
-        <div class="text-lg font-semibold text-gray-900">Admin Dashboard</div>
-    </div>
-
-    {{-- ROLE --}}
-    <div class="mb-5">
+        <div class="mb-5">
         <div class="px-3 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold text-center">
             Administrator
         </div>
@@ -88,6 +82,20 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ route('admin.sellers.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.sellers.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Buyers
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.sellers.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.sellers.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Logistic company
+                </a>
+            </li>
+
         </ul>
 
     </li>
@@ -110,18 +118,20 @@
             </li>
 
             <li>
-                <a href=""
-                   class="block py-1.5 text-sm text-stone-600 hover:text-stone-900 hover:font-medium">
-                    All Messages
-                </a>
-            </li>
+    <a
+        href="{{ route('admin.messenger.all-messages') }}"
+        class="block py-1.5 text-sm {{ request()->routeIs('admin.messenger.all-messages') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}"
+    >
+        All Messages
+    </a>
+</li>
 
             <li>
-                <a href=""
-                   class="block py-1.5 text-sm text-stone-600 hover:text-stone-900 hover:font-medium">
-                    Notice Manager
-                </a>
-            </li>
+    <a href="{{ route('admin.messenger.notice') }}"
+       class="block py-1.5 text-sm {{ request()->routeIs('admin.messenger.notice') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+        Notice Managment
+    </a>
+</li>
 
             
         </ul>

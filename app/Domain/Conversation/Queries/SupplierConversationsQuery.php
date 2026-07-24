@@ -12,6 +12,7 @@ class SupplierConversationsQuery
         string $contextType,
         int $contextId,
         ?string $platformRole = null,
+        ?string $search = null,
     ) {
 
         return Conversation::query()
@@ -62,6 +63,19 @@ class SupplierConversationsQuery
 
 
             ])
+
+
+            ->when($search, function ($query) use ($search) {
+
+            $query->where(function ($query) use ($search) {
+
+                $query
+                    ->where('title', 'like', "%{$search}%")
+                    ->orWhere('subtitle', 'like', "%{$search}%");
+
+            });
+
+        })
 
 
             ->latest('updated_at');

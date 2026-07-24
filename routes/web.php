@@ -830,6 +830,24 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
     Route::prefix('messenger')->name('messenger.')->group(function () {
 
             Route::get('/', [AdminMessengerController::class, 'index'])->name('index');
+
+            Route::get('/all-messages', [AdminMessengerController::class, 'allMessages'])->name('all-messages');
+            Route::get('/all-messages/conversations', [AdminMessengerController::class, 'allConversations'])->name('all.conversations');
+            Route::get('/all-messages/conversations/{conversation}', [AdminMessengerController::class, 'showAll'])->name('all.show');
+            Route::post('/all-messages/conversations/{conversation}/read', [AdminMessengerController::class, 'markAsRead'])->name('read');
+            Route::post('/all-messages/conversations/{conversation}/close', [AdminMessengerController::class, 'close'])->name('conversations.close');
+            Route::post('/all-messages/conversations/{conversation}/reopen', [AdminMessengerController::class, 'reopen'])->name('conversations.reopen');
+            Route::get('/all-messages/conversations/{conversation}/messages/new', [AdminMessengerController::class, 'newMessages']);
+            Route::delete('/all-messages/conversations/{conversation}', [AdminMessengerController::class, 'destroyConversation'])->name('conversations.destroy');
+
+            Route::get('/notice-messages', [AdminMessengerController::class, 'noticeMessages'])->name('notice');
+            Route::get('/notice-conversations', [AdminMessengerController::class, 'noticeConversations'])->name('notice.conversations');
+            Route::get('/notice-conversations/{conversation}', [AdminMessengerController::class, 'showAll'])->name('notice.show');
+            Route::post('/notice-conversations/{conversation}/read', [AdminMessengerController::class, 'markAsRead'])->name('read');
+            Route::get('/notice-conversations/{conversation}/messages/new', [AdminMessengerController::class, 'newMessages']);
+            Route::delete('/notice-conversations/{conversation}', [AdminMessengerController::class, 'destroyConversation'])->name('conversations.destroy');
+            Route::post('/notices', [AdminMessengerController::class, 'createNotice'])->name('notices.store');
+
             Route::get('/conversations', [AdminMessengerController::class, 'conversations'])->name('conversations');
             Route::get('/conversations/{conversation}', [AdminMessengerController::class, 'show'])->name('show');
             Route::get('/conversations/{conversation}/messages/new', [AdminMessengerController::class, 'newMessages']);
@@ -837,6 +855,9 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
             Route::delete('/conversations/empty', [AdminMessengerController::class, 'deleteEmptyConversations'])->name('delete-empty');
             Route::get('/statistics', [AdminMessengerController::class, 'statistics'])->name('statistics');
             Route::delete('/messages/{message}', [AdminMessengerController::class, 'destroyMessage'])->name('messages.destroy');
+            Route::post('/conversations/{conversation}/close', [AdminMessengerController::class, 'close'])->name('conversations.close');
+            Route::post('/conversations/{conversation}/reopen', [AdminMessengerController::class, 'reopen'])->name('conversations.reopen');
+            Route::delete('/conversations/{conversation}', [AdminMessengerController::class, 'destroyConversation'])->name('conversations.destroy');
 
         });
 

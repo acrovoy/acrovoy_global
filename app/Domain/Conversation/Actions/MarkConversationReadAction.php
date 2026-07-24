@@ -12,46 +12,37 @@ class MarkConversationReadAction
      * Отметить Conversation как прочитанный.
      */
     public function execute(
-        int $conversationId,
-        string $contextType,
-        int $contextId
-    ): ConversationParticipant {
+    int $conversationId,
+    string $contextType,
+    int $contextId
+): ?ConversationParticipant {
 
-        return DB::transaction(function () use (
-            $conversationId,
-            $contextType,
-            $contextId
-        ) {
+    return DB::transaction(function () use (
+        $conversationId,
+        $contextType,
+        $contextId
+    ) {
 
-            $participant = ConversationParticipant::query()
-                ->where('conversation_id', $conversationId)
-                ->where('context_type', $contextType)
-                ->where('context_id', $contextId)
-                ->lockForUpdate()
-                ->firstOrFail();
+        $participant = ConversationParticipant::query()
+            ->where('conversation_id', $conversationId)
+            ->where('context_type', $contextType)
+            ->where('context_id', $contextId)
+            ->lockForUpdate()
+            ->first();
 
+        if (!$participant) {
+            return null;
+        }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Обновляем время последнего прочтения
-            |--------------------------------------------------------------------------
-            */
+        $participant->update([
+            'last_read_at' => now(),
+        ]);
 
-            $participant->update([
-                'last_read_at' => now(),
-            ]);
+        event(new MessageRead($participant));
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Domain Event
-            |--------------------------------------------------------------------------
-            */
-
-            event(new MessageRead($participant));
+        return $participant;
+    });
+}
 
 
-            return $participant;
-        });
-    }
 }

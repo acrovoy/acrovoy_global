@@ -14,6 +14,7 @@ use App\Domain\Conversation\Enums\MessageType;
 
 use App\Domain\Conversation\Services\ConversationHeaderService;
 use App\Domain\Conversation\Resolvers\ProductHeaderResolver;
+use App\Domain\Conversation\Resolvers\NoticeConversationHeaderResolver;
 use App\Domain\Conversation\Resolvers\RfqHeaderResolver;
 use App\Domain\Conversation\Resolvers\ProjectHeaderResolver;
 use App\Domain\Conversation\Resolvers\UserHeaderResolver;
@@ -32,14 +33,7 @@ class ConversationController extends Controller
         private ActiveContextService $context,
         private FormatConversationMessageAction $formatMessage,
     ) {
-
-    $this->headerService = new ConversationHeaderService();
-
-    $this->headerService
-        ->addResolver(new ProductHeaderResolver())
-        ->addResolver(new RfqHeaderResolver())
-        ->addResolver(new ProjectHeaderResolver())
-        ->addResolver(new UserHeaderResolver());
+        
 
     }
 

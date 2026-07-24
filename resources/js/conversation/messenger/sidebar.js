@@ -4,6 +4,9 @@ export default class SupplierMessengerSidebar
 
     constructor(api, openCallback, conversationsUrl)
 {
+
+    console.log('SIDEBAR CONSTRUCTOR');
+    
     this.api = api;
 
     this.openCallback =
@@ -18,6 +21,40 @@ export default class SupplierMessengerSidebar
         );
 
     this.activeConversationId = null;
+
+
+
+    this.search = '';
+
+const input =
+    document.getElementById(
+        'conversation-search'
+    );
+
+    console.log('SEARCH INPUT =', input);
+
+if (input) {
+
+    let timer = null;
+
+    input.addEventListener('input', (e) => {
+
+        clearTimeout(timer);
+
+        timer = setTimeout(() => {
+
+            this.search = e.target.value.trim();
+
+            this.load();
+
+        }, 300);
+
+    });
+
+}
+
+
+
 }
 
 
@@ -27,9 +64,23 @@ export default class SupplierMessengerSidebar
 
         
 
-        const response =
+        const url = new URL(
+    this.conversationsUrl,
+    window.location.origin
+);
+
+if (this.search) {
+
+    url.searchParams.set(
+        'search',
+        this.search
+    );
+
+}
+
+const response =
     await this.api.request(
-        this.conversationsUrl
+        url.toString()
     );
 
             

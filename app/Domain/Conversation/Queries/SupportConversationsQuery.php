@@ -4,7 +4,7 @@ namespace App\Domain\Conversation\Queries;
 
 use App\Domain\Conversation\Models\Conversation;
 
-class AdminConversationsQuery
+class SupportConversationsQuery
 {
     public function execute()
     {
