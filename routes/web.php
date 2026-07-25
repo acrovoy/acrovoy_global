@@ -862,18 +862,12 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         });
 
 
-    Route::get('/', function () {
-        return view('dashboard.admin.home');
-    })->name('home');
+    Route::get('/', function () { return view('dashboard.admin.home'); })->name('home');
 
     Route::get('orders/{order}/shipments', [AdminOrdersController::class, 'shipments'])->name('orders.shipments');
-    Route::put('orders/{order}/shipments/{orderItemShipment}', [AdminOrdersController::class, 'updateShipment'])
-        ->name('orders.shipments.update');
-    Route::post('orders/{order}/upload-invoice-delivery', [AdminOrdersController::class, 'uploadInvoiceDelivery'])
-        ->name('orders.upload-invoice-delivery');
-    Route::post('orders/{order}/calculate-delivery', [AdminOrdersController::class, 'calculateDeliveryPrice'])
-        ->name('orders.calculate-delivery');
-
+    Route::put('orders/{order}/shipments/{orderItemShipment}', [AdminOrdersController::class, 'updateShipment'])->name('orders.shipments.update');
+    Route::post('orders/{order}/upload-invoice-delivery', [AdminOrdersController::class, 'uploadInvoiceDelivery'])->name('orders.upload-invoice-delivery');
+    Route::post('orders/{order}/calculate-delivery', [AdminOrdersController::class, 'calculateDeliveryPrice'])->name('orders.calculate-delivery');
 
     // Virify & Trusted
     Route::post('sellers/{seller}/verify-trust', [AdminSellersController::class, 'updateVerifyTrust']);
@@ -886,11 +880,16 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
     Route::post('products/{product}/approve', [AdminProductController::class, 'approve'])->name('products.approve');
     Route::post('products/{product}/reject', [AdminProductController::class, 'reject'])->name('products.reject');
 
-    Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
-    Route::get('users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
-    Route::put('users/{user}', [AdminUserController::class, 'update'])->name('users.update');
-    Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
-    Route::patch('users/{user}/toggle-block', [AdminUserController::class, 'toggleBlock'])->name('users.toggleBlock');
+    // Users
+    Route::prefix('users')->name('users.')->controller(AdminUserController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('{user}', 'show')->name('show');
+        Route::get('{user}/edit', 'edit')->name('edit');
+        Route::put('{user}', 'update')->name('update');
+        Route::delete('{user}', 'destroy')->name('destroy');
+        Route::patch('{user}/toggle-block', 'toggleBlock')->name('toggleBlock');
+
+    });
 
     Route::get('sellers', [AdminSellersController::class, 'index'])->name('sellers.index');
     Route::get('sellers/{seller}/show', [AdminSellersController::class, 'show'])->name('sellers.show');

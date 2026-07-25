@@ -35,5 +35,10 @@ public function country()
     return $this->belongsTo(Country::class, 'country');
 }
 
+public function countryLocation()
+{
+    return $this->belongsTo(Country::class, 'country');
+}
+
 
 }

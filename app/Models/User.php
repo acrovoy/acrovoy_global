@@ -49,8 +49,9 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    'email_verified_at' => 'datetime',
+    'is_blocked' => 'boolean',
+];
 
     public function premiumPlan()
     {
@@ -182,5 +183,13 @@ public function shippingTemplates()
         'provider_id'
     )->where('is_active', 1);
 }
+
+public function addresses()
+{
+    return $this->hasMany(UserAddress::class)
+        ->where('user_type', self::class);
+}
+
+
 
 }

@@ -3,36 +3,153 @@
 @section('dashboard-content')
 
 <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-    <h1 class="text-2xl font-bold">Users</h1>
+    <div>
+            <h2 class="text-2xl font-semibold text-gray-900">
+                Users
+            </h2>
+            <p class="text-sm text-gray-500">
+                Browse, manage, and monitor all registered platform users
+            </p>
+        </div>
+
+    
 
     <form method="GET" class="flex gap-2 items-center w-full md:w-auto">
 
-        {{-- Поиск по имени или email --}}
-        <input type="text"
-               name="search"
-               value="{{ $search ?? '' }}"
-               placeholder="Search by name or email..."
-               class="border border-gray-300 rounded-md px-3 py-2 text-sm w-full md:w-64 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-               onkeyup="if(event.key === 'Enter') this.form.submit()">
+    <input type="text"
+           name="search"
+           value="{{ $search ?? '' }}"
+           placeholder="Search by name or email..."
+           class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full md:w-72">
 
-    </form>
+    <button type="submit"
+            class="inline-flex items-center gap-2
+                   px-4 py-2
+                   text-sm font-medium
+                   text-gray-700
+                   bg-white
+                   border border-gray-200
+                   rounded-lg
+                   hover:bg-gray-50
+                   hover:border-gray-300
+                   hover:text-gray-900
+                   active:scale-[0.98]
+                   transition-all duration-150
+                   shadow-sm">
+
+        Search
+
+    </button>
+
+</form>
 </div>
+
+@php
+    function sortDirection($column, $sort, $direction)
+    {
+        return $sort === $column && $direction === 'asc'
+            ? 'desc'
+            : 'asc';
+    }
+@endphp
 
 <div class="overflow-x-auto border border-gray-200 rounded-lg">
     <table class="min-w-full text-sm divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-4 py-2 text-left font-medium text-gray-700">ID</th>
-                <th class="px-4 py-2 text-left font-medium text-gray-700">Name</th>
-                <th class="px-4 py-2 text-left font-medium text-gray-700">Email</th>
-                <th class="px-4 py-2 text-left font-medium text-gray-700">Status</th>
-                <th class="px-4 py-2 text-left font-medium text-gray-700">Created</th>
-                <th class="px-4 py-2 text-right font-medium text-gray-700">Actions</th>
+                 {{-- ID --}}
+    <th class="px-4 py-2 text-left font-medium text-gray-700">
+        <a href="{{ route('admin.users.index', array_merge(request()->query(), [
+            'sort' => 'id',
+            'direction' => $sort === 'id' && $direction === 'asc' ? 'desc' : 'asc'
+        ])) }}"
+           class="inline-flex items-center gap-1 hover:text-black">
+
+            ID
+
+            @if($sort === 'id')
+                {{ $direction === 'asc' ? '↑' : '↓' }}
+            @endif
+
+        </a>
+    </th>
+
+    {{-- Name --}}
+    <th class="px-4 py-2 text-left font-medium text-gray-700">
+        <a href="{{ route('admin.users.index', array_merge(request()->query(), [
+            'sort' => 'name',
+            'direction' => $sort === 'name' && $direction === 'asc' ? 'desc' : 'asc'
+        ])) }}"
+           class="inline-flex items-center gap-1 hover:text-black">
+
+            Name
+
+            @if($sort === 'name')
+                {{ $direction === 'asc' ? '↑' : '↓' }}
+            @endif
+
+        </a>
+    </th>
+
+    {{-- Email --}}
+    <th class="px-4 py-2 text-left font-medium text-gray-700">
+        <a href="{{ route('admin.users.index', array_merge(request()->query(), [
+            'sort' => 'email',
+            'direction' => $sort === 'email' && $direction === 'asc' ? 'desc' : 'asc'
+        ])) }}"
+           class="inline-flex items-center gap-1 hover:text-black">
+
+            Email
+
+            @if($sort === 'email')
+                {{ $direction === 'asc' ? '↑' : '↓' }}
+            @endif
+
+        </a>
+    </th>
+
+    {{-- Status --}}
+    <th class="px-4 py-2 text-left font-medium text-gray-700">
+        <a href="{{ route('admin.users.index', array_merge(request()->query(), [
+            'sort' => 'is_blocked',
+            'direction' => $sort === 'is_blocked' && $direction === 'asc' ? 'desc' : 'asc'
+        ])) }}"
+           class="inline-flex items-center gap-1 hover:text-black">
+
+            Status
+
+            @if($sort === 'is_blocked')
+                {{ $direction === 'asc' ? '↑' : '↓' }}
+            @endif
+
+        </a>
+    </th>
+
+    {{-- Created --}}
+    <th class="px-4 py-2 text-left font-medium text-gray-700">
+        <a href="{{ route('admin.users.index', array_merge(request()->query(), [
+            'sort' => 'created_at',
+            'direction' => $sort === 'created_at' && $direction === 'asc' ? 'desc' : 'asc'
+        ])) }}"
+           class="inline-flex items-center gap-1 hover:text-black">
+
+            Registered
+
+            @if($sort === 'created_at')
+                {{ $direction === 'asc' ? '↑' : '↓' }}
+            @endif
+
+        </a>
+    </th>
+                
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
         @foreach($users as $user)
-            <tr>
+            <tr
+            onclick="window.location='{{ route('admin.users.show', $user) }}'"
+    class="cursor-pointer hover:bg-gray-50 transition-colors"
+    >
                 <td class="px-4 py-2">{{ $user->id }}</td>
                 <td class="px-4 py-2">{{ $user->name }}</td>
                 <td class="px-4 py-2">{{ $user->email }}</td>
@@ -43,40 +160,7 @@
                     </span>
                 </td>
                 <td class="px-4 py-2">{{ $user->created_at->format('Y-m-d H:i') }}</td>
-                <td class="px-4 py-2 text-right space-x-2">
-                    {{-- Block / Unblock --}}
-                    <form class="inline" action="{{ route('admin.users.toggleBlock', $user) }}" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        <button type="submit"
-                                class="text-yellow-600 hover:text-yellow-800 font-medium px-2 py-1 rounded">
-                            {{ $user->is_blocked ? 'Unblock' : 'Block' }}
-                        </button>
-                    </form>
-
-                    {{-- Private message --}}
-                    <button class="open-conversation text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded" data-subject-type="App\Models\User"
-    data-subject-id="{{ $user->id }}">
-                            Chat
-                        </button>
-
-                    {{-- Edit --}}
-                    <a href="{{ route('admin.users.edit', $user) }}"
-                       class="text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded">
-                       Edit
-                    </a>
-
-                    {{-- Delete --}}
-                    <form class="inline" action="{{ route('admin.users.destroy', $user) }}" method="POST"
-                          onsubmit="return confirm('Delete this user?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit"
-                                class="text-red-600 hover:text-red-800 font-medium px-2 py-1 rounded">
-                            Delete
-                        </button>
-                    </form>
-                </td>
+                
             </tr>
         @endforeach
         </tbody>
@@ -84,10 +168,6 @@
 </div>
 
 
-<x-conversation.drawer
-    subjectType="App\Models\User"
-    :subjectId="$user->id"
-    :messagesUrl="url('/dashboard/admin/messenger/conversations')"
-/>
+
 
 @endsection
