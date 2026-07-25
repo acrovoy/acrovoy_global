@@ -6,7 +6,9 @@ use App\Domain\Conversation\Models\Conversation;
 
 class AllConversationsQuery
 {
-    public function execute()
+    public function execute(
+        ?string $search = null,
+    )
     {
         return Conversation::query()
 
@@ -25,6 +27,20 @@ class AllConversationsQuery
                 },
 
             ])
+
+
+             ->when($search, function ($query) use ($search) {
+
+            $query->where(function ($query) use ($search) {
+
+                $query
+                    ->where('title', 'like', "%{$search}%")
+                    ->orWhere('subtitle', 'like', "%{$search}%");
+
+            });
+
+        })
+
 
             ->latest('updated_at');
     }

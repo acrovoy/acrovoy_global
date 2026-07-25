@@ -22,6 +22,8 @@ class CreateConversationAction
                 'conversation_type' => $data->conversationType,
                 'subject_type'      => $data->subjectType,
                 'subject_id'        => $data->subjectId,
+                'title'             => $data->title,
+                'subtitle'          => $data->subtitle,
                 'created_by'        => $data->createdBy,
                 'status'            => ConversationStatus::ACTIVE,
             ]);

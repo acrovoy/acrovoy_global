@@ -842,7 +842,7 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
 
             Route::get('/notice-messages', [AdminMessengerController::class, 'noticeMessages'])->name('notice');
             Route::get('/notice-conversations', [AdminMessengerController::class, 'noticeConversations'])->name('notice.conversations');
-            Route::get('/notice-conversations/{conversation}', [AdminMessengerController::class, 'showAll'])->name('notice.show');
+            Route::get('/notice-conversations/{conversation}', [AdminMessengerController::class, 'showNotice'])->name('notice.show');
             Route::post('/notice-conversations/{conversation}/read', [AdminMessengerController::class, 'markAsRead'])->name('read');
             Route::get('/notice-conversations/{conversation}/messages/new', [AdminMessengerController::class, 'newMessages']);
             Route::delete('/notice-conversations/{conversation}', [AdminMessengerController::class, 'destroyConversation'])->name('conversations.destroy');

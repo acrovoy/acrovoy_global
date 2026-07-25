@@ -15,36 +15,7 @@
         </div>
 
 
-        <button
-            type="button"
-            class="
-                w-9 h-9
-                rounded-lg
-                border
-                border-stone-200
-                flex
-                items-center
-                justify-center
-                text-stone-500
-                hover:bg-stone-50
-                transition
-            "
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-            </svg>
-        </button>
+       
 
     </div>
 
@@ -84,6 +55,7 @@
 
 
             <input
+                id="conversation-search"
                 type="text"
                 placeholder="Search conversations..."
                 class="

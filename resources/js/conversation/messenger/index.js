@@ -20,7 +20,7 @@ class SupplierMessenger
             'conversation-list'
         );
 
-        console.log(1);
+        
     this.conversationsUrl =
         conversationList.dataset.url;
 
@@ -113,17 +113,14 @@ class SupplierMessenger
 
         try {
 
-             console.log('BASE URL =', this.conversationsUrl);
-        console.log('ID =', id);
-        console.log('URL =', `${this.conversationsUrl}/${id}`);
-        
-
             const response =
     await this.api.request(
         `${this.conversationsUrl}/${id}`
     );
 
 
+    
+    
 
             this.currentConversation =
                 response.conversation;
@@ -228,7 +225,7 @@ class SupplierMessenger
                         'POST'
                     );
 
-                    console.log(response);
+                    
 
                 this.currentConversation =
                     response.conversation;
@@ -300,11 +297,18 @@ class SupplierMessenger
 
     if (this.currentConversation?.type === 'notice') {
 
-    if (form) {
-        form.classList.add('hidden');
-    }
+    if (this.currentConversation.is_admin) {
 
-    return;
+        // Администратор может писать уведомления
+        form?.classList.remove('hidden');
+
+    } else {
+
+        // Обычные пользователи только читают
+        form?.classList.add('hidden');
+        return;
+
+    }
 }
 
 if (form) {
@@ -498,7 +502,7 @@ initDeleteConversation()
 initNoticeDrawer()
 {
 
-      console.log('NOTICE INIT');
+      
 
     const drawer =
         document.getElementById(
@@ -567,7 +571,7 @@ if (submit) {
 
             });
 
-            console.log(response);
+            
 
         drawer.classList.add('hidden');
 
@@ -604,6 +608,18 @@ renderConversationActions(conversation)
     if (!button) {
         return;
     }
+
+    if (conversation.type === 'notice') {
+
+    button.classList.add('hidden');
+
+    return;
+
+}
+
+button.classList.remove('hidden');
+
+
 
     if (conversation.status === 'active') {
 
@@ -698,6 +714,8 @@ showEmptyHeader()
         );
 
          
+        
+
 
     if (!support) {
         return;
@@ -775,12 +793,11 @@ stopPolling()
     updateHeader(header, hasSupport = false, isSupport = false, conversationType = null)
 {
 
-    console.log('UPDATE HEADER DEBUG', {
-    header,
-    hasSupport,
-    isSupport,
-    conversationType
-});
+    const noticeButton = document.getElementById(
+    'conversation-create-notice'
+);
+
+noticeButton?.classList.add('hidden');
 
 
      const support =
@@ -820,16 +837,7 @@ stopPolling()
     }
 
 
-    const closeButton =
-        document.getElementById(
-            'conversation-close'
-        );
-
-    if (closeButton) {
-
-        closeButton.classList.remove('hidden');
-
-    }
+   
 
     const deleteButton =
     document.getElementById(
@@ -925,6 +933,8 @@ if (support) {
     }
 
 }
+
+
 
 
 

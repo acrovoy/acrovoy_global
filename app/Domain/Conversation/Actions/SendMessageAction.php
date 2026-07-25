@@ -8,6 +8,9 @@ use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\Models\Message;
 use Illuminate\Support\Facades\DB;
 
+use App\Domain\Conversation\Enums\MessageType;
+use App\Domain\Conversation\Enums\ConversationType;
+
 use App\Domain\Conversation\Enums\ConversationStatus;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -18,6 +21,8 @@ class SendMessageAction
      */
     public function execute(CreateMessageData $data): Message
     {
+
+    
         return DB::transaction(function () use ($data) {
 
             $conversation = Conversation::query()
@@ -27,6 +32,11 @@ class SendMessageAction
             $conversation = Conversation::query()
                 ->lockForUpdate()
                 ->findOrFail($data->conversationId);
+
+                $messageType = $conversation->conversation_type === ConversationType::NOTICE
+    ? MessageType::SYSTEM
+    : $data->messageType;
+
 
             if (! $conversation->status->canSendMessages()) {
 
@@ -52,7 +62,7 @@ class SendMessageAction
                 'sender_id'   => $data->senderId,
                 'created_by' => $data->createdBy,
 
-                'message_type' => $data->messageType,
+                'message_type' => $messageType,
 
                 'message' => $data->message,
 

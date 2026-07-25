@@ -18,13 +18,11 @@ class SupportRequestController extends Controller
 
     public function store(Request $request)
 {
-    Log::info('========== SUPPORT REQUEST ==========');
+    
 
     $identity = $this->context->identity();
 
-    Log::info('Identity', $identity);
-
-    Log::info('Request payload', $request->all());
+    
 
     $data = $request->validate([
 
@@ -47,8 +45,7 @@ class SupportRequestController extends Controller
 
     ]);
 
-    Log::info('Validated data', $data);
-
+    
     $conversation = $this->action->execute(
 
         requesterType: $identity['entity_type'],
@@ -61,9 +58,7 @@ class SupportRequestController extends Controller
 
     );
 
-    Log::info('Conversation created', [
-        'conversation_id' => $conversation->id,
-    ]);
+    
 
     $conversation->load([
         'messages.sender',

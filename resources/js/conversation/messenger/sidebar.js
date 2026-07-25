@@ -5,7 +5,7 @@ export default class SupplierMessengerSidebar
     constructor(api, openCallback, conversationsUrl)
 {
 
-    console.log('SIDEBAR CONSTRUCTOR');
+    
     
     this.api = api;
 
@@ -31,7 +31,7 @@ const input =
         'conversation-search'
     );
 
-    console.log('SEARCH INPUT =', input);
+    
 
 if (input) {
 
@@ -83,7 +83,7 @@ const response =
         url.toString()
     );
 
-            
+           
     
 
         this.render(

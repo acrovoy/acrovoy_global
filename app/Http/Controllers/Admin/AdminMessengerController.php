@@ -40,7 +40,7 @@ class AdminMessengerController extends Controller
         private AllConversationsQuery $allConversations,
         private ConversationService $conversationService,
         private NoticeConversationsQuery $noticeConversations,
-        
+
     ) {}
     /**
      * Messenger page.
@@ -52,19 +52,19 @@ class AdminMessengerController extends Controller
         );
     }
 
-public function allMessages()
-{
-    return view(
-        'dashboard.admin.messenger.all-messages'
-    );
-}
+    public function allMessages()
+    {
+        return view(
+            'dashboard.admin.messenger.all-messages'
+        );
+    }
 
-public function noticeMessages()
-{
-    return view(
-        'dashboard.admin.messenger.notice-messages'
-    );
-}
+    public function noticeMessages()
+    {
+        return view(
+            'dashboard.admin.messenger.notice-messages'
+        );
+    }
 
 
     /**
@@ -73,10 +73,13 @@ public function noticeMessages()
      * Sidebar.
      */
     public function conversations(Request $request)
-{
-     $conversations =
+    {
+
+    $search = request('search');
+
+        $conversations =
             $this->supportConversations
-            ->execute()
+            ->execute($search)
             ->get();
 
 
@@ -136,7 +139,6 @@ public function noticeMessages()
                         ->contains(function ($participant) {
 
                             return $participant->role === 'support';
-
                         }),
 
                 ];
@@ -146,10 +148,13 @@ public function noticeMessages()
     }
 
     public function allConversations(Request $request)
-{
-    $conversations =
+    {
+
+    $search = request('search');
+
+        $conversations =
             $this->allConversations
-            ->execute()
+            ->execute($search)
             ->get();
 
 
@@ -209,7 +214,6 @@ public function noticeMessages()
                         ->contains(function ($participant) {
 
                             return $participant->role === 'support';
-
                         }),
 
                 ];
@@ -220,19 +224,23 @@ public function noticeMessages()
 
 
     public function noticeConversations(Request $request)
-{
-     $conversations =
+    {
+        $search = request('search');
+        $isAdmin = $this->context->identity()['platform_role'] === 'admin';
+
+        $conversations =
             $this->noticeConversations
-            ->execute()
+            ->execute($search)
             ->get();
 
 
+            
 
 
         return response()->json([
 
             'conversations' =>
-            $conversations->map(function ($conversation) {
+            $conversations->map(function ($conversation) use ($isAdmin) {
 
                 $lastMessage = $conversation->lastMessage;
 
@@ -283,8 +291,9 @@ public function noticeMessages()
                         ->contains(function ($participant) {
 
                             return $participant->role === 'support';
-
                         }),
+
+                    'is_admin' => $isAdmin,
 
                 ];
             })
@@ -306,25 +315,23 @@ public function noticeMessages()
 
 
         $participant =
-    $conversation
-        ->participants
-        ->first(function($participant) use ($currentType, $currentId) {
+            $conversation
+            ->participants
+            ->first(function ($participant) use ($currentType, $currentId) {
 
-            return
-                $participant->context_type === $currentType
-                &&
-                (int)$participant->context_id === (int)$currentId;
+                return
+                    $participant->context_type === $currentType
+                    &&
+                    (int)$participant->context_id === (int)$currentId;
+            });
 
-        });
 
+        if ($participant) {
 
-if ($participant) {
-
-    $participant->update([
-        'last_read_at' => now(),
-    ]);
-
-}
+            $participant->update([
+                'last_read_at' => now(),
+            ]);
+        }
 
 
 
@@ -351,7 +358,7 @@ if ($participant) {
                 $conversation->conversation_type,
 
                 'status' => $conversation->status->value,
-                
+
 
             ],
 
@@ -363,15 +370,7 @@ if ($participant) {
                 ->sortBy('created_at')
                 ->map(function ($message) use ($currentType, $currentId) {
 
-
-               Log::info('Creator', [
-    'message_id' => $message->id,
-    'creator_by' => $message->created_by,
-    'creator_loaded' => $message->relationLoaded('creator'),
-    'creator' => $message->creator?->id,
-]);
-
-
+                  
                     return [
 
                         'id' =>
@@ -432,25 +431,23 @@ if ($participant) {
 
 
         $participant =
-    $conversation
-        ->participants
-        ->first(function($participant) use ($currentType, $currentId) {
+            $conversation
+            ->participants
+            ->first(function ($participant) use ($currentType, $currentId) {
 
-            return
-                $participant->context_type === $currentType
-                &&
-                (int)$participant->context_id === (int)$currentId;
+                return
+                    $participant->context_type === $currentType
+                    &&
+                    (int)$participant->context_id === (int)$currentId;
+            });
 
-        });
 
+        if ($participant) {
 
-if ($participant) {
-
-    $participant->update([
-        'last_read_at' => now(),
-    ]);
-
-}
+            $participant->update([
+                'last_read_at' => now(),
+            ]);
+        }
 
 
 
@@ -477,7 +474,7 @@ if ($participant) {
                 $conversation->conversation_type,
 
                 'status' => $conversation->status->value,
-                
+
 
             ],
 
@@ -489,15 +486,7 @@ if ($participant) {
                 ->sortBy('created_at')
                 ->map(function ($message) use ($currentType, $currentId) {
 
-
-               Log::info('Creator', [
-    'message_id' => $message->id,
-    'creator_by' => $message->created_by,
-    'creator_loaded' => $message->relationLoaded('creator'),
-    'creator' => $message->creator?->id,
-]);
-
-
+                   
                     return [
 
                         'id' =>
@@ -552,31 +541,30 @@ if ($participant) {
     public function showNotice(Conversation $conversation)
     {
 
+    $isAdmin = $this->context->identity()['platform_role'] === 'admin';
 
         $currentType = $this->context->type();
         $currentId   = $this->context->id();
 
 
         $participant =
-    $conversation
-        ->participants
-        ->first(function($participant) use ($currentType, $currentId) {
+            $conversation
+            ->participants
+            ->first(function ($participant) use ($currentType, $currentId) {
 
-            return
-                $participant->context_type === $currentType
-                &&
-                (int)$participant->context_id === (int)$currentId;
+                return
+                    $participant->context_type === $currentType
+                    &&
+                    (int)$participant->context_id === (int)$currentId;
+            });
 
-        });
 
+        if ($participant) {
 
-if ($participant) {
-
-    $participant->update([
-        'last_read_at' => now(),
-    ]);
-
-}
+            $participant->update([
+                'last_read_at' => now(),
+            ]);
+        }
 
 
 
@@ -603,7 +591,9 @@ if ($participant) {
                 $conversation->conversation_type,
 
                 'status' => $conversation->status->value,
-                
+
+                'is_admin' => $isAdmin,
+
 
             ],
 
@@ -616,12 +606,12 @@ if ($participant) {
                 ->map(function ($message) use ($currentType, $currentId) {
 
 
-               Log::info('Creator', [
-    'message_id' => $message->id,
-    'creator_by' => $message->created_by,
-    'creator_loaded' => $message->relationLoaded('creator'),
-    'creator' => $message->creator?->id,
-]);
+                    Log::info('Creator', [
+                        'message_id' => $message->id,
+                        'creator_by' => $message->created_by,
+                        'creator_loaded' => $message->relationLoaded('creator'),
+                        'creator' => $message->creator?->id,
+                    ]);
 
 
                     return [
@@ -676,28 +666,28 @@ if ($participant) {
     }
 
     public function markAsRead(Conversation $conversation)
-{
-    $this->markConversationRead->execute(
-        $conversation->id,
-        $this->context->type(),
-        $this->context->id()
-    );
+    {
+        $this->markConversationRead->execute(
+            $conversation->id,
+            $this->context->type(),
+            $this->context->id()
+        );
 
-    return response()->json([
-        'success' => true,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+        ]);
+    }
 
-public function newMessages(
-    Conversation $conversation,
-    Request $request
-) {
+    public function newMessages(
+        Conversation $conversation,
+        Request $request
+    ) {
 
 
 
-    return response()->json([
+        return response()->json([
 
-        'messages' =>
+            'messages' =>
 
             $this->loadNewMessages->execute(
 
@@ -711,125 +701,116 @@ public function newMessages(
 
             ),
 
-    ]);
+        ]);
+    }
 
-}
-
-public function deleteEmptyConversations(
-    
-)
-{
-    $count = $this->conversationService
-        ->deleteEmptyConversations();
+    public function deleteEmptyConversations()
+    {
+        $count = $this->conversationService
+            ->deleteEmptyConversations();
 
 
-    return response()->json([
-        'success' => true,
-        'count' => $count,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'count' => $count,
+        ]);
+    }
 
-public function statistics(): JsonResponse
-{
-    $statistics =
-        $this->conversationService
+    public function statistics(): JsonResponse
+    {
+        $statistics =
+            $this->conversationService
             ->getConversationStatistics();
 
-    return response()->json([
-        'total' => $statistics['total'],
-        'empty' => $statistics['empty'],
-    ]);
-}
+        return response()->json([
+            'total' => $statistics['total'],
+            'empty' => $statistics['empty'],
+        ]);
+    }
 
-public function destroyMessage(
-    Message $message
-): JsonResponse
-{
-    $this->conversationService
-        ->deleteMessage($message);
+    public function destroyMessage(
+        Message $message
+    ): JsonResponse {
+        $this->conversationService
+            ->deleteMessage($message);
 
-    return response()->json([
-        'success' => true,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+        ]);
+    }
 
-public function close(
-    Conversation $conversation
-): JsonResponse {
+    public function close(
+        Conversation $conversation
+    ): JsonResponse {
 
-    $this->conversationService
-        ->closeConversation($conversation);
+        $this->conversationService
+            ->closeConversation($conversation);
 
-    return response()->json([
-        'success' => true,
-        'conversation' => $conversation,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'conversation' => $conversation,
+        ]);
+    }
 
-public function reopen(
-    Conversation $conversation
-): JsonResponse
-{
-    $this->conversationService
-        ->reopenConversation($conversation);
+    public function reopen(
+        Conversation $conversation
+    ): JsonResponse {
+        $this->conversationService
+            ->reopenConversation($conversation);
 
-    return response()->json([
-        'success' => true,
-        'conversation' => $conversation,
-    ]);
+        return response()->json([
+            'success' => true,
+            'conversation' => $conversation,
+        ]);
+    }
+    public function destroyConversation(
+        Conversation $conversation
+    ): JsonResponse {
+        $this->conversationService
+            ->deleteConversation($conversation);
 
-}
-public function destroyConversation(
-    Conversation $conversation
-): JsonResponse
-{
-    $this->conversationService
-        ->deleteConversation($conversation);
-
-    return response()->json([
-        'success' => true,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+        ]);
+    }
 
 
-public function createNotice(
-    Request $request,
-    CreateNoticeConversationAction $action
-)
-{
-    $data = $request->validate([
-        'title' => [
-            'required',
-            'string',
-            'max:255',
-        ],
+    public function createNotice(
+        Request $request,
+        CreateNoticeConversationAction $action
+    ) {
+        $data = $request->validate([
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-        'subtitle' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
+            'subtitle' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-        'description' => [
-            'required',
-            'string',
-            'max:5000',
-        ],
-    ]);
+            'description' => [
+                'required',
+                'string',
+                'max:5000',
+            ],
+        ]);
 
-    $conversation = $action->execute(
-        title: $data['title'],
-        subtitle: $data['subtitle'] ?? null,
-        description: $data['description'],
-        createdBy: auth()->id(),
-    );
+        $conversation = $action->execute(
+            title: $data['title'],
+            subtitle: $data['subtitle'] ?? null,
+            description: $data['description'],
+            createdBy: auth()->id(),
+        );
 
-    return response()->json([
-    'success' => true,
-    'conversation' => [
-        'id' => $conversation->id,
-    ],
-]);
-}
-
+        return response()->json([
+            'success' => true,
+            'conversation' => [
+                'id' => $conversation->id,
+            ],
+        ]);
+    }
 }

@@ -14,6 +14,10 @@ final class CreateConversationData
 
         public readonly ?int $subjectId,
 
+        public readonly ?string $title = null,
+
+        public readonly ?string $subtitle = null,
+
         /**
          * Роль участника в данном контексте.
          *

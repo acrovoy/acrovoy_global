@@ -7,6 +7,8 @@ use App\Domain\Conversation\Services\ConversationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Support\Facades\Log;
+
 use App\Domain\Conversation\Models\Conversation;
 
 use App\Domain\Conversation\DTO\CreateMessageData;
@@ -20,7 +22,10 @@ use App\Domain\Conversation\Resolvers\ProjectHeaderResolver;
 use App\Domain\Conversation\Resolvers\UserHeaderResolver;
 use App\Services\Company\ActiveContextService;
 use App\Models\User;
+use App\Models\Product;
 use App\Domain\Conversation\Enums\ConversationType;
+use App\Domain\Project\Models\Project;
+use App\Domain\RFQ\Models\RFQ;
 
 
 use App\Domain\Conversation\Actions\FormatConversationMessageAction;
@@ -58,6 +63,12 @@ class ConversationController extends Controller
         ]);
 
 
+       
+
+
+$subject = $data['subject_type']::findOrFail(
+    $data['subject_id']
+);
         
         $identity = $this->context->identity();
         $conversationType = null;
@@ -69,16 +80,45 @@ if (
     $conversationType = ConversationType::PRIVATE;
 }
 
+$title = null;
+$subtitle = null;
+
+if ($subject instanceof Product) {
+    $title = $subject->name;
+    $subtitle = $subject->undername;
+}
+
+if ($subject instanceof Project) {
+    $title = $subject->title;
+    $subtitle = $subject->subtitle;
+}
+
+if ($subject instanceof Rfq) {
+    $title = $subject->title;
+    $subtitle = $subject->subtitle;
+}
+
+if ($subject instanceof User) {
+    $title = 'ACROVOY';
+    $subtitle = 'Customer Service'; 
+}
+
+
         /*
         |--------------------------------------------------------------------------
         | Создаем или находим Conversation
         |--------------------------------------------------------------------------
         */
 
+
+        
+
         $conversation = $this->conversationService
             ->findOrCreateBusinessConversation(
                 subjectType: $data['subject_type'],
                 subjectId: $data['subject_id'],
+                title: $title,
+                subtitle: $subtitle,
                 createdBy: $identity['user_id'],
                 contextType: $identity['entity_type'],
                 contextId: $identity['entity_id'],
@@ -168,6 +208,9 @@ if (
             
         ]);
 
+
+
+     
 
 
         return response()->json([

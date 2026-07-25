@@ -64,6 +64,8 @@ class ConversationService
     public function findOrCreateBusinessConversation(
         string $subjectType,
         int $subjectId,
+        ?string $title = null,
+        ?string $subtitle = null,
         int $createdBy,
         ?string $contextType = null,
         ?int $contextId = null,
@@ -77,6 +79,8 @@ class ConversationService
             conversationType: $conversationType,
             subjectType: $subjectType,
             subjectId: $subjectId,
+            title: $title,
+            subtitle: $subtitle,
             platformRole: $platformRole,
             createdBy: $createdBy,
             contextType: $contextType,
@@ -104,12 +108,16 @@ class ConversationService
     public function findOrCreatePrivateConversation(
         int $createdBy,
         ?string $platformRole = null,
+        ?string $title = null,
+        ?string $subtitle = null,
     ): Conversation {
 
         $data = new CreateConversationData(
             conversationType: ConversationType::PRIVATE,
             subjectType: null,
             subjectId: null,
+            title: $title,
+            subtitle: $subtitle,
             platformRole: $platformRole,
             createdBy: $createdBy,
         );
