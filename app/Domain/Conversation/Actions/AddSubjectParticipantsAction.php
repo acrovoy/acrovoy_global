@@ -5,6 +5,8 @@ namespace App\Domain\Conversation\Actions;
 use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\DTO\AddParticipantData;
 use App\Models\Product;
+use App\Domain\RFQ\Models\Rfq;
+
 
 class AddSubjectParticipantsAction
 {
@@ -26,6 +28,10 @@ class AddSubjectParticipantsAction
                 $this->addProductSupplier(
                     $conversation
                 ),
+
+             
+
+            
 
 
             default =>
@@ -97,4 +103,7 @@ class AddSubjectParticipantsAction
         );
 
     }
+
+    
+    
 }

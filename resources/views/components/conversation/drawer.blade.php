@@ -11,7 +11,7 @@
     class="fixed inset-y-0 right-0 h-full w-full max-w-[460px]
            bg-white shadow-2xl
            transform translate-x-full
-           transition-transform duration-300
+           transition-transform duration-300 z-[9999]
            z-50 flex flex-col"
 
     data-subject-type="{{ $subjectType }}"
@@ -35,6 +35,12 @@
                 <div
                     id="conversation-title"
                     class="font-semibold text-gray-900 truncate"
+                >
+                </div>
+
+                <div
+                    id="conversation-subtitle"
+                    class="text-sm text-stone-500 truncate"
                 >
                 </div>
 
@@ -126,6 +132,6 @@
 {{-- OVERLAY --}}
 <div
     id="conversation-overlay"
-    class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+    class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998]"
 >
 </div>

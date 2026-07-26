@@ -53,7 +53,7 @@ $supplier = \App\Models\Supplier::find($supplierId);
     $progress = ($score / $nextLevelScore) * 100;
     if ($progress > 100) $progress = 100;
 
-    $rating = $supplier->reviews()->avg('rating') ?? 0;
+    $rating =  0;
     $rating = round($rating, 1);
 @endphp
 
@@ -122,34 +122,7 @@ $supplier = \App\Models\Supplier::find($supplierId);
 
     </div>
 
-    {{-- RECENT LOGS --}}
-    <div class="border-t pt-4">
-
-        <div class="text-sm font-semibold text-gray-900 mb-3">
-            Recent Activity
-        </div>
-
-        <ul class="space-y-2 max-h-40 overflow-y-auto pr-1">
-
-            @foreach($supplier->reputationLogs()->latest()->take(5)->get() as $log)
-                <li class="flex items-center justify-between text-sm">
-
-                    <span class="text-gray-600">
-                        {{ $log->reason }}
-                    </span>
-
-                    <span class="font-medium {{ $log->score_change > 0 ? 'text-green-600' : 'text-red-500' }}">
-                        {{ $log->score_change > 0 ? '+' : '' }}{{ $log->score_change }}
-                    </span>
-
-                </li>
-            @endforeach
-
-        </ul>
-
-    </div>
-
-</div>
+    
 
 
 

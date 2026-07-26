@@ -56,9 +56,9 @@ class Rfq extends Model
     ];
 
     public function buyer()
-    {
-        return $this->belongsTo(User::class, 'buyer_id');
-    }
+{
+    return $this->morphTo();
+}
 
     public function creator()
     {

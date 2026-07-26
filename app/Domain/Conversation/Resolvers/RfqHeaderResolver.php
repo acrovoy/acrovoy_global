@@ -13,15 +13,51 @@ class RfqHeaderResolver implements ConversationHeaderResolver
         return $conversation->subject_type === Rfq::class;
     }
 
+
     public function resolve(Conversation $conversation): array
     {
+        $rfq = Rfq::query()
+            ->with([
+                'buyer',
+                'offers',
+            ])
+            ->findOrFail($conversation->subject_id);
+
+
         return [
 
-            'title' => 'RFQ',
+            /*
+            |--------------------------------------------------------------------------
+            | RFQ
+            |--------------------------------------------------------------------------
+            */
 
-            'subtitle' => null,
+            'title' => $rfq->title,
 
-            'avatar' => null,
+            'subtitle' => $rfq->public_id,
+
+            'label' => 'View RFQ',
+
+            'avatar' => asset('images/rfq_avatar.png'),
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Link
+            |--------------------------------------------------------------------------
+            */
+
+            'url' => route(
+    'rfqs.workspace',
+    $rfq->id
+            ),
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Manager
+            |--------------------------------------------------------------------------
+            */
 
             'manager' => [
 
@@ -35,15 +71,30 @@ class RfqHeaderResolver implements ConversationHeaderResolver
 
             ],
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Company
+            |--------------------------------------------------------------------------
+            */
+
             'company' => [
 
-                'id' => null,
+                'id' => $rfq->buyer?->id,
 
-                'name' => null,
+                'name' => $rfq->buyer?->company_name
+                    ?? $rfq->buyer?->name,
 
                 'logo' => null,
 
             ],
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Presence
+            |--------------------------------------------------------------------------
+            */
 
             'online' => false,
 

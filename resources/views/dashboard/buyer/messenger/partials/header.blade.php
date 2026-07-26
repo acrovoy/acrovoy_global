@@ -72,11 +72,30 @@
 
         {{-- View Subject --}}
 
-        <a id="conversation-header-link" href="#" 
-        class="hidden inline-flex items-center justify-center h-9 px-3 rounded-lg 
-        border border-stone-200 text-xs font-medium text-stone-600 hover:bg-stone-50 transition">
-        View Product
-    </a>
+         <a
+    id="conversation-header-link"
+    href="#"
+    class="
+        hidden
+        inline-flex
+        items-center
+        justify-center
+        h-9
+        px-3
+        rounded-lg
+        border
+        border-stone-200
+        text-xs
+        font-medium
+        text-stone-600
+        hover:bg-stone-50
+        transition
+    "
+>
+    <span id="conversation-header-link-text">
+        View
+    </span>
+</a>
 
 
 

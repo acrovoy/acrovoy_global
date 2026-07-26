@@ -70,7 +70,14 @@
                     </div>
 
                     <div class="text-gray-800/50 text-xs mt-3 flex justify-between pb-1">
-                        <div></div>
+                        <div>
+
+                       
+        
+          
+
+
+                        </div>
                         <div>
                             <span class="text-gray-600/50">Visibility:</span>
 

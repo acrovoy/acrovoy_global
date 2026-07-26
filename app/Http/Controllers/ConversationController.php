@@ -26,6 +26,7 @@ use App\Models\Product;
 use App\Domain\Conversation\Enums\ConversationType;
 use App\Domain\Project\Models\Project;
 use App\Domain\RFQ\Models\RFQ;
+use App\Domain\Negotiation\Models\RfqOffer;
 
 
 use App\Domain\Conversation\Actions\FormatConversationMessageAction;
@@ -48,6 +49,9 @@ class ConversationController extends Controller
      */
     public function open(Request $request)
     {
+
+     
+
         $data = $request->validate([
 
             'subject_type' => [
@@ -88,16 +92,24 @@ if ($subject instanceof Product) {
     $subtitle = $subject->undername;
 }
 
-if ($subject instanceof Project) {
-    $title = $subject->title;
-    $subtitle = $subject->subtitle;
-}
 
 if ($subject instanceof Rfq) {
     $title = $subject->title;
-    $subtitle = $subject->subtitle;
+    $subtitle = 'RFQ';
 }
 
+if ($subject instanceof RfqOffer) {
+
+if($subject->rfq->project){
+
+$title = $subject->rfq->project->title;
+    $subtitle = 'Project';
+
+} else {
+    $title = $subject->rfq->title;
+    $subtitle = 'RFQ';
+}
+}
 if ($subject instanceof User) {
     $title = 'ACROVOY';
     $subtitle = 'Customer Service'; 

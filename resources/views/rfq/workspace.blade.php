@@ -83,6 +83,10 @@ $itemsByAttribute = $offerVersion?->items
 
 </div>
 
+
+
+
+
 <script>
 document.addEventListener('click', function (e) {
 
@@ -105,5 +109,8 @@ document.addEventListener('click', function (e) {
     .then(() => location.reload());
 });
 </script>
+
+
+
 
 @endsection

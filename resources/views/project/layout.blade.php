@@ -14,6 +14,12 @@
 
 @yield('project-content')
 
+<x-conversation.drawer
+    subjectType="App\Domain\Project\Models\Project"
+    :subjectId="$project->id"
+    :messagesUrl="url('/dashboard/supplier/messenger/conversations')"
+/>
+
 @endsection
 
 

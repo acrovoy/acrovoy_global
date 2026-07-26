@@ -221,6 +221,39 @@
             </button>
         </form>
 
+         {{-- =========================================
+                            CHAT (only when editable or submitted)
+                        ========================================= --}}
+                        <button
+    type="button"
+    class="
+        open-conversation
+        inline-flex
+        items-center
+        gap-2
+        px-3
+        py-1.5
+        rounded-lg
+        border
+        border-stone-200
+        bg-white
+        text-stone-600
+        text-xs
+        font-medium
+        hover:border-stone-300
+        hover:bg-stone-50
+        hover:text-stone-900
+        transition
+        shadow-sm
+    "
+    data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
+    data-subject-id="{{ $offer->id }}"
+>
+    
+
+    Chat
+</button>
+
     @elseif(optional($version)->status === 'accepted')
 
         <span class="px-3 py-1 text-[11px] font-medium rounded-md
@@ -529,5 +562,11 @@
     </div>
 
 </div>
+
+<x-conversation.drawer
+    subjectType="App\Domain\Negotiation\Models\RfqOffer"
+    :subjectId="$offer->id"
+    :messagesUrl="url('/dashboard/supplier/messenger/conversations')"
+/>
 
 @endsection

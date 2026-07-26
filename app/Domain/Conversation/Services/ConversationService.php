@@ -16,12 +16,15 @@ use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\Models\ConversationParticipant;
 use App\Domain\Conversation\Models\Message;
 use App\Domain\Conversation\Actions\AddSubjectParticipantsAction;
+use App\Domain\Conversation\Actions\AddRfqParticipantsAction;
 use App\Domain\Conversation\Actions\DeleteEmptyConversationsAction;
 use App\Domain\Conversation\Actions\DeleteConversationMessageAction;
 use App\Domain\Conversation\Actions\CloseConversationAction;
 use App\Domain\Conversation\Actions\ReopenConversationAction;
 use App\Domain\Conversation\Actions\DeleteConversationAction;
 use App\Domain\Conversation\Actions\CreateNoticeConversationAction;
+use App\Domain\Negotiation\Models\RfqOffer;
+use App\Facades\ActiveContext;
 
 
 
@@ -35,6 +38,7 @@ class ConversationService
         private readonly SendMessageAction $sendMessage,
         private readonly MarkConversationReadAction $markRead,
         private AddSubjectParticipantsAction $addSubjectParticipants,
+        private AddRfqParticipantsAction $addRfqParticipants,
         private readonly DeleteEmptyConversationsAction $deleteEmptyConversations,
         private readonly DeleteConversationMessageAction $deleteConversationMessageAction,
         private readonly CloseConversationAction $closeConversationAction,
@@ -42,8 +46,7 @@ class ConversationService
         private readonly DeleteConversationAction $deleteConversationAction,
         private readonly CreateNoticeConversationAction $createNoticeConversationAction,
 
-    ) {
-    }
+    ) {}
 
 
     /**
@@ -74,7 +77,7 @@ class ConversationService
     ): Conversation {
 
         $conversationType ??= ConversationType::BUSINESS;
-        
+
         $data = new CreateConversationData(
             conversationType: $conversationType,
             subjectType: $subjectType,
@@ -92,15 +95,21 @@ class ConversationService
             ->execute($data);
     }
 
-   
+
 
     public function syncSubjectParticipants(
-    Conversation $conversation
-): void
-{
-    $this->addSubjectParticipants
-         ->execute($conversation);
-}
+        Conversation $conversation
+    ): void {
+        if ($conversation->subject_type == RfqOffer::class) {
+
+        $identity = ActiveContext::identity();
+            $this->addRfqParticipants
+                ->execute($conversation, $identity);
+        } else {
+            $this->addSubjectParticipants
+                ->execute($conversation);
+        }
+    }
 
     /**
      * Создать личный Conversation.
@@ -202,69 +211,64 @@ class ConversationService
     }
 
     /**
- * Удалить пустые Conversation.
- */
-public function deleteEmptyConversations(): int
-{
-    return $this->deleteEmptyConversations
-        ->execute();
-}
+     * Удалить пустые Conversation.
+     */
+    public function deleteEmptyConversations(): int
+    {
+        return $this->deleteEmptyConversations
+            ->execute();
+    }
 
-public function getConversationStatistics(): array
-{
-    return [
-        'total' => Conversation::has('messages')->count(),
+    public function getConversationStatistics(): array
+    {
+        return [
+            'total' => Conversation::has('messages')->count(),
 
-        'empty' => Conversation::doesntHave('messages')->count(),
-    ];
-}
+            'empty' => Conversation::doesntHave('messages')->count(),
+        ];
+    }
 
-public function deleteMessage(
-    Message $message
-): void
-{
-    $this->deleteConversationMessageAction
-        ->execute($message);
-}
+    public function deleteMessage(
+        Message $message
+    ): void {
+        $this->deleteConversationMessageAction
+            ->execute($message);
+    }
 
-public function closeConversation(
-    Conversation $conversation
-): Conversation
-{
-    return $this->closeConversationAction
-        ->execute($conversation);
-}
+    public function closeConversation(
+        Conversation $conversation
+    ): Conversation {
+        return $this->closeConversationAction
+            ->execute($conversation);
+    }
 
-public function reopenConversation(
-    Conversation $conversation
-): Conversation
-{
-    return $this->reopenConversationAction
-        ->execute($conversation);
-}
+    public function reopenConversation(
+        Conversation $conversation
+    ): Conversation {
+        return $this->reopenConversationAction
+            ->execute($conversation);
+    }
 
-public function deleteConversation(
-    Conversation $conversation
-): void
-{
-    $this->deleteConversationAction
-        ->execute($conversation);
-}
+    public function deleteConversation(
+        Conversation $conversation
+    ): void {
+        $this->deleteConversationAction
+            ->execute($conversation);
+    }
 
-public function createNotice(
-    string $title,
-    string $subtitle,
-    string $description,
-    int $createdBy,
-): Conversation {
+    public function createNotice(
+        string $title,
+        string $subtitle,
+        string $description,
+        int $createdBy,
+    ): Conversation {
 
-    return $this->createNoticeConversationAction
-        ->execute(
-            $title,
-            $subtitle,
-            $description,
-            $createdBy,
-        );
-}
-    
+        return $this->createNoticeConversationAction
+            ->execute(
+                $title,
+                $subtitle,
+                $description,
+                $createdBy,
+            );
+    }
 }

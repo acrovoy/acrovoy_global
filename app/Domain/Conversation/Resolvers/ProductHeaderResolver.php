@@ -35,6 +35,8 @@ class ProductHeaderResolver implements ConversationHeaderResolver
 
             'subtitle' => $product->undername,
 
+            'label' => 'View Product',
+
             'avatar' => $product->main_image_url,
 
             'url' => route('product.show', $product->slug),

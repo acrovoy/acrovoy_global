@@ -20,7 +20,9 @@ class SupplierMessenger
             'conversation-list'
         );
 
-        
+         
+
+
     this.conversationsUrl =
         conversationList.dataset.url;
 
@@ -942,11 +944,22 @@ if (support) {
     'conversation-header-link'
 );
 
+const linkText = document.getElementById(
+    'conversation-header-link-text'
+);
+
+
 if (link) {
 
     if (header.url) {
 
         link.href = header.url;
+
+        if (linkText) {
+            linkText.innerText =
+                header.label ?? 'View';
+        }
+
         link.classList.remove('hidden');
 
     } else {
@@ -967,6 +980,10 @@ document.addEventListener(
     'DOMContentLoaded',
     ()=>{
 
+        if (!document.getElementById('conversation-list')) {
+        return;
+    }
+    
         const app =
             new SupplierMessenger();
 

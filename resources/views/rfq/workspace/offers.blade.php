@@ -75,9 +75,38 @@
 
                     <div class="flex items-center gap-4 text-sm">
 
-                        <span class="text-green-600 text-xs">
-                            Supplier offer submitted
-                        </span>
+                         {{-- =========================================
+                            CHAT (only when editable or submitted)
+                        ========================================= --}}
+                        <button
+    type="button"
+    class="
+        open-conversation
+        inline-flex
+        items-center
+        gap-2
+        px-3
+        py-1.5
+        rounded-lg
+        border
+        border-stone-200
+        bg-white
+        text-stone-600
+        text-xs
+        font-medium
+        hover:border-stone-300
+        hover:bg-stone-50
+        hover:text-stone-900
+        transition
+        shadow-sm
+    "
+    data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
+    data-subject-id="{{ $offer->id }}"
+>
+    
+
+    Chat
+</button>
 
                     </div>
 
@@ -455,6 +484,12 @@ $isCounter  = $activeVersion->is_counter ?? false;
 
     </form>
 </div>
+
+<x-conversation.drawer
+    subjectType="App\Domain\Negotiation\Models\RfqOffer"
+    :subjectId="$offer->id"
+    :messagesUrl="url('/dashboard/supplier/messenger/conversations')"
+/>
 
 
 <script>

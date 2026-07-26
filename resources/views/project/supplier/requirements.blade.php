@@ -40,6 +40,43 @@
 
                     </div>
 
+
+                      {{-- =========================================
+                            CHAT (only when editable or submitted)
+                        ========================================= --}}
+                        <button
+    type="button"
+    class="
+        open-conversation
+        inline-flex
+        items-center
+        gap-2
+        px-3
+        py-1.5
+        rounded-lg
+        border
+        border-stone-200
+        bg-white
+        text-stone-600
+        text-xs
+        font-medium
+        hover:border-stone-300
+        hover:bg-stone-50
+        hover:text-stone-900
+        transition
+        shadow-sm
+    "
+    data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
+    data-subject-id="{{ $offerVersion->offer->id }}"
+>
+    
+
+    Chat
+</button>
+
+
+                 
+
                 </div>
 
                 <div class="p-5 bg-white">
@@ -71,16 +108,7 @@
 
 
 
-                        {{-- =========================================
-                            CHAT (only when editable or submitted)
-                        ========================================= --}}
-                        <button type="button"
-                            class="px-4 py-1 border border-gray-500 text-gray-500 rounded-lg opacity-50 hover:bg-gray-50 hover:text-gray-800
-                            {{ $isReadonly ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            @disabled($isReadonly)>
-                            Chat with Orderer
-                        </button>
-
+                        
 
 
 
@@ -361,6 +389,13 @@ $supplierTotalPrice = $offerVersion->total_price;
     </div>
 
 </div>
+
+
+ <x-conversation.drawer
+    subjectType="App\Domain\Negotiation\Models\RfqOffer"
+    :subjectId="$offerVersion->offer->id"
+    :messagesUrl="url('/dashboard/supplier/messenger/conversations')"
+/>
 
 {{-- ========================= --}}
 {{-- AUTOSAVE ENGINE --}}

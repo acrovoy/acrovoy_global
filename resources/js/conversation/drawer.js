@@ -13,7 +13,8 @@ export default class ConversationDrawer
         this.overlay = document.getElementById('conversation-overlay');
         this.closeButton = document.getElementById('close-conversation');
 
-        this.title = document.getElementById('conversation-title');
+        this.title = document.getElementById('conversation-subtitle');
+        this.subtitle = document.getElementById('conversation-title');
         this.avatar = document.getElementById('conversation-avatar');
         this.status = document.getElementById('conversation-status');
 
@@ -243,6 +244,9 @@ export default class ConversationDrawer
     {
         this.title.textContent =
             header.title ?? '';
+
+        this.subtitle.textContent =
+            header.subtitle ?? '';
 
         this.status.textContent =
             header.online

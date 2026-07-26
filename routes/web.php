@@ -823,8 +823,7 @@ Route::get('/faq', function () {
 
 
 
-// Admin routes
-
+// ADMIN ROUTES /////////////////////////////////////////////////////////////
 Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group(function () {
 
     Route::prefix('messenger')->name('messenger.')->group(function () {
@@ -861,64 +860,78 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
 
         });
 
-
     Route::get('/', function () { return view('dashboard.admin.home'); })->name('home');
-
-    Route::get('orders/{order}/shipments', [AdminOrdersController::class, 'shipments'])->name('orders.shipments');
-    Route::put('orders/{order}/shipments/{orderItemShipment}', [AdminOrdersController::class, 'updateShipment'])->name('orders.shipments.update');
-    Route::post('orders/{order}/upload-invoice-delivery', [AdminOrdersController::class, 'uploadInvoiceDelivery'])->name('orders.upload-invoice-delivery');
-    Route::post('orders/{order}/calculate-delivery', [AdminOrdersController::class, 'calculateDeliveryPrice'])->name('orders.calculate-delivery');
 
     // Virify & Trusted
     Route::post('sellers/{seller}/verify-trust', [AdminSellersController::class, 'updateVerifyTrust']);
 
     // Products moderation
     Route::resource('products', AdminProductController::class);
-    Route::get('/products/{product}', [AdminProductController::class, 'show'])->name('products.show');
-
-    // Moderation actions
-    Route::post('products/{product}/approve', [AdminProductController::class, 'approve'])->name('products.approve');
-    Route::post('products/{product}/reject', [AdminProductController::class, 'reject'])->name('products.reject');
+    Route::prefix('products/{product}')->name('products.')->group(function () {
+            Route::post('approve', [AdminProductController::class, 'approve'])->name('approve');
+            Route::post('reject', [AdminProductController::class, 'reject'])->name('reject');
+        });
 
     // Users
-    Route::prefix('users')->name('users.')->controller(AdminUserController::class)->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('{user}', 'show')->name('show');
-        Route::get('{user}/edit', 'edit')->name('edit');
-        Route::put('{user}', 'update')->name('update');
-        Route::delete('{user}', 'destroy')->name('destroy');
-        Route::patch('{user}/toggle-block', 'toggleBlock')->name('toggleBlock');
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [AdminUserController::class, 'index'])->name('index');
+        Route::prefix('{user}')->group(function () {
 
+                Route::get('/', [AdminUserController::class, 'show'])->name('show');
+                Route::get('edit', [AdminUserController::class, 'edit'])->name('edit');
+                Route::put('/', [AdminUserController::class, 'update'])->name('update');
+                Route::delete('/', [AdminUserController::class, 'destroy'])->name('destroy');
+                Route::patch('toggle-block', [AdminUserController::class, 'toggleBlock'])->name('toggleBlock');
+            });
     });
 
-    Route::get('sellers', [AdminSellersController::class, 'index'])->name('sellers.index');
-    Route::get('sellers/{seller}/show', [AdminSellersController::class, 'show'])->name('sellers.show');
-    Route::get('sellers/{id}/edit', [AdminSellersController::class, 'edit'])->name('sellers.edit');
-    Route::put('sellers/{id}', [AdminSellersController::class, 'update'])->name('sellers.update');
-    // Загрузка сертификата
-    Route::post('sellers/{seller}/certificates', [AdminSellersController::class, 'uploadCertificate'])->name('sellers.certificates.upload');
-    // Удаление сертификата
-    Route::delete('sellers/certificates/{certificate}', [AdminSellersController::class, 'deleteCertificate'])->name('sellers.certificates.delete');
-    Route::get('sellers/{seller}/certificates/list', [AdminSellersController::class, 'listCertificates']);
+    // Sellers
+    Route::prefix('sellers')->name('sellers.')->group(function () {
+        Route::get('/', [AdminSellersController::class, 'index'])->name('index');
+
+        Route::prefix('{seller}')->group(function () {
+                Route::get('show', [AdminSellersController::class, 'show'])->name('show');
+                Route::post('certificates', [AdminSellersController::class, 'uploadCertificate'])->name('certificates.upload');
+                Route::get('certificates/list', [AdminSellersController::class, 'listCertificates']);
+            });
+
+        Route::get('{id}/edit', [AdminSellersController::class, 'edit'])->name('edit');
+        Route::put('{id}', [AdminSellersController::class, 'update'])->name('update');
+        Route::delete('certificates/{certificate}', [AdminSellersController::class, 'deleteCertificate'])->name('certificates.delete');
+    });
 
     
+    // Orders & Disputes
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [AdminOrdersController::class, 'index'])->name('index');
 
-    Route::get('orders', [AdminOrdersController::class, 'index'])->name('orders.index');
-    Route::get('orders/{order}', [AdminOrdersController::class, 'show'])->name('orders.show');
-    Route::post('orders/disputes/{dispute}/admin-comment', [AdminOrdersController::class, 'addDisputeAdminComment'])->name('orders.disputes.adminComment');
+        Route::prefix('{order}')->group(function () {
+                Route::get('/', [AdminOrdersController::class, 'show'])->name('show');
+                Route::get('shipments', [AdminOrdersController::class, 'shipments'])->name('shipments');
+                Route::put('shipments/{orderItemShipment}', [AdminOrdersController::class, 'updateShipment'])->name('shipments.update');
+                Route::post('upload-invoice-delivery', [AdminOrdersController::class, 'uploadInvoiceDelivery'])->name('upload-invoice-delivery');
+                Route::post('calculate-delivery', [AdminOrdersController::class, 'calculateDeliveryPrice'])->name('calculate-delivery');
+            });
+
+        Route::post('disputes/{dispute}/admin-comment', [AdminOrdersController::class, 'addDisputeAdminComment'])->name('disputes.adminComment');
+    });
     Route::patch('disputes/{dispute}', [AdminOrdersController::class, 'update'])->name('disputes.update');
 
-    Route::get('banners', [AdminBannersController::class, 'index'])->name('banners.index');
-    Route::post('banners', [AdminBannersController::class, 'store'])->name('banners.store');
+    // Banners
+    Route::prefix('banners')->name('banners.')->group(function () {
+        Route::get('/', [AdminBannersController::class, 'index'])->name('index');
+        Route::post('/', [AdminBannersController::class, 'store'])->name('store');
+    });
 
-
-    Route::get('premium-plans', [PremiumPlanController::class, 'index'])->name('premium-plans.index');
-    Route::get('premium-plans/create', [PremiumPlanController::class, 'create'])->name('premium-plans.create');
-    Route::post('premium-plans', [PremiumPlanController::class, 'store'])->name('premium-plans.store');
-    Route::get('premium-plans/{id}/edit', [PremiumPlanController::class, 'edit'])->name('premium-plans.edit');
-    Route::put('premium-plans/{id}', [PremiumPlanController::class, 'update'])->name('premium-plans.update');
-    Route::delete('premium-plans/{id}', [PremiumPlanController::class, 'destroy'])->name('premium-plans.destroy');
-
+    // Premium Plans
+    Route::prefix('premium-plans')->name('premium-plans.')->group(function () {
+        Route::get('/', [PremiumPlanController::class, 'index'])->name('index');
+        Route::get('create', [PremiumPlanController::class, 'create'])->name('create');
+        Route::post('/', [PremiumPlanController::class, 'store'])->name('store');
+        Route::get('{id}/edit', [PremiumPlanController::class, 'edit'])->name('edit');
+        Route::put('{id}', [PremiumPlanController::class, 'update'])->name('update');
+        Route::delete('{id}', [PremiumPlanController::class, 'destroy'])->name('destroy');
+    });
 
     Route::resource('faq', AdminFAQController::class);
 
@@ -931,15 +944,14 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
     Route::put('exchange-rates/{currency}', [AdminExchangeRateController::class, 'update'])->name('exchange-rates.update');
 
     //Shipping-templates
-    Route::get('shipping-templates', [AdminShippingTemplateController::class, 'index'])->name('shipping-templates.index');
-    // Создание
-    Route::get('shipping-templates/create', [AdminShippingTemplateController::class, 'create'])->name('shipping-templates.create');
-    Route::post('shipping-templates', [AdminShippingTemplateController::class, 'store'])->name('shipping-templates.store');
-    // Редактирование
-    Route::get('shipping-templates/{shippingTemplate}/edit', [AdminShippingTemplateController::class, 'edit'])->name('shipping-templates.edit');
-    Route::put('shipping-templates/{shippingTemplate}', [AdminShippingTemplateController::class, 'update'])->name('shipping-templates.update');
-    // Удаление
-    Route::delete('shipping-templates/{shippingTemplate}', [AdminShippingTemplateController::class, 'destroy'])->name('shipping-templates.destroy');
+    Route::prefix('shipping-templates')->name('shipping-templates.')->group(function () {
+        Route::get('/', [AdminShippingTemplateController::class, 'index'])->name('index');
+        Route::get('create', [AdminShippingTemplateController::class, 'create'])->name('create');
+        Route::post('/', [AdminShippingTemplateController::class, 'store'])->name('store');
+        Route::get('{shippingTemplate}/edit', [AdminShippingTemplateController::class, 'edit'])->name('edit');
+        Route::put('{shippingTemplate}', [AdminShippingTemplateController::class, 'update'])->name('update');
+        Route::delete('{shippingTemplate}', [AdminShippingTemplateController::class, 'destroy'])->name('destroy');
+    });
 
     Route::prefix('settings')->name('settings.')->group(function () {
 
@@ -986,7 +998,6 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         Route::delete('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'destroy'])->name('attributes.options.destroy');
     });
 
-
     // === Help Center ===
     Route::prefix('help')->name('help.')->group(function () {
 
@@ -1017,8 +1028,6 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
 
 
     });
-
-
     
 });
 
@@ -1044,11 +1053,9 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
         ->name('companies.destroy');
 });
 
-Route::get('/dashboard/users/find-by-email', [UserController::class, 'findByEmail'])
-    ->name('dashboard.users.findByEmail');
+Route::get('/dashboard/users/find-by-email', [UserController::class, 'findByEmail'])->name('dashboard.users.findByEmail');
 
-Route::post('/dashboard/companies/{company}/transfer-owner', [CompanyController::class, 'transferOwner'])
-    ->name('dashboard.companies.transfer-owner');
+Route::post('/dashboard/companies/{company}/transfer-owner', [CompanyController::class, 'transferOwner'])->name('dashboard.companies.transfer-owner');
 
 // Help Center
 Route::prefix('help')->name('help.')->group(function () {
@@ -1058,7 +1065,6 @@ Route::prefix('help')->name('help.')->group(function () {
 });
 
 Route::post('/api/user/timezone', [UserTimezoneController::class, 'update'])->middleware('auth');
-
 
 // Route::get('/dashboard', function () {
 //     return view('dashboard');

@@ -106,4 +106,9 @@ public function getOwnerNameAttribute(): ?string
     };
 }
 
+public function owner()
+{
+    return $this->morphTo();
+}
+
 }
