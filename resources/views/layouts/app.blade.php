@@ -195,7 +195,18 @@
 
 <x-ui.modal.confirm />
 
+<script>
+window.dispatchAlert = function(type, message) {
 
+    window.dispatchEvent(new CustomEvent('app-alert', {
+        detail: {
+            type,
+            message
+        }
+    }));
+
+};
+</script>
 
 
 

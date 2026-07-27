@@ -1,6 +1,6 @@
 
 
-<form action="{{ route('supplier.company.update') }}"
+<form action="{{ route('supplier.company.update.legacy') }}"
       method="POST"
       enctype="multipart/form-data"
       class="max-w-7xl mx-auto">

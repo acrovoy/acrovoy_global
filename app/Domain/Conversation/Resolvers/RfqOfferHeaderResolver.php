@@ -70,30 +70,7 @@ if ($contact instanceof \App\Models\User) {
 }
 
 
-            Log::info('RFQ Offer Header Resolver', [
-                'contact' => $contact,
-
-    'conversation_id' => $conversation->id,
-
-    'platform_role' => $context->platformRole(),
-
-    'contact_class' => $contact ? get_class($contact) : null,
-
-    'contact_id' => $contact?->id,
-
-    'contact_company_name' => $contact?->company_name ?? null,
-
-    'contact_name' => $contact?->name ?? null,
-
-    'avatar_url' => $contact?->avatar_url ?? null,
-
-    'logo_url' => $contact?->logo_url ?? null,
-
-    'contact_attributes' => $contact?->getAttributes(),
-
-    'contact_array' => $contact?->toArray(),
-
-]);
+            
 
 
 if($rfq->project){

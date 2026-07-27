@@ -12,25 +12,48 @@ use App\Models\Country;
 use Illuminate\Support\Str;
 
 use App\Services\ReputationService;
+use Illuminate\Support\Facades\Log;
 
 use App\Domain\Media\Services\MediaService;
 use App\Domain\Media\DTO\UploadMediaDTO;
 use App\Domain\Media\Jobs\DeleteMediaJob;
 
+ use App\Domain\Company\Actions\UpdateOverviewAction;
+ use App\Domain\Company\Actions\UpdateGeneralAction;
+ use App\Domain\Company\Actions\UpdateManufacturingAction;
+ use App\Domain\Company\Actions\UpdateContactsAction;
+
 use App\Services\Company\ActiveContextService;
 
-class ManufacturerController extends Controller
+use App\Models\ExportMarket;
+use App\Models\ManufacturingCapability;
+use App\Models\CompanyUser;
+use App\Models\Supplier;
+
+class SupplierCompanyController extends Controller
 {
 
+public function __construct(
+        private ActiveContextService $context,
+        private MediaService $mediaService,
+        private UpdateOverviewAction $updateOverviewAction,
+        private UpdateGeneralAction $updateGeneralAction,
+        private UpdateManufacturingAction $updateManufacturingAction,
+        private UpdateContactsAction $updateContactsAction,
+        
 
+ 
+)
+{
+
+}
     /**
  * Show company profile (read-only page)
  */
-public function showCompanyProfile(ActiveContextService $context)
+public function showCompanyProfile()
 {
     
-
-    $company = $context->company();
+    $company = $this->context->company();
 
     if (!$company) {
         return redirect()
@@ -49,7 +72,7 @@ public function showCompanyProfile(ActiveContextService $context)
     $catalogMedia = $company->catalogImageMedia()->first();
 
     return view(
-        'dashboard.supplier.profile.show',
+        'dashboard.supplier.company-profile.show',
         compact('company', 'catalogMedia')
     );
 }
@@ -59,11 +82,11 @@ public function showCompanyProfile(ActiveContextService $context)
     /**
      * Показ страницы профиля компании
      */
-    public function companyProfile(ActiveContextService $context)
+    public function companyProfile()
     {
         
 
-    $company = $context->company();
+    $company = $this->context->company();
 
         if ($company) {
             $company->load([
@@ -99,7 +122,7 @@ public function showCompanyProfile(ActiveContextService $context)
 $selectedmanufacturingCapabilities =
     $profile?->manufacturingCapabilities?->pluck('id')->toArray() ?? [];
 
-        return view('dashboard.supplier.company-profile', compact(
+        return view('dashboard.supplier.company-profile.company-profile', compact(
             'company',
             'countries',
             'exportMarkets',
@@ -114,11 +137,11 @@ $selectedmanufacturingCapabilities =
     /**
      * Обновление профиля компании
      */
-    public function updateCompany(Request $request, MediaService $mediaService, ActiveContextService $context)
+    public function updateCompany(Request $request)
     {
        
 
-    $company = $context->company();
+    $company = $this->context->company();
  
         if (!$company) {
             return back()->withErrors('Supplier not found');
@@ -162,7 +185,7 @@ $selectedmanufacturingCapabilities =
                 isMain: true
             );
 
-            $mediaService->upload($dto);
+            $this->mediaService->upload($dto);
         }
 
         /** CATALOG IMAGE */
@@ -274,7 +297,7 @@ $selectedmanufacturingCapabilities =
         'certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
     ]);
 
-    $company = auth()->user()?->supplier;
+    $company = $this->context->supplier();
 
     if (!$company) {
         return response()->json([
@@ -289,7 +312,7 @@ $selectedmanufacturingCapabilities =
         $metadata = json_decode($request->input('metadata'), true) ?? [];
     }
 
-    $dto = new \App\Domain\Media\DTO\UploadMediaDTO(
+    $dto = new UploadMediaDTO(
         file: $request->file('certificate'),
         model: $company,
         collection: 'supplier_certificates',
@@ -301,7 +324,7 @@ $selectedmanufacturingCapabilities =
         isMain: true
     );
 
-    $media = app(\App\Domain\Media\Services\MediaService::class)->upload($dto);
+    $media = $this->mediaService->upload($dto);
 
     return response()->json([
         'success' => true,
@@ -338,7 +361,7 @@ public function deleteCertificate($id)
 
     } catch (\Throwable $e) {
 
-        \Log::error($e);
+        Log::error($e);
 
         return response()->json([
             'success' => true
@@ -347,12 +370,11 @@ public function deleteCertificate($id)
 }
 
     
-    public function uploadFactoryPhotos(Request $request, MediaService $mediaService,
-    ActiveContextService $context)
+    public function uploadFactoryPhotos(Request $request)
 {
-    abort_if(!$context->isCompany(), 403);
+    abort_if(!$this->context->isCompany(), 403);
 
-    $supplier = $context->company();
+    $supplier = $this->context->company();
 
     if (!$supplier) {
         return response()->json(['error' => 'Supplier not found'], 404);
@@ -377,14 +399,14 @@ public function deleteCertificate($id)
                 isMain: true
             );
 
-            $mediaService->upload($dto);
+            $this->mediaService->upload($dto);
         }
 
         return response()->json(['success' => true]);
 
     } catch (\Throwable $e) {
 
-        \Log::error($e);
+        Log::error($e);
 
         return response()->json([
             'success' => false
@@ -393,12 +415,11 @@ public function deleteCertificate($id)
 }
 
 
-public function deleteFactoryPhoto($id,
-    ActiveContextService $context)
+public function deleteFactoryPhoto($id)
 {
-     abort_if(!$context->isCompany(), 403);
+     abort_if(!$this->context->isCompany(), 403);
 
-    $supplier = $context->company();
+    $supplier = $this->context->company();
 
     $media = $supplier->media()
         ->where('collection', 'factory_photos')
@@ -412,16 +433,15 @@ public function deleteFactoryPhoto($id,
     ]);
 }
 
-public function uploadCatalogImage(Request $request,
-    ActiveContextService $context)
+public function uploadCatalogImage(Request $request)
 {
     $request->validate([
         'catalog_image' => 'required|image|max:10240',
     ]);
 
-    abort_if(!$context->isCompany(), 403);
+    abort_if(!$this->context->isCompany(), 403);
 
-    $company = $context->company();
+    $company = $this->context->company();
 
     if (!$company) {
         return response()->json(['message' => 'Company not found'], 404);
@@ -441,13 +461,132 @@ public function uploadCatalogImage(Request $request,
         isMain: true
     );
 
-    $media = app(MediaService::class)
-        ->upload($dto);
+    $media = $this->mediaService->upload($dto);
 
     return response()->json([
         'success' => true,
         'url' => $media->cdn_url
     ]);
+}
+
+
+public function updateLogo(Request $request)
+{
+    $company = $this->context->company();
+
+    if (!$company) {
+        return response()->json([
+            'message' => 'Supplier not found'
+        ], 404);
+    }
+
+    $request->validate([
+        'logo' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    $oldLogo = $company->media()
+        ->where('collection', 'company_logos')
+        ->first();
+
+    if ($oldLogo) {
+        DeleteMediaJob::dispatch($oldLogo->uuid);
+    }
+
+    $file = $request->file('logo');
+
+    $dto = new UploadMediaDTO(
+        file: $file,
+        model: $company,
+        collection: 'company_logos',
+        mediaRole: 'company_logo',
+        private: false,
+        originalFileName: $file->getClientOriginalName(),
+        sortOrder: 0,
+        isMain: true
+    );
+
+    $media = $this->mediaService->upload($dto);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Company logo updated successfully.',
+        'url' => $media->cdn_url,
+    ]);
+}
+
+public function drawer(string $section)
+{
+    $company = $this->context->company();
+
+    abort_unless(
+        view()->exists("dashboard.supplier.company-profile.drawers.$section"),
+        404
+    );
+
+    $data = [
+        'company' => $company,
+    ];
+
+    if ($section === 'overview') {
+        $data['countries'] = Country::orderBy('name')->get();
+    }
+
+    if ($section === 'general') {
+
+        $data['exportMarkets'] = ExportMarket::with('translations')->get();
+
+    }
+
+    if ($section === 'manufacturing') {
+        $data['manufacturingCapabilities'] = ManufacturingCapability::all();
+    }
+
+     if ($section === 'members') {
+
+        $data['members'] = $company->members()
+            ->with('user')
+            ->get();
+            }
+
+    
+
+    return view(
+        "dashboard.supplier.company-profile.drawers.$section",
+        $data
+    );
+}
+
+public function update(Request $request, string $section)
+{
+    $company = $this->context->company();
+
+    abort_unless($company, 404);
+
+    return match ($section) {
+
+        'overview' => ($this->updateOverviewAction)(
+            $request,
+            $company
+        ),
+
+        'general' => ($this->updateGeneralAction)(
+            $request,
+            $company
+        ),
+
+       'manufacturing' => ($this->updateManufacturingAction)(
+            $request,
+            $company
+        ),
+
+        'contacts' => ($this->updateContactsAction)(
+    $request,
+    $company
+),
+
+        default => abort(404),
+
+    };
 }
 
 }

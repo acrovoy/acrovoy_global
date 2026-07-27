@@ -1,5 +1,7 @@
 import './bootstrap';
 
+import './edit/drawer';
+
 import Alpine from 'alpinejs';
 
 import collapse from '@alpinejs/collapse'; 

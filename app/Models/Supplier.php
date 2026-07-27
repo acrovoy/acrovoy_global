@@ -230,6 +230,12 @@ public function users()
     return $this->morphMany(CompanyUser::class, 'company');
 }
 
-
+public function members()
+{
+    return $this->morphMany(
+        CompanyUser::class,
+        'company'
+    );
+}
 
 }

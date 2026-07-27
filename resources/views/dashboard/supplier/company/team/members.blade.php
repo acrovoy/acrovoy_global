@@ -67,14 +67,45 @@
                 <tr class="hover:bg-gray-50 transition">
 
                     <td class="px-5 py-3">
-                        <div class="font-medium text-gray-900">
-                            {{ $member->user->name ?? '-' }}
-                        </div>
 
-                        <div class="text-xs text-gray-400">
-                            {{ $member->user->email ?? '-' }}
-                        </div>
-                    </td>
+    <div class="flex items-center gap-3">
+
+        @if($member->user?->avatar()?->cdn_url)
+
+            <img
+                src="{{ $member->user->avatar()->cdn_url }}"
+                alt="{{ $member->user->name }}"
+                class="h-10 w-10 rounded-full object-cover border border-gray-200">
+
+        @else
+
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700">
+
+                {{ strtoupper(substr($member->user->name ?? '?', 0, 1)) }}
+
+            </div>
+
+        @endif
+
+        <div>
+
+            <div class="font-medium text-gray-900">
+
+                {{ trim(($member->user->name ?? '') . ' ' . ($member->user->last_name ?? '')) }}
+
+            </div>
+
+            <div class="text-xs text-gray-400">
+
+                {{ $member->user->email ?? '-' }}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</td>
 
 
                     <td class="px-5 py-3 text-gray-700">
