@@ -69,7 +69,7 @@
 >
     
 
-    Chat
+    Chat with Buyer
 </button>
 
 
