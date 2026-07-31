@@ -297,7 +297,12 @@
 @endif
 
 
+@php
+    $identity = \App\Facades\ActiveContext::identity();
 
+    $company = \App\Facades\ActiveContext::company();
+    $user = \App\Facades\ActiveContext::user();
+@endphp
                 <!-- Right: User Dropdown -->
                 <div class="hidden sm:flex sm:items-center">
 
@@ -312,7 +317,32 @@
                         <div class="bg-[#F7F3EA] shadow-lg rounded-lg p-2"></div>
                         <x-slot name="trigger">
                             <button class="flex items-center text-gray-700 hover:text-gray-900 font-medium">
-                                <span>{{ Auth::user()->name }}</span>
+                                
+                            <div class="flex flex-col items-start leading-tight">
+    @if($identity['mode'] === 'company')
+
+        <span class="font-medium">
+            {{ $company?->name }}
+        </span>
+
+        <span class="text-xs text-gray-500">
+            {{ ucfirst($identity['platform_role']) }} Company
+        </span>
+
+    @else
+
+        <span class="font-medium">
+            {{ $user?->name }}
+        </span>
+
+        <span class="text-xs text-gray-500">
+            {{ ucfirst($identity['platform_role']) }} Individual
+        </span>
+
+    @endif
+</div>
+
+
                                 <svg class="ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

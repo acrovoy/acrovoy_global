@@ -799,15 +799,32 @@ $company = $supplier;
                     {{-- Footer --}}
                     <div class="border-t border-gray-100 px-3 py-2.5">
 
-                        <div class="text-sm font-semibold text-gray-900 line-clamp-1">
-                            {{ $certificateName ?: $certificate->original_file_name }}
-                        </div>
+                        <div class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900">
+    {{ $certificateName ?: $certificate->original_file_name }}
+</div>
 
                         @if($certificateNumber)
-                            <div class="mt-2 text-xs text-gray-500">
-                                {{ $certificateNumber }}
-                            </div>
-                        @endif
+    <div class="mt-2 flex items-center gap-2">
+        <div
+            class="min-w-0 flex-1 truncate text-xs text-gray-500"
+            title="{{ $certificateNumber }}">
+            {{ $certificateNumber }}
+        </div>
+
+        <button
+            type="button"
+            class="copy-certificate-number shrink-0 text-gray-400 transition hover:text-gray-700"
+            data-number="{{ $certificateNumber }}"
+            title="Copy certificate number">
+
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="9" y="9" width="11" height="11" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+
+        </button>
+    </div>
+@endif
 
                         @if($validUntil)
                             <div class="mt-1 text-xs text-gray-400">
@@ -1049,6 +1066,38 @@ $company = $supplier;
     @endphp
 
     
+<script> 
+
+   document.addEventListener('click', async function (e) {
+
+    const btn = e.target.closest('.copy-certificate-number');
+
+    if (!btn) return;
+
+    const number = btn.dataset.number;
+
+    try {
+
+        await navigator.clipboard.writeText(number);
+
+        dispatchAlert(
+            'success',
+            'Certificate number copied to clipboard.'
+        );
+
+    } catch (err) {
+
+        dispatchAlert(
+            'error',
+            'Failed to copy certificate number.'
+        );
+
+    }
+
+});
+
+</script>
+
 
 
 <script>
