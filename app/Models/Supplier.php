@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Domain\Media\Models\Media;
+use App\Domain\Contact\Traits\HasContacts;
+use App\Domain\Contact\Models\Contact;
 
 class Supplier extends Model
 {
-    use HasFactory;
+    use HasFactory, HasContacts;
 
     protected $fillable = [
         'user_id',
@@ -121,6 +123,14 @@ class Supplier extends Model
     {
         return $this->belongsToMany(SupplierType::class);
     }
+
+    public function businessTypes()
+{
+    return $this->morphToMany(
+        BusinessType::class,
+        'business_typeable'
+    );
+}
 
     public function exportMarkets()
     {
@@ -236,6 +246,27 @@ public function members()
         CompanyUser::class,
         'company'
     );
+}
+
+
+public function profileMembers()
+{
+    return $this->morphMany(
+        CompanyUser::class,
+        'company'
+    )
+    ->where('show_in_profile', true);
+}
+
+public function contacts()
+{
+    return $this->morphMany(Contact::class, 'contactable');
+}
+
+public function publicContacts()
+{
+    return $this->morphMany(Contact::class, 'contactable')
+        ->where('is_public', true);
 }
 
 }

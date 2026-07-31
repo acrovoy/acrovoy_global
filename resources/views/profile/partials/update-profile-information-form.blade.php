@@ -59,7 +59,7 @@
             class="hidden"
         >
     </div>
-
+   
     <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
 </div>
 
@@ -86,7 +86,7 @@
 
 
         <div>
-            <x-input-label for="email" :value="__('Email')" />
+            <x-input-label for="email" :value="__('Registration Email')" />
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
@@ -110,7 +110,18 @@
         </div>
 
 
-        <div>
+        <x-contact.list
+    :contacts="$user->contacts"
+    title="Business Contacts"
+    description="Primary contact details."
+    ownerType="user"
+    :ownerId="$user->id"
+    :editable="true"
+    
+/>
+       
+
+        <!-- <div>
             <x-input-label for="role" :value="__('Account Type')" />
             
             <select id="role" name="role" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -120,7 +131,7 @@
             </select>
 
             <x-input-error class="mt-2" :messages="$errors->get('role')" />
-        </div>
+        </div> -->
 
 
         <div class="flex items-center gap-4">
@@ -138,6 +149,8 @@
         </div>
     </form>
 
+
+     
 
     <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -173,3 +186,4 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 </section>
+

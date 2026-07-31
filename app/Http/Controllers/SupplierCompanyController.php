@@ -29,6 +29,7 @@ use App\Models\ExportMarket;
 use App\Models\ManufacturingCapability;
 use App\Models\CompanyUser;
 use App\Models\Supplier;
+use App\Models\BusinessType;
 
 class SupplierCompanyController extends Controller
 {
@@ -66,7 +67,8 @@ public function showCompanyProfile()
         'supplierTypes.translation',
         'country',
         'media',
-        'profile'
+        'profile',
+        'contacts' => fn ($query) => $query->orderBy('sort_order'),
     ]);
 
     $catalogMedia = $company->catalogImageMedia()->first();
@@ -529,6 +531,11 @@ public function drawer(string $section)
 
     if ($section === 'overview') {
         $data['countries'] = Country::orderBy('name')->get();
+        $data['businessTypes'] = BusinessType::with('translation')
+    ->where('target_type', 'supplier')
+    ->orderBy('slug')
+    ->get();
+
     }
 
     if ($section === 'general') {

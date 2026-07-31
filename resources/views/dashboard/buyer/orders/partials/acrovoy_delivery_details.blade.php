@@ -95,7 +95,14 @@
                                        
                                     @endif
 
-                                    <div><strong>Shipping Provider:</strong> {{ $shipment->provider->last_name ? $shipment->provider->name .' '. $shipment->provider->last_name : $shipment->provider->name ?? '-' }}</div>
+                                   <div>
+    <strong>Shipping Provider:</strong>
+
+    {{ $shipment->provider
+        ? trim($shipment->provider->name . ' ' . ($shipment->provider->last_name ?? ''))
+        : '-'
+    }}
+</div>
                                 </div>
 
                                 {{-- Tracking number block --}}

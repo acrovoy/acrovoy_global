@@ -1,6 +1,9 @@
 @extends('layouts.auth')
 
 @section('content')
+
+
+
 <div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
 
     <!-- LEFT: IMAGE + BRAND -->
@@ -41,7 +44,7 @@
             <input
                 type="text"
                 name="name"
-                placeholder="Full Name"
+                placeholder="Name"
                 required
                 autofocus
                 class="w-full px-4 py-3 border border-gray-300 rounded-md text-lg focus:outline-none focus:border-blue-500"

@@ -2,6 +2,12 @@ import { initGeneralDrawer } from './general';
 
 import { initManufacturingDrawer } from './manufacturing';
 
+import { initContactDrawer } from './contact';
+
+import { initBusinessDrawer } from './overview';
+
+
+
 let drawer = null;
 let overlay = null;
 let body = null;
@@ -97,6 +103,10 @@ async function openDrawer(config = {}) {
         initGeneralDrawer();
 
         initManufacturingDrawer();
+
+        initContactDrawer();
+
+        initBusinessDrawer();
 
     } catch (e) {
 

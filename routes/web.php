@@ -70,7 +70,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AdminShippingCenterController;
 use App\Http\Controllers\Admin\AdminShippingTemplateController;
 use App\Http\Controllers\Admin\Settings\ConstantsController;
-use App\Http\Controllers\Admin\Settings\SupplierTypeController;
+use App\Http\Controllers\Admin\Settings\BusinessTypeController;
 use App\Http\Controllers\Admin\Settings\UnitsController;
 use App\Http\Controllers\Admin\Settings\MaterialsController;
 use App\Http\Controllers\Admin\Settings\LanguagesController;
@@ -92,6 +92,9 @@ use App\Http\Controllers\Api\UserTimezoneController;
 use App\Http\Controllers\SupplierMessengerController;
 use App\Http\Controllers\BuyerMessengerController;
 
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContactDrawerController;
+
 use App\Models\Supplier;
 
 /*
@@ -104,6 +107,10 @@ use App\Models\Supplier;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+
+
+
 
 // Home page
 Route::get('/', [HomeController::class, 'index'])->name('main');
@@ -118,6 +125,15 @@ Route::middleware('auth')->group(function () {
 Route::get('/rfqs/{rfq}', [RfqController::class, 'show'])
     ->name('rfqs.workspace');
 
+
+//CONTACTS
+Route::prefix('contacts')->name('contacts.')->group(function () {
+        Route::post('/', [ContactController::class, 'store'])->name('store');
+        Route::put('/{contact}', [ContactController::class, 'update'])->name('update');
+        Route::delete('/{contact}', [ContactController::class, 'destroy'])->name('destroy');
+        Route::get('/drawer', [ContactDrawerController::class, 'index'])->name('drawer');
+
+    });
 
 Route::post('/conversations/open', [ConversationController::class, 'open'])->name('conversations.open');
 Route::post('/conversations/message', [ConversationController::class, 'message'])->name('conversations.message');
@@ -750,7 +766,7 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
         Route::get('languages/{language}', [LanguagesController::class, 'show'])->name('languages.show');
 
         // Supplier type
-        Route::resource('supplier-types', SupplierTypeController::class);
+        Route::resource('business-types', BusinessTypeController::class);
 
         // Materials
         Route::get('materials', [MaterialsController::class, 'index'])->name('materials.index');
@@ -857,6 +873,8 @@ Route::post('/api/user/timezone', [UserTimezoneController::class, 'update'])->mi
 
 
 Route::post('/dashboard/support/request',[SupportRequestController::class, 'store'])->name('support.request');
+
+
 
 
 

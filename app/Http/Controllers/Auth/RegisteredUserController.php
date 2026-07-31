@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Supplier;
+
+use App\Domain\Contact\Services\ContactService;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +19,11 @@ use Illuminate\Support\Str;
 
 class RegisteredUserController extends Controller
 {
+
+public function __construct(
+        protected ContactService $contactService,
+    ) {
+    }
     /**
      * Display the registration view.
      */
@@ -32,6 +39,9 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+
+   
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
@@ -44,6 +54,23 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'role' => 'buyer',
         ]);
+
+       
+
+        $this->contactService->create([
+    'contactable_type' => User::class,
+    'contactable_id'   => $user->id,
+    'created_by' => $user->id,
+
+    'type' => 'email',
+    'value' => $user->email,
+    'label' => 'Personal',
+
+    'is_primary' => true,
+    'is_public' => true,
+    'show_in_profile' => true,
+]);
+
 
         event(new Registered($user));
 
@@ -74,6 +101,21 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'role' => 'manufacturer',
         ]);
+
+        $this->contactService->create([
+    'contactable_type' => User::class,
+    'contactable_id'   => $user->id,
+    'created_by' => $user->id,
+
+    'type' => 'email',
+    'value' => $user->email,
+    'label' => 'Personal',
+
+    'is_primary' => true,
+    'is_public' => true,
+    'show_in_profile' => true,
+]);
+
 
         $supplier = Supplier::create([
         'user_id' => $user->id, // сразу ставим user_id

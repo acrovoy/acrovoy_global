@@ -41,3 +41,9 @@ import './conversation/index';
 import './conversation/messenger/index';
 
 import './dashboard/admin/messenger/tools';
+
+import { initSwipers } from './components/swiper';
+
+document.addEventListener('DOMContentLoaded', () => {
+    initSwipers();
+});

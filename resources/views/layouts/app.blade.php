@@ -192,6 +192,7 @@
 })();
 </script>
 
+<x-edit.edit-drawer />
 
 <x-ui.modal.confirm />
 

@@ -1,40 +1,48 @@
-<ul class="space-y-0.5 ml-3 border-l border-gray-200 pl-3 text-sm">
+<ul class="space-y-1">
 
 @foreach($categories as $category)
 
-    <li class="relative">
+    @if(isset($tree[$category->id]))
 
-        {{-- ROOT или Parent Node (НЕ clickable) --}}
-        @if(isset($tree[$category->id]))
+        {{-- есть дочерние категории --}}
+        @include('supplier.partials.category_tree', [
+            'categories' => $tree[$category->id],
+            'tree' => $tree,
+            'supplier' => $supplier
+        ])
 
-            <div class="flex items-center px-2 py-1.5 text-sm font-semibold text-gray-700 tracking-wide select-none">
-                {{ $category->name }}
-            </div>
+    @else
 
-            {{-- Recursive children --}}
-            @include('supplier.partials.category_tree', [
-                'categories' => $tree[$category->id],
-                'tree' => $tree,
-                'supplier' => $supplier
-            ])
+        {{-- конечная категория --}}
+        <li>
 
-        @else
-
-            {{-- Leaf Category → CLICKABLE LINK --}}
             <a href="{{ request()->fullUrlWithQuery(['category' => $category->slug]) }}"
-               class="flex items-center gap-2 px-2 py-1.5 rounded-md transition-all duration-150
-               {{ request('category') == $category->slug
-                    ? 'text-emerald-600 font-semibold bg-emerald-50'
-                    : 'text-gray-600 text-sm hover:text-gray-900 hover:bg-gray-50' }}">
+   class="flex items-center justify-between rounded-lg px-3 py-2 transition
 
-                <span class="w-3"></span>
+   {{ request('category') == $category->slug
+        ? 'bg-[#f7f3ec] border border-[#e8ddd0] text-[#6f4e37]'
+        : 'text-gray-700 hover:bg-gray-50'
+   }}">
 
-                <span class="truncate">{{ $category->name }}</span>
-            </a>
+    <div>
 
+        <div class="font-medium">
+            {{ $category->name }}
+        </div>
+
+        @if($category->parent)
+            <div class="mt-0.5 text-xs text-gray-400">
+                {{ $category->parent->name }}
+            </div>
         @endif
 
-    </li>
+    </div>
+
+</a>
+
+        </li>
+
+    @endif
 
 @endforeach
 

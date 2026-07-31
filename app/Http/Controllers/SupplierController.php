@@ -55,10 +55,10 @@ class SupplierController extends Controller
 
         // Query
         $query = Supplier::with([
-            'country',
-            'products',
-            'catalogImageMedia'
-        ]);
+    'country',
+    'products',
+    'catalogImageMedia',
+])->where('id', '!=', 1);
 
         // Применяем фильтры, если есть
         if ($hasFilters) {
@@ -320,6 +320,10 @@ class SupplierController extends Controller
     : [];
         
 
+    $activeCountries = collect($request->get('country', []))
+    ->map(fn ($id) => (int) $id)
+    ->toArray();
+
         return view('supplier.show', compact(
             'supplier',
             'rootCategories',
@@ -336,7 +340,8 @@ class SupplierController extends Controller
             'activeTab',
             'supplierRating',
             'count',
-            'wishlistIds'
+            'wishlistIds',
+            'activeCountries'
         ));
     }
 }

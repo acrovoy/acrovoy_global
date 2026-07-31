@@ -20,8 +20,10 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+
+    
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $request->user()->load('contacts'),
         ]);
     }
 
@@ -63,6 +65,8 @@ class ProfileController extends Controller
 
     // 4️⃣ Сохраняем пользователя
     $user->save();
+
+    
 
     // 6️⃣ Обработка аватара
 if ($request->hasFile('avatar')) {

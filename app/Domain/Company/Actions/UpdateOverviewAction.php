@@ -16,6 +16,7 @@ class UpdateOverviewAction
             'short_description' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'country_id' => ['nullable', 'integer'],
+            'business_types_selected' => ['nullable', 'string'],
         ]);
 
         /*
@@ -32,9 +33,9 @@ class UpdateOverviewAction
 
         while (
             Supplier::query()
-                ->where('slug', $slug)
-                ->whereKeyNot($company->id)
-                ->exists()
+            ->where('slug', $slug)
+            ->whereKeyNot($company->id)
+            ->exists()
         ) {
             $slug = "{$originalSlug}-{$counter}";
 
@@ -50,6 +51,24 @@ class UpdateOverviewAction
         */
 
         $company->update($data);
+
+        $company->update($data);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sync business types
+        |--------------------------------------------------------------------------
+        */
+
+        $businessTypeIds = collect(
+            explode(',', $request->input('business_types_selected', ''))
+        )
+            ->filter()
+            ->map(fn($id) => (int) $id);
+
+        $company->businessTypes()->sync($businessTypeIds);
+
+
 
         return response()->json([
             'success' => true,

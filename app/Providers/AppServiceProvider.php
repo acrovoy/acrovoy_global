@@ -8,6 +8,8 @@ use Illuminate\Support\ServiceProvider;
 
 use App\View\Composers\NavigationComposer;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
+
 use App\Models\Category;
 use App\Observers\CategoryObserver;
 use App\Models\Language;
@@ -68,7 +70,9 @@ class AppServiceProvider extends ServiceProvider
         Blade::component('supplier.certificate-card', \App\View\Components\Supplier\CertificateCard::class);
         Category::observe(CategoryObserver::class);
         Paginator::useTailwind();
-         View::composer('layouts.navigation', NavigationComposer::class);
+        View::composer('layouts.navigation', NavigationComposer::class);
+
+     
        
     }
 }

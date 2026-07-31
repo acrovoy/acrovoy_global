@@ -4,17 +4,17 @@
 
 <div class="flex justify-between items-center mb-6">
     <div>
-        <h1 class="text-xl font-semibold text-gray-900">Supplier Types</h1>
+        <h1 class="text-xl font-semibold text-gray-900">Business Types</h1>
         <p class="text-sm text-gray-500 mt-1">
-            Manage available supplier classifications
+            Manage available business classifications
         </p>
     </div>
 
-    <a href="{{ route('admin.settings.supplier-types.create') }}"
+    <a href="{{ route('admin.settings.business-types.create') }}"
        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md
               hover:bg-gray-800 text-sm shadow-sm">
         <span class="text-lg leading-none">+</span>
-         Add Supplier Type
+         Add Business Type
     </a>
 </div>
 
@@ -31,7 +31,7 @@
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-            @forelse($supplierTypes as $type)
+            @forelse($businessTypes as $type)
             <tr class="hover:bg-gray-50 transition">
                 <td class="px-6 py-4">{{ $type->id }}</td>
                 <td class="px-6 py-4">{{ $type->slug }}</td>
@@ -43,12 +43,12 @@
                     @endforeach
                 </td>
                 <td class="px-6 py-4 flex gap-2">
-                    <a href="{{ route('admin.settings.supplier-types.edit', $type) }}"
+                    <a href="{{ route('admin.settings.business-types.edit', $type) }}"
                        class="px-2 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm shadow">
                         Edit
                     </a>
 
-                    <form action="{{ route('admin.settings.supplier-types.destroy', $type) }}" method="POST">
+                    <form action="{{ route('admin.settings.business-types.destroy', $type) }}" method="POST">
                         @csrf
                         @method('DELETE')
                         <button type="submit"
@@ -61,7 +61,7 @@
             @empty
             <tr>
                 <td colspan="4" class="px-6 py-4 text-center text-gray-500">
-                    No supplier types found
+                    No business types found
                 </td>
             </tr>
             @endforelse

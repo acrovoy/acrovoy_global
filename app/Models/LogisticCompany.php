@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Domain\Contact\Traits\HasContacts;
+
 class LogisticCompany extends Model
 {
-    use HasFactory;
+    use HasFactory, HasContacts;
 
     protected $table = 'logistic_companies';
 
@@ -29,5 +31,13 @@ class LogisticCompany extends Model
     public function users()
 {
     return $this->morphMany(CompanyUser::class, 'company');
+}
+
+public function businessTypes()
+{
+    return $this->morphToMany(
+        BusinessType::class,
+        'business_typeable'
+    );
 }
 }

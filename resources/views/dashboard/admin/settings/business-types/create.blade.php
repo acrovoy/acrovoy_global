@@ -2,12 +2,12 @@
 
 @section('settings-content')
 
-<h1 class="text-xl font-semibold mb-6">Add Supplier Type</h1>
+<h1 class="text-xl font-semibold mb-6">Add Business Type</h1>
 
 <x-alerts />
 
 <form method="POST"
-      action="{{ route('admin.settings.supplier-types.store') }}"
+      action="{{ route('admin.settings.business-types.store') }}"
       class="space-y-2 bg-gray-50 border rounded-xl shadow-sm p-6">
 
     @csrf
@@ -25,10 +25,38 @@
         @enderror
     </div>
 
+
+    {{-- TARGET TYPE --}}
+<div class="mb-4">
+    <label class="block text-sm font-medium mb-1">
+        Applies To
+    </label>
+
+    <select
+        name="target_type"
+        class="w-full border rounded px-3 py-2 text-sm">
+
+        <option value="">Select type...</option>
+
+        @foreach($targetTypes as $value => $label)
+            <option value="{{ $value }}"
+                {{ old('target_type') == $value ? 'selected' : '' }}>
+                {{ $label }}
+            </option>
+        @endforeach
+
+    </select>
+
+    @error('target_type')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
+
+
     {{-- TRANSLATIONS --}}
     <div x-data="{ open: false }" class="border rounded-lg p-4 mb-6 bg-white">
 
-        <h4 class="font-semibold mb-4">Supplier Type Translations</h4>
+        <h4 class="font-semibold mb-4">Business Type Translations</h4>
 
         @foreach($languages as $index => $language)
 
@@ -63,7 +91,7 @@
                     <input type="text"
                            name="translations[{{ $language->code }}][name]"
                            class="w-full border rounded px-3 py-2 text-sm"
-                           placeholder="Supplier Type Name ({{ $language->code }})"
+                           placeholder="Business Type Name ({{ $language->code }})"
                            value="{{ $name }}">
                 </div>
 
@@ -101,10 +129,10 @@
         <button type="submit"
                 class="px-4 py-2 bg-gray-900 text-white rounded text-sm hover:bg-gray-800 transition">
 
-            Save Supplier Type
+            Save Business Type
         </button>
 
-        <a href="{{ route('admin.settings.supplier-types.index') }}"
+        <a href="{{ route('admin.settings.business-types.index') }}"
            class="px-4 py-2 bg-gray-100 rounded text-sm">
 
             Cancel

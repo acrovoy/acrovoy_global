@@ -2,12 +2,12 @@
 
 @section('settings-content')
 
-<h1 class="text-xl font-semibold mb-6">Edit Supplier Type</h1>
+<h1 class="text-xl font-semibold mb-6">Edit Business Type</h1>
 
 <x-alerts />
 
 <form method="POST"
-      action="{{ route('admin.settings.supplier-types.update', $supplierType->id) }}"
+      action="{{ route('admin.settings.business-types.update', $businessType->id) }}"
       class="space-y-2 bg-gray-50 border rounded-xl shadow-sm p-6">
 
     @csrf
@@ -20,12 +20,38 @@
         <input type="text"
                name="slug"
                class="w-full border rounded px-3 py-2 text-sm"
-               value="{{ old('slug', $supplierType->slug) }}">
+               value="{{ old('slug', $businessType->slug) }}">
 
         @error('slug')
         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
         @enderror
     </div>
+
+    {{-- TARGET TYPE --}}
+<div class="mb-4">
+    <label class="block text-sm font-medium mb-1">
+        Applies To
+    </label>
+
+    <select
+        name="target_type"
+        class="w-full border rounded px-3 py-2 text-sm">
+
+        <option value="">Select type...</option>
+
+        @foreach($targetTypes as $value => $label)
+            <option value="{{ $value }}"
+                {{ old('target_type', $businessType->target_type) == $value ? 'selected' : '' }}>
+                {{ $label }}
+            </option>
+        @endforeach
+
+    </select>
+
+    @error('target_type')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
 
     {{-- TRANSLATIONS --}}
     <div x-data="{ open: false }"
@@ -36,7 +62,7 @@
         @foreach($languages as $index => $language)
 
             @php
-                $translation = $supplierType->translations
+                $translation = $businessType->translations
                     ->firstWhere('locale', $language->code);
 
                 $name = old(
@@ -109,10 +135,10 @@
         <button type="submit"
                 class="px-4 py-2 bg-gray-900 text-white rounded text-sm hover:bg-gray-800 transition">
 
-            Update Supplier Type
+            Update Business Type
         </button>
 
-        <a href="{{ route('admin.settings.supplier-types.index') }}"
+        <a href="{{ route('admin.settings.business-types.index') }}"
            class="px-4 py-2 bg-gray-100 rounded text-sm">
 
             Cancel

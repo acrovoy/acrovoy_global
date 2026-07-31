@@ -34,6 +34,98 @@
 
         </div>
 
+        {{-- ================= BUSINESS TYPE ================= --}}
+<div>
+
+    <label class="block text-sm font-semibold text-gray-900">
+        Business Type
+    </label>
+
+    <p class="mt-1 text-xs text-gray-500">
+        Select one or more business types that describe your company.
+    </p>
+
+    {{-- Selected --}}
+    <div class="mt-4">
+
+        <div
+            id="selected-business-types"
+            class="flex flex-wrap gap-2 min-h-[44px] rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3">
+
+        </div>
+
+    </div>
+
+    {{-- Search --}}
+    <div class="mt-4">
+
+        <input
+            type="text"
+            id="businessTypeSearch"
+            placeholder="Search business types..."
+            class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm
+                   focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+
+    </div>
+
+    <input
+        type="hidden"
+        id="initial-business-types"
+        value='@json(
+            $company->businessTypes->map(function ($type){
+                return [
+                    "id" => (string)$type->id,
+                    "name" => $type->translation?->name ?? $type->slug,
+                ];
+            })
+        )'>
+
+    {{-- Options --}}
+    <div
+        class="grid grid-cols-2 gap-3 mt-4">
+
+        @foreach($businessTypes as $type)
+
+            @php
+                $name = $type->translation?->name ?? $type->slug;
+            @endphp
+
+            <button
+                type="button"
+                class="business-type-option flex items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm transition hover:border-blue-400 hover:bg-blue-50"
+                data-id="{{ $type->id }}"
+                data-name="{{ $name }}">
+
+                <span>{{ $name }}</span>
+
+                <svg
+                    class="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24">
+
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 5v14m-7-7h14"/>
+
+                </svg>
+
+            </button>
+
+        @endforeach
+
+    </div>
+
+    <input
+        type="hidden"
+        name="business_types_selected"
+        id="businessTypesSelectedInput">
+
+</div>
+
+
         {{-- Short Description --}}
         <div>
 

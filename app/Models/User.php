@@ -8,13 +8,16 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\UserSetting;
+use App\Domain\Contact\Models\Contact;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
+use App\Domain\Contact\Traits\HasContacts;
 
 use App\Domain\Media\Models\Media;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasContacts;
 
     /**
      * The attributes that are mass assignable.
@@ -190,7 +193,19 @@ public function addresses()
         ->where('user_type', self::class);
 }
 
+public function businessTypes()
+{
+    return $this->morphToMany(
+        BusinessType::class,
+        'business_typeable'
+    );
+}
 
+public function profileContact()
+{
+    return $this->morphOne(Contact::class, 'contactable')
+        ->where('show_in_profile', true);
+}
 
 
 

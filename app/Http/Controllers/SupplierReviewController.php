@@ -22,7 +22,7 @@ class SupplierReviewController extends Controller
 
     public function store(Request $request, Order $order)
 {
-    $this->authorize('view', $order);
+    
 
     if ($order->status !== 'completed') {
         return redirect()->back()->with('error', 'Невозможно оставить отзыв для незавершенного заказа.');
