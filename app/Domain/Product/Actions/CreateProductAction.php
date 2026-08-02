@@ -16,7 +16,6 @@ class CreateProductAction
             $product = Product::create([
                 'name' => $data->name,
                 'supplier_id' => $data->supplierId,
-                'supplier_type' => $data->supplierType,
                 'created_by' => $data->createdBy,
                 'sku' => $data->sku,
                 'slug' => $data->slug,

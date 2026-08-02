@@ -72,14 +72,13 @@ public function getSupplierProducts()
 {
 
 $ActiveContext = app(ActiveContextService::class);
-    $supplierId = $ActiveContext->id();
-    $supplierType = $ActiveContext->type();
+    $supplierId = $ActiveContext->supplierId();
+    
 
    
 
     return Product::with('translations')
         ->where('supplier_id', $supplierId)
-        ->where('supplier_type', $supplierType)
         ->get();
 }
 
@@ -88,8 +87,7 @@ private function authorizeProduct(Product $product): void
     $ActiveContext = app(ActiveContextService::class);
 
     abort_if(!$ActiveContext->isCompany(), 403);
-    abort_if($ActiveContext->type() !== Supplier::class, 403);
-    abort_if($product->supplier_id !== $ActiveContext->id(), 403);
+   abort_if($product->supplier_id !== $ActiveContext->supplierId(), 403);
 }
 
     private function getShippingTemplates()
@@ -98,11 +96,9 @@ private function authorizeProduct(Product $product): void
 
     
 
-    $supplierId = $context->id();
-    $supplierType = $context->type();
-
+    $supplierId = $context->supplierId();
+    
     return ShippingTemplate::where('provider_id', $supplierId)
-        ->where('provider_type', $supplierType)
         ->with('translations')
         ->get();
 }

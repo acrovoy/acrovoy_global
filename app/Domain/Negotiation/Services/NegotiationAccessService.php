@@ -28,7 +28,7 @@ class NegotiationAccessService
          */
         if ($this->context->isCompany()) {
 
-            $supplier = $this->context->company();
+            $supplier = $this->context->entity();
 
             if (!$supplier) {
                 return false;
@@ -49,7 +49,7 @@ class NegotiationAccessService
             return false;
         }
 
-        $supplier = $this->context->company();
+        $supplier = $this->context->entity();
 
         return $supplier && $supplier->id === $offer->supplier_id;
     }

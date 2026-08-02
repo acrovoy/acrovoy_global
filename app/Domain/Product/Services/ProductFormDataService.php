@@ -21,13 +21,8 @@ class ProductFormDataService
 
         
 
-        $supplierId = $context->id();
-        $supplierType = $context->type();
-
-        $ShippingTe111mplate = ShippingTemplate::with('translations')
-                ->where('provider_type', 'App\Models\LogisticCompany')
-                ->where('provider_id', 1)
-                ->first();
+        $supplierId = $context->supplierId();
+        
 
 
         return [
@@ -41,8 +36,7 @@ class ProductFormDataService
                 ->where('is_active', true)
                 ->get(),
 
-            'shippingTemplates' => ShippingTemplate::where('provider_type', $supplierType)
-                ->where('provider_id', $supplierId)
+            'shippingTemplates' => ShippingTemplate::where('provider_id', $supplierId)
                 ->with('translations')
                 ->get(),
 
@@ -54,7 +48,6 @@ class ProductFormDataService
             'customAttributes' => Attribute::query()
                 ->where('entity_type', 'product')
                 ->where('is_custom', 1)
-                ->where('owner_type', $supplierType)
                 ->where('owner_id', $supplierId)
                 ->with([
                     'translations',

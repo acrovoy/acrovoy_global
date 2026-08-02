@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Facades\ActiveContext;
+use App\Services\Company\ActiveContextService;
 
 use App\Domain\Filters\Supplier\CountryFilter;
 use App\Domain\Filters\FilterFactory;
@@ -15,9 +16,17 @@ use App\Models\Category;
 use App\Models\Country;
 use App\Models\ExportMarket;
 use App\Models\Product;
+use App\Models\User;
 
 class SupplierController extends Controller
 {
+
+    public function __construct(
+        private ActiveContextService $context,
+
+
+    ) {}
+
     public function index(Request $request)
     {
         // Categories (3 уровня)
@@ -55,10 +64,15 @@ class SupplierController extends Controller
 
         // Query
         $query = Supplier::with([
-    'country',
-    'products',
-    'catalogImageMedia',
-])->where('id', '!=', 1);
+            'country',
+            'products',
+            'catalogImageMedia',
+        ])
+            ->where('status', 'active')
+            ->where('is_published', true)
+            ->where('id', '!=', 1);
+
+
 
         // Применяем фильтры, если есть
         if ($hasFilters) {
@@ -69,15 +83,13 @@ class SupplierController extends Controller
             $pipeline = $factory->make($request->all());
 
             $query = $pipeline->apply($query, $request->all());
-
-            
         }
 
         // Получаем поставщиков
         $suppliers = $query->paginate(20)->withQueryString();
-        
 
-        
+
+
 
         return view('supplier.index', [
             'suppliers'       => $suppliers,
@@ -91,19 +103,22 @@ class SupplierController extends Controller
             'activeExportMarkets' => $activeExportMarkets,
             'exportMarkets' => $exportMarkets,
             'activeYears' => $activeYears,
-            
+
         ]);
     }
 
     public function show(Request $request, $slug)
     {
+
+
+
         $tabs = config('marketplace.supplier_tabs');
         $activeTab = $request->get('tab', 'profile');
 
         $supplier = Supplier::with([
             'country',
             'supplierReviews.order.user',
-            'supplierTypes.translation',
+            'businessTypes.translation',
             'reviews',
             'factoryPhotos',
             'certificatesMedia',
@@ -112,7 +127,8 @@ class SupplierController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-            
+
+
         /*
     |--------------------------------------------------------------------------
     | Reputation & Level Logic
@@ -163,7 +179,7 @@ class SupplierController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $types = $supplier->supplierTypes
+        $types = $supplier->businessTypes
             ->map(
                 fn($type) =>
                 $type->translation?->name ?? $type->slug
@@ -186,6 +202,9 @@ class SupplierController extends Controller
     |--------------------------------------------------------------------------
     */
 
+
+
+
         $productsQuery = Product::query()
             ->where('supplier_id', $supplier->id)
             ->with([
@@ -198,6 +217,8 @@ class SupplierController extends Controller
                 'variantGroup.items.product',
                 'variantGroup.items.media',
             ]);
+
+
 
         /*
     |--------------------------------------------------------------------------
@@ -249,6 +270,8 @@ class SupplierController extends Controller
         $products = $productsQuery
             ->paginate(25)
             ->withQueryString();
+
+
 
         /*
     |--------------------------------------------------------------------------
@@ -313,16 +336,21 @@ class SupplierController extends Controller
         $count = $supplier->supplierReviews->count();
 
         $wishlistIds = auth()->check()
-    ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
-        ->pluck('product_id')
-        ->toArray()
-    : [];
-        
+            ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
+            ->where('buyer_id', ActiveContext::id())
+            ->pluck('product_id')
+            ->toArray()
+            : [];
 
-    $activeCountries = collect($request->get('country', []))
-    ->map(fn ($id) => (int) $id)
-    ->toArray();
+        if ($supplier->supplierable_type == 'App\Models\User') {
+            $is_personal = true;
+        } else {
+            $is_personal = false;
+        }
+
+       $activeCountries = collect($request->get('country', []))
+            ->map(fn($id) => (int) $id)
+            ->toArray();
 
         return view('supplier.show', compact(
             'supplier',
@@ -341,7 +369,8 @@ class SupplierController extends Controller
             'supplierRating',
             'count',
             'wishlistIds',
-            'activeCountries'
+            'activeCountries',
+            'is_personal',
         ));
     }
 }

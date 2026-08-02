@@ -6,6 +6,8 @@
     'ownerType' => null,
     'ownerId' => null,
     'editable' => false,
+
+    'public' => false,
 ])
 
 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -70,7 +72,10 @@
 
             @foreach($contacts->sortBy('sort_order') as $contact)
 
-                <x-contact.item :contact="$contact" />
+                <x-contact.item 
+    :contact="$contact"
+    :public="$public"
+/>
 
             @endforeach
 

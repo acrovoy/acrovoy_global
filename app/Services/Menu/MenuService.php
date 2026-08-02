@@ -150,7 +150,7 @@ class MenuService
             ],
 
             ['type' => 'header', 'label' => 'Company'],
-            ['type' => 'link', 'label' => 'Company Profile', 'route' => 'supplier.company.show'],
+            ['type' => 'link', 'label' => 'Company Profile', 'route' => 'supplier.profile.show'],
 
             ['type' => 'header', 'label' => 'Communication'],
             ['type' => 'link', 'label' => 'Messages', 'route' => 'supplier.messenger.index'],
@@ -241,6 +241,10 @@ class MenuService
             'label' => 'Shipping Center',
             'route' => 'supplier.shipping-templates.index',
         ],
+
+         ['type' => 'header', 'label' => 'Business Profile'],
+            ['type' => 'link', 'label' => 'Business Profile', 'route' => 'supplier.profile.show'],
+
 
         // ❌ НЕТ TEAM БЛОКА
 

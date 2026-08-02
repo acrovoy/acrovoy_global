@@ -11,13 +11,50 @@
         {{-- Company Name --}}
         <div>
 
-            <label
-                for="name"
-                class="block text-sm font-semibold text-gray-900">
+            <div class="flex items-center gap-2">
 
-                Company Name
+    <label
+        for="name"
+        class="block text-sm font-semibold text-gray-900">
 
-            </label>
+        @if($is_personal)
+            Name
+        @else
+            Company Name
+        @endif
+
+    </label>
+
+
+    @if($is_personal)
+
+        <x-help-tooltip width="w-80">
+            <div class="space-y-2 leading-relaxed">
+
+                <div class="font-semibold text-white">
+                    Personal Name
+                </div>
+
+                <div class="text-gray-200 text-sm normal-case">
+                    Enter your first and last name as it should appear on your supplier profile.
+                </div>
+
+                <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1 normal-case">
+                    <li>Use your real first and last name.</li>
+                    <li>Do not enter a company name in this field.</li>
+                    <li>This name will represent you as a supplier.</li>
+                </ul>
+
+                <div class="text-gray-400 text-xs border-t border-gray-700 pt-2 normal-case">
+                    Recommendation: Use the name of the person responsible for business communication.
+                </div>
+
+            </div>
+        </x-help-tooltip>
+
+    @endif
+
+</div>
 
             <p class="mt-1 text-xs text-gray-500">
                 This name is displayed throughout the marketplace.
@@ -38,12 +75,12 @@
 <div>
 
     <label class="block text-sm font-semibold text-gray-900">
-        Business Type
-    </label>
+    Business Type
+</label>
 
-    <p class="mt-1 text-xs text-gray-500">
-        Select one or more business types that describe your company.
-    </p>
+<p class="mt-1 text-xs text-gray-500">
+    Select one or more business types that describe your business activities.
+</p>
 
     {{-- Selected --}}
     <div class="mt-4">

@@ -6,6 +6,8 @@ import { initContactDrawer } from './contact';
 
 import { initBusinessDrawer } from './overview';
 
+import { initAddressDrawer } from './address';
+
 
 
 let drawer = null;
@@ -107,6 +109,8 @@ async function openDrawer(config = {}) {
         initContactDrawer();
 
         initBusinessDrawer();
+
+        initAddressDrawer();
 
     } catch (e) {
 

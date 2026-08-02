@@ -22,6 +22,7 @@ use App\Domain\Media\Jobs\DeleteMediaJob;
  use App\Domain\Company\Actions\UpdateGeneralAction;
  use App\Domain\Company\Actions\UpdateManufacturingAction;
  use App\Domain\Company\Actions\UpdateContactsAction;
+ use App\Domain\Company\Actions\UpdateAddressAction;
 
 use App\Services\Company\ActiveContextService;
 
@@ -41,6 +42,7 @@ public function __construct(
         private UpdateGeneralAction $updateGeneralAction,
         private UpdateManufacturingAction $updateManufacturingAction,
         private UpdateContactsAction $updateContactsAction,
+        private UpdateAddressAction $updateAddressAction
         
 
  
@@ -54,17 +56,14 @@ public function __construct(
 public function showCompanyProfile()
 {
     
-    $company = $this->context->company();
 
-    if (!$company) {
-        return redirect()
-            ->route('supplier.company.profile')
-            ->withErrors('Company profile not found.');
-    }
+$company = $this->context->supplierProfile();
+
+abort_if(!$company, 404);
 
     $company->load([
         'exportMarkets.translation',
-        'supplierTypes.translation',
+        'businessTypes.translation',
         'country',
         'media',
         'profile',
@@ -73,9 +72,10 @@ public function showCompanyProfile()
 
     $catalogMedia = $company->catalogImageMedia()->first();
 
+    $is_personal = $this->context->isPersonal();
     return view(
         'dashboard.supplier.company-profile.show',
-        compact('company', 'catalogMedia')
+        compact('company', 'catalogMedia', 'is_personal')
     );
 }
 
@@ -88,12 +88,12 @@ public function showCompanyProfile()
     {
         
 
-    $company = $this->context->company();
+    $company = $this->context->entity();
 
         if ($company) {
             $company->load([
                 'exportMarkets.translation',
-                'supplierTypes.translation',
+                'businessTypes.translation',
                 'country',
                 'media',
                 'profile'
@@ -109,13 +109,13 @@ public function showCompanyProfile()
             ->with('translations')
             ->get();
 
-        $supplierTypes = \App\Models\SupplierType::with('translations')->get();
+        $supplierTypes = \App\Models\BusinessType::with('translations')->get();
 
         $countries = Country::withCurrentTranslation()
             ->orderBy('name')
             ->get();
 
-        $selectedTypes = $company->supplierTypes?->pluck('id')->toArray() ?? [];
+        $selectedTypes = $company->businessTypes?->pluck('id')->toArray() ?? [];
 
         $selectedMarkets = $company->exportMarkets?->pluck('id')->toArray() ?? [];
 
@@ -128,7 +128,7 @@ $selectedmanufacturingCapabilities =
             'company',
             'countries',
             'exportMarkets',
-            'supplierTypes',
+            'businessTypes',
             'selectedTypes',
             'selectedMarkets',
             'manufacturingCapabilities',
@@ -143,7 +143,7 @@ $selectedmanufacturingCapabilities =
     {
        
 
-    $company = $this->context->company();
+    $company = $this->context->entity();
  
         if (!$company) {
             return back()->withErrors('Supplier not found');
@@ -299,15 +299,28 @@ $selectedmanufacturingCapabilities =
         'certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
     ]);
 
-    $company = $this->context->supplier();
+    $supplier = $this->context->supplier();
 
-    if (!$company) {
+    if (!$supplier) {
+
+        $identity = $this->context->identity();
+
+        $supplier = \App\Models\Supplier::where(
+            'supplierable_type',
+            $identity['entity_type']
+        )->where(
+            'supplierable_id',
+            $identity['entity_id']
+        )->first();
+    }
+
+    if (!$supplier) {
         return response()->json([
-            'message' => 'Company profile not found.'
+            'message' => 'Supplier profile not found.'
         ], 404);
     }
 
-    // ✅ Decode metadata JSON from frontend
+    // Decode metadata JSON from frontend
     $metadata = [];
 
     if ($request->filled('metadata')) {
@@ -316,13 +329,13 @@ $selectedmanufacturingCapabilities =
 
     $dto = new UploadMediaDTO(
         file: $request->file('certificate'),
-        model: $company,
+        model: $supplier,
         collection: 'supplier_certificates',
         mediaRole: 'certificate',
         private: false,
         originalFileName: $request->file('certificate')->getClientOriginalName(),
         metadata: $metadata,
-        sortOrder: 0,      
+        sortOrder: 0,
         isMain: true
     );
 
@@ -333,7 +346,7 @@ $selectedmanufacturingCapabilities =
         'id' => $media->id,
         'name' => $media->original_file_name,
         'status' => $media->processing_status,
-        'url' => $media->cdn_url
+        'url' => $media->cdn_url,
     ]);
 }
 
@@ -342,7 +355,22 @@ public function deleteCertificate($id)
 {
     try {
 
-        $supplier = auth()->user()->supplier;
+        $supplier = $this->context->supplier();
+
+        if (!$supplier) {
+
+            $identity = $this->context->identity();
+
+            $supplier = \App\Models\Supplier::where(
+                'supplierable_type',
+                $identity['entity_type']
+            )->where(
+                'supplierable_id',
+                $identity['entity_id']
+            )->first();
+        }
+
+        abort_unless($supplier, 404);
 
         $media = $supplier->media()
             ->where('collection', 'supplier_certificates')
@@ -351,14 +379,14 @@ public function deleteCertificate($id)
 
         // State transition
         $media->update([
-            'processing_status' => 'deleting'
+            'processing_status' => 'deleting',
         ]);
 
         // Async delete pipeline
         DeleteMediaJob::dispatch($media->uuid);
 
         return response()->json([
-            'success' => true
+            'success' => true,
         ]);
 
     } catch (\Throwable $e) {
@@ -366,24 +394,37 @@ public function deleteCertificate($id)
         Log::error($e);
 
         return response()->json([
-            'success' => true
-        ]);
+            'success' => false,
+        ], 500);
     }
 }
 
     
     public function uploadFactoryPhotos(Request $request)
 {
-    abort_if(!$this->context->isCompany(), 403);
-
-    $supplier = $this->context->company();
+    $supplier = $this->context->supplier();
 
     if (!$supplier) {
-        return response()->json(['error' => 'Supplier not found'], 404);
+
+        $identity = $this->context->identity();
+
+        $supplier = \App\Models\Supplier::where(
+            'supplierable_type',
+            $identity['entity_type']
+        )->where(
+            'supplierable_id',
+            $identity['entity_id']
+        )->first();
+    }
+
+    if (!$supplier) {
+        return response()->json([
+            'error' => 'Supplier not found'
+        ], 404);
     }
 
     $request->validate([
-        'photos.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096'
+        'photos.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096',
     ]);
 
     try {
@@ -397,14 +438,16 @@ public function deleteCertificate($id)
                 mediaRole: 'factory_photo',
                 private: false,
                 originalFileName: $file->getClientOriginalName(),
-                sortOrder: 0,      
+                sortOrder: 0,
                 isMain: true
             );
 
             $this->mediaService->upload($dto);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true
+        ]);
 
     } catch (\Throwable $e) {
 
@@ -416,12 +459,24 @@ public function deleteCertificate($id)
     }
 }
 
-
 public function deleteFactoryPhoto($id)
 {
-     abort_if(!$this->context->isCompany(), 403);
+    $supplier = $this->context->supplier();
 
-    $supplier = $this->context->company();
+    if (!$supplier) {
+
+        $identity = $this->context->identity();
+
+        $supplier = \App\Models\Supplier::where(
+            'supplierable_type',
+            $identity['entity_type']
+        )->where(
+            'supplierable_id',
+            $identity['entity_id']
+        )->first();
+    }
+
+    abort_unless($supplier, 404);
 
     $media = $supplier->media()
         ->where('collection', 'factory_photos')
@@ -431,7 +486,7 @@ public function deleteFactoryPhoto($id)
     DeleteMediaJob::dispatch($media->uuid);
 
     return response()->json([
-        'success' => true
+        'success' => true,
     ]);
 }
 
@@ -441,12 +496,25 @@ public function uploadCatalogImage(Request $request)
         'catalog_image' => 'required|image|max:10240',
     ]);
 
-    abort_if(!$this->context->isCompany(), 403);
-
-    $company = $this->context->company();
+    $company = $this->context->supplier();
 
     if (!$company) {
-        return response()->json(['message' => 'Company not found'], 404);
+
+        $identity = $this->context->identity();
+
+        $company = \App\Models\Supplier::where(
+            'supplierable_type',
+            $identity['entity_type']
+        )->where(
+            'supplierable_id',
+            $identity['entity_id']
+        )->first();
+    }
+
+    if (!$company) {
+        return response()->json([
+            'message' => 'Supplier not found'
+        ], 404);
     }
 
     // Удаляем старую картинку каталога
@@ -459,7 +527,7 @@ public function uploadCatalogImage(Request $request)
         mediaRole: 'catalog_image',
         private: false,
         originalFileName: $request->file('catalog_image')->getClientOriginalName(),
-        sortOrder: 0,      
+        sortOrder: 0,
         isMain: true
     );
 
@@ -467,14 +535,29 @@ public function uploadCatalogImage(Request $request)
 
     return response()->json([
         'success' => true,
-        'url' => $media->cdn_url
+        'url' => $media->cdn_url,
     ]);
 }
 
 
 public function updateLogo(Request $request)
 {
-    $company = $this->context->company();
+    $company = $this->context->supplier();
+
+    if (!$company) {
+
+        $identity = $this->context->identity();
+
+        $company = \App\Models\Supplier::where(
+            'supplierable_type',
+            $identity['entity_type']
+        )
+        ->where(
+            'supplierable_id',
+            $identity['entity_id']
+        )
+        ->first();
+    }
 
     if (!$company) {
         return response()->json([
@@ -518,44 +601,66 @@ public function updateLogo(Request $request)
 
 public function drawer(string $section)
 {
-    $company = $this->context->company();
+     $participant = $this->context->entity();
 
-    abort_unless(
-        view()->exists("dashboard.supplier.company-profile.drawers.$section"),
-        404
-    );
+
+if ($participant instanceof \App\Models\User) {
+
+    $company = Supplier::where(
+        'supplierable_type',
+        get_class($participant)
+    )
+    ->where(
+        'supplierable_id',
+        $participant->id
+    )
+    ->first();
+
+} else {
+
+    $company = $participant;
+}
+
+
+abort_unless($company,404);
+
 
     $data = [
         'company' => $company,
+        'is_personal' => $this->context->isPersonal(),
     ];
 
-    if ($section === 'overview') {
+    if (in_array($section, ['overview', 'address'])) {
         $data['countries'] = Country::orderBy('name')->get();
-        $data['businessTypes'] = BusinessType::with('translation')
-    ->where('target_type', 'supplier')
+    }
+
+
+    if ($section === 'overview') {
+               
+        $targetType = $this->context->isPersonal()
+    ? 'supplier_individual'
+    : 'supplier_company';
+
+$data['businessTypes'] = BusinessType::with('translation')
+    ->where('target_type', $targetType)
     ->orderBy('slug')
     ->get();
 
     }
 
     if ($section === 'general') {
-
         $data['exportMarkets'] = ExportMarket::with('translations')->get();
-
     }
 
     if ($section === 'manufacturing') {
         $data['manufacturingCapabilities'] = ManufacturingCapability::all();
     }
 
-     if ($section === 'members') {
-
+    if ($section === 'members' && $this->context->isCompany()) {
         $data['members'] = $company->members()
             ->with('user')
             ->get();
-            }
-
-    
+    }
 
     return view(
         "dashboard.supplier.company-profile.drawers.$section",
@@ -565,7 +670,22 @@ public function drawer(string $section)
 
 public function update(Request $request, string $section)
 {
-    $company = $this->context->company();
+    $company = $this->context->supplier();
+
+    if (!$company) {
+
+        $identity = $this->context->identity();
+
+        $company = \App\Models\Supplier::where(
+            'supplierable_type',
+            $identity['entity_type']
+        )
+        ->where(
+            'supplierable_id',
+            $identity['entity_id']
+        )
+        ->first();
+    }
 
     abort_unless($company, 404);
 
@@ -581,18 +701,22 @@ public function update(Request $request, string $section)
             $company
         ),
 
-       'manufacturing' => ($this->updateManufacturingAction)(
+        'manufacturing' => ($this->updateManufacturingAction)(
             $request,
             $company
         ),
 
         'contacts' => ($this->updateContactsAction)(
+            $request,
+            $company
+        ),
+
+        'address' => ($this->updateAddressAction)(
     $request,
     $company
 ),
 
         default => abort(404),
-
     };
 }
 

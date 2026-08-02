@@ -199,17 +199,9 @@ class ActiveContextService
      * SUPPLIER CONTEXT (ONLY IF ACTIVE COMPANY IS SUPPLIER)
      */
     public function supplier(): ?Supplier
-    {
-        if (!$this->isCompany()) {
-            return null;
-        }
-
-        if ($this->type() !== Supplier::class) {
-            return null;
-        }
-
-        return $this->company();
-    }
+{
+    return $this->supplierProfile();
+}
 
     public function supplierParticipant(): ?array
 {
@@ -218,11 +210,8 @@ class ActiveContextService
     }
 
     return [
-        'type' => $this->isCompany()
-            ? $this->type()          // Supplier::class / Company class
-            : User::class,
-
-        'id' => $this->id(),
+        'type' => $this->entityType(),
+        'id'   => $this->entityId(),
     ];
 }
 
@@ -249,20 +238,11 @@ class ActiveContextService
      */
     public function supplierId(): ?int
 {
-    if (!$this->isSupplier()) {
-        return null;
-    }
-
-    return $this->id();
+    return $this->supplier()?->id;
 }
 
 
-public function supplierType(): string
-{
-    return $this->isCompany()
-        ? $this->type()
-        : User::class;
-}
+
 
     public function isSupplier(): bool
     {
@@ -330,14 +310,43 @@ public function supplierType(): string
          | Представляемый контекст
          |----------------------------------------------------------
          */
-        'entity_type' => $this->isCompany()
-            ? $this->type()
-            : User::class,
+        'entity_type' => $this->entityType(),
 
-        'entity_id' => $this->isCompany()
-            ? $this->id()
-            : $this->user()?->id,
+'entity_id' => $this->entityId(),
     ];
+}
+
+public function entity(): ?Model
+{
+    if ($this->isPersonal()) {
+        return $this->user();
+    }
+
+    if ($this->resolvedCompany !== null) {
+        return $this->resolvedCompany;
+    }
+
+    return $this->resolvedCompany = CompanyUser::query()
+        ->with('company')
+        ->where('user_id', auth()->id())
+        ->where('company_id', $this->id())
+        ->where('company_type', $this->type())
+        ->first()
+        ?->company;
+}
+
+public function entityType(): ?string
+{
+    return $this->isCompany()
+        ? $this->type()
+        : User::class;
+}
+
+public function entityId(): ?int
+{
+    return $this->isCompany()
+        ? $this->id()
+        : $this->user()?->id;
 }
 
 
@@ -373,6 +382,27 @@ public function companyRole(): ?string
     return $this->ctx()['role'] ?? null;
 }
 
+
+public function participant(): array
+{
+    return [
+        'type' => $this->entityType(),
+        'id'   => $this->entityId(),
+    ];
+}
+
+public function supplierProfile(): ?Supplier
+{
+    $entity = $this->entity();
+
+    if (!$entity) {
+        return null;
+    }
+
+    return Supplier::where('supplierable_type', $entity::class)
+        ->where('supplierable_id', $entity->getKey())
+        ->first();
+}
 
 
 }

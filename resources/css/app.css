@@ -16,3 +16,13 @@
     visibility: visible;
     pointer-events: auto;
 }
+
+
+.leaflet-container {
+    z-index: 0 !important;
+}
+
+.leaflet-pane,
+.leaflet-control {
+    z-index: 0 !important;
+}

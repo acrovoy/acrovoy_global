@@ -105,7 +105,7 @@ $completed =
                     @php
                         use App\Facades\ActiveContext;
 
-                        $supplierId = ActiveContext::supplierId();
+                        $supplierId = ActiveContext::entityId();
 
                         $offer = $rfq->offers
                             ->where('participant_type', ActiveContext::type())

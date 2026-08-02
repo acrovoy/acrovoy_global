@@ -8,7 +8,6 @@ class ProductListQueryService
 {
     public function getSupplierProducts(
         int $supplierId,
-        string $supplierType,
         array $filters
     ) {
         $query = Product::query()
@@ -21,8 +20,8 @@ class ProductListQueryService
         $q->withPivot('quantity');
     },
             ])
-            ->where('supplier_id', $supplierId)
-            ->where('supplier_type', $supplierType);
+            ->where('supplier_id', $supplierId);
+            
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);

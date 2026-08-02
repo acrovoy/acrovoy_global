@@ -510,27 +510,144 @@
                 </p>
 
                 {{-- Supplier Info --}}
-                <div class="text-gray-700">
-                    {{ __('product/product_show.supplier') }}
 
-                    @php
-                    $supplier = $product1->supplier
-                    @endphp
+                
 
-                    @if($supplier)
-                    @php
-                    $name = $supplier instanceof \App\Models\Supplier
-                    ? $supplier->name
-                    : trim(($supplier->name ?? '') . ' ' . ($supplier->last_name ?? ''));
 
-                    @endphp
-                    <span class="font-medium text-gray-900">
-                        {{ $name }}
-                    </span>
-                    @else
-                    <span class="text-gray-400">—</span>
-                    @endif
+                @php
+                    $supplier = $product1->supplier;
+                @endphp
+
+                
+
+                @if($supplier)
+
+                <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+
+                    {{-- HEADER --}}
+                    <div class="relative overflow-hidden px-6 py-7 border-b border-gray-200 bg-white">
+
+                        @php
+                            $level = $supplier->level;
+
+                            $supplierRating = round(
+                                $supplier->supplierReviews->avg('rating') ?? 0,
+                                1
+                            );
+
+                            $glow = match($level) {
+                                'Silver'   => 'linear-gradient(135deg,#d1d5db,#f3f4f6)',
+                                'Gold'     => 'linear-gradient(135deg,#f59e0b,#fde68a)',
+                                'Platinum' => 'linear-gradient(135deg,#1f2937,#6b7280)',
+                                default    => 'linear-gradient(135deg,#e5e7eb,#f9fafb)',
+                            };
+                        @endphp
+
+                        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+
+                            <div
+                                class="absolute -top-20 -right-16 w-52 h-52 rounded-full blur-3xl opacity-20"
+                                style="background: {{ $glow }};">
+                            </div>
+
+                            <div
+                                class="absolute -bottom-20 -left-16 w-56 h-56 rounded-full blur-3xl opacity-10"
+                                style="background: {{ $glow }};">
+                            </div>
+
+                        </div>
+
+                        <div class="relative flex flex-col items-center text-center">
+
+                            <a
+                                href="{{ route('supplier.show', $supplier->slug) }}"
+                                class="w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+
+                                <img
+                                    src="{{ $supplier->logo?->cdn_url ?? asset('images/no-logo.png') }}"
+                                    class="w-full h-full object-cover">
+
+                            </a>
+
+                            <a
+                                href="{{ route('supplier.show', $supplier->slug) }}"
+                                class="mt-4 text-lg font-semibold text-gray-900 hover:text-emerald-700 transition">
+
+                                {{ $supplier->name }}
+
+                            </a>
+
+                            <div class="mt-2">
+
+                                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold
+
+                                    {{ $level === 'Basic' ? 'bg-gray-100 text-gray-600 border border-gray-200' : '' }}
+                                    {{ $level === 'Silver' ? 'bg-gray-200 text-gray-700 border border-gray-300' : '' }}
+                                    {{ $level === 'Gold' ? 'bg-amber-100 text-amber-700 border border-amber-200' : '' }}
+                                    {{ $level === 'Platinum' ? 'bg-slate-900 text-white border border-slate-700' : '' }}">
+
+                                    {{ strtoupper($level) }} SUPPLIER
+
+                                </span>
+
+                            </div>
+
+                            <div class="mt-4 flex items-center gap-1">
+
+                                @for($i=1;$i<=5;$i++)
+                                    @if($i <= floor($supplierRating))
+                                        <svg class="w-4 h-4 fill-yellow-500" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z"/>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 fill-gray-300" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z"/>
+                                        </svg>
+                                    @endif
+                                @endfor
+
+                                <span class="ml-2 text-sm text-gray-500">
+                                    {{ number_format($supplierRating,1) }}
+                                    ({{ $supplier->supplierReviews->count() }})
+                                </span>
+
+                            </div>
+
+                            @if($supplier->country)
+                                <div class="mt-3 text-sm text-gray-500">
+                                    {{ $supplier->country->name }}
+                                </div>
+                            @endif
+
+                            <a
+                                href="{{ route('supplier.show', $supplier->slug) }}"
+                                class="mt-6 inline-flex items-center justify-center w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+
+                                Visit Supplier Profile
+
+                                <svg
+                                    class="ml-2 w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    viewBox="0 0 24 24">
+
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M9 5l7 7-7 7"/>
+
+                                </svg>
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
                 </div>
+
+                @endif
 
             </div>
         </div>

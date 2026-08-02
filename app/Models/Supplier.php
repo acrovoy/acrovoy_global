@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Domain\Media\Models\Media;
 use App\Domain\Contact\Traits\HasContacts;
 use App\Domain\Contact\Models\Contact;
+use App\Models\BusinessType;
 
 class Supplier extends Model
 {
@@ -31,7 +32,7 @@ class Supplier extends Model
 
     protected $with = [
         'country',
-        'supplierTypes.translation',
+        'businessTypes.translation',
         'exportMarkets.translation',
         'factoryPhotos',
         'profile'
@@ -119,10 +120,7 @@ class Supplier extends Model
     )->where('is_active', 1);
 }
 
-    public function supplierTypes()
-    {
-        return $this->belongsToMany(SupplierType::class);
-    }
+  
 
     public function businessTypes()
 {
@@ -268,5 +266,24 @@ public function publicContacts()
     return $this->morphMany(Contact::class, 'contactable')
         ->where('is_public', true);
 }
+
+public function addresses()
+{
+    return $this->morphMany(
+        CompanyAddress::class,
+        'addressable'
+    );
+}
+
+public function primaryAddress()
+{
+    return $this->morphOne(
+        CompanyAddress::class,
+        'addressable'
+    )->where('is_primary', true);
+}
+
+
+
 
 }

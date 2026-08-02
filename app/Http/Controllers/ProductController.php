@@ -85,9 +85,9 @@ class ProductController extends Controller
 
     public function index(Request $request, ProductListQueryService $service)
     {
+        $supplierId = $this->activeContext->supplierId();
         $products = $service->getSupplierProducts(
-            $this->activeContext->id(),
-            $this->activeContext->type(),
+            $supplierId,
             $request->only(['sort', 'status', 'user'])
         );
 

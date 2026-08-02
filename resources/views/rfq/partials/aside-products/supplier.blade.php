@@ -4,7 +4,7 @@
 @php
     use App\Facades\ActiveContext;
 
-    $supplierId = ActiveContext::supplierId();
+    $supplierId = ActiveContext::entityId();
 
     $offer = $rfq->offers
         ->where('participant_type', \App\Models\Supplier::class)

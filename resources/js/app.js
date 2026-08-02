@@ -6,6 +6,13 @@ import Alpine from 'alpinejs';
 
 import collapse from '@alpinejs/collapse'; 
 
+import { initCompanyAddressMap } from './address-map';
+
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+window.L = L;
+
 Alpine.plugin(collapse)
 
 window.Alpine = Alpine;
@@ -46,4 +53,6 @@ import { initSwipers } from './components/swiper';
 
 document.addEventListener('DOMContentLoaded', () => {
     initSwipers();
+
+    initCompanyAddressMap();
 });

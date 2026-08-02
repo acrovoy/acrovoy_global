@@ -17,7 +17,7 @@
 
 
 @php
-    $supplierId = ActiveContext::id();
+    $supplierId = ActiveContext::supplierId();
 
 $supplier = \App\Models\Supplier::find($supplierId);
 

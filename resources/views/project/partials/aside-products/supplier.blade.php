@@ -3,7 +3,7 @@
 @php
     use App\Facades\ActiveContext;
 
-    $supplierId = ActiveContext::supplierId();
+    $supplierId = ActiveContext::entityId();
 @endphp
 
 @foreach($project->rfqs as $index => $rfq)

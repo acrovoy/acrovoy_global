@@ -58,7 +58,7 @@ class SupplierRfqController extends Controller
     */
     $offer = RfqOffer::query()
         ->where('rfq_id', $rfq->id)
-        ->where('participant_id', $context->supplierId())
+        ->where('participant_id', $context->entityId())
         ->first();
 
     /*

@@ -48,27 +48,17 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+   
     public function supplier()
 {
-    return $this->morphTo(null, 'supplier_type', 'supplier_id');
+    return $this->belongsTo(Supplier::class);
 }
 
 public function supplierName(): ?string
 {
-    if (!$this->supplier) {
-        return null;
-    }
-
-    if ($this->supplier instanceof \App\Models\Supplier) {
-        return $this->supplier->name;
-    }
-
-    if ($this->supplier instanceof \App\Models\User) {
-        return $this->supplier->first_name . ' ' . $this->supplier->last_name;
-    }
-
-    return null;
+    return $this->supplier?->name;
 }
+
 
     
 

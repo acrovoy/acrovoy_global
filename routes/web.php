@@ -379,7 +379,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
     Route::post('shipping-templates/{template}/toggle-active',  [ShippingTemplateController::class, 'toggleActive'])->name('shipping-templates.toggle-active');
 
     Route::delete('certificate/{id}', [SupplierCompanyController::class, 'deleteCertificate'])->name('certificate.delete');
-    Route::get('/company-profile/show', [SupplierCompanyController::class, 'showCompanyProfile'])->name('company.show');
+    Route::get('/profile/show', [SupplierCompanyController::class, 'showCompanyProfile'])->name('profile.show');
     Route::get('/company-profile', [SupplierCompanyController::class, 'companyProfile'])->name('company.profile');
 
     Route::post('/company-profile', [SupplierCompanyController::class, 'updateCompany'])->name('company.update.legacy');

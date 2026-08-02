@@ -107,7 +107,7 @@
 
         {{-- Supplier Types --}}
         @php
-$types = optional($company->supplierTypes)
+$types = optional($company->businessTypes)
     ->map(fn($type) => $type->translation?->name ?? $type->slug)
     ->filter()
     ->values();

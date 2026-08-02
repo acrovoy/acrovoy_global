@@ -115,7 +115,7 @@ public function getClosedRfqsForSupplier()
      */
     private function isSupplierParticipant(Rfq $rfq): bool
 {
-    $supplierId = $this->context->supplierId();
+    $supplierId = $this->context->entityId();
     $supplierType = $this->context->type();
 
     if (!$supplierId) {

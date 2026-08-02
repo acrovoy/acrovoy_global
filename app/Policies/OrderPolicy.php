@@ -43,7 +43,7 @@ class OrderPolicy
         // supplier company
         if ($this->context->isCompany()) {
 
-            $company = $this->context->company();
+            $company = $this->context->entity();
 
             if (
                 $order->supplier_id === $company->id ||
@@ -74,7 +74,7 @@ class OrderPolicy
         // supplier может обновлять свой заказ
         if ($this->context->isCompany()) {
 
-            $company = $this->context->company();
+            $company = $this->context->entity();
 
             return $order->supplier_id === $company->id;
         }
