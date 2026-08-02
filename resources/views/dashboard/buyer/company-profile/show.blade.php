@@ -6,12 +6,7 @@
 
 @php
             $level = $company->level;
-            $supplierRating = round(
-                        $company->supplierReviews->avg('rating') ?? 0,
-                        1
-                    );
-
-                  
+            
             @endphp
 
 {{-- Header --}}
@@ -160,13 +155,16 @@
             {{-- Company Header --}}
 <div class="flex flex-col lg:flex-row lg:items-end gap-6">
 
+
+
     {{-- Logo --}}
     <div class="-mt-12 relative shrink-0">
         <div id="logo-dropzone"
             class="w-36 h-36 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-white relative cursor-pointer group">
 
             <img id="logo-preview"
-                src="{{ $company->logo?->cdn_url ?? asset('images/no-logo.png') }}"
+                src="{{ $company->logo()?->cdn_url ?? asset('images/no-logo.png') }}"
+
                 class="w-full h-full object-cover"
             >
 
@@ -229,54 +227,23 @@
                             </svg>
                             @endif
 
-                            {{ strtoupper($level) }} SUPPLIER
+                            {{ strtoupper($level) }} BUYER
                         </span>
 
 
 
-                        <div class="mt-1 items-center flex justify-center">
-                            <div class="flex flex-col md:flex-row items-center gap-1 inline">
+                       
 
-                                @for ($i = 1; $i <= 5; $i++)
-                                    @if ($i <=floor($supplierRating))
-                                    <svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" /></svg>
-                                    @elseif ($i - $supplierRating < 1)
-                                        <svg class="w-4 h-4 fill-current text-yellow-300" viewBox="0 0 20 20">
-                                        <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" /></svg>
-                                        @else
-                                        <svg class="w-4 h-4 fill-current text-gray-300" viewBox="0 0 20 20">
-                                            <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
-                                        </svg></svg>
-
-                                        @endif
-
-                                        @endfor
-
-                                        <span class="text-xs text-gray-500">{{$supplierRating = number_format($supplierRating, 1);}}</span>
-
-                            </div>
-                        </div>
-
-                        <div @click="openReviews = true" class="items-center flex justify-center text-xs  mt-1 text-emerald-700 hover:text-emerald-900 hover:underline hover:cursor-pointer">
-                            {{-- Количество отзывов --}}
-                            <span>{{ $company->supplierReviews->count() }} review(s)</span>
-                        </div>
+                        
 
 
-                        <!-- @if($company->country)
-                            <span>•</span>
-                        @endif -->
-
-                        <!-- <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 text-xs font-medium">
-                            Verified Supplier
-                        </span> -->
+                       
 
                     </div>
 
 
 
-                    @include('supplier.modals.supplier_reviews', ['supplier' => $company])
+                  
 
 
 
@@ -342,7 +309,7 @@
         type="button"
         onclick="openDrawer({
             title: 'Edit Company Overview',
-            url: '{{ route("supplier.company.drawer","overview") }}'
+            url: '{{ route("buyer.company.drawer","overview") }}'
             })"
         class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition">
 
@@ -612,7 +579,7 @@
         onclick="openDrawer({
             title: 'Edit General Information',
             description: 'Update company background and export markets.',
-            url: '{{ route('supplier.company.drawer', 'general') }}'
+            url: '{{ route('buyer.company.drawer', 'general') }}'
         })"
         class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:border-gray-300">
 
@@ -658,32 +625,7 @@
 
             </div>
 
-            {{-- Export Markets --}}
-            <div>
-
-                <div class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-                    Markets
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-
-                    @forelse($company->exportMarkets as $market)
-
-                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                            {{ $market->translation?->name ?? $market->slug }}
-                        </span>
-
-                    @empty
-
-                        <span class="text-gray-400">
-                            —
-                        </span>
-
-                    @endforelse
-
-                </div>
-
-            </div>
+           
 
         </div>
 @if($is_personal)
@@ -1186,183 +1128,7 @@
 
 
 
-        {{-- ================= MANUFACTURING PROFILE ================= --}}
-<div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-
-   {{-- Header --}}
-<div class="flex items-start justify-between px-6 py-5 border-b border-gray-200">
-
-    <div>
-
-    <h2 class="text-lg font-semibold text-gray-900">
-        @if($is_personal)
-            Business Capabilities
-        @else
-            Manufacturing Profile
-        @endif
-    </h2>
-
-    <p class="mt-1 text-sm text-gray-500">
-        @if($is_personal)
-            Business activities, supply capabilities and operational details.
-        @else
-            Production capabilities, factory information and manufacturing capacity.
-        @endif
-    </p>
-
-</div>
-
-    <button
-        type="button"
-        onclick="openDrawer({
-            title: 'Edit Manufacturing Profile',
-            description: 'Update manufacturing facilities and production capacity.',
-            url: '{{ route('supplier.company.drawer', 'manufacturing') }}'
-        })"
-        class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:border-gray-400">
-
-        <svg
-            class="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24">
-
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15.232 5.232l3.536 3.536M9 11l6.768-6.768a2.5 2.5 0 113.536 3.536L12.536 14.536A4 4 0 019.707 15.707L7 16l.293-2.707A4 4 0 018.464 10.88L15.232 5.232z"/>
-
-        </svg>
-
-        Edit
-
-    </button>
-
-</div>
-
-    <div class="p-6 space-y-8">
-
-        {{-- Manufacturing Capabilities --}}
-        @if($company->profile?->manufacturingCapabilities?->isNotEmpty())
-
-            <div>
-
-                <div class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-    @if($is_personal)
-        Business Capabilities
-    @else
-        Manufacturing Capabilities
-    @endif
-</div>
-
-                <div class="flex flex-wrap gap-2">
-
-                    @foreach($company->profile->manufacturingCapabilities as $capability)
-
-                        <span class="px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-medium">
-                            {{ $capability->name }}
-                        </span>
-
-                    @endforeach
-
-                </div>
-
-            </div>
-
-        @endif
-
-
-        {{-- Manufacturing Overview --}}
-        <div>
-
-            <div class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-    @if($is_personal)
-        Business Overview
-    @else
-        Manufacturing Overview
-    @endif
-</div>
-
-            <div class="text-sm leading-7 text-gray-700">
-                {!! $company->profile?->manufacturing_description ?? '—' !!}
-            </div>
-
-        </div>
-
-
-        {{-- Statistics --}}
-<div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
-
-    <div class="rounded-xl border border-gray-200 p-5">
-
-        <div class="text-xs uppercase tracking-wide text-gray-400">
-            Facility Area
-        </div>
-
-        <div class="mt-2 text-lg font-bold text-gray-900">
-            {{ $company->profile?->factory_area ? $company->profile?->factory_area.' m²' : '—' }}
-        </div>
-
-    </div>
-
-
-    <div class="rounded-xl border border-gray-200 p-5">
-
-        <div class="text-xs uppercase tracking-wide text-gray-400">
-            Production Lines
-        </div>
-
-        <div class="mt-2 text-lg font-bold text-gray-900">
-            {{ $company->profile?->production_lines ?? '—' }}
-        </div>
-
-    </div>
-
-
-    <div class="rounded-xl border border-gray-200 p-5">
-
-        <div class="text-xs uppercase tracking-wide text-gray-400">
-            Minimum Order Quantity
-        </div>
-
-        <div class="mt-2 text-lg font-bold text-gray-900">
-            {{ $company->profile?->moq ?? '—' }}
-        </div>
-
-    </div>
-
-
-    <div class="rounded-xl border border-gray-200 p-5">
-
-        <div class="text-xs uppercase tracking-wide text-gray-400">
-            Monthly Capacity
-        </div>
-
-        <div class="mt-2 text-lg font-bold text-gray-900">
-            {{ $company->profile?->monthly_capacity ?? '—' }}
-        </div>
-
-    </div>
-
-
-    <div class="rounded-xl border border-gray-200 p-5">
-
-        <div class="text-xs uppercase tracking-wide text-gray-400">
-            Lead Time
-        </div>
-
-        <div class="mt-2 text-lg font-bold text-gray-900">
-            {{ $company->profile?->lead_time_days ? $company->profile?->lead_time_days.' days' : '—' }}
-        </div>
-
-    </div>
-
-</div>
-
-    </div>
-
-</div>
+       
 
         {{-- ================= CONTACT INFORMATION ================= --}}
 
@@ -1958,120 +1724,14 @@ function deleteCertificate(id) {
 
 
 
- {{-- ================= CATALOG VISUAL BLOCK ================= --}}
+ 
 
-<div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mt-6">
 
-    {{-- Header --}}
-    <div class="px-6 py-5 border-b border-gray-200">
-
-       <div>
-
-    <h2 class="text-lg font-semibold text-gray-900">
-        Catalog Presentation
-    </h2>
-
-    <p class="mt-1 text-sm text-gray-500">
-        Choose the main image that will represent your business in the supplier catalog.
-    </p>
-
-</div>
-
-    </div>
-
-    {{-- Body --}}
-    <div class="p-8">
-
-        <div class="grid lg:grid-cols-2 gap-12 items-start">
-
-            {{-- Upload --}}
-            <div class="flex flex-col items-center">
-
-                <div
-                    id="catalog-dropzone"
-                    class="group w-72 aspect-square rounded-2xl overflow-hidden
-                           border-2 border-dashed border-gray-300
-                           bg-gradient-to-b from-gray-50 to-white
-                           cursor-pointer relative transition hover:border-gray-400">
-
-                    <img
-                        id="catalog-preview"
-                        src="{{ $catalogMedia?->cdn_url ?? asset('images/no-catalog-image.png') }}"
-                        class="w-full h-full object-cover">
-
-                    <div
-                        class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center">
-
-                        <div class="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-medium shadow">
-                            Change Image
-                        </div>
-
-                    </div>
-
-                    <input
-                        type="file"
-                        name="catalog_image"
-                        accept="image/*"
-                        id="catalog-input"
-                        class="hidden">
-
-                </div>
-
-                <p class="mt-4 text-sm text-gray-500 text-center max-w-xs">
-                    This image will be displayed on supplier cards throughout the marketplace.
-                </p>
-
-            </div>
-
-            {{-- Preview --}}
-            <div class="flex justify-center items-start">
-
-                @include('dashboard.supplier.partials.preview-card')
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
     
 
 </div>
 
-<script>
-document.getElementById('catalog-dropzone').addEventListener('click', function() {
-    document.getElementById('catalog-input').click();
-});
 
-document.getElementById('catalog-input').addEventListener('change', function(e) {
-
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('catalog_image', file);
-
-    fetch("{{ route('manufacturer.catalog.upload') }}", {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': "{{ csrf_token() }}",
-            'Accept': 'application/json'
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        if (data.success) {
-            document.getElementById('catalog-preview').src = data.url;
-        }
-
-    })
-    .catch(() => alert('Upload failed'));
-
-});
-</script>
 
 
 
@@ -2197,7 +1857,7 @@ async function uploadLogo(file)
     try {
 
         const response = await fetch(
-            "{{ route('supplier.company.logo') }}",
+            "{{ route('buyer.company.logo') }}",
             {
                 method: 'POST',
                 headers: {

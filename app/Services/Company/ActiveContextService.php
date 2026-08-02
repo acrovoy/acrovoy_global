@@ -216,17 +216,9 @@ class ActiveContextService
 }
 
     public function buyer(): ?Buyer
-    {
-        if (!$this->isCompany()) {
-            return null;
-        }
-
-        if ($this->type() !== Buyer::class) {
-            return null;
-        }
-
-        return $this->company();
-    }
+{
+    return $this->buyerProfile();
+}
 
     public function buyerId(): ?int
     {
@@ -245,22 +237,14 @@ class ActiveContextService
 
 
     public function isSupplier(): bool
-    {
-        if ($this->isCompany()) {
-            return $this->type() === \App\Models\Supplier::class;
-        }
+{
+    return $this->supplierProfile() !== null;
+}
 
-        return auth()->user()?->setting('platform_mode') === 'supplier';
-    }
-
-    public function isBuyer(): bool
-    {
-        if ($this->isCompany()) {
-            return $this->type() === \App\Models\Buyer::class;
-        }
-
-        return auth()->user()?->setting('platform_mode') === 'buyer';
-    }
+public function isBuyer(): bool
+{
+    return $this->buyerProfile() !== null;
+}
 
     private function fallbackPersonal($user): void
     {
@@ -401,6 +385,19 @@ public function supplierProfile(): ?Supplier
 
     return Supplier::where('supplierable_type', $entity::class)
         ->where('supplierable_id', $entity->getKey())
+        ->first();
+}
+
+public function buyerProfile(): ?Buyer
+{
+    $entity = $this->entity();
+
+    if (!$entity) {
+        return null;
+    }
+
+    return Buyer::where('buyerable_type', $entity::class)
+        ->where('buyerable_id', $entity->getKey())
         ->first();
 }
 

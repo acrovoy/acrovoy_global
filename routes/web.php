@@ -17,6 +17,7 @@ use App\Http\Controllers\BuyerCartController;
 use App\Http\Controllers\DashboardRoleController;
 use App\Http\Controllers\BuyerOrderController;
 use App\Http\Controllers\SupplierCompanyController;
+use App\Http\Controllers\BuyerCompanyController;
 use App\Http\Controllers\PremiumSellerPlanController;
 use App\Http\Controllers\PremiumBuyerPlanController;
 use App\Http\Controllers\CurrencyController;
@@ -361,6 +362,16 @@ Route::prefix('dashboard/buyer')->name('buyer.')->group(function () {
                 Route::get('/conversations/{conversation}/messages/new', [BuyerMessengerController::class, 'newMessages']);
 
             });
+
+    Route::delete('certificate/{id}', [BuyerCompanyController::class, 'deleteCertificate'])->name('certificate.delete');
+    Route::get('/profile/show', [BuyerCompanyController::class, 'showCompanyProfile'])->name('profile.show');
+    Route::get('/company-profile', [BuyerCompanyController::class, 'companyProfile'])->name('company.profile');
+
+    Route::post('/company-profile', [BuyerCompanyController::class, 'updateCompany'])->name('company.update.legacy');
+
+    Route::post('/company-profile/logo', [BuyerCompanyController::class, 'updateLogo'])->name('company.logo');
+    Route::get('/company/drawer/{section}', [BuyerCompanyController::class, 'drawer'])->name('company.drawer');
+    Route::post('/company/update/{section}', [BuyerCompanyController::class, 'update'])->name('company.update');
 
     });
 

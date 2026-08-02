@@ -146,22 +146,7 @@ default => '#d1d5db',
 
 
 
-                    {{-- DIVIDER --}}
-                    <div class=""></div>
-
-                       @if($activeTab === 'products')
-
-    <div class="border-t border-gray-200"></div>
-
-    <div class="p-4 space-y-6">
-
-        @include('supplier.sections.catalog-sidebar')
-
-        @include('supplier.sections.product-filters')
-
-    </div>
-
-@endif
+                    
 
 
 
@@ -203,7 +188,7 @@ default => '#d1d5db',
                                     d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
 
-                            Chat with Supplier
+                            Chat with Buyer
 
                         </button>
 
@@ -218,20 +203,15 @@ default => '#d1d5db',
 
             </aside>
             <div class="flex-1 min-w-0">
-                @if($activeTab === 'home')
-                @include('supplier.partials.home')
-                @endif
+               
 
                 @if($activeTab === 'profile')
-                @include('supplier.partials.profile')
+                @include('buyer.partials.profile')
                 @endif
 
-                @if($activeTab === 'products')
-                @include('supplier.partials.products')
-                @endif
-
+                
                 @if($activeTab === 'contacts')
-                @include('supplier.partials.contacts')
+                @include('buyer.partials.contacts')
                 @endif
             </div>
         </div>
