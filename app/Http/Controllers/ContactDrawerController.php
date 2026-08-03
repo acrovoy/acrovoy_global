@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Contact\Models\Contact;
 use App\Models\Supplier;
+use App\Models\Buyer;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -27,6 +28,10 @@ class ContactDrawerController extends Controller
                 ->findOrFail($request->integer('id')),
 
             'supplier' => Supplier::query()
+                ->with('contacts')
+                ->findOrFail($request->integer('id')),
+
+            'buyer' => Buyer::query()
                 ->with('contacts')
                 ->findOrFail($request->integer('id')),
 

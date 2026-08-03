@@ -19,10 +19,10 @@ use App\Domain\Media\DTO\UploadMediaDTO;
 use App\Domain\Media\Jobs\DeleteMediaJob;
 
  use App\Domain\Company\Actions\UpdateBuyerOverviewAction;
- use App\Domain\Company\Actions\UpdateGeneralAction;
+ use App\Domain\Company\Actions\UpdateBuyerGeneralAction;
  use App\Domain\Company\Actions\UpdateManufacturingAction;
  use App\Domain\Company\Actions\UpdateContactsAction;
- use App\Domain\Company\Actions\UpdateAddressAction;
+ use App\Domain\Company\Actions\UpdateBuyerAddressAction;
 
 use App\Services\Company\ActiveContextService;
 
@@ -39,10 +39,10 @@ public function __construct(
         private ActiveContextService $context,
         private MediaService $mediaService,
         private UpdateBuyerOverviewAction $updateBuyerOverviewAction,
-        private UpdateGeneralAction $updateGeneralAction,
+        private UpdateBuyerGeneralAction $updateBuyerGeneralAction,
         private UpdateManufacturingAction $updateManufacturingAction,
         private UpdateContactsAction $updateContactsAction,
-        private UpdateAddressAction $updateAddressAction
+        private UpdateBuyerAddressAction $updateBuyerAddressAction
         
 
  
@@ -302,24 +302,24 @@ $selectedmanufacturingCapabilities =
         'certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
     ]);
 
-    $supplier = $this->context->supplier();
+    $buyer = $this->context->buyer();
 
-    if (!$supplier) {
+    if (!$buyer) {
 
         $identity = $this->context->identity();
 
-        $supplier = \App\Models\Supplier::where(
-            'supplierable_type',
+        $buyer = \App\Models\Buyer::where(
+            'buyerable_type',
             $identity['entity_type']
         )->where(
-            'supplierable_id',
+            'buyerable_id',
             $identity['entity_id']
         )->first();
     }
 
-    if (!$supplier) {
+    if (!$buyer) {
         return response()->json([
-            'message' => 'Supplier profile not found.'
+            'message' => 'Buyer profile not found.'
         ], 404);
     }
 
@@ -332,8 +332,8 @@ $selectedmanufacturingCapabilities =
 
     $dto = new UploadMediaDTO(
         file: $request->file('certificate'),
-        model: $supplier,
-        collection: 'supplier_certificates',
+        model: $buyer,
+        collection: 'buyer_certificates',
         mediaRole: 'certificate',
         private: false,
         originalFileName: $request->file('certificate')->getClientOriginalName(),
@@ -358,25 +358,25 @@ public function deleteCertificate($id)
 {
     try {
 
-        $supplier = $this->context->supplier();
+        $buyer = $this->context->buyer();
 
-        if (!$supplier) {
+        if (!$buyer) {
 
             $identity = $this->context->identity();
 
-            $supplier = \App\Models\Supplier::where(
-                'supplierable_type',
+            $buyer = \App\Models\Buyer::where(
+                'buyerable_type',
                 $identity['entity_type']
             )->where(
-                'supplierable_id',
+                'buyerable_id',
                 $identity['entity_id']
             )->first();
         }
 
-        abort_unless($supplier, 404);
+        abort_unless($buyer, 404);
 
-        $media = $supplier->media()
-            ->where('collection', 'supplier_certificates')
+        $media = $buyer->media()
+            ->where('collection', 'buyer_certificates')
             ->where('id', $id)
             ->firstOrFail();
 
@@ -405,24 +405,24 @@ public function deleteCertificate($id)
     
     public function uploadFactoryPhotos(Request $request)
 {
-    $supplier = $this->context->supplier();
+    $buyer = $this->context->buyer();
 
-    if (!$supplier) {
+    if (!$buyer) {
 
         $identity = $this->context->identity();
 
-        $supplier = \App\Models\Supplier::where(
-            'supplierable_type',
+        $buyer = \App\Models\Buyer::where(
+            'buyerable_type',
             $identity['entity_type']
         )->where(
-            'supplierable_id',
+            'buyerable_id',
             $identity['entity_id']
         )->first();
     }
 
-    if (!$supplier) {
+    if (!$buyer) {
         return response()->json([
-            'error' => 'Supplier not found'
+            'error' => 'Buyer not found'
         ], 404);
     }
 
@@ -436,7 +436,7 @@ public function deleteCertificate($id)
 
             $dto = new UploadMediaDTO(
                 file: $file,
-                model: $supplier,
+                model: $buyer,
                 collection: 'factory_photos',
                 mediaRole: 'factory_photo',
                 private: false,
@@ -464,24 +464,24 @@ public function deleteCertificate($id)
 
 public function deleteFactoryPhoto($id)
 {
-    $supplier = $this->context->supplier();
+    $buyer = $this->context->buyer();
 
-    if (!$supplier) {
+    if (!$buyer) {
 
         $identity = $this->context->identity();
 
-        $supplier = \App\Models\Supplier::where(
-            'supplierable_type',
+        $buyer = \App\Models\Buyer::where(
+            'buyerable_type',
             $identity['entity_type']
         )->where(
-            'supplierable_id',
+            'buyerable_id',
             $identity['entity_id']
         )->first();
     }
 
-    abort_unless($supplier, 404);
+    abort_unless($buyer, 404);
 
-    $media = $supplier->media()
+    $media = $buyer->media()
         ->where('collection', 'factory_photos')
         ->where('id', $id)
         ->firstOrFail();
@@ -493,54 +493,6 @@ public function deleteFactoryPhoto($id)
     ]);
 }
 
-public function uploadCatalogImage(Request $request)
-{
-    $request->validate([
-        'catalog_image' => 'required|image|max:10240',
-    ]);
-
-    $company = $this->context->supplier();
-
-    if (!$company) {
-
-        $identity = $this->context->identity();
-
-        $company = \App\Models\Supplier::where(
-            'supplierable_type',
-            $identity['entity_type']
-        )->where(
-            'supplierable_id',
-            $identity['entity_id']
-        )->first();
-    }
-
-    if (!$company) {
-        return response()->json([
-            'message' => 'Supplier not found'
-        ], 404);
-    }
-
-    // Удаляем старую картинку каталога
-    $company->catalogImageMedia()->delete();
-
-    $dto = new UploadMediaDTO(
-        file: $request->file('catalog_image'),
-        model: $company,
-        collection: 'catalog_images',
-        mediaRole: 'catalog_image',
-        private: false,
-        originalFileName: $request->file('catalog_image')->getClientOriginalName(),
-        sortOrder: 0,
-        isMain: true
-    );
-
-    $media = $this->mediaService->upload($dto);
-
-    return response()->json([
-        'success' => true,
-        'url' => $media->cdn_url,
-    ]);
-}
 
 
 public function updateLogo(Request $request)
@@ -684,7 +636,7 @@ public function update(Request $request, string $section)
 
         $identity = $this->context->identity();
 
-        Log::info('Buyer update: identity()', $identity);
+      
 
         $company = \App\Models\Buyer::where(
             'buyerable_type',
@@ -694,20 +646,12 @@ public function update(Request $request, string $section)
             $identity['entity_id']
         )->first();
 
-        Log::info('Buyer update: fallback buyer', [
-            'company_id' => $company?->id,
-            'class' => $company ? get_class($company) : null,
-        ]);
+        
     }
 
     abort_unless($company, 404);
 
-    Log::info('Buyer update: final company', [
-        'id' => $company->id,
-        'name' => $company->name,
-        
-        
-    ]);
+   
 
     return match ($section) {
 
@@ -716,7 +660,7 @@ public function update(Request $request, string $section)
             $company
         ),
 
-        'general' => ($this->updateGeneralAction)(
+        'general' => ($this->updateBuyerGeneralAction)(
             $request,
             $company
         ),
@@ -731,7 +675,7 @@ public function update(Request $request, string $section)
             $company
         ),
 
-        'address' => ($this->updateAddressAction)(
+        'address' => ($this->updateBuyerAddressAction)(
             $request,
             $company
         ),

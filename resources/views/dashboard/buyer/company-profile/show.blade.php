@@ -537,7 +537,7 @@
 
         <div class="max-h-[70vh] overflow-y-auto">
 
-            @include('dashboard.supplier.partials.manage-factoryphotos')
+            @include('dashboard.buyer.partials.manage-factoryphotos')
 
         </div>
 
@@ -655,25 +655,7 @@
                     </div>
                 </div>
 
-                <div class="rounded-xl border border-gray-200 p-5">
-                    <div class="text-xs uppercase tracking-wide text-gray-400">
-                        Export Revenue
-                    </div>
-
-                    <div class="mt-2 text-lg font-bold text-gray-900">
-                        {{ $company->profile?->annual_export_revenue ? '$'.number_format($company->profile?->annual_export_revenue) : '—' }}
-                    </div>
-                </div>
-
-                <div class="rounded-xl border border-gray-200 p-5">
-                    <div class="text-xs uppercase tracking-wide text-gray-400">
-                        Registration Capital
-                    </div>
-
-                    <div class="mt-2 text-lg font-bold text-gray-900">
-                        {{ $company->profile?->registration_capital ? '$'.number_format($company->profile?->registration_capital) : '—' }}
-                    </div>
-                </div>
+               
 
             </div>
 
@@ -781,7 +763,8 @@
         <div class="swiper-wrapper">
 
         @foreach($certificates as $certificate)
-
+        
+        
             @php
                 $meta = is_array($certificate->metadata)
                     ? $certificate->metadata
@@ -1137,7 +1120,7 @@
     :contacts="$company->contacts"
     title="Business Contacts"
     description="Primary business contact details."
-    ownerType="supplier"
+    ownerType="buyer"
     :ownerId="$company->id"
     :editable="true"
     
@@ -1334,7 +1317,7 @@
             type="button"
             onclick="openDrawer({
                 title: 'Edit Address',
-                url: '{{ route('supplier.company.drawer', 'address') }}'
+                url: '{{ route('buyer.company.drawer', 'address') }}'
             })"
             class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
 
@@ -1644,7 +1627,7 @@ function submitCertificate() {
     formData.append('certificate', file);
     formData.append('metadata', JSON.stringify(metadata));
 
-    fetch("{{ route('manufacturer.certificates.upload') }}", {
+    fetch("{{ route('buyer.certificates.upload') }}", {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': "{{ csrf_token() }}",
@@ -1681,7 +1664,7 @@ document.addEventListener('click', function(e){
 function deleteCertificate(id) {
     console.log('delete', id);
 
-    const url = "{{ route('manufacturer.certificates.delete', ['certificate' => 'CERT_ID']) }}"
+    const url = "{{ route('buyer.certificates.delete', ['certificate' => 'CERT_ID']) }}"
         .replace('CERT_ID', id);
 
     fetch(url, {
@@ -1747,7 +1730,7 @@ function deleteCertificate(id) {
 
             try {
 
-                const response = await fetch(`/factory/photos/${id}`, {
+                const response = await fetch(`/dashboard/buyer/factory/photos/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

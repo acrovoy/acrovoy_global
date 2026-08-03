@@ -1,6 +1,6 @@
 <form
     class="drawer-form flex h-full flex-col"
-    action="{{ route('supplier.company.update', 'general') }}"
+    action="{{ route('buyer.company.update', 'general') }}"
     method="POST">
 
     @csrf
@@ -100,146 +100,15 @@
 
                 </div>
 
-                <div>
+                
 
-                    <label class="block text-sm font-semibold text-gray-900">
-                        Annual Export Revenue (USD)
-                    </label>
-
-                    <p class="mt-1 text-xs text-gray-500">
-                        Estimated annual export revenue.
-                    </p>
-
-                    <input
-                        type="number"
-                        name="annual_export_revenue"
-                        value="{{ old('annual_export_revenue', $company->profile?->annual_export_revenue) }}"
-                        placeholder="650000"
-                        class="mt-3 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-
-                </div>
-
-                <div>
-
-                    <label class="block text-sm font-semibold text-gray-900">
-                        Registration Capital (USD)
-                    </label>
-
-                    <p class="mt-1 text-xs text-gray-500">
-                        Registered company capital.
-                    </p>
-
-                    <input
-                        type="number"
-                        name="registration_capital"
-                        value="{{ old('registration_capital', $company->profile?->registration_capital) }}"
-                        placeholder="1000000"
-                        class="mt-3 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-
-                </div>
+               
 
             </div>
 
         </section>
 
-        {{-- ================= EXPORT MARKETS ================= --}}
-        <section class="space-y-5">
-
-            <div>
-
-                <h3 class="text-base font-semibold text-gray-900">
-                    Export Markets
-                </h3>
-
-                <p class="mt-1 text-sm text-gray-500">
-                    Select countries and regions where your products are exported.
-                </p>
-
-            </div>
-
-            {{-- Selected --}}
-            <div>
-
-                <label class="block text-sm font-semibold text-gray-900 mb-3">
-                    Selected Markets
-                </label>
-
-                <div
-                    id="selected-export-markets"
-                    class="flex flex-wrap gap-2 min-h-[44px] rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3">
-
-                </div>
-
-            </div>
-
-            {{-- Search --}}
-            <div>
-
-                <input
-                    type="text"
-                    id="exportMarketSearch"
-                    placeholder="Search export markets..."
-                    class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-
-            </div>
-
-            <input
-    type="hidden"
-    id="initial-export-markets"
-    value='@json(
-        $company->exportMarkets->map(function ($market) {
-            return [
-                "id" => (string) $market->id,
-                "name" => $market->translation?->name ?? $market->slug,
-            ];
-        })
-    )'>
-
-            {{-- Options --}}
-            <div
-                id="export-markets-options"
-                class="grid grid-cols-2 gap-3">
-
-                @foreach($exportMarkets as $market)
-
-                    @php
-                        $name = $market->translation?->name ?? $market->slug;
-                    @endphp
-
-                    <button
-                        type="button"
-                        class="export-market-option flex items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm transition hover:border-blue-400 hover:bg-blue-50"
-                        data-id="{{ $market->id }}"
-                        data-name="{{ $name }}">
-
-                        <span>{{ $name }}</span>
-
-                        <svg
-                            class="w-4 h-4 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            viewBox="0 0 24 24">
-
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M12 5v14m-7-7h14"/>
-
-                        </svg>
-
-                    </button>
-
-                @endforeach
-
-            </div>
-
-            <input
-                type="hidden"
-                name="export_markets_selected"
-                id="exportMarketsSelectedInput">
-
-        </section>
+        
 
     </div>
 

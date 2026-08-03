@@ -1,6 +1,6 @@
 <form
     class="drawer-form flex h-full flex-col"
-    action="{{ route('supplier.company.update', 'address') }}"
+    action="{{ route('buyer.company.update', 'address') }}"
     method="POST">
 
     @csrf

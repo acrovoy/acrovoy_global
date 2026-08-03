@@ -483,7 +483,14 @@ Route::delete('/factory/photos/{id}', [SupplierCompanyController::class, 'delete
 
 
 
-Route::prefix('dashboard/buyer')->name('buyer.')->middleware(['auth', 'role:buyer'])->group(function () {
+Route::prefix('dashboard/buyer')->name('buyer.')->group(function () {
+
+        Route::post('/certificates/upload', [BuyerCompanyController::class, 'uploadCertificate'])->name('certificates.upload');
+        Route::post('/factory/photos/upload', [BuyerCompanyController::class, 'uploadFactoryPhotos'])->name('factory.photos.upload');
+        Route::delete('/factory/photos/{id}', [BuyerCompanyController::class, 'deleteFactoryPhoto'])->name('factory.photos.delete');
+        Route::delete('certificates/{certificate}', [BuyerCompanyController::class, 'deleteCertificate'])->name('certificates.delete');
+
+
         Route::get('/premium-buyer-plans', [PremiumBuyerPlanController::class, 'index'])->name('premium-plans');
         Route::get('/premium-buyer-plans/compare', [PremiumBuyerPlanController::class, 'compare'])->name('premium-plans.compare');
         Route::post('/premium-buyer-plans/subscribe', [PremiumBuyerPlanController::class, 'subscribe'])->name('premium-plans.subscribe');

@@ -121,4 +121,12 @@ public function getLevelAttribute()
         };
     }
 
+    public function primaryAddress()
+{
+    return $this->morphOne(
+        CompanyAddress::class,
+        'addressable'
+    )->where('is_primary', true);
+}
+
 }

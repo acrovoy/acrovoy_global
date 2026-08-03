@@ -74,6 +74,18 @@ return [
             ],
         ],
 
+        'buyer_certificates' => [
+    'ratio' => 'A4',
+    'variants' => [
+        'large' => 1200,
+        'medium' => 800,
+        'small' => 400,
+        'thumb' => 150,
+    ],
+],
+
+
+
         'help_articles' => [
             'ratio' => '16:9',
             'variants' => [
