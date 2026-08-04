@@ -111,7 +111,7 @@
      {{-- QUICK LINKS --}}
                     <div class="border-t border-gray-200 p-1">
 
-                        <a href="#"
+                        <a href="{{ route('buyer.show', $buyer) }}"
                             class="flex items-center justify-between rounded-xl
                       px-4 py-3
                       text-sm

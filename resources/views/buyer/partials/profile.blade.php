@@ -5,12 +5,9 @@
 <div class="max-w-7xl mx-auto space-y-4">
 
 @php
-$company = $supplier;
+$company = $buyer;
             $level = $company->level;
-            $supplierRating = round(
-                        $company->supplierReviews->avg('rating') ?? 0,
-                        1
-                    );
+            
                     
             @endphp
 
@@ -85,7 +82,7 @@ $company = $supplier;
     <div class="-mt-12 relative shrink-0">
         <div class="w-36 h-36 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-white relative">
 
-            <img src="{{ $company->logo?->cdn_url ?? asset('images/no-logo.png') }}"
+            <img src="{{ $company->logo()?->cdn_url ?? asset('images/no-logo.png') }}"
                 class="w-full h-full object-cover"
             >
 
@@ -150,34 +147,7 @@ $company = $supplier;
 
 
 
-                        <div class="mt-1 items-center flex justify-center">
-                            <div class="flex flex-col md:flex-row items-center gap-1 inline">
-
-                                @for ($i = 1; $i <= 5; $i++)
-                                    @if ($i <=floor($supplierRating))
-                                    <svg class="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" /></svg>
-                                    @elseif ($i - $supplierRating < 1)
-                                        <svg class="w-4 h-4 fill-current text-yellow-300" viewBox="0 0 20 20">
-                                        <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" /></svg>
-                                        @else
-                                        <svg class="w-4 h-4 fill-current text-gray-300" viewBox="0 0 20 20">
-                                            <path d="M10 15l-5.878 3.09L5.36 11.545 1 7.91l6.061-.545L10 2l2.939 5.365L19 7.91l-4.36 3.635 1.238 6.545z" />
-                                        </svg></svg>
-
-                                        @endif
-
-                                        @endfor
-
-                                        <span class="text-xs text-gray-500">{{$supplierRating = number_format($supplierRating, 1);}}</span>
-
-                            </div>
-                        </div>
-
-                        <div @click="openReviews = true" class="items-center flex justify-center text-xs  mt-1 text-emerald-700 hover:text-emerald-900 hover:underline hover:cursor-pointer">
-                            {{-- Количество отзывов --}}
-                            <span>{{ $company->supplierReviews->count() }} review(s)</span>
-                        </div>
+                        
 
 
                         <!-- @if($company->country)
@@ -192,7 +162,7 @@ $company = $supplier;
 
 
 
-                    @include('supplier.modals.supplier_reviews', ['supplier' => $company])
+                  
 
 
 
@@ -594,8 +564,7 @@ $company = $supplier;
     $profile = $company->profile;
 
     $hasLeft =
-        filled($profile?->about_us_description) ||
-        $company->exportMarkets->isNotEmpty();
+        filled($profile?->about_us_description);
 
     $hasRight =
         !$is_personal &&
@@ -654,30 +623,7 @@ $company = $supplier;
 
             @endif
 
-            {{-- Export Markets --}}
-            @if($company->exportMarkets->isNotEmpty())
-
-            <div>
-
-                <div class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
-                    Markets
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-
-                    @foreach($company->exportMarkets as $market)
-
-                        <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                            {{ $market->translation?->name ?? $market->slug }}
-                        </span>
-
-                    @endforeach
-
-                </div>
-
-            </div>
-
-            @endif
+           
 
         </div>
 

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
 @php
-$company = $supplier;
+$company = $buyer;
 @endphp
 @php
 $level = $company->level;
@@ -26,8 +26,8 @@ default => '#d1d5db',
 
         {{-- Breadcrumb --}}
         <div class="text-sm text-gray-600 mb-6">
-            <a href="/suppliers" class="hover:text-black">Suppliers</a> /
-            <span class="text-gray-900">{{ $supplier->name }}</span>
+            <span class="hover:text-black">Buyer</span> /
+            <span class="text-gray-900">{{ $buyer->name }}</span>
         </div>
 
 
@@ -66,7 +66,7 @@ default => '#d1d5db',
 
                             <div class="w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
                                 <img
-                                    src="{{ $company->logo?->cdn_url ?? asset('images/no-logo.png') }}"
+                                    src="{{ $company->logo()?->cdn_url ?? asset('images/no-logo.png') }}"
                                     class="w-full h-full object-cover">
                             </div>
 

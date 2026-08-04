@@ -121,12 +121,27 @@ public function getLevelAttribute()
         };
     }
 
+    public function publicContacts()
+{
+    return $this->morphMany(Contact::class, 'contactable')
+        ->where('is_public', true);
+}
+
     public function primaryAddress()
 {
     return $this->morphOne(
         CompanyAddress::class,
         'addressable'
     )->where('is_primary', true);
+}
+
+public function profileMembers()
+{
+    return $this->morphMany(
+        CompanyUser::class,
+        'company'
+    )
+    ->where('show_in_profile', true);
 }
 
 }

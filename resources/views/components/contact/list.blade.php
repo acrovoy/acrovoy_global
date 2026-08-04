@@ -1,3 +1,7 @@
+@php
+    $contacts = $contacts ?? collect();
+@endphp
+
 @props([
     'contacts',
     'title' => 'Contact Information',

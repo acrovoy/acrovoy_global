@@ -11,6 +11,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\BuyerController;
 use App\Http\Controllers\ManufacturerOrderController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\BuyerCartController;
@@ -434,6 +435,8 @@ Route::get('/set-currency/{currency}', [CurrencyController::class, 'setCurrency'
 Route::get('/supplier/{supplier:slug}', [SupplierController::class, 'show'])->name('supplier.show');
 Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
 Route::post('/company/switch', [CompanySwitchController::class, 'switch'])->name('company.switch');
+
+Route::get('/buyer/{buyer:slug}', [BuyerController::class, 'show'])->name('buyer.show');
 
 Route::prefix('dashboard/category-selector')->group(function () {
     Route::get('/root', [CategorySelectorController::class, 'root']);

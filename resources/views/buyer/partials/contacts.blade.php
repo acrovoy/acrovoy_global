@@ -165,7 +165,7 @@
     :contacts="$company->publicContacts"
     title="Business Contacts"
     description="Primary business contact details."
-    ownerType="supplier"
+    ownerType="buyer"
     :ownerId="$company->id"
     :public="true"
     

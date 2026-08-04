@@ -1,4 +1,4 @@
-<h3 class="text-2xl font-bold mb-6">Basic Information</h3>
+<h3 class="text-2xl font-bold mb-6 mt-4">Basic Information</h3>
 
 {{-- Product Name --}}
 <div class="border rounded p-4 mb-4 bg-white shadow-sm" x-data="{ open: false }">
