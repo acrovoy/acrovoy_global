@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Domain\Media\Models\Media;
 
+use App\Domain\Collection\Models\ProductCollection;
 use App\Models\Warehouse;
 use App\Models\ProductWarehouseStock;
 use App\Domain\RFQ\Models\Rfq;
+
+
+
 
 class Product extends Model
 {
@@ -40,7 +45,10 @@ class Product extends Model
     
 
     protected $appends = [
-    'warehouse_stocks'
+    'warehouse_stocks',
+    'name',
+    'undername',
+    'main_image_url',
 ];
 
     public function category()
@@ -360,6 +368,18 @@ public function getTotalStockAttribute()
 public function rfqs()
 {
     return $this->hasMany(Rfq::class);
+}
+
+public function collections()
+{
+    return $this->morphToMany(
+        ProductCollection::class,
+        'collectionable',
+        'collectionables',
+        'collectionable_id',
+        'collection_id'
+    )->withPivot('sort_order')
+     ->withTimestamps();
 }
 
 }

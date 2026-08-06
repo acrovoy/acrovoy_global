@@ -54,6 +54,13 @@
                 </a>
             </li>
 
+            <li>
+            <a href="{{ route('admin.collections.index') }}"
+               class="block py-1.5 text-sm {{ request()->routeIs('admin.collections.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                Collections
+            </a>
+        </li>
+
         </ul>
 
     </li>

@@ -11,6 +11,8 @@ import { initCompanyAddressMap } from './address-map';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
+import './collections/sortable';
+
 window.L = L;
 
 Alpine.plugin(collapse)

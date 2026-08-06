@@ -134,6 +134,16 @@ return [
             ],
         ],
 
+        'collection_cover' => [
+            'ratio' => '16:9',
+            'variants' => [
+                'large' => 1600,
+                'medium' => 1000,
+                'small' => 600,
+                'thumb' => 240,
+            ],
+        ],
+
     ],
 
 ];

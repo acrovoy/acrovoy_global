@@ -39,6 +39,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\PublicCollectionController;
 
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
@@ -84,6 +85,7 @@ use App\Http\Controllers\Admin\Settings\AttributeController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
+use App\Http\Controllers\Admin\ProductCollectionController;
 
 use App\Http\Controllers\SupportRequestController;
 
@@ -127,6 +129,11 @@ Route::middleware('auth')->group(function () {
 Route::get('/rfqs/{rfq}', [RfqController::class, 'show'])
     ->name('rfqs.workspace');
 
+Route::get('/collections', [PublicCollectionController::class, 'index'])
+    ->name('collections.index');
+    
+Route::get('/collections/{collection:slug}', [PublicCollectionController::class, 'show'])
+    ->name('collections.show');
 
 //CONTACTS
 Route::prefix('contacts')->name('contacts.')->group(function () {
@@ -646,7 +653,35 @@ Route::get('/faq', function () { return view('pages.faq'); })->name('faq');
 
 
 // ADMIN ROUTES /////////////////////////////////////////////////////////////
-Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group(function () {
+Route::prefix('dashboard/admin')->name('admin.')->group(function () {
+
+
+    Route::prefix('collections')->name('collections.')->group(function () {
+
+        Route::get('/{collection}/search-products', [ProductCollectionController::class, 'searchProducts'])->name('products.search');
+
+        Route::get('/', [ProductCollectionController::class, 'index'])->name('index');
+        Route::get('/create', [ProductCollectionController::class, 'create'])->name('create');
+        Route::post('/', [ProductCollectionController::class, 'store'])->name('store');
+
+        Route::get('/{collection}', [ProductCollectionController::class, 'show'])->name('show');
+        Route::get('/{collection}/edit', [ProductCollectionController::class, 'edit'])->name('edit');
+        Route::put('/{collection}', [ProductCollectionController::class, 'update'])->name('update');
+        Route::delete('/{collection}', [ProductCollectionController::class, 'destroy'])->name('destroy');
+
+        Route::post('/{collection}/publish', [ProductCollectionController::class, 'publish'])->name('publish');
+        Route::post('/{collection}/unpublish', [ProductCollectionController::class, 'unpublish'])->name('unpublish');
+
+        Route::post('/{collection}/products', [ProductCollectionController::class, 'attachProducts'])->name('products.attach');
+        Route::delete('/{collection}/products/{product}', [ProductCollectionController::class, 'detachProduct'])->name('products.detach');
+
+        Route::post('/{collection}/reorder', [ProductCollectionController::class, 'reorder'])->name('reorder');
+
+        Route::get('/{collection}/products', [ProductCollectionController::class, 'products'])->name('products');
+
+        
+
+    });
 
     Route::prefix('messenger')->name('messenger.')->group(function () {
 
@@ -852,6 +887,10 @@ Route::prefix('dashboard/admin')->name('admin.')->middleware(['auth', 'is_admin'
     });
     
 });
+
+
+
+
 
 
 Route::prefix('dashboard')->name('dashboard.')->group(function () {

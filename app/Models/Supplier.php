@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Domain\Media\Models\Media;
 use App\Domain\Contact\Traits\HasContacts;
 use App\Domain\Contact\Models\Contact;
 use App\Models\BusinessType;
+use App\Models\Collection;
 
 class Supplier extends Model
 {
@@ -284,6 +287,15 @@ public function primaryAddress()
 }
 
 
+
+public function collections(): MorphToMany
+{
+    return $this->morphToMany(
+        Collection::class,
+        'collectionable'
+    )->withPivot('sort_order')
+     ->withTimestamps();
+}
 
 
 }
