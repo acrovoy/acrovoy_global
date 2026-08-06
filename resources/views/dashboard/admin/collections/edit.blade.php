@@ -316,17 +316,14 @@
                                 name="type"
                                 class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm transition focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5">
 
-                                <option value="platform" @selected(old('type', $collection->type) === 'platform')>
-                                    Platform
-                                </option>
-
-                                <option value="supplier" @selected(old('type', $collection->type) === 'supplier')>
-                                    Supplier
-                                </option>
-
-                                <option value="buyer" @selected(old('type', $collection->type) === 'buyer')>
-                                    Buyer
-                                </option>
+                                <option value="platform" @selected(old('type', $collection->type) === 'platform')>Platform Collection</option>
+                                <option value="supplier" @selected(old('type', $collection->type) === 'supplier')>Supplier Collection</option>
+                                <option value="buyer" @selected(old('type', $collection->type) === 'buyer')>Buyer Collection</option>
+                                <option value="featured" @selected(old('type', $collection->type) === 'featured')>Featured Selection</option>
+                                <option value="industry" @selected(old('type', $collection->type) === 'industry')>Industry Collection</option>
+                                <option value="seasonal" @selected(old('type', $collection->type) === 'seasonal')>Seasonal Collection</option>
+                                <option value="project" @selected(old('type', $collection->type) === 'project')>Project Collection</option>
+                                <option value="showcase" @selected(old('type', $collection->type) === 'showcase')>Supplier Showcase</option>
 
                             </select>
 
@@ -494,6 +491,186 @@
 
 
 
+{{-- ===================================================== --}}
+{{-- COLLECTION CONTENT --}}
+{{-- ===================================================== --}}
+
+<div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+    <div class="border-b border-gray-100 bg-gray-50 px-8 py-5">
+
+        <h2 class="text-lg font-semibold text-gray-900">
+            Collection Content
+        </h2>
+
+        <p class="mt-1 text-sm text-gray-500">
+            Additional information that helps buyers better understand this curated collection.
+        </p>
+
+    </div>
+
+    <div class="space-y-8 p-8">
+
+        {{-- SUBTITLE --}}
+        <div>
+
+            <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Subtitle
+            </label>
+
+            <input
+                type="text"
+                name="subtitle"
+                value="{{ old('subtitle', $collection->subtitle) }}"
+                placeholder="Premium furniture solutions for hotels, resorts and commercial spaces."
+                class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/5">
+
+            <p class="mt-2 text-sm text-gray-500">
+                Short introduction displayed below the collection title.
+            </p>
+
+        </div>
+
+
+        {{-- OVERVIEW --}}
+        <div>
+
+            <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Collection Overview
+            </label>
+
+            <textarea
+                rows="6"
+                name="overview"
+                placeholder="Explain what makes this collection unique, what products are included and who it is intended for."
+                class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm leading-7 focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/5">{{ old('overview', $collection->overview) }}</textarea>
+
+        </div>
+
+
+        {{-- IDEAL FOR --}}
+        <div>
+
+            <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Ideal For
+            </label>
+
+            <textarea
+                rows="3"
+                name="ideal_for"
+                placeholder="Hotel chains, architects, procurement companies, interior designers..."
+                class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm leading-7 focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/5">{{ old('ideal_for', $collection->ideal_for) }}</textarea>
+
+        </div>
+
+
+        {{-- PROCUREMENT NOTES --}}
+        <div>
+
+            <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Procurement Notes
+            </label>
+
+            <textarea
+                rows="3"
+                name="procurement_notes"
+                placeholder="MOQ, customization, production lead times, export information..."
+                class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm leading-7 focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/5">{{ old('procurement_notes', $collection->procurement_notes) }}</textarea>
+
+        </div>
+
+
+        {{-- HIGHLIGHTS --}}
+        <div>
+
+            <div class="mb-4 flex items-center justify-between">
+
+                <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Collection Highlights
+                </label>
+
+                <button
+                    type="button"
+                    id="add-highlight"
+                    class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50">
+
+                    + Add Highlight
+
+                </button>
+
+            </div>
+
+
+            <div id="highlights-wrapper" class="space-y-3">
+
+                @php
+    $highlights = old(
+        'highlights',
+        optional($collection->highlights)->pluck('title')->toArray() ?? []
+    );
+@endphp
+
+@forelse($highlights as $highlight)
+
+                    <div class="flex items-center gap-3">
+
+                        <input
+                            type="text"
+                            name="highlights[]"
+                            value="{{ $highlight }}"
+                            class="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/5">
+
+                        <button
+                            type="button"
+                            class="remove-highlight rounded-lg border border-red-200 px-3 py-2 text-red-500 hover:bg-red-50">
+
+                            ✕
+
+                        </button>
+
+                    </div>
+
+                @empty
+
+                    <div class="flex items-center gap-3">
+
+                        <input
+                            type="text"
+                            name="highlights[]"
+                            placeholder="OEM Available"
+                            class="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/5">
+
+                        <button
+                            type="button"
+                            class="remove-highlight rounded-lg border border-red-200 px-3 py-2 text-red-500 hover:bg-red-50">
+
+                            ✕
+
+                        </button>
+
+                    </div>
+
+                @endforelse
+
+            </div>
+
+
+            <p class="mt-3 text-sm text-gray-500">
+                Add the key selling points that will be displayed on the collection page.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
 
                 {{-- ================= INFO ================= --}}
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
@@ -587,6 +764,49 @@
 </form>
 
 </div>
+
+
+<script>
+
+document.getElementById('add-highlight').addEventListener('click', () => {
+
+    document.getElementById('highlights-wrapper').insertAdjacentHTML('beforeend', `
+
+        <div class="flex items-center gap-3">
+
+            <input
+                type="text"
+                name="highlights[]"
+                class="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5"
+                placeholder="New highlight">
+
+            <button
+                type="button"
+                class="remove-highlight rounded-lg border border-red-200 px-3 py-2 text-red-500 hover:bg-red-50">
+
+                ✕
+
+            </button>
+
+        </div>
+
+    `);
+
+});
+
+
+document.addEventListener('click', function(e){
+
+    if(e.target.classList.contains('remove-highlight')){
+
+        e.target.closest('.flex').remove();
+
+    }
+
+});
+
+</script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

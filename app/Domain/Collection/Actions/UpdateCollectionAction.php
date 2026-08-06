@@ -21,12 +21,26 @@ class UpdateCollectionAction
             $data
         ) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Update Collection
+            |--------------------------------------------------------------------------
+            */
+
             $collection->update([
 
                 'slug' => $this->generateSlug(
                     $collection,
                     $data
                 ),
+
+                'subtitle' => $data['subtitle'] ?? null,
+
+                'overview' => $data['overview'] ?? null,
+
+                'ideal_for' => $data['ideal_for'] ?? null,
+
+                'procurement_notes' => $data['procurement_notes'] ?? null,
 
                 'type' => $data['type']
                     ?? $collection->type,
@@ -43,6 +57,13 @@ class UpdateCollectionAction
                     ?? $collection->published_at,
 
             ]);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Translations
+            |--------------------------------------------------------------------------
+            */
 
             foreach ($data['translations'] as $locale => $translation) {
 
@@ -70,8 +91,37 @@ class UpdateCollectionAction
             }
 
 
-            
-            return $collection->load('translations');
+            /*
+            |--------------------------------------------------------------------------
+            | Highlights
+            |--------------------------------------------------------------------------
+            */
+
+            $collection->highlights()->delete();
+
+            foreach ($data['highlights'] ?? [] as $index => $highlight) {
+
+                $highlight = trim($highlight);
+
+                if ($highlight === '') {
+                    continue;
+                }
+
+                $collection->highlights()->create([
+
+                    'title' => $highlight,
+
+                    'sort_order' => $index,
+
+                ]);
+
+            }
+
+
+            return $collection->load([
+                'translations',
+                'highlights',
+            ]);
 
         });
 

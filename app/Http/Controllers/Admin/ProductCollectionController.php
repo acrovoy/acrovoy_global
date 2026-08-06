@@ -103,6 +103,7 @@ class ProductCollectionController extends Controller
             'translations',
             'products',
             'media',
+            'highlights',
         ]);
 
         return view(

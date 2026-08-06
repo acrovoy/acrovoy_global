@@ -6,6 +6,8 @@ use App\Domain\Collection\Models\ProductCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+use App\Domain\Collection\Models\ProductCollectionHighlight;
+
 class CreateCollectionAction
 {
     /**
@@ -51,15 +53,35 @@ class CreateCollectionAction
                     'seo_description' => $translation['seo_description'] ?? null,
 
                 ];
-
             }
 
             $collection
                 ->translations()
                 ->createMany($translations);
 
-            return $collection->load('translations');
 
+            if (!empty($data['highlights'])) {
+
+                foreach ($data['highlights'] as $index => $highlight) {
+
+                    $highlight = trim($highlight);
+
+                    if ($highlight === '') {
+                        continue;
+                    }
+
+                    $collection->highlights()->create([
+
+                        'title' => $highlight,
+
+                        'sort_order' => $index,
+
+                    ]);
+                }
+            }
+
+
+            return $collection->load('translations');
         });
     }
 
@@ -78,7 +100,6 @@ class CreateCollectionAction
             $slug = Str::slug(
                 $translation['title'] ?? 'collection'
             );
-
         }
 
         $originalSlug = $slug;
@@ -87,14 +108,13 @@ class CreateCollectionAction
 
         while (
             ProductCollection::query()
-                ->where('slug', $slug)
-                ->exists()
+            ->where('slug', $slug)
+            ->exists()
         ) {
 
             $slug = "{$originalSlug}-{$counter}";
 
             $counter++;
-
         }
 
         return $slug;

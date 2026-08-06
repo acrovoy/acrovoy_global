@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use App\Models\Product;
 
 use App\Domain\Media\Models\Media;
+use App\Domain\Collection\Models\ProductCollectionHighlight;
 
 class ProductCollection extends Model
 {
@@ -25,11 +26,16 @@ class ProductCollection extends Model
         'is_featured',
         'sort_order',
         'published_at',
+        'subtitle',
+        'overview',        
+        'ideal_for',
+        'procurement_notes',
     ];
 
     protected $casts = [
         'is_featured' => 'boolean',
         'published_at' => 'datetime',
+       
     ];
 
     /*
@@ -138,5 +144,14 @@ public function getDescriptionAttribute(): ?string
     return $this->currentTranslation?->description;
 }
 
+
+public function highlights()
+{
+    return $this->hasMany(
+        ProductCollectionHighlight::class,
+        'collection_id',
+        'id'
+    )->orderBy('sort_order');
+}
 
 }

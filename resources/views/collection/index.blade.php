@@ -50,93 +50,143 @@
         {{-- FEATURED --}}
 
         {{-- ===================================================== --}}
-{{-- FEATURED COLLECTION --}}
-{{-- ===================================================== --}}
+        {{-- FEATURED COLLECTION --}}
+        {{-- ===================================================== --}}
 
-@if($featured)
+        @if($featured)
 
-<section class="mb-20">
+        <section class="mb-20">
 
-    <a href="{{ route('collections.show', $featured->slug) }}"
-       class="group block overflow-hidden rounded-3xl border border-gray-200 bg-white">
+            <a href="{{ route('collections.show', $featured->slug) }}"
+            class="group block overflow-hidden rounded-3xl border border-gray-200 bg-white">
 
-        <div class="grid lg:grid-cols-[1.4fr_520px]">
+                <div class="grid lg:grid-cols-[1.4fr_520px]">
 
-            {{-- ================= LEFT ================= --}}
+                    {{-- ================= LEFT ================= --}}
 
-            <div class="flex flex-col justify-center p-12 lg:p-16">
+                    <div class="flex flex-col justify-center p-12 lg:p-16">
 
-                <div class="inline-flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-3">
 
-                    <span class="rounded-full bg-gray-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-                        Featured Collection
-                    </span>
+    <span class="rounded-full bg-gray-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+        Featured Collection
+    </span>
 
-                    <span class="text-sm text-gray-500">
-                        {{ $featured->products_count }} Products
-                    </span>
+    <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-700">
+        {{ match($featured->type) {
+            'platform' => 'Platform Collection',
+            'supplier' => 'Supplier Collection',
+            'buyer' => 'Buyer Collection',
+            default => ucfirst($featured->type).' Collection'
+        } }}
+    </span>
 
-                </div>
+    <span class="text-sm text-gray-500">
+        {{ $featured->products_count }} Products
+    </span>
 
-                <h2 class="mt-8 text-4xl font-semibold tracking-tight text-gray-900">
+</div>
 
-                    {{ $featured->name }}
+                        <h2 class="mt-8 text-4xl font-semibold tracking-tight text-gray-900">
+    {{ $featured->name }}
+</h2>
 
-                
+@if($featured->subtitle)
 
-                </h2>
+    <p class="mt-4 text-xl font-light leading-8 text-gray-500">
 
-                @if($featured->short_description)
+        {{ $featured->subtitle }}
 
-                    <p class="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-
-                        {{ $featured->short_description }}
-
-                    </p>
-
-                @endif
-
-                <div class="mt-10">
-
-                    <span class="inline-flex items-center gap-3 font-medium text-gray-900">
-
-                        Explore Collection
-
-                        <svg class="w-5 h-5 transition group-hover:translate-x-1"
-                             fill="none"
-                             stroke="currentColor"
-                             stroke-width="2"
-                             viewBox="0 0 24 24">
-
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M9 5l7 7-7 7"/>
-
-                        </svg>
-
-                    </span>
-
-                </div>
-
-            </div>
-
-            {{-- ================= IMAGE ================= --}}
-
-            <div class="relative bg-gray-100">
-
-                <img
-                    src="{{ $featured->cover?->cdn_url }}"
-                    class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105">
-
-            </div>
-
-        </div>
-
-    </a>
-
-</section>
+    </p>
 
 @endif
+
+@if($featured->short_description)
+
+    <p class="mt-8 max-w-2xl text-lg leading-8 text-gray-600">
+
+        {{ $featured->short_description }}
+
+    </p>
+
+@endif
+
+@if($featured->highlights->count())
+
+<div class="mt-8 flex flex-wrap gap-3">
+
+    @foreach($featured->highlights->take(4) as $highlight)
+
+        <span
+            class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm">
+
+            <svg
+                class="h-4 w-4 text-emerald-500"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                viewBox="0 0 24 24">
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M5 13l4 4L19 7"/>
+
+            </svg>
+
+            {{ $highlight->title }}
+
+        </span>
+
+    @endforeach
+
+</div>
+
+@endif
+
+
+
+                        <div class="mt-10">
+
+                            <span class="inline-flex items-center gap-3 font-medium text-gray-900">
+
+                                Explore Collection
+
+                                <svg class="w-5 h-5 transition group-hover:translate-x-1"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    viewBox="0 0 24 24">
+
+                                    <path stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M9 5l7 7-7 7"/>
+
+                                </svg>
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    {{-- ================= IMAGE ================= --}}
+
+                    <div class="relative bg-gray-100">
+
+                        <img
+                            src="{{ $featured->cover?->cdn_url }}"
+                            class="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105">
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </section>
+
+        @endif
 
         {{-- GRID --}}
 
@@ -175,7 +225,7 @@
                 <div class="relative aspect-[4/3] overflow-hidden bg-gray-100">
 
                     <img
-                        src="{{ $collection->cover_image_url }}"
+                        src="{{ $collection->cover?->cdn_url }}"
                         class="h-full w-full object-cover transition duration-700 group-hover:scale-105">
 
                 </div>
@@ -185,65 +235,81 @@
 
                 <div class="p-7">
 
-                    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between">
 
-                        <span class="text-xs uppercase tracking-[0.18em] text-gray-500">
+        <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-700">
+            {{ ucfirst($collection->type) }}
+        </span>
 
-                            {{ ucfirst($collection->type) }}
+        <span class="text-sm text-gray-500">
+            {{ $collection->products_count }} Products
+        </span>
 
-                        </span>
+    </div>
 
-                        <span class="text-sm text-gray-500">
+    <h3 class="mt-5 text-xl font-semibold text-gray-900">
+        {{ $collection->name }}
+    </h3>
 
-                            {{ $collection->products_count }} products
+    @if($collection->subtitle)
+        <p class="mt-2 text-sm font-medium text-gray-500">
+            {{ $collection->subtitle }}
+        </p>
+    @endif
 
-                        </span>
+    @if($collection->short_description)
+        <p class="mt-5 line-clamp-3 text-sm leading-7 text-gray-600">
+            {{ $collection->short_description }}
+        </p>
+    @endif
 
-                    </div>
+    @if($collection->highlights->count())
+        <div class="mt-6 flex flex-wrap gap-2">
 
+            @foreach($collection->highlights->take(3) as $highlight)
 
-                    <h3 class="mt-5 text-xl font-semibold text-gray-900">
+                <span class="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700">
+                    {{ $highlight->title }}
+                </span>
 
-                        {{ $collection->name }}
+            @endforeach
 
-                    </h3>
+        </div>
+    @endif
 
+    <div class="mt-8 flex items-center justify-between border-t border-gray-100 pt-6">
 
-                    @if($collection->short_description)
+        <div class="space-y-1">
 
-                        <p class="mt-4 line-clamp-3 text-sm leading-7 text-gray-600">
+            <div class="text-xs uppercase tracking-[0.16em] text-gray-400">
+                Updated
+            </div>
 
-                            {{ $collection->short_description }}
+            <div class="text-sm font-medium text-gray-700">
+                {{ $collection->updated_at->format('M Y') }}
+            </div>
 
-                        </p>
+        </div>
 
-                    @endif
+        <span class="inline-flex items-center gap-2 text-sm font-semibold text-gray-900">
 
+            View Collection
 
-                    <div class="mt-8 flex items-center justify-between">
+            <svg class="h-5 w-5 transition group-hover:translate-x-1"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M9 5l7 7-7 7"/>
+            </svg>
 
-                        <span class="text-sm font-medium text-gray-900">
+        </span>
 
-                            View Collection
+    </div>
 
-                        </span>
-
-                        <svg
-                            class="h-5 w-5 text-gray-400 transition group-hover:translate-x-1"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            viewBox="0 0 24 24">
-
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  d="M9 5l7 7-7 7"/>
-
-                        </svg>
-
-                    </div>
-
-                </div>
+</div>
 
             </a>
 
