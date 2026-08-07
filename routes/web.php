@@ -86,6 +86,7 @@ use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
 use App\Http\Controllers\Admin\ProductCollectionController;
+use App\Http\Controllers\Admin\Content\PageController;
 
 use App\Http\Controllers\SupportRequestController;
 
@@ -126,14 +127,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/company/switch', [CompanySwitchController::class, 'switch'])->name('company.switch');
 });
 
-Route::get('/rfqs/{rfq}', [RfqController::class, 'show'])
-    ->name('rfqs.workspace');
+Route::get('/rfqs/{rfq}', [RfqController::class, 'show'])->name('rfqs.workspace');
 
-Route::get('/collections', [PublicCollectionController::class, 'index'])
-    ->name('collections.index');
-    
-Route::get('/collections/{collection:slug}', [PublicCollectionController::class, 'show'])
-    ->name('collections.show');
+Route::get('/collections', [PublicCollectionController::class, 'index'])->name('collections.index');
+Route::get('/collections/{collection:slug}', [PublicCollectionController::class, 'show'])->name('collections.show');
+
+Route::get('/{page:slug}', [PageController::class, 'show'])->name('pages.show');
 
 //CONTACTS
 Route::prefix('contacts')->name('contacts.')->group(function () {
@@ -654,6 +653,15 @@ Route::get('/faq', function () { return view('pages.faq'); })->name('faq');
 
 // ADMIN ROUTES /////////////////////////////////////////////////////////////
 Route::prefix('dashboard/admin')->name('admin.')->group(function () {
+
+
+   Route::prefix('pages')->name('pages.')->group(function () {
+        Route::resource('', PageController::class)->parameters(['' => 'page']);
+        Route::post('{page}/publish', [PageController::class, 'publish'])->name('publish');
+        Route::post('{page}/unpublish', [PageController::class, 'unpublish'])->name('unpublish');
+        Route::post('/upload', [PageController::class, 'upload'])->name('upload');
+    });
+
 
 
     Route::prefix('collections')->name('collections.')->group(function () {

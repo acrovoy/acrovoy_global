@@ -174,6 +174,43 @@
     </li>
 
 
+
+    {{-- CONTENT MANAGEMENT --}}
+<li>
+
+    <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+        Content Management
+    </div>
+
+    <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
+
+        <li>
+            <a href="{{ route('admin.pages.index') }}"
+               class="block py-1.5 text-sm {{ request()->routeIs('admin.pages.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                Pages
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('admin.faq.index') }}"
+               class="block py-1.5 text-sm {{ request()->routeIs('admin.faq.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                FAQ
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('admin.help.index') }}"
+               class="block py-1.5 text-sm {{ request()->routeIs('admin.help.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                Help Center
+            </a>
+        </li>
+
+    </ul>
+
+</li>
+
+
+
     {{-- SYSTEM --}}
     <li>
 
@@ -204,19 +241,7 @@
                 </a>
             </li>
 
-            <li>
-                <a href="{{ route('admin.faq.index') }}"
-                   class="block py-1.5 text-sm {{ request()->routeIs('admin.faq.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
-                    FAQ
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('admin.help.index') }}"
-                   class="block py-1.5 text-sm {{ request()->routeIs('admin.help.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
-                    Help Center
-                </a>
-            </li>
+           
 
             <li>
                 <a href="{{ route('admin.settings.index') }}"

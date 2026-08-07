@@ -46,7 +46,7 @@
             <ul class="space-y-1">
                 <li><a href="{{ route('help.index') }}" class="hover:text-white transition">Help Center</a></li>
                 <li><a href="{{ route('help.category', ['slug' => 'guides']) }}" class="hover:text-white transition">Buyer Guides</a></li>
-                <li><a href="{{ route('help.category', ['slug' => 'policies']) }}" class="hover:text-white transition">Policies</a></li>
+                <li><a href="{{ route('pages.show', ['page' => 'policy']) }}" class="hover:text-white transition">Policies</a></li>
                 <li><a href="{{ route('faq') }}" class="hover:text-white transition">FAQ</a></li>
                 <li><a href="" class="hover:text-white transition">Contact Support</a></li>
             </ul>
