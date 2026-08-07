@@ -56,6 +56,10 @@ $languages = Language::where('is_active', true)
     >
         <option value="">Select entity type</option>
 
+        <option value="product">
+            Product
+        </option>
+
         <option value="rfq">
             RFQ
         </option>

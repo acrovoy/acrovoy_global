@@ -23,6 +23,7 @@ class Attribute extends Model
         'created_by',
         'sort_order',
         'meta',
+        'is_active',
     ];
 
     protected $casts = [

@@ -3,7 +3,7 @@
 @include('product.edit.partials.progress-bar', [$mode = 'edit'])
 
 <form method="POST"
-            action="{{ route('supplier.products.update-step1', [
+            action="{{ route('supplier.products.update', [
           'product' => $product->id,
           'step' => 2
       ]) }}"

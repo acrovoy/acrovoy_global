@@ -3,19 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
+
 use App\Domain\Product\Factories\ProductDTOFactory;
 
 /* === REQUEST === */
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Requests\StoreProductRequest;
 
+use Illuminate\Support\Facades\Log;
+
+
 /* === SERVICES === */
-use App\Domain\Media\Services\MediaService;
-use App\Domain\Media\DTO\UploadMediaDTO;
 use App\Domain\Product\Services\ProductFormDataService;
 use App\Domain\Product\Services\ProductEditQueryService;
 use App\Domain\Product\Services\ProductViewQueryService;
@@ -23,7 +23,6 @@ use App\Domain\Product\Services\ProductListQueryService;
 
 /* === ACTIONS === */
 use App\Domain\Product\Actions\DeleteProductAction;
-use App\Domain\Product\Actions\UpdateProductAction;
 use App\Domain\Product\Actions\UpdateProductBasicInfoAction;
 use App\Domain\Product\Actions\UpdateProductCategoryAction;
 use App\Domain\Product\Actions\UpdateProductMaterialsAction;
@@ -33,38 +32,28 @@ use App\Domain\Product\Actions\UpdateProductCountryShippingAction;
 use App\Domain\Product\Actions\UpdateProductVariantAction;
 use App\Domain\Product\Actions\AttachProductVariantAction;
 
-/* === DTO === */
-use App\Domain\Product\DTO\ProductDTO;
-
 /* === MODELS === */
 use App\Models\Product;
-use App\Models\ProductImage;
-use App\Models\ProductPriceTier;
-use App\Models\ProductMaterial;
-use App\Models\Material;
-use App\Models\Specification;
-use App\Models\Category;
-use App\Models\Supplier;
-use App\Models\Color;
-use App\Models\ShippingTemplate;
-use App\Models\ProductVariantGroup;
-use App\Models\ProductVariantItem;
+
 use App\Models\Attribute;
 use App\Models\AttributeGroup;
 use App\Models\Warehouse;
 use App\Models\ProductAttributeValue;
 use App\Models\ProductWarehouseStock;
+use App\Models\ProductVariantItem;
+use App\Models\ProductVariantGroup;
+
+
+use App\Domain\Media\Services\MediaService;
+use App\Domain\Media\DTO\UploadMediaDTO;
 
 use App\Models\Country;
-use App\Models\Language;
-use App\Models\MessageThread;
-use App\Models\Project;
 
 use App\Domain\Product\Actions\CreateProductAction;
 use App\Domain\Product\Actions\SyncProductTranslationAction;
 
 use App\Domain\Product\Actions\SyncProductPriceTierAction;
-use App\Domain\Product\Actions\SyncProductSpecificationAction;
+
 use App\Domain\Product\Actions\SyncProductAttributeAction;
 use App\Domain\Product\Actions\SyncProductMaterialAction;
 use App\Domain\Product\Actions\SyncShippingTemplateAction;
@@ -76,27 +65,33 @@ use App\Services\Company\ActiveContextService;
 class ProductController extends Controller
 {
 
-    protected ActiveContextService $activeContext;
 
-    public function __construct(ActiveContextService $activeContext)
-    {
-        $this->activeContext = $activeContext;
-    }
+
+    public function __construct(
+        private ActiveContextService $context,
+        private MediaService $mediaService,
+
+    ) {}
 
     public function index(Request $request, ProductListQueryService $service)
     {
-        $supplierId = $this->activeContext->supplierId();
+
+        $this->authorize('viewAny', Product::class);
+
+        $entity = $this->context->entity();
+
+        $supplierId = $entity->getKey();
         $products = $service->getSupplierProducts(
             $supplierId,
             $request->only(['sort', 'status', 'user'])
         );
 
-        $warehouses = Warehouse::where('provider_id', $this->activeContext->id())
-        ->where('provider_type', $this->activeContext->type())
-        ->get();
-        
+        $warehouses = Warehouse::where('provider_id', $entity->getKey())
+            ->where('provider_type', $entity::class)
+            ->get();
 
-        
+
+
 
         return view('dashboard.supplier.products', [
             'products' => $products,
@@ -114,20 +109,20 @@ class ProductController extends Controller
     }
 
 
-    public function createNew(ProductFormDataService $service)
+    public function create(ProductFormDataService $service)
     {
 
+        $this->authorize('create', Product::class);
 
 
-        $supplierId = $this->activeContext->id();
-        $supplierType = $this->activeContext->type();
+        $supplier = $this->context->supplier();
+
         $products = Product::with('translations')
-            ->where('supplier_id', $supplierId)
-            ->where('supplier_type', $supplierType)
+            ->where('supplier_id', $supplier->id)
             ->get();
         $availableAttributesGrouped = collect();
 
-        $data = $service->getCreateFormData();
+        $data = $service->getCreateFormData($supplier->id);
 
         return view('product.create.add-product', array_merge($data, [
             'steps' => 1,
@@ -138,107 +133,18 @@ class ProductController extends Controller
     }
 
 
-    public function createStep2(ProductFormDataService $service)
-    {
-
-
-
-        $supplierId = $this->activeContext->id();
-        $supplierType = $this->activeContext->type();
-        $products = Product::with('translations')
-            ->where('supplier_id', $supplierId)
-            ->where('supplier_type', $supplierType)
-            ->get();
-        $availableAttributesGrouped = collect();
-
-        $data = $service->getCreateFormData();
-
-        return view('product.create.add-product', array_merge($data, [
-            'steps' => 2,
-            'countries' => Country::all(),
-            'products' => $products,
-            'availableAttributesGrouped' => $availableAttributesGrouped,
-        ]));
-    }
-
-
-    public function create(ProductFormDataService $service)
-    {
-
-
-
-        $supplierId = $this->activeContext->id();
-        $supplierType = $this->activeContext->type();
 
 
 
 
-        $data = $service->getCreateFormData();
-
-
-
-
-
-        $products = Product::with('translations')
-            ->where('supplier_id', $supplierId)
-            ->where('supplier_type', $supplierType)
-            ->get();
-
-
-        $ownerType = $this->activeContext->isPersonal()
-            ? \App\Models\User::class
-            : \App\Models\Supplier::class;
-
-        $ownerId = $this->activeContext->id();
-
-
-
-
-        $availableAttributes = Attribute::query()
-            ->where('entity_type', 'product')
-            ->where('is_custom', 1)
-            ->where('is_active', true)
-            ->where('owner_type', $ownerType)
-            ->where('owner_id', $ownerId)
-            ->get();
-
-        $availableAttributesGrouped = $availableAttributes
-            ->load('group')
-            ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
-            ->sortBy(function ($attrs, $groupName) {
-                return strtolower($groupName) === 'general' ? 0 : 1;
-            });
-
-
-        $groups = AttributeGroup::where('owner_type', $ownerType)
-            ->where('owner_id', $ownerId)
-            ->get();
-
-
-
-
-        return view('dashboard.supplier.add-product', array_merge($data, [
-            'products' => $products,
-            'groups' => $groups,
-            'availableAttributesGrouped' => $availableAttributesGrouped,
-            'availableAttributes' => $availableAttributes,
-
-        ]));
-    }
-
-
-    public function storeStep1(
+    public function store(
         Request $request,
         CreateProductAction $createProduct,
         SyncProductTranslationAction $translationAction,
-        SyncProductPriceTierAction $priceAction,
-        SyncProductAttributeAction $attributeAction,
-        SyncProductCustomAttributeAction $customAttributeAction,
-        SyncProductMaterialAction $materialAction,
-        SyncShippingTemplateAction $shippingAction,
-        AttachProductVariantAction $attachProductVariantAction,
         ProductDTOFactory $dtoFactory,
     ) {
+
+        $this->authorize('create', Product::class);
 
         /*
         |-------------------------------------------------------------------------- 
@@ -261,285 +167,26 @@ class ProductController extends Controller
         );
 
         return redirect()->route('supplier.products.edit-step', [
-    'product' => $product->id,
-    'step' => 2,
-])
+            'product' => $product->id,
+            'step' => 2,
+        ])
             ->with('success', 'Product created successfully. Please proceed to the next step to add more details.');
     }
 
-
-    
-
-
-    public function store(
-        StoreProductRequest $request,
-        CreateProductAction $createProduct,
-        SyncProductTranslationAction $translationAction,
-        SyncProductPriceTierAction $priceAction,
-        SyncProductAttributeAction $attributeAction,
-        SyncProductCustomAttributeAction $customAttributeAction,
-        SyncProductMaterialAction $materialAction,
-        SyncShippingTemplateAction $shippingAction,
-        AttachProductVariantAction $attachProductVariantAction,
-        ProductDTOFactory $dtoFactory,
-    ) {
-
-
-
-
-
-        $supplierId = $this->activeContext->id();
-        $supplierType = $this->activeContext->type();
-
-
-        DB::transaction(function () use (
-            $request,
-            $createProduct,
-            $translationAction,
-            $priceAction,
-            $materialAction,
-            $shippingAction,
-            $dtoFactory,
-            $attachProductVariantAction,
-            $attributeAction,
-            $customAttributeAction,
-            $supplierId,
-            $supplierType,
-        ) {
-
-            /*
-        |-------------------------------------------------------------------------- 
-        | Create Product
-        |-------------------------------------------------------------------------- 
-        */
-            $productDTO = $dtoFactory->fromRequest($request);
-            $product = $createProduct->execute($productDTO);
-
-            /*
-        |-------------------------------------------------------------------------- 
-        | Translation Sync
-        |-------------------------------------------------------------------------- 
-        */
-            $translationAction->execute(
-                $product,
-                $request->name,
-                $request->undername,
-                $request->description
-            );
-
-
-            /*
-        |-------------------------------------------------------------------------- 
-        | Variant Group Guarantee
-        |-------------------------------------------------------------------------- 
-        */
-
-            $variantProducts = $request->input('variant_products', []);
-            $variantTitles = $request->input('variant_titles', []);
-            $variantImages = $request->file('variant_images', []);
-
-            $parentTitle = $request->input('parent_title', $product->name);
-            $parentFile = $request->file('parent_image');
-
-            $mediaService = app(\App\Domain\Media\Services\MediaService::class);
-
-            // 🔹 Создаём родительский вариант только если есть что-то для группы
-            if (!empty($parentTitle) || count($variantProducts) > 0) {
-
-                // 🔹 Создаём или берём группу
-                $group = $product->variant_group_id
-                    ? ProductVariantGroup::findOrFail($product->variant_group_id)
-                    : ProductVariantGroup::create([
-                        'name' => $parentTitle,
-                        'variant_hash' => \Illuminate\Support\Str::uuid()->toString(),
-                    ]);
-
-                if (!$product->variant_group_id) {
-                    $product->update(['variant_group_id' => $group->id]);
-                }
-
-                // 🔹 Создаём ProductVariantItem для родителя
-                $parentVariantItem = \App\Models\ProductVariantItem::updateOrCreate(
-                    [
-                        'variant_group_id' => $group->id,
-                        'product_id' => $product->id,
-                    ],
-                    ['title' => $parentTitle]
-                );
-
-                // 🔹 Загружаем media для родителя
-                if ($parentFile) {
-                    $dto = new \App\Domain\Media\DTO\UploadMediaDTO(
-                        file: $parentFile,
-                        model: $product,
-                        collection: 'product_variant_image',
-                        mediaRole: 'variant_image',
-                        private: false,
-                        originalFileName: $parentFile->getClientOriginalName(),
-                        metadata: [],
-                        sortOrder: 0,
-                        isMain: true
-                    );
-                    $uploadedMedia = $mediaService->upload($dto);
-                    $parentVariantItem->update(['media_id' => $uploadedMedia->id]);
-                }
-
-                // 🔹 Обрабатываем остальные варианты
-                foreach ($variantProducts as $index => $variantProductId) {
-                    if (empty($variantProductId)) continue;
-
-                    $variantProduct = Product::find($variantProductId);
-                    if (
-                        !$variantProduct ||
-                        $variantProduct->supplier_id !== $supplierId ||
-                        $variantProduct->supplierType !== $supplierType
-                    ) continue;
-
-                    $group = $attachProductVariantAction->execute($product, $variantProduct);
-
-                    // 🔹 Обновляем variant_group_id у привязанного продукта
-                    if ($variantProduct->variant_group_id !== $group->id) {
-                        $variantProduct->update(['variant_group_id' => $group->id]);
-                    }
-
-
-                    $title = $variantTitles[$index] ?? $variantProduct->name;
-                    $variantItem = \App\Models\ProductVariantItem::updateOrCreate(
-                        [
-                            'variant_group_id' => $group->id,
-                            'product_id' => $variantProduct->id,
-                        ],
-                        ['title' => $title]
-                    );
-
-                    $file = $variantImages[$index] ?? null;
-                    if ($file) {
-                        $dto = new \App\Domain\Media\DTO\UploadMediaDTO(
-                            file: $file,
-                            model: $variantProduct,
-                            collection: 'product_variant_image',
-                            mediaRole: 'variant_image',
-                            private: false,
-                            originalFileName: $file->getClientOriginalName(),
-                            metadata: [],
-                            sortOrder: $index,
-                            isMain: true
-                        );
-                        $uploadedMedia = $mediaService->upload($dto);
-                        $variantItem->update(['media_id' => $uploadedMedia->id]);
-                    }
-                }
-            }
-
-            /*
-        |-------------------------------------------------------------------------- 
-        | Other Syncs
-        |-------------------------------------------------------------------------- 
-        */
-            $files = $request->file('images', []);
-
-            foreach ($files as $index => $file) {
-                $dto = new UploadMediaDTO(
-                    file: $file,
-                    model: $product,
-                    collection: 'product_gallery',
-                    mediaRole: 'product_image',
-                    private: false,
-                    originalFileName: $file->getClientOriginalName(),
-                    metadata: [],
-                    sortOrder: $request->sort_order[$index] ?? $index,
-                    isMain: ($request->is_main[$index] ?? 0) == 1
-                );
-                $mediaService->upload($dto);
-            }
-
-            $priceAction->execute($product, $request->price_tiers ?? []);
-
-            $materialIds = explode(',', $request->materials_selected ?? '');
-            $materialAction->execute($product, array_filter($materialIds));
-
-            
-
-            $shippingAction->execute(
-                $product,
-                $request->shipping_templates ?? []
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | CUSTOM ATTRIBUTES
-            |--------------------------------------------------------------------------
-            */
-            if ($request->has('custom_attributes')) {
-                $customAttributeAction->execute(
-                    $product,
-                    $request->input('custom_attributes')
-                );
-            }
-
-
-
-
-
-            // 🔹 **Синхронизация атрибутов продукта**
-            if ($request->has('attributes')) {
-                $attributeAction->execute($product, $request->input('attributes'));
-            }
-
-
-            // 🔹 Сохраняем Shipping Dimensions (габариты и вес упаковки)
-            $shippingData = $request->input('shipping', []);
-
-            if (!empty($shippingData)) {
-                $product->shippingDimensions()->updateOrCreate(
-                    [], // Laravel автоматически подставит product_id
-                    [
-                        'length' => $shippingData['length'] ?? 0,
-                        'width'  => $shippingData['width'] ?? 0,
-                        'height' => $shippingData['height'] ?? 0,
-                        'weight' => $shippingData['weight'] ?? 0,
-                        'package_type' => $shippingData['package_type'] ?? 'box',
-                    ]
-                );
-            }
-        });
-
-        return redirect()->route('supplier.products.index')
-            ->with('success', 'Product created successfully');
-    }
 
 
     public function edit(
         Product $product,
         ProductEditQueryService $service,
-
-    ) {
-
-
-
-
-
-
-        return view(
-            'product.edit',
-            $service->getEditViewData($product)
-        );
-    }
-
-    public function editStep(
-        Product $product,
-        ProductEditQueryService $service,
         $step = 1
     ) {
 
-        $ownerType = $this->activeContext->isPersonal()
-            ? \App\Models\User::class
-            : \App\Models\Supplier::class;
+        $this->authorize('update', $product);
 
-        $ownerId = $this->activeContext->id();
+        $entity = $this->context->entity();
 
-
+        $ownerType = $entity::class;
+        $ownerId = $entity->getKey();
 
 
         $availableAttributes = Attribute::query()
@@ -572,6 +219,7 @@ class ProductController extends Controller
 
         $customAttributes = $product->attributes()
             ->where('is_custom', 1)
+            ->where('is_active', 1)
             ->with('group')
             ->get();
 
@@ -590,9 +238,9 @@ class ProductController extends Controller
         );
     }
 
-   
 
-    public function updateStep(
+
+    public function update(
         Request $request,
         Product $product,
         UpdateProductBasicInfoAction $basicInfoAction,
@@ -604,9 +252,10 @@ class ProductController extends Controller
         UpdateProductVariantAction $updateProductVariantAction,
         SyncProductCustomAttributeAction $customAttributeAction,
         ProductDTOFactory $dtoFactory,
-        SyncProductAttributeAction $attributeAction,
         $step = 1
     ) {
+
+        $this->authorize('update', $product);
 
 
         $nextstep = $step + 1;
@@ -767,14 +416,14 @@ class ProductController extends Controller
 
             if ($request->has('variants')) {
 
-                $mediaService = app(\App\Domain\Media\Services\MediaService::class);
+
 
                 // 🔹 Новый вариант — ищем variant_group_id среди существующих айтемов
                 $variantGroupId = $product->variantItems()->first()?->variant_group_id;
 
                 // Если группы нет и будут добавляться новые айтемы, создаём её
                 if (!$variantGroupId && collect($request->variants)->filter(fn($v) => !empty($v['linked_product_id']))->isNotEmpty()) {
-                    $variantGroup = \App\Models\ProductVariantGroup::create([
+                    $variantGroup = ProductVariantGroup::create([
                         'product_id' => $product->id,
                     ]);
                     $variantGroupId = $variantGroup->id;
@@ -787,9 +436,9 @@ class ProductController extends Controller
                 $existingVariants = $product->variantItems;
 
                 // Удаляем отсутствующие
-                $existingVariants->each(function ($variant) use ($incomingIds, $mediaService) {
+                $existingVariants->each(function ($variant) use ($incomingIds) {
                     if (!in_array($variant->id, $incomingIds)) {
-                        if ($variant->media) $mediaService->delete($variant->media);
+                        if ($variant->media) $this->mediaService->delete($variant->media);
                         $product = $variant->product;
                         $variant->delete();
 
@@ -809,7 +458,7 @@ class ProductController extends Controller
                     if (!empty($variantData['id'])) {
                         // 🔹 Существующий вариант
 
-                        $variant = \App\Models\ProductVariantItem::find($variantData['id']);
+                        $variant = ProductVariantItem::find($variantData['id']);
 
 
                         //БЕЗОПАСНІЙ ВАРИАНТ. ПОТОМ ПОМЕНЯТЬ И ПРОВЕРИТЬ
@@ -828,7 +477,7 @@ class ProductController extends Controller
 
 
                         // 🔹 Создаём новый вариант
-                        $variant = \App\Models\ProductVariantItem::create([
+                        $variant = ProductVariantItem::create([
                             'product_id' => $variantData['linked_product_id'] ?? null,
                             'variant_group_id' => $variantGroupId,
                             'title' => $variantData['title'],
@@ -837,16 +486,16 @@ class ProductController extends Controller
 
                         $linkedProductId = $variantData['linked_product_id'] ?? $product->id;
                         if ($linkedProductId) {
-                            \App\Models\Product::where('id', $linkedProductId)
+                            Product::where('id', $linkedProductId)
                                 ->update(['variant_group_id' => $variantGroupId]);
                         }
                     }
 
                     // 🔹 Обработка изображения
                     if (!empty($variantData['image'])) {
-                        $mediaService = app(\App\Domain\Media\Services\MediaService::class);
-                        $media = $mediaService->upload(
-                            new \App\Domain\Media\DTO\UploadMediaDTO(
+
+                        $media = $this->mediaService->upload(
+                            new UploadMediaDTO(
                                 file: $variantData['image'],
                                 model: $variant,
                                 collection: 'product_variant_image',
@@ -864,13 +513,13 @@ class ProductController extends Controller
 
                 if ($remainingVariants->count() <= 1) {
                     foreach ($remainingVariants as $variant) {
-                        if ($variant->media) $mediaService->delete($variant->media);
+                        if ($variant->media) $this->mediaService->delete($variant->media);
                         $variant->delete();
                     }
 
                     // Удаляем саму группу
                     if ($product->variant_group_id) {
-                        \App\Models\ProductVariantGroup::find($product->variant_group_id)?->delete();
+                        ProductVariantGroup::find($product->variant_group_id)?->delete();
                         $product->update(['variant_group_id' => null]);
                     }
                 }
@@ -898,44 +547,47 @@ class ProductController extends Controller
 
 
     public function updateStock(Request $request, Product $product)
-{
-    $request->validate([
-        'stocks' => ['required', 'array'],
-        'stocks.*' => ['nullable', 'integer', 'min:0'],
-    ]);
+    {
 
-    $ActiveContext = $this->activeContext;
+        $this->authorize('update', $product);
 
-    abort_if($product->supplier_id !== $ActiveContext->id(), 403);
 
-    DB::transaction(function () use ($request, $product) {
+        $request->validate([
+            'stocks' => ['required', 'array'],
+            'stocks.*' => ['nullable', 'integer', 'min:0'],
+        ]);
 
-        foreach ($request->stocks as $warehouseId => $quantity) {
+        DB::transaction(function () use ($request, $product) {
 
-            ProductWarehouseStock::updateOrCreate(
-                [
-                    'product_id' => $product->id,
-                    'warehouse_id' => $warehouseId,
-                ],
-                [
-                    'quantity' => (int) $quantity,
-                ]
-            );
-        }
-    });
+            foreach ($request->stocks as $warehouseId => $quantity) {
 
-    // пересчёт общего стока (если нужно вернуть в UI)
-    $totalStock = ProductWarehouseStock::where('product_id', $product->id)
-        ->sum('quantity');
+                ProductWarehouseStock::updateOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'warehouse_id' => $warehouseId,
+                    ],
+                    [
+                        'quantity' => (int) $quantity,
+                    ]
+                );
+            }
+        });
 
-    return response()->json([
-        'success' => true,
-        'stock' => $totalStock,
-    ]);
-}
+        // пересчёт общего стока (если нужно вернуть в UI)
+        $totalStock = ProductWarehouseStock::where('product_id', $product->id)
+            ->sum('quantity');
+
+        return response()->json([
+            'success' => true,
+            'stock' => $totalStock,
+        ]);
+    }
 
     public function destroy(Product $product, DeleteProductAction $action)
     {
+
+        $this->authorize('delete', $product);
+
         $action->execute($product);
 
         return response()->json([
@@ -947,15 +599,13 @@ class ProductController extends Controller
     public function storeCustomAttribute(
         Request $request,
 
-        ActiveContextService $context
     ) {
-        $ownerType = $context->isPersonal()
-            ? 'App\Models\User'
-            : 'App\Models\Supplier';
 
-        $owner = $context->isPersonal()
-            ? auth()->user()
-            : $context->company();
+        $this->authorize('create', Product::class);
+
+
+        $owner = $this->context->supplier();
+        $ownerType = $owner::class;
 
         $data = $request->validate([
             'id' => ['nullable', 'exists:attributes,id'],
@@ -1055,12 +705,25 @@ class ProductController extends Controller
 
     public function attachAttributes(Request $request, Product $product)
     {
+
+        $this->authorize('update', $product);
+
         $request->validate([
             'attributes' => ['array'],
             'attributes.*' => ['exists:attributes,id'],
         ]);
 
-        $attributeIds = $request->input('attributes', []);
+        $owner = $this->context->supplier();
+
+        $allowedIds = Attribute::query()
+            ->where('owner_type', $owner::class)
+            ->where('owner_id', $owner->id)
+            ->pluck('id');
+
+
+        $attributeIds = collect($request->input('attributes', []))
+            ->intersect($allowedIds)
+            ->values();
 
         $customAttributeIds = Attribute::where('is_custom', 1)
             ->pluck('id');
@@ -1081,4 +744,53 @@ class ProductController extends Controller
 
         return back();
     }
+
+    public function deleteAttribute(
+    Product $product,
+    Attribute $attribute
+) {
+    Log::info('DELETE ATTRIBUTE START', [
+        'product_id' => $product->id,
+        'attribute_id' => $attribute->id,
+    ]);
+
+    $this->authorize('update', $product);
+
+    $owner = $this->context->supplier();
+
+    
+
+    abort_unless(
+        $attribute->is_custom &&
+        $attribute->owner_type === $owner::class &&
+        $attribute->owner_id == $owner->id,
+        403
+    );
+
+    DB::transaction(function () use ($attribute) {
+
+        
+
+        $deleted = ProductAttributeValue::where('attribute_id', $attribute->id)
+            ->delete();
+
+        
+
+        
+
+        $updated = $attribute->update([
+            'is_active' => 0,
+        ]);
+
+        
+    });
+
+    
+
+    return response()->json([
+        'success' => true,
+    ]);
+}
+
+
 }

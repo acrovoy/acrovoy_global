@@ -3,7 +3,7 @@
 
 
 <form method="POST"
-    action="{{ route('supplier.products.store-step1') }}"
+    action="{{ route('supplier.products.store') }}"
     enctype="multipart/form-data"
     class="" id="productForm">
     @csrf

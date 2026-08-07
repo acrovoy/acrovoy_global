@@ -4,114 +4,107 @@ namespace App\Policies;
 
 use App\Models\Product;
 use App\Models\User;
-use App\Models\Supplier;
-use App\Services\Company\ActiveContextService;
 
-class ProductPolicy
+class ProductPolicy extends BasePolicy
 {
     /**
-     * View list of products
+     * View product list.
      */
     public function viewAny(User $user): bool
-    {
-        $context = app(ActiveContextService::class);
-
-        return $context->isCompany()
-            && $context->type() === Supplier::class;
-    }
-
+{
+    return $this->isSupplier()
+        && $this->supplier() !== null;
+}
 
     /**
-     * View single product
+     * View product.
      */
     public function view(User $user, Product $product): bool
     {
-        $context = app(ActiveContextService::class);
-
-        return $context->isCompany()
-            && $context->type() === Supplier::class
-            && $product->supplier_id === $context->id();
+        return $this->ownsSupplier($product->supplier);
     }
 
-
     /**
-     * Create product
+     * Create product.
      */
     public function create(User $user): bool
     {
-        $context = app(ActiveContextService::class);
+        if (!$this->supplier()) {
+            return false;
+        }
 
-        return $context->isCompany()
-            && $context->type() === Supplier::class
-            && in_array($context->role(), [
+        if ($this->isPersonal()) {
+            return true;
+        }
+
+        return in_array(
+            $this->companyRole(),
+            [
                 'owner',
                 'administrator',
-                'sales'
-            ]);
-    }
-
-
-    /**
-     * Update product
-     */
-    public function update(User $user, Product $product): bool
-    {
-
-    
-        $context = app(ActiveContextService::class);
-
-        return
-        $product->supplier_id === $context->id()
-        && $product->supplier_type === $context->type()
-        && (
-            // company mode roles
-            (
-                $context->isCompany()
-                && in_array($context->role(), [
-                    'owner',
-                    'administrator',
-                    'sales',
-                ])
-            )
-
-            // personal mode
-            ||
-
-            (
-                $context->isPersonal()
-            )
+                'sales',
+            ],
+            true
         );
     }
 
+    /**
+     * Update product.
+     */
+    public function update(User $user, Product $product): bool
+    {
+        if (!$this->ownsSupplier($product->supplier)) {
+            return false;
+        }
+
+        if ($this->isPersonal()) {
+            return true;
+        }
+
+        return in_array(
+            $this->companyRole(),
+            [
+                'owner',
+                'administrator',
+                'sales',
+            ],
+            true
+        );
+    }
 
     /**
-     * Delete product
+     * Delete product.
      */
     public function delete(User $user, Product $product): bool
     {
-        $context = app(ActiveContextService::class);
+        if (!$this->ownsSupplier($product->supplier)) {
+            return false;
+        }
 
-        return $context->isCompany()
-            && $context->type() === Supplier::class
-            && $product->supplier_id === $context->id()
-            && in_array($context->role(), [
+        if ($this->isPersonal()) {
+            return true;
+        }
+
+        return in_array(
+            $this->companyRole(),
+            [
                 'owner',
-                'administrator'
-            ]);
+                'administrator',
+            ],
+            true
+        );
     }
 
-
     /**
-     * Restore product
+     * Restore.
      */
     public function restore(User $user, Product $product): bool
     {
         return false;
     }
 
-
     /**
-     * Force delete product permanently
+     * Force delete.
      */
     public function forceDelete(User $user, Product $product): bool
     {

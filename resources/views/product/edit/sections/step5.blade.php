@@ -3,7 +3,7 @@
 
 
 <form method="POST"
-    action="{{ route('supplier.products.update-step1', [
+    action="{{ route('supplier.products.update', [
           'product' => $product->id,
           'step' => 5
       ]) }}"

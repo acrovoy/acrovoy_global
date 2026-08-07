@@ -320,7 +320,7 @@ document.addEventListener('click', function (e) {
         hiddenInput.value = currentTemplateId;
     }
 
-    openDrawer();
+    openShippingTemplateDrawer();
     loadWarehouses(currentTemplateId);
 });
 
@@ -328,7 +328,7 @@ document.addEventListener('click', function (e) {
 // ===============================
 // OPEN DRAWER
 // ===============================
-function openDrawer() {
+function openShippingTemplateDrawer() {
     overlay.classList.remove('hidden');
     drawer.classList.remove('translate-x-full');
 

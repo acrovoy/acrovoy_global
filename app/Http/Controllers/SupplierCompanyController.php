@@ -59,6 +59,7 @@ public function showCompanyProfile()
 
 $company = $this->context->supplierProfile();
 
+
 abort_if(!$company, 404);
 
     $company->load([

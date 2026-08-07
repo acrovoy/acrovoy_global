@@ -4,54 +4,72 @@ namespace App\Policies;
 
 use App\Models\ShippingTemplate;
 use App\Models\User;
-use App\Services\Company\ActiveContextService;
 
-class ShippingTemplatePolicy
+class ShippingTemplatePolicy extends BasePolicy
 {
-    public function update(User $user, ShippingTemplate $template): bool
+    /**
+     * View list.
+     */
+    public function viewAny(): bool
     {
-        $context = app(ActiveContextService::class);
-
-        if (!$context->isCompany()) {
-            return false;
-        }
-
-        return $template->manufacturer_id === $context->id();
+        return $this->isSupplier()
+            && $this->supplier() !== null;
     }
 
-    public function delete(User $user, ShippingTemplate $template): bool
+    /**
+     * View template.
+     */
+    public function view(User $user, ShippingTemplate $shippingTemplate): bool
     {
-        $context = app(ActiveContextService::class);
-
-        if (!$context->isCompany()) {
-            return false;
-        }
-
-        return $template->manufacturer_id === $context->id();
+        return $this->ownsEntity(
+            $shippingTemplate->provider_type,
+            $shippingTemplate->provider_id
+        );
     }
 
-    public function view(User $user, ShippingTemplate $template): bool
-    {
-        $context = app(ActiveContextService::class);
-
-        if (!$context->isCompany()) {
-            return false;
-        }
-
-        return $template->manufacturer_id === $context->id();
-    }
-
+    /**
+     * Create template.
+     */
     public function create(User $user): bool
     {
-        $context = app(ActiveContextService::class);
-
-        return $context->isCompany();
+        return $this->entity() !== null;
     }
 
-    public function viewAny(User $user): bool
+    /**
+     * Update template.
+     */
+    public function update(User $user, ShippingTemplate $shippingTemplate): bool
     {
-        $context = app(ActiveContextService::class);
+        return $this->ownsEntity(
+            $shippingTemplate->provider_type,
+            $shippingTemplate->provider_id
+        );
+    }
 
-        return $context->isCompany();
+    /**
+     * Delete template.
+     */
+    public function delete(User $user, ShippingTemplate $shippingTemplate): bool
+    {
+        return $this->ownsEntity(
+            $shippingTemplate->provider_type,
+            $shippingTemplate->provider_id
+        );
+    }
+
+    /**
+     * Restore template.
+     */
+    public function restore(User $user, ShippingTemplate $shippingTemplate): bool
+    {
+        return $this->delete($user, $shippingTemplate);
+    }
+
+    /**
+     * Force delete template.
+     */
+    public function forceDelete(User $user, ShippingTemplate $shippingTemplate): bool
+    {
+        return false;
     }
 }

@@ -302,35 +302,60 @@ public function isBuyer(): bool
 
 public function entity(): ?Model
 {
-    if ($this->isPersonal()) {
-        return $this->user();
-    }
-
     if ($this->resolvedCompany !== null) {
         return $this->resolvedCompany;
     }
 
-    return $this->resolvedCompany = CompanyUser::query()
-        ->with('company')
-        ->where('user_id', auth()->id())
-        ->where('company_id', $this->id())
-        ->where('company_type', $this->type())
-        ->first()
-        ?->company;
+    /**
+     * COMPANY MODE
+     */
+    if ($this->isCompany()) {
+        return $this->resolvedCompany = CompanyUser::query()
+            ->with('company')
+            ->where('user_id', auth()->id())
+            ->where('company_id', $this->id())
+            ->where('company_type', $this->type())
+            ->first()
+            ?->company;
+    }
+
+    /**
+     * PERSONAL MODE
+     *
+     * User сам entity НЕ является.
+     * Entity определяется активной ролью пользователя.
+     */
+    if ($this->isPersonal()) {
+
+        return $this->resolvedCompany = match ($this->platformRole()) {
+
+            'supplier' => Supplier::query()
+                ->where('supplierable_type', User::class)
+                ->where('supplierable_id', $this->user()->id)
+                ->first(),
+
+            'buyer' => Buyer::query()
+                ->where('buyerable_type', User::class)
+                ->where('buyerable_id', $this->user()->id)
+                ->first(),
+
+            default => null,
+        };
+    }
+
+    return null;
 }
 
 public function entityType(): ?string
 {
-    return $this->isCompany()
-        ? $this->type()
-        : User::class;
+    $entity = $this->entity();
+
+    return $entity ? get_class($entity) : null;
 }
 
 public function entityId(): ?int
 {
-    return $this->isCompany()
-        ? $this->id()
-        : $this->user()?->id;
+    return $this->entity()?->getKey();
 }
 
 
@@ -367,11 +392,17 @@ public function companyRole(): ?string
 }
 
 
-public function participant(): array
+public function participant(): ?array
 {
+    $entity = $this->entity();
+
+    if (!$entity) {
+        return null;
+    }
+
     return [
-        'type' => $this->entityType(),
-        'id'   => $this->entityId(),
+        'type' => $entity::class,
+        'id'   => $entity->getKey(),
     ];
 }
 
@@ -379,26 +410,18 @@ public function supplierProfile(): ?Supplier
 {
     $entity = $this->entity();
 
-    if (!$entity) {
-        return null;
-    }
-
-    return Supplier::where('supplierable_type', $entity::class)
-        ->where('supplierable_id', $entity->getKey())
-        ->first();
+    return $entity instanceof Supplier
+        ? $entity
+        : null;
 }
 
 public function buyerProfile(): ?Buyer
 {
     $entity = $this->entity();
 
-    if (!$entity) {
-        return null;
-    }
-
-    return Buyer::where('buyerable_type', $entity::class)
-        ->where('buyerable_id', $entity->getKey())
-        ->first();
+    return $entity instanceof Buyer
+        ? $entity
+        : null;
 }
 
 

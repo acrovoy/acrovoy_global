@@ -257,7 +257,7 @@
             <div class="flex items-center gap-2">
 
                 <button type="button"
-                    onclick="openDrawer('attribute-drawer')"
+                    onclick="openMainCustomDrawer('attribute-drawer')"
                     class="inline-flex items-center gap-2 px-4 py-2
                            text-sm font-medium text-gray-700
                            bg-white border border-gray-200
@@ -322,55 +322,75 @@
 
                         @foreach($attrs as $attr)
 
-                            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
+    <div class="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50">
 
-                                <input
-                                    class="rounded border-gray-300 text-gray-900 focus:ring-gray-900/10"
-                                    type="checkbox"
-                                    name="attributes[]"
-                                    value="{{ $attr->id }}"
-                                    @if(in_array($attr->id, $attachedIds)) checked @endif
-                                />
-
-                                <div class="flex-1">
-
-                                    <div class="text-sm font-medium text-gray-800">
-                                        {{ $attr->name }}
-                                    </div>
-
-                                    <div class="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
-
-                                        @if(in_array($attr->type, ['select', 'multiselect']))
-
-                                            @foreach($attr->options->take(5) as $option)
-
-                                                <span class="px-1.5 py-[1px] rounded bg-gray-100 border border-gray-200">
-                                                    {{ $option->translatedValue() }}
-                                                </span>
-
-                                            @endforeach
-
-                                            @if($attr->options->count() > 5)
-
-                                                <span class="text-gray-300">
-                                                    +{{ $attr->options->count() - 5 }}
-                                                </span>
-
-                                            @endif
-
-                                        @else
+        {{-- CHECKBOX --}}
+        <input
+            class="mt-1 rounded border-gray-300 text-gray-900 focus:ring-gray-900/10"
+            type="checkbox"
+            name="attributes[]"
+            value="{{ $attr->id }}"
+            id="attribute-{{ $attr->id }}"
+            @if(in_array($attr->id, $attachedIds)) checked @endif
+        />
 
 
+        {{-- CONTENT --}}
+        <label 
+            for="attribute-{{ $attr->id }}"
+            class="flex-1 cursor-pointer"
+        >
 
-                                        @endif
+            <div class="text-sm font-medium text-gray-800">
+                {{ $attr->name }}
+            </div>
 
-                                    </div>
 
-                                </div>
+            <div class="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
 
-                            </label>
+                @if(in_array($attr->type, ['select', 'multiselect']))
 
-                        @endforeach
+                    @foreach($attr->options->take(5) as $option)
+
+                        <span class="px-1.5 py-[1px] rounded bg-gray-100 border border-gray-200">
+                            {{ $option->translatedValue() }}
+                        </span>
+
+                    @endforeach
+
+
+                    @if($attr->options->count() > 5)
+
+                        <span class="text-gray-300">
+                            +{{ $attr->options->count() - 5 }}
+                        </span>
+
+                    @endif
+
+                @endif
+
+            </div>
+
+        </label>
+
+
+        {{-- REMOVE FROM LIST --}}
+        <button
+    type="button"
+    onclick="deleteAttributeFromDrawer(
+        {{ $product->id }},
+        {{ $attr->id }},
+        this
+    )"
+    class="shrink-0 mt-1 text-gray-400 hover:text-red-600 transition"
+>
+    ✕
+</button>
+
+
+    </div>
+
+@endforeach
 
                     </div>
 
@@ -395,17 +415,7 @@
     {{-- RIGHT ACTIONS --}}
     <div class="flex items-center gap-2">
 
-        {{-- DELETE --}}
-        <button
-            type="submit"
-            formaction=""
-            formmethod="POST"
-            onclick="return confirm('Archive selected attributes?')"
-            class="px-4 py-2 text-sm rounded-lg border border-red-200
-                   text-red-600 hover:bg-red-50 transition">
-
-            <span>Delete selected</span>
-        </button>
+      
 
         {{-- PRIMARY --}}
         <button
@@ -423,9 +433,63 @@
     </form>
 
 </div>
-
 <script>
-    function openDrawer(id) {
+function deleteAttributeFromDrawer(productId, attributeId, button) {
+
+    if (!confirm('Delete this attribute?')) {
+        return;
+    }
+
+
+    fetch(
+    `/products/${productId}/attributes/${attributeId}`,
+        {
+            method: 'DELETE',
+
+            headers: {
+                'X-CSRF-TOKEN':
+                    document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+
+                'Accept': 'application/json'
+            }
+        }
+    )
+    .then(response => response.json())
+
+    .then(data => {
+
+        if (data.success) {
+
+            const row = button.closest(
+                '.flex.items-start'
+            );
+
+            if (row) {
+                row.remove();
+            }
+
+        } else {
+
+            alert(data.message ?? 'Delete failed');
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        alert('Delete failed');
+
+    });
+}
+
+</script>
+<script>
+    function openMainCustomDrawer(id) {
 
         // закрываем все
         document.querySelectorAll('[id$="-drawer"]').forEach(el => {

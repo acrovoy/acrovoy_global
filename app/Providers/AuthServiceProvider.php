@@ -5,8 +5,8 @@ use App\Models\Product;
 use App\Models\ShippingTemplate;
 use App\Models\Order;
 use App\Models\Rfq;
-use App\Models\RfqOffer;
-use App\Models\Project;
+use App\Domain\Negotiation\Models\RfqOffer;
+use App\Models\Warehouse;
 use App\Models\User;
 
 
@@ -14,8 +14,8 @@ use App\Policies\ProductPolicy;
 use App\Policies\ShippingTemplatePolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\RfqPolicy;
-use App\Policies\RfqOfferPolicy;
-use App\Policies\ProjectPolicy;
+use App\Domain\Negotiation\Policies\RfqOfferPolicy;
+use App\Policies\WarehousePolicy;
 use App\Policies\TeamPolicy;
 
 // use Illuminate\Support\Facades\Gate;
@@ -30,15 +30,15 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
+        Warehouse::class => WarehousePolicy::class,
         ShippingTemplate::class => ShippingTemplatePolicy::class,
         Product::class => ProductPolicy::class,
         Order::class => OrderPolicy::class,
-        Project::class => ProjectPolicy::class,
+        
         User::class => TeamPolicy::class,
-        \App\Domain\Negotiation\Models\RfqOffer::class =>
-        \App\Domain\Negotiation\Policies\RfqOfferPolicy::class,
+        RfqOffer::class => RfqOfferPolicy::class,
 
-    \App\Domain\Negotiation\Models\RfqOfferParticipant::class =>
+    
         \App\Domain\Negotiation\Policies\RfqOfferParticipantPolicy::class,
         \App\Domain\Negotiation\Models\RfqOfferVersion::class
         => \App\Domain\Negotiation\Policies\RfqOfferVersionPolicy::class,

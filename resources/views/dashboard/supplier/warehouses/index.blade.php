@@ -24,20 +24,21 @@
 
             
 
-            <button onclick="openCreateWarehouseDrawer()"
-        class="inline-flex items-center gap-2 mt-3 px-4 py-2
-           text-sm font-medium text-gray-700
-           bg-white border border-gray-200
-           rounded-lg
-           hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
-           active:scale-[0.98]
-           transition-all duration-150 shadow-sm">
+            @can('create', App\Models\Warehouse::class)
 
-           <span class="text-lg leading-none">+</span>
+<button onclick="openCreateWarehouseDrawer()"
+    class="inline-flex items-center gap-2 mt-3 px-4 py-2
+       text-sm font-medium text-gray-700
+       bg-white border border-gray-200
+       rounded-lg
+       hover:bg-gray-50">
+
+    <span class="text-lg leading-none">+</span>
     <span>Add New Warehouse</span>
 
-   
 </button>
+
+@endcan
 
         </div>
     </div>
@@ -45,7 +46,7 @@
     <x-alerts />
 
     {{-- Table Card --}}
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto">
+    <div class="mt-6 bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 text-sm">
 
             <thead class="bg-gray-50 text-gray-600">
@@ -138,22 +139,32 @@
                         {{-- Actions --}}
                         <td class="px-5 py-3 text-right whitespace-nowrap space-x-2">
 
-                           <button onclick='openEditWarehouseDrawer(@json($warehouse))'
-        class="text-sm text-gray-700 hover:underline">
-    Edit
-</button>
+                           @can('update', $warehouse)
 
-                            <form action="{{ route('supplier.warehouses.destroy', $warehouse) }}"
-      method="POST"
-      class="inline delete-warehouse-form">
+        <button 
+            onclick='openEditWarehouseDrawer(@json($warehouse))'
+            class="text-sm text-gray-700 hover:underline">
+            Edit
+        </button>
 
-    @csrf
-    @method('DELETE')
+    @endcan
 
-                                <button class="text-sm text-red-600 hover:underline">
-                                    Delete
-                                </button>
-                            </form>
+                             @can('delete', $warehouse)
+
+        <form action="{{ route('supplier.warehouses.destroy', $warehouse) }}"
+              method="POST"
+              class="inline delete-warehouse-form">
+
+            @csrf
+            @method('DELETE')
+
+            <button class="text-sm text-red-600 hover:underline">
+                Delete
+            </button>
+
+        </form>
+
+    @endcan
 
                         </td>
 
@@ -259,10 +270,12 @@ function openCreateWarehouseDrawer() {
 
     document.getElementById('formMethod').value = 'POST';
 
-    openDrawer();
+    openWarehouseDrawer();
 }
 
 function openEditWarehouseDrawer(warehouse) {
+
+ 
 
     document.getElementById('drawerTitle').innerText = 'Edit Warehouse';
 
@@ -277,10 +290,15 @@ function openEditWarehouseDrawer(warehouse) {
     document.getElementById('address').value = warehouse.address ?? '';
     document.getElementById('is_default').checked = warehouse.is_default ?? false;
 
-    openDrawer();
+
+    
+
+    openWarehouseDrawer();
+
+    
 }
 
-function openDrawer() {
+function openWarehouseDrawer() {
     document.getElementById('warehouseDrawer').classList.remove('hidden');
 
     setTimeout(() => {

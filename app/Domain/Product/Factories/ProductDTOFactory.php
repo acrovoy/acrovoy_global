@@ -118,7 +118,7 @@ class ProductDTOFactory
             slug: $slug,
             name: $name,
             sku: $sku,
-            supplierId: $this->context->id(),
+            supplierId: $this->context->supplierId(),
             categoryId: $request->category,
             moq: $request->moq,
             leadTime: $request->lead_time,

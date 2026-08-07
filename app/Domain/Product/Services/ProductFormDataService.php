@@ -5,26 +5,18 @@ namespace App\Domain\Product\Services;
 use App\Models\Category;
 use App\Models\Material;
 use App\Models\Country;
-use App\Models\Supplier;
 use App\Models\ShippingTemplate;
 use App\Models\Attribute;
 
-use App\Services\Company\ActiveContextService;
+
 
 class ProductFormDataService
 {
-    public function getCreateFormData(): array
+    public function getCreateFormData($supplierId): array
     {
         $locale = app()->getLocale();
 
-        $context = app(ActiveContextService::class);
-
         
-
-        $supplierId = $context->supplierId();
-        
-
-
         return [
             'categories' => Category::all(),
 

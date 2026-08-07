@@ -108,7 +108,7 @@ class MenuService
             [
             'type' => 'link',
             'label' => 'Add Product',
-            'route' => 'supplier.new_products.create',
+            'route' => 'supplier.products.create',
         ],
 
         
@@ -227,7 +227,7 @@ class MenuService
         [
             'type' => 'link',
             'label' => 'Add Product',
-            'route' => 'supplier.new_products.create',
+            'route' => 'supplier.products.create',
         ],
         [
             'type' => 'link',

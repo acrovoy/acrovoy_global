@@ -13,7 +13,7 @@
 
         <button
     type="button"
-    onclick="openDrawer('attribute-picker-drawer')"
+    onclick="openMainCustomDrawer('attribute-picker-drawer')"
     class="inline-flex items-center gap-2 mt-3 px-4 py-2
            text-sm font-medium text-gray-700
            bg-white border border-gray-200

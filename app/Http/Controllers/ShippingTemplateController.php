@@ -14,12 +14,11 @@ use App\Services\Company\ActiveContextService;
 
 class ShippingTemplateController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-        // если есть middleware проверки роли:
-        // $this->middleware('role:manufacturer');
-    }
+    public function __construct(
+    private ActiveContextService $context
+) {
+    
+}
 
     /**
      * List all shipping templates
@@ -28,20 +27,21 @@ class ShippingTemplateController extends Controller
     {
 
 
-        $context = app(ActiveContextService::class);
+        $this->authorize('viewAny', ShippingTemplate::class);
 
 
 
-        $supplierId = $context->id();
-        $supplierType = $context->type();
+        $entity = $this->context->entity();
 
-        $warehouses = Warehouse::where('provider_id', $supplierId)
-        ->where('provider_type', $supplierType)
-        ->get();
+        abort_unless($entity, 404);
+
+        $warehouses = Warehouse::where('provider_type', $entity::class)
+            ->where('provider_id', $entity->getKey())
+            ->get();
 
         $templates = ShippingTemplate::with('locations', 'warehouse')
-            ->where('provider_type', $supplierType)
-            ->where('provider_id', $supplierId)
+            ->where('provider_type', $entity::class)
+            ->where('provider_id', $entity->getKey())
             ->get();
 
         return view('dashboard.supplier.shipping-templates.index', compact('templates', 'warehouses'));
@@ -52,6 +52,9 @@ class ShippingTemplateController extends Controller
      */
     public function create()
     {
+
+    $this->authorize('create', ShippingTemplate::class);
+
         $countries = Country::withCurrentTranslation()
             ->orderBy('name')->get();
         $allLocations = Location::orderBy('id')->get();
@@ -86,6 +89,9 @@ class ShippingTemplateController extends Controller
      */
     public function store(Request $request)
     {
+
+     $this->authorize('create', ShippingTemplate::class);
+
         $data = $request->validate([
             'title' => 'required|array',
             'description' => 'nullable|array',
@@ -98,18 +104,19 @@ class ShippingTemplateController extends Controller
 
         DB::transaction(function () use ($data) {
 
-            $context = app(ActiveContextService::class);
+           
 
 
 
-            $supplierId = $context->id();
-            $supplierType = $context->type();
+            $entity = $this->context->entity();
+
+abort_unless($entity, 404);
 
 
             // 1️⃣ Создаем базовую запись шаблона
-            $template = ShippingTemplate::create([
-                'provider_id' => $supplierId,
-                'provider_type' => $supplierType,
+           $template = ShippingTemplate::create([
+    'provider_type' => $entity::class,
+    'provider_id'   => $entity->getKey(),
                 'price' => $data['price'],
                 'price_unit' => $data['price_unit'],
                 'delivery_time' => $data['delivery_time'] ?? null,
@@ -145,11 +152,11 @@ class ShippingTemplateController extends Controller
      */
     public function edit(ShippingTemplate $shippingTemplate)
     {
-        $context = app(ActiveContextService::class);
+        
 
+$this->authorize('update', $shippingTemplate);
 
-
-        $supplierId = $context->id();
+        
 
 
         // Получаем все страны
@@ -192,9 +199,9 @@ class ShippingTemplateController extends Controller
     public function update(Request $request, ShippingTemplate $shippingTemplate)
     {
 
-        $context = app(ActiveContextService::class);
+        
 
-
+ $this->authorize('update', $shippingTemplate);
 
 
 
@@ -262,12 +269,9 @@ class ShippingTemplateController extends Controller
      */
     public function destroy(ShippingTemplate $shippingTemplate)
     {
-        $context = app(ActiveContextService::class);
 
-
-
-
-
+    $this->authorize('delete', $shippingTemplate);
+     
         $shippingTemplate->locations()->detach();
         $shippingTemplate->delete();
 
@@ -278,6 +282,9 @@ class ShippingTemplateController extends Controller
 
     public function attachWarehouse(Request $request, ShippingTemplate $template)
 {
+
+ $this->authorize('update', $template);
+
     $data = $request->validate([
         'warehouse_id' => 'nullable|integer|exists:warehouses,id',
     ]);
@@ -296,6 +303,10 @@ class ShippingTemplateController extends Controller
 
 public function toggleActive(ShippingTemplate $template)
 {
+
+ $this->authorize('update', $template);
+
+ 
     $template->update([
         'is_active' => !$template->is_active,
     ]);

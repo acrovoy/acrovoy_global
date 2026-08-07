@@ -132,7 +132,7 @@ Route::get('/rfqs/{rfq}', [RfqController::class, 'show'])->name('rfqs.workspace'
 Route::get('/collections', [PublicCollectionController::class, 'index'])->name('collections.index');
 Route::get('/collections/{collection:slug}', [PublicCollectionController::class, 'show'])->name('collections.show');
 
-Route::get('/{page:slug}', [PageController::class, 'show'])->name('pages.show');
+
 
 //CONTACTS
 Route::prefix('contacts')->name('contacts.')->group(function () {
@@ -158,7 +158,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 });
 
 //main supplier
-Route::prefix('supplier')->group(function () {
+Route::middleware('auth')->prefix('supplier')->group(function () {
 
     Route::get('orders', [ManufacturerOrderController::class, 'index'])->name('supplier.orders');
     Route::get('orders/{id}', [ManufacturerOrderController::class, 'show'])->name('supplier.orders.show');
@@ -168,9 +168,7 @@ Route::prefix('supplier')->group(function () {
     Route::get('/locations/locations', [LocationController::class, 'locationsByRegion'])->name('supplier.locations.locations');
     Route::post('orders/origin/{item}', [ManufacturerOrderController::class, 'storeOrigin'])->name('manufacturer.orders.origin.store');
     Route::post('orders/{order}/status', [ManufacturerOrderController::class, 'updateStatus'])->name('supplier.orders.update-status');
-
-    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+    
     Route::post('/products/{product}/price-tiers', [ProductPriceController::class, 'store']);
 
     // =========================
@@ -230,7 +228,7 @@ Route::prefix('supplier')->group(function () {
 });
 
 //SUPPLIER WAREHOUSE PROJECTS
-Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
+Route::middleware('auth')->prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
     Route::get('/warehouses', [WarehouseController::class, 'index'])->name('warehouses.index');
     Route::get('/warehouses/create', [WarehouseController::class, 'create'])->name('warehouses.create');
@@ -255,6 +253,10 @@ Route::get('/locations/search', [LocationController::class, 'search']);
 Route::post('/warehouses/attach-location', [WarehouseController::class, 'attachLocation'])->name('supplier.warehouses.attach-location');
 
 Route::post('/products/{product}/attach-attributes', [ProductController::class, 'attachAttributes'])->name('products.attach-attributes');
+Route::delete(
+    'products/{product}/attributes/{attribute}',
+    [ProductController::class, 'deleteAttribute']
+)->name('products.delete-attribute');
 
 Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])->name('rfqs.custom-attributes.store');
 Route::post('/rfqs/{rfq}/custom-attributes/attach', [RfqRequirementController::class, 'attach'])->name('rfqs.custom-attributes.attach');
@@ -451,17 +453,15 @@ Route::prefix('dashboard/category-selector')->group(function () {
     Route::get('/attributes/{categoryId}', [CategorySelectorController::class, 'attributes']);
 });
 
-Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
+Route::middleware('auth')->prefix('dashboard/supplier')->name('supplier.')->group(function () {
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-    Route::get('/add-new-product', [ProductController::class, 'createNew'])->name('new_products.create');
-    Route::get('/add-step2-product', [ProductController::class, 'createStep2'])->name('products.create-step2');
-    Route::post('/products-step1', [ProductController::class, 'storeStep1'])->name('products.store-step1');
-    Route::get('/products/{product}/edit-step/{step}', [ProductController::class, 'editStep'])->name('products.edit-step');
-    Route::put('/products/{product}/update-step1/{step}', [ProductController::class, 'updateStep'])->name('products.update-step1');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+
     Route::get('/add-product', [ProductController::class, 'create'])->name('products.create');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    Route::post('/products-step1', [ProductController::class, 'store'])->name('products.store');
+    Route::get('/products/{product}/edit-step/{step}', [ProductController::class, 'edit'])->name('products.edit-step');
+    Route::put('/products/{product}/update-step1/{step}', [ProductController::class, 'update'])->name('products.update');
+    
     Route::get('/orders', [ManufacturerOrderController::class, 'index'])->name('orders');
     Route::get('/orders/{id}', [ManufacturerOrderController::class, 'show'])->name('orders.show');
     Route::get('/analytics', function () {
@@ -947,3 +947,5 @@ Route::post('/dashboard/support/request',[SupportRequestController::class, 'stor
 
 
 require __DIR__ . '/auth.php';
+
+Route::get('/{page:slug}', [PageController::class, 'show'])->name('pages.show');
