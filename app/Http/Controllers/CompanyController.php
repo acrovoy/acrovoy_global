@@ -132,7 +132,7 @@ class CompanyController extends Controller
      */
     public function edit(int $id)
 {
-    $company = $this->findCompany($id);
+    $company = $this->findOwnedCompany($id);
 
     abort_if(!$company, 404);
 
@@ -144,7 +144,7 @@ class CompanyController extends Controller
      */
     public function update(Request $request, int $id)
 {
-    $company = $this->findCompany($id);
+    $company = $this->findOwnedCompany($id);
 
     abort_if(!$company, 404);
 
@@ -178,7 +178,7 @@ class CompanyController extends Controller
  */
 public function destroy(int $id)
 {
-    $company = $this->findCompany($id);
+    $company = $this->findOwnedCompany($id);
 
     abort_if(!$company, 404);
 
@@ -239,22 +239,6 @@ public function destroy(int $id)
     };
 }
 
-private function findCompany($id)
-{
-    foreach ($this->map as $type => $table) {
-        $company = DB::table($table)->where('id', $id)->first();
-
-        if ($company) {
-            $company->type = $type;
-            $company->table = $table;
-            return $company;
-        }
-    }
-
-    return null;
-}
-
-
 public function transferOwner(Request $request, int $companyId)
 {
     $request->validate([
@@ -266,8 +250,8 @@ public function transferOwner(Request $request, int $companyId)
     try {
 
         // 1. найти модель компании (buyer/supplier/logistics)
-        $company = $this->findCompany($companyId);
-        abort_if(!$company, 404);
+        $company = $this->findOwnedCompany($companyId);
+        
 
         $companyType = match($company->type) {
             'buyer' => 'App\Models\Buyer',
@@ -311,6 +295,44 @@ public function transferOwner(Request $request, int $companyId)
         DB::rollBack();
         throw $e;
     }
+}
+
+private function findOwnedCompany(int $id)
+{
+    abort_unless(auth()->check(), 403);
+
+    $userId = auth()->id();
+
+    foreach ($this->map as $type => $table) {
+
+        $modelClass = $this->getModelClass($type);
+
+        $company = DB::table($table)
+            ->where('id', $id)
+            ->first();
+
+        if (!$company) {
+            continue;
+        }
+
+        $membership = DB::table('company_users')
+            ->where('user_id', $userId)
+            ->where('company_type', $modelClass)
+            ->where('company_id', $id)
+            ->where('role', 'owner')
+            ->where('status', 'active')
+            ->first();
+
+        abort_unless($membership, 403);
+
+        $company->type = $type;
+        $company->table = $table;
+        $company->membership_role = $membership->role;
+
+        return $company;
+    }
+
+    abort(404);
 }
    
 }

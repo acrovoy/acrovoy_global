@@ -7,164 +7,342 @@ use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\PriceTier;
-use App\Facades\ActiveContext; 
+use App\Services\Company\ActiveContextService;
+use App\Models\Buyer;
 
 class CartController extends Controller
 {
+
+public function __construct(
+    private ActiveContextService $context,
+) {}
+
+
     public function index()
     {
-        $cartItems = CartItem::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
+
+       
+
+        abort_unless(
+            auth()->check() && $this->context->isBuyer(),
+            403
+        );
+
+        $buyer = $this->context->buyer();
+
+        abort_unless($buyer, 403);
+
+        $cartItems = CartItem::query()
+            ->where('buyer_type', Buyer::class)
+            ->where('buyer_id', $buyer->id)
             ->with('product')
             ->get();
 
-        $total = $cartItems->sum(fn($item) => $item->price * $item->quantity);
+        $total = $cartItems->sum(
+            fn ($item) => $item->price * $item->quantity
+        );
 
-        return view('dashboard.buyer.cart', compact('cartItems', 'total'));
+        return view(
+            'dashboard.buyer.cart',
+            compact('cartItems', 'total')
+        );
     }
 
+      /**
+     * ADD PRODUCT
+     */
     public function add(Request $request, Product $product)
     {
-        $user = auth()->user();
+        abort_unless(
+            auth()->check() && $this->context->isBuyer(),
+            403
+        );
 
-        /** 1. MOQ продукта */
+        $buyer = $this->context->buyer();
+
+        abort_unless($buyer, 403);
+
+
+        /**
+         * 1. MOQ продукта
+         */
         $moq = $product->moq;
 
-        /** 2. Ищем подходящий ценовой диапазон */
-        $priceTier = PriceTier::where('product_id', $product->id)
+
+        /**
+         * 2. Ищем подходящий ценовой диапазон
+         */
+        $priceTier = PriceTier::query()
+            ->where('product_id', $product->id)
             ->where('min_qty', '<=', $moq)
             ->where(function ($q) use ($moq) {
                 $q->where('max_qty', '>=', $moq)
-                  ->orWhereNull('max_qty');
+                    ->orWhereNull('max_qty');
             })
             ->orderBy('min_qty')
             ->first();
 
+
         if (! $priceTier) {
-            return back()->withErrors('Price not found for MOQ');
+            return back()->withErrors(
+                'Price not found for MOQ'
+            );
         }
 
-        /** 3. Проверка корзины */
-        $cartItem = CartItem::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
+
+        /**
+         * 3. Проверка корзины
+         */
+        $cartItem = CartItem::query()
+            ->where('buyer_type', Buyer::class)
+            ->where('buyer_id', $buyer->id)
             ->where('product_id', $product->id)
             ->first();
 
+
         if ($cartItem) {
-            return back()->with('info', 'Product already in cart');
+            return back()->with(
+                'info',
+                'Product already in cart'
+            );
         }
 
-        /** 4. Добавление */
+
+        /**
+         * 4. Добавление
+         */
         CartItem::create([
-            'buyer_type' => ActiveContext::type(),
-            'buyer_id'   => ActiveContext::id(),
+            'buyer_type' => Buyer::class,
+            'buyer_id'   => $buyer->id,
             'product_id' => $product->id,
             'quantity'   => $moq,
             'price'      => $priceTier->price,
             'created_by' => auth()->id(),
         ]);
 
-        return back()->with('success', 'Product added to cart');
+
+        return back()->with(
+            'success',
+            'Product added to cart'
+        );
     }
 
-    public function update(Request $request, CartItem $cartItem)
-    {
-        abort_if(
-            $cartItem->buyer_id !== ActiveContext::id(),
+     /**
+     * UPDATE QUANTITY
+     */
+    public function update(
+        Request $request,
+        CartItem $cartItem
+    ) {
+        abort_unless(
+            auth()->check() && $this->context->isBuyer(),
             403
         );
 
+        $buyer = $this->context->buyer();
+
+        abort_unless($buyer, 403);
+
+
+        /**
+         * ВАЖНО:
+         * проверяем не только buyer_id,
+         * но и buyer_type.
+         */
+        abort_unless(
+            $cartItem->buyer_type === Buyer::class &&
+            (int) $cartItem->buyer_id === (int) $buyer->id,
+            403
+        );
+
+
         $action = $request->input('action');
+
 
         if ($action === 'increase') {
             $cartItem->quantity++;
         }
 
-        if ($action === 'decrease' && $cartItem->quantity > 1) {
+
+        if (
+            $action === 'decrease' &&
+            $cartItem->quantity > 1
+        ) {
             $cartItem->quantity--;
         }
 
-        /** цена */
-        $priceTier = PriceTier::where('product_id', $cartItem->product_id)
+
+        /**
+         * Обновляем цену согласно quantity
+         */
+        $priceTier = PriceTier::query()
+            ->where('product_id', $cartItem->product_id)
             ->where('min_qty', '<=', $cartItem->quantity)
             ->where(function ($q) use ($cartItem) {
-                $q->where('max_qty', '>=', $cartItem->quantity)
-                  ->orWhereNull('max_qty');
+                $q->where(
+                    'max_qty',
+                    '>=',
+                    $cartItem->quantity
+                )->orWhereNull('max_qty');
             })
             ->orderByDesc('min_qty')
             ->first();
+
 
         if ($priceTier) {
             $cartItem->price = $priceTier->price;
         }
 
+
         $cartItem->save();
 
-        /** totals */
-        $itemTotal = $cartItem->price * $cartItem->quantity;
 
-        $cartTotal = CartItem::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
+        /**
+         * Totals
+         */
+        $itemTotal =
+            $cartItem->price *
+            $cartItem->quantity;
+
+
+        $cartTotal = CartItem::query()
+            ->where('buyer_type', Buyer::class)
+            ->where('buyer_id', $buyer->id)
             ->get()
-            ->sum(fn ($item) => $item->price * $item->quantity);
+            ->sum(
+                fn ($item) =>
+                    $item->price * $item->quantity
+            );
+
 
         return response()->json([
             'quantity' => $cartItem->quantity,
-            'price' => number_format($cartItem->price, 2),
-            'itemTotal' => number_format($itemTotal, 2),
-            'cartTotal' => number_format($cartTotal, 2),
+            'price' => number_format(
+                $cartItem->price,
+                2
+            ),
+            'itemTotal' => number_format(
+                $itemTotal,
+                2
+            ),
+            'cartTotal' => number_format(
+                $cartTotal,
+                2
+            ),
         ]);
     }
 
+
+      /**
+     * REMOVE
+     */
     public function remove(CartItem $cartItem)
     {
-        abort_if(
-            $cartItem->buyer_id !== ActiveContext::id(),
+        abort_unless(
+            auth()->check() && $this->context->isBuyer(),
             403
         );
 
+        $buyer = $this->context->buyer();
+
+        abort_unless($buyer, 403);
+
+
+        /**
+         * Проверяем владельца корзины
+         */
+        abort_unless(
+            $cartItem->buyer_type === Buyer::class &&
+            (int) $cartItem->buyer_id === (int) $buyer->id,
+            403
+        );
+
+
         $cartItem->delete();
+
 
         return back();
     }
 
-    public function addAndRedirect(Request $request, Product $product)
-    {
-        $user = auth()->user();
 
+    /**
+     * ADD AND REDIRECT
+     */
+    public function addAndRedirect(
+        Request $request,
+        Product $product
+    ) {
+        abort_unless(
+            auth()->check() && $this->context->isBuyer(),
+            403
+        );
+
+        $buyer = $this->context->buyer();
+
+        abort_unless($buyer, 403);
+
+
+        /**
+         * MOQ
+         */
         $moq = $product->moq;
 
-        $priceTier = PriceTier::where('product_id', $product->id)
+
+        /**
+         * Price tier
+         */
+        $priceTier = PriceTier::query()
+            ->where('product_id', $product->id)
             ->where('min_qty', '<=', $moq)
             ->where(function ($q) use ($moq) {
                 $q->where('max_qty', '>=', $moq)
-                  ->orWhereNull('max_qty');
+                    ->orWhereNull('max_qty');
             })
             ->orderBy('min_qty')
             ->first();
 
+
         if (! $priceTier) {
-            return back()->withErrors('Price not found for MOQ');
+            return back()->withErrors(
+                'Price not found for MOQ'
+            );
         }
 
-        $cartItem = CartItem::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
+
+        /**
+         * Already exists
+         */
+        $cartItem = CartItem::query()
+            ->where('buyer_type', Buyer::class)
+            ->where('buyer_id', $buyer->id)
             ->where('product_id', $product->id)
             ->first();
 
+
         if ($cartItem) {
-            return back()->with('info', 'Product already in cart');
+            return back()->with(
+                'info',
+                'Product already in cart'
+            );
         }
 
+
+        /**
+         * Create
+         */
         CartItem::create([
-            'buyer_type' => ActiveContext::type(),
-            'buyer_id'   => ActiveContext::id(),
+            'buyer_type' => Buyer::class,
+            'buyer_id'   => $buyer->id,
             'product_id' => $product->id,
             'quantity'   => $moq,
             'price'      => $priceTier->price,
             'created_by' => auth()->id(),
         ]);
 
-        return redirect()->route('buyer.cart.index');
+
+        return redirect()->route(
+            'buyer.cart.index'
+        );
     }
+
 }

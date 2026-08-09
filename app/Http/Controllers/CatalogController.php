@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 
 use App\Domain\Filters\FilterFactory;
 
-use App\Facades\ActiveContext;
+use App\Services\Company\ActiveContextService;
+use App\Models\Wishlist;
 
 use App\Models\Category;
 use App\Models\Product;
@@ -18,16 +19,26 @@ use App\Models\Attribute;
 
 class CatalogController extends Controller
 {
+
+public function __construct(
+    private readonly ActiveContextService $context
+) {
+}
  public function index(Request $request)
 {
     $locale = app()->getLocale();
 
-    $wishlistIds = auth()->user()
-    ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
+    $wishlistIds = [];
+
+$buyer = $this->context->buyerProfile();
+
+if ($buyer) {
+    $wishlistIds = Wishlist::query()
+        ->where('buyer_type', $buyer::class)
+        ->where('buyer_id', $buyer->getKey())
         ->pluck('product_id')
-        ->toArray()
-    : [];
+        ->toArray();
+}
 
     // Mega Menu (верхний каталог)
     $catalogCategories = Category::with('children')

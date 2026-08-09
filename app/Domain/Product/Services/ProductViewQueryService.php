@@ -2,24 +2,38 @@
 
 namespace App\Domain\Product\Services;
 
-use App\Facades\ActiveContext;
-
 use App\Models\Product;
+use App\Models\Wishlist;
 use App\Domain\Project\Models\Project;
+use App\Services\Company\ActiveContextService;
 use Illuminate\Support\Facades\Auth;
 
 class ProductViewQueryService
 {
+
+public function __construct(
+        private readonly ActiveContextService $context
+    ) {
+    }
     public function getProductViewData(string $slug): array
     {
-        $user = Auth::user();
-        
-    $wishlistIds = $user
-    ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
-        ->pluck('product_id')
-        ->toArray()
-    : [];
+        $buyer = $this->context->buyerProfile();
+
+        /*
+        |--------------------------------------------------------------------------
+        | WISHLIST
+        |--------------------------------------------------------------------------
+        */
+
+        $wishlistIds = [];
+
+        if ($buyer) {
+            $wishlistIds = Wishlist::query()
+                ->where('buyer_type', $buyer::class)
+                ->where('buyer_id', $buyer->getKey())
+                ->pluck('product_id')
+                ->toArray();
+        }
 
         // Загружаем продукт с необходимыми связями, включая варианты
         $product1 = Product::with([
@@ -43,13 +57,15 @@ class ProductViewQueryService
 
         $projects = collect();
 
-        if ($user) {
-            $projects = Project::where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
+        if ($buyer) {
+            $projects = Project::query()
+                ->where('buyer_type', $buyer::class)
+                ->where('buyer_id', $buyer->getKey())
                 ->where('status', 'draft')
                 ->orderByDesc('created_at')
                 ->get();
         }
+
 
         $gallery = [];
 

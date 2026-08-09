@@ -1,25 +1,37 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Facades\ActiveContext;
-
-
-use Illuminate\Http\Request;
 
 use App\Models\Product;
 use App\Models\Wishlist;
+use Illuminate\Http\JsonResponse;
+
+use App\Services\Company\ActiveContextService;
 
 class WishlistController extends Controller
 {
+    public function __construct(
+        private readonly ActiveContextService $context
+    ) {
+       
+    }
 
+    /**
+     * WISHLIST
+     */
     public function index()
     {
-         $items = Wishlist::query()
-        ->where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
-        ->with('product')
-        ->latest()
-        ->paginate(8);
+
+            $entity = $this->context->buyerProfile();
+
+        abort_unless($entity, 403);
+
+        $items = Wishlist::query()
+            ->where('buyer_type', $entity::class)
+            ->where('buyer_id', $entity->getKey())
+            ->with('product')
+            ->latest()
+            ->paginate(8);
 
         return view(
             'dashboard.buyer.wishlist.index',
@@ -27,54 +39,71 @@ class WishlistController extends Controller
         );
     }
 
+    /**
+     * TOGGLE
+     */
+    public function toggle(Product $product): JsonResponse
+    {
+        $entity = $this->context->buyerProfile();
 
-    
+        abort_unless($entity, 403);
 
+        $query = Wishlist::query()
+            ->where('buyer_type', $entity::class)
+            ->where('buyer_id', $entity->getKey())
+            ->where('product_id', $product->id);
 
-    public function toggle(Product $product)
-{
-    $query = Wishlist::query()
-        ->where('buyer_type', ActiveContext::type())
-        ->where('buyer_id', ActiveContext::id())
-        ->where('product_id', $product->id);
+        $wishlist = $query->first();
 
-    $wishlist = $query->first();
+        if ($wishlist) {
 
-    if ($wishlist) {
+            $wishlist->delete();
 
-        $wishlist->delete();
+            $status = 'removed';
 
-        $status = 'removed';
+        } else {
 
-    } else {
+            Wishlist::firstOrCreate(
+                [
+                    'buyer_type' => $entity::class,
+                    'buyer_id' => $entity->getKey(),
+                    'product_id' => $product->id,
+                ],
+                [
+                    'created_by' => auth()->id(),
+                ]
+            );
 
-      Wishlist::firstOrCreate([
-    'buyer_type' => ActiveContext::type(),
-    'buyer_id'   => ActiveContext::id(),
-    'product_id' => $product->id,
-], [
-    'created_by' => auth()->id(),
-]);
+            $status = 'added';
+        }
 
-        $status = 'added';
+        $count = Wishlist::query()
+            ->where('buyer_type', $entity::class)
+            ->where('buyer_id', $entity->getKey())
+            ->count();
+
+        return response()->json([
+            'status' => $status,
+            'count' => $count,
+        ]);
     }
 
-    return response()->json([
-        'status' => $status,
+    /**
+     * COUNT
+     */
+    public function count(): JsonResponse
+    {
+        $entity = $this->context->buyerProfile();
 
-        'count' => Wishlist::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
-            ->count()
-    ]);
-}
+        abort_unless($entity, 403);
 
-public function count()
-{
-    return response()->json([
-        'count' => Wishlist::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
-            ->count()
-    ]);
-}
+        $count = Wishlist::query()
+            ->where('buyer_type', $entity::class)
+            ->where('buyer_id', $entity->getKey())
+            ->count();
 
+        return response()->json([
+            'count' => $count,
+        ]);
+    }
 }

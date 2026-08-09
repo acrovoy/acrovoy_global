@@ -265,6 +265,20 @@ Route::post('/rfqs/{rfq}/custom-attributes/bulk-archive', [RfqRequirementControl
 Route::post('/custom-attributes', [ProductController::class, 'storeCustomAttribute'])->name('custom-attributes.store');
 Route::post('/dashboard/supplier/rfqs/{rfq}/offer/create-revision', [RfqOfferController::class, 'createRevision'])->name('supplier.rfq.offer.create-revision');
 
+Route::prefix('buyer/cart')->name('buyer.cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
+    Route::post('/add-and-redirect/{product}', [CartController::class, 'addAndRedirect'])->name('add.redirect');
+    Route::patch('/update/{cartItem}', [CartController::class, 'update'])->name('update');
+    Route::delete('/remove/{cartItem}', [CartController::class, 'remove'])->name('remove');
+});
+
+Route::prefix('buyer/wishlist')->name('buyer.wishlist.')->group(function () {
+    Route::get('/', [WishlistController::class, 'index'])->name('index');
+    Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('toggle');
+    Route::get('/count', [WishlistController::class, 'count'])->name('count');
+});
+
 Route::prefix('dashboard/buyer')->name('buyer.')->group(function () {
 
         // =========================
@@ -542,7 +556,7 @@ Route::middleware('auth')->group(function () {
 
 
 //main buyer
-Route::prefix('buyer')->middleware(['auth', 'role:buyer'])->group(function () {
+Route::prefix('buyer')->group(function () {
     Route::put('disputes/{dispute}/accept', [OrderDisputeController::class, 'accept'])->name('buyer.disputes.accept');
     
 });
@@ -551,19 +565,9 @@ Route::post('/manufacturer/orders/{order}/update-tracking', [ManufacturerOrderCo
 
 Route::post('/manufacturer/orders/{order}/status', [ManufacturerOrderController::class, 'updateStatus'])->name('manufacturer.orders.update-status');
 
-Route::middleware(['auth', 'role:buyer'])->prefix('buyer/cart')->name('buyer.cart.')->group(function () {
-    Route::get('/', [CartController::class, 'index'])->name('index');
-    Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
-    Route::post('/add-and-redirect/{product}', [CartController::class, 'addAndRedirect'])->name('add.redirect');
-    Route::patch('/update/{cartItem}', [CartController::class, 'update'])->name('update');
-    Route::delete('/remove/{cartItem}', [CartController::class, 'remove'])->name('remove');
-});
 
-Route::middleware(['auth', 'role:buyer'])->prefix('buyer/wishlist')->name('buyer.wishlist.')->group(function () {
-    Route::get('/', [WishlistController::class, 'index'])->name('index');
-    Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('toggle');
-    Route::get('/count', [WishlistController::class, 'count'])->name('count');
-});
+
+
 
 
 
@@ -949,3 +953,4 @@ Route::post('/dashboard/support/request',[SupportRequestController::class, 'stor
 require __DIR__ . '/auth.php';
 
 Route::get('/{page:slug}', [PageController::class, 'show'])->name('pages.show');
+

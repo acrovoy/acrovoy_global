@@ -80,8 +80,9 @@ class BuyerProjectController extends Controller
     ) {
 
 
-        $buyerType = $context->type();
-        $buyerId = $context->id();
+        $buyer = $this->context->buyerProfile();
+
+    abort_unless($buyer, 403);
 
 
         /**
@@ -97,11 +98,11 @@ class BuyerProjectController extends Controller
          */
 
         $rfq = $this->createProjectAction->execute(
-            $dto,
-            $buyerId,
-            $buyerType,
-            auth()->id()
-        );
+        $dto,
+        $buyer->getKey(),
+        $buyer::class,
+        auth()->id()
+    );
 
         return redirect()
             ->route('buyer.projects.index')

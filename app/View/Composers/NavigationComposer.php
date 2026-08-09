@@ -4,7 +4,7 @@
 
 namespace App\View\Composers;
 
-use App\Facades\ActiveContext;
+use App\Services\Company\ActiveContextService;
 
 use Illuminate\View\View;
 use App\Models\Category;
@@ -17,6 +17,14 @@ use App\Models\CartItem;
 
 class NavigationComposer
 {
+
+public function __construct(
+        private readonly ActiveContextService $context
+    ) {
+        $this->context->resolve();
+    }
+
+
     public function compose(View $view): void
     {
         
@@ -68,20 +76,30 @@ $catalogCategories = Category::with('children')
         $currentLang = app()->getLocale();
 
 
-        //dispute
+         // ---------------------------------------------------------
+        // DISPUTES
+        // ---------------------------------------------------------
 
         $disputeCount = 0;
         $disputeLink = null;
 
         if (auth()->check()) {
 
-            // 🧑 Покупатель
+            // Buyer
             if (auth()->user()->role === 'buyer') {
 
-                $buyerOpenDisputes = OrderDispute::whereHas('order', function ($q) {
-                    $q->where('user_id', auth()->id());
-                })
-                    ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
+                $buyerOpenDisputes = OrderDispute::whereHas(
+                    'order',
+                    function ($q) {
+                        $q->where('user_id', auth()->id());
+                    }
+                )
+                    ->whereIn('status', [
+                        'pending',
+                        'supplier_offer',
+                        'rejected',
+                        'admin_review',
+                    ])
                     ->get();
 
                 $disputeCount = $buyerOpenDisputes->count();
@@ -94,7 +112,7 @@ $catalogCategories = Category::with('children')
                 }
             }
 
-            // 🏭 Продавец (manufacturer)
+            // Seller
             if (
                 auth()->user()->role === 'manufacturer' &&
                 auth()->user()->supplier
@@ -109,7 +127,12 @@ $catalogCategories = Category::with('children')
                         );
                     }
                 )
-                    ->whereIn('status', ['pending', 'supplier_offer', 'rejected', 'admin_review'])
+                    ->whereIn('status', [
+                        'pending',
+                        'supplier_offer',
+                        'rejected',
+                        'admin_review',
+                    ])
                     ->get();
 
                 $disputeCount = $sellerOpenDisputes->count();
@@ -123,46 +146,60 @@ $catalogCategories = Category::with('children')
             }
         }
 
-        //Wishlist
 
-        $wishlistCount = Wishlist::where('buyer_type', ActiveContext::type())
-    ->where('buyer_id', ActiveContext::id())
-    ->count();
 
-                    //Cart
-$cartCount = CartItem::where('buyer_type', ActiveContext::type())
-    ->where('buyer_id', ActiveContext::id())
-    ->sum('quantity');
+        // ---------------------------------------------------------
+        // BUYER ENTITY
+        // ---------------------------------------------------------
+
+        $wishlistCount = 0;
+        $cartCount = 0;
+
+        if (auth()->check()) {
+
+            $buyer = $this->context->buyerProfile();
+
+            if ($buyer) {
+
+                $wishlistCount = Wishlist::query()
+                    ->where('buyer_type', $buyer::class)
+                    ->where('buyer_id', $buyer->getKey())
+                    ->count();
+
+                $cartCount = CartItem::query()
+                    ->where('buyer_type', $buyer::class)
+                    ->where('buyer_id', $buyer->getKey())
+                    ->sum('quantity');
+            }
+        }
 
         $view->with([
             'catalogCategories' => $catalogCategories,
+
             'countries' => $countries,
             'currentCountry' => $currentCountry,
             'currentCountryName' => $currentCountryName,
             'mainCountries' => $mainCountries,
             'otherCountries' => $otherCountries,
+
             'currencies' => $currencies,
             'currentCurrencyCode' => $currentCurrencyCode,
             'currentCurrency' => $currentCurrency,
             'mainCurrencies' => $mainCurrencies,
             'otherCurrencies' => $otherCurrencies,
+
             'languages' => $languages,
             'currentLang' => $currentLang,
-             //dispute
-             'disputeCount' => $disputeCount,
-             'disputeLink' => $disputeLink,
-             //Wishlist
-             'wishlistCount' => $wishlistCount,
-    //Cart
-    'cartCount' => $cartCount,
 
+            // disputes
+            'disputeCount' => $disputeCount,
+            'disputeLink' => $disputeLink,
 
+            // wishlist
+            'wishlistCount' => $wishlistCount,
 
-
-
-
-
-
-]);
+            // cart
+            'cartCount' => $cartCount,
+        ]);
          }
 }

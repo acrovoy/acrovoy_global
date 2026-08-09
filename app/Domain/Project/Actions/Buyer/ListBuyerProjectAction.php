@@ -10,9 +10,13 @@ class ListBuyerProjectAction
 {
     public function execute(ActiveContextService $context)
     {
+        $buyer = $context->buyerProfile();
+
+        abort_unless($buyer, 403);
+
         $query = Project::query()
-            ->where('buyer_type', $context->type())
-            ->where('buyer_id', $context->id());
+            ->where('buyer_type', $buyer::class)
+            ->where('buyer_id', $buyer->getKey());
 
         return [
             'active' => (clone $query)
