@@ -110,4 +110,55 @@ class ProductPolicy extends BasePolicy
     {
         return false;
     }
+
+
+        /**
+     * Contact supplier about product.
+     *
+     * Buyer can contact the supplier if the product
+     * belongs to an active supplier.
+     */
+    public function contact(User $user, Product $product): bool
+    {
+        return $product->supplier !== null;
+    }
+
+
+    /**
+     * Add product to a project.
+     *
+     * Only users working in buyer context can add
+     * products to their projects.
+     */
+    public function addToProject(User $user, Product $product): bool
+    {
+        return $product->supplier !== null
+            && $this->isBuyer();
+    }
+
+
+    /**
+     * Request product customization.
+     *
+     * Customization is available only when the supplier
+     * offers customization for this product.
+     */
+    public function customize(User $user, Product $product): bool
+    {
+        return $product->supplier !== null
+            && (bool) $product->customization
+            && $this->isBuyer();
+    }
+
+
+    /**
+ * Add product to wishlist.
+ */
+public function addToWishlist(User $user, Product $product): bool
+{
+    return $this->isBuyer()
+        && $this->buyer() !== null;
+}
+
+
 }

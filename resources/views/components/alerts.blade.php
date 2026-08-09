@@ -9,19 +9,21 @@
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0 translate-y-2 scale-95"
     x-init="init()"
-    class="fixed top-6 right-6 z-[9999] w-full max-w-md pointer-events-none"
->
+    class="fixed top-6 right-6 z-[9999] w-full max-w-md pointer-events-none">
     <div
         class="pointer-events-auto relative overflow-hidden rounded-2xl border border-gray-200 bg-white/95 backdrop-blur-xl shadow-[0_18px_60px_rgba(15,23,42,.12)]">
+
 
         {{-- Цветная полоска --}}
         <div
             class="absolute left-0 top-0 bottom-0 w-1"
             :class="{
-                'bg-emerald-500': type === 'success',
-                'bg-red-500': type === 'error',
-                'bg-amber-500': type === 'warning'
-            }">
+        'bg-emerald-500': type === 'success',
+        'bg-red-500': type === 'error',
+        'bg-amber-500': type === 'warning',
+        'bg-blue-500': type === 'guest',
+        'bg-slate-500': type === 'info'
+    }">
         </div>
 
         <div class="flex items-start gap-4 px-6 py-5">
@@ -30,12 +32,14 @@
             <div
                 class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
                 :class="{
-                    'bg-emerald-50 border-emerald-100': type === 'success',
-                    'bg-red-50 border-red-100': type === 'error',
-                    'bg-amber-50 border-amber-100': type === 'warning'
-                }">
+            'bg-emerald-50 border-emerald-100': type === 'success',
+            'bg-red-50 border-red-100': type === 'error',
+            'bg-amber-50 border-amber-100': type === 'warning',
+            'bg-blue-50 border-blue-100': type === 'guest',
+            'bg-slate-50 border-slate-100': type === 'info'
+        }">
 
-                {{-- success --}}
+                {{-- Success --}}
                 <svg
                     x-show="type === 'success'"
                     class="w-5 h-5 text-emerald-600"
@@ -46,10 +50,10 @@
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        d="M5 13l4 4L19 7"/>
+                        d="M5 13l4 4L19 7" />
                 </svg>
 
-                {{-- error --}}
+                {{-- Error --}}
                 <svg
                     x-show="type === 'error'"
                     class="w-5 h-5 text-red-600"
@@ -60,10 +64,10 @@
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        d="M12 9v4m0 4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+                        d="M12 9v4m0 4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
                 </svg>
 
-                {{-- warning --}}
+                {{-- Warning --}}
                 <svg
                     x-show="type === 'warning'"
                     class="w-5 h-5 text-amber-600"
@@ -74,7 +78,43 @@
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        d="M12 8v4m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.66 18h16.68a1 1 0 00.87-1.5l-7.5-13a1 1 0 00-1.74 0z"/>
+                        d="M12 8v4m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.66 18h16.68a1 1 0 00.87-1.5l-7.5-13a1 1 0 00-1.74 0z" />
+                </svg>
+
+                {{-- Guest --}}
+                <svg
+                    x-show="type === 'guest'"
+                    class="w-5 h-5 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15 19a4 4 0 00-8 0" />
+                    <circle
+                        cx="11"
+                        cy="9"
+                        r="3" />
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M17 11l2 2 4-4" />
+                </svg>
+
+                {{-- Info --}}
+                <svg
+                    x-show="type === 'info'"
+                    class="w-5 h-5 text-slate-600"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 16v-4m0-4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
                 </svg>
 
             </div>
@@ -84,12 +124,16 @@
                 <div
                     class="text-sm font-semibold text-gray-900"
                     x-text="
-                        type === 'success'
-                            ? 'Success'
-                            : (type === 'error'
-                                ? 'Something went wrong'
-                                : 'Please check the form')
-                    ">
+                type === 'success'
+                    ? 'Success'
+                    : (type === 'error'
+                        ? 'Something went wrong'
+                        : (type === 'guest'
+                            ? 'Registration required'
+                            : (type === 'info'
+                                ? 'Information'
+                                : 'Please check the form')))
+            ">
                 </div>
 
                 <div
@@ -108,6 +152,11 @@
         </div>
 
     </div>
+
+
+
+
+
 </div>
 
 <script>

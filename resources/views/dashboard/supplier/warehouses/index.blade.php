@@ -186,64 +186,90 @@
 
 @include('dashboard.supplier.warehouses.partials.drawer-create')
 
-{{-- drawer --}}
-<div id="attachLocationDrawer" class="fixed inset-0 z-50 hidden">
 
-    {{-- backdrop --}}
-    <div class="absolute inset-0 bg-gray-900 bg-opacity-30"
+{{-- DRAWER --}}
+<div id="attachLocationDrawer"
+     class="fixed inset-0 z-50 hidden">
+
+    {{-- BACKDROP --}}
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
          onclick="closeAttachLocationDrawer()"></div>
 
-    {{-- panel --}}
+    {{-- DRAWER --}}
     <div id="attachLocationPanel"
-         class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl
-                transform translate-x-full transition duration-300">
+         class="absolute right-0 top-0 h-full w-[460px] bg-white shadow-2xl
+                transform translate-x-full transition-transform duration-300
+                flex flex-col">
 
+        {{-- HEADER --}}
+        <div class="px-6 py-5 border-b bg-gray-50">
+            <div class="flex items-start justify-between gap-4">
 
-                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Attach Location
+                    </h3>
 
+                    <p class="text-sm text-gray-500 mt-1">
+                        Attach a location to this warehouse for shipping and inventory.
+                    </p>
+                </div>
 
+                <button type="button"
+                        onclick="closeAttachLocationDrawer()"
+                        class="shrink-0 text-gray-400 hover:text-gray-700
+                               transition text-xl leading-none">
+                    ✕
+                </button>
 
-        <div class="flex justify-between items-center px-5 py-4 border-b">
-            <h3 class="text-lg font-semibold text-gray-900">
-                Attach Location
-            </h3>
-
-
-
-           
-
-
-
-            <button onclick="closeAttachLocationDrawer()"
-                    class="text-gray-500 hover:text-gray-800 text-xl">
-                ✕
-            </button>
+            </div>
         </div>
 
-        <form method="POST" action="{{ route('supplier.warehouses.attach-location') }}" class="p-5 flex flex-col gap-4">
+        {{-- FORM --}}
+        <form method="POST"
+              action="{{ route('supplier.warehouses.attach-location') }}"
+              class="flex flex-col flex-1">
 
             @csrf
 
-            <input type="hidden" name="warehouse_id" id="attach_warehouse_id">
+            <input type="hidden"
+                   name="warehouse_id"
+                   id="attach_warehouse_id">
 
-            <x-location-picker :countries="$countries" />
+            {{-- BODY --}}
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-            <div class="flex justify-end gap-2 pt-4">
+                <x-location-picker :countries="$countries" />
+
+            </div>
+
+            {{-- FOOTER --}}
+            <div class="border-t bg-white px-6 py-4
+                        flex items-center justify-between gap-2">
+
                 <button type="button"
                         onclick="closeAttachLocationDrawer()"
-                        class="px-4 py-2 text-sm border rounded-lg">
+                        class="px-4 py-2 text-sm rounded-lg
+                               border border-gray-200 text-gray-600
+                               hover:bg-gray-50 transition">
                     Cancel
                 </button>
 
                 <button type="submit"
-                        class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg">
+                        class="px-4 py-2 text-sm rounded-lg
+                               bg-gray-900 text-white
+                               hover:bg-gray-800 transition shadow-sm">
                     Attach
                 </button>
+
             </div>
 
         </form>
+
     </div>
 </div>
+
+
 
 <script>
 function closeAttachLocationDrawer() {

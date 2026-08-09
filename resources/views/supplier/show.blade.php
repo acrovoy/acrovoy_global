@@ -22,6 +22,9 @@ default => '#d1d5db',
 
 
 <section class="bg-[#F7F3EA] py-8">
+
+    
+
     <div class="container mx-auto px-6">
 
         {{-- Breadcrumb --}}
@@ -172,40 +175,133 @@ default => '#d1d5db',
                         <div class="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-semibold mb-3">
                             Communication
                         </div>
+                        @if(auth()->check())
 
+                            @if($canContactSupplier)
+                            
+                            
                         <button
                             class="open-conversation
-        inline-flex
-        items-center
-        gap-2
-        px-3
-        py-1.5
-        rounded-lg
-        border
-        border-stone-200
-        bg-white
-        text-stone-600
-        text-xs
-        font-medium
-        hover:border-stone-300
-        hover:bg-stone-50
-        hover:text-stone-900
-        transition
-        shadow-sm">
+                                inline-flex
+                                items-center
+                                gap-2
+                                px-3
+                                py-1.5
+                                rounded-lg
+                                border
+                                border-stone-200
+                                bg-white
+                                text-stone-600
+                                text-xs
+                                font-medium
+                                hover:border-stone-300
+                                hover:bg-stone-50
+                                hover:text-stone-900
+                                transition
+                                shadow-sm">
 
-                            <svg class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
+                                                    <svg class="w-5 h-5"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c0-4.418 3.582-8 9-8s9 3.582 9 8z" />
+                                                    </svg>
 
-                            Chat with Supplier
+                                                    Chat with Supplier
 
-                        </button>
+                                                </button>
+
+                                            
+
+                        @else
+
+                        <button
+                            type="button"
+                                onclick="dispatchAlert(
+                                    'info',
+                                    'Only buyers can contact suppliers.'
+                                )"
+                                                    class="
+                                inline-flex
+                                items-center
+                                gap-2
+                                px-3
+                                py-1.5
+                                rounded-lg
+                                border
+                                border-stone-200
+                                bg-white
+                                text-stone-600
+                                text-xs
+                                font-medium
+                                hover:border-stone-300
+                                hover:bg-stone-50
+                                hover:text-stone-900
+                                transition
+                                shadow-sm">
+
+                                                    <svg class="w-5 h-5"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c0-4.418 3.582-8 9-8s9 3.582 9 8z" />
+                                                    </svg>
+
+                                                    Chat with Supplier
+
+                                                </button>
+
+
+                        
+
+                        @endif
+                    @else
+                        <button
+                                type="button"
+                                onclick="dispatchAlert(
+                                    'guest',
+                                    'Please register or log in to contact the supplier.'
+                                )"
+                                class="
+                            inline-flex
+                            items-center
+                            gap-2
+                            px-3
+                            py-1.5
+                            rounded-lg
+                            border
+                            border-stone-200
+                            bg-white
+                            text-stone-600
+                            text-xs
+                            font-medium
+                            hover:border-stone-300
+                            hover:bg-stone-50
+                            hover:text-stone-900
+                            transition
+                            shadow-sm">
+
+                                <svg class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c0-4.418 3.582-8 9-8s9 3.582 9 8z" />
+                                </svg>
+
+                                Chat with Supplier
+
+                            </button>
+                        @endif
+
 
                     </div>
 

@@ -8,6 +8,8 @@ use App\Models\Rfq;
 use App\Domain\Negotiation\Models\RfqOffer;
 use App\Models\Warehouse;
 use App\Models\User;
+use App\Models\Buyer;
+use App\Models\Supplier;
 
 
 use App\Policies\ProductPolicy;
@@ -17,9 +19,16 @@ use App\Policies\RfqPolicy;
 use App\Domain\Negotiation\Policies\RfqOfferPolicy;
 use App\Policies\WarehousePolicy;
 use App\Policies\TeamPolicy;
+use App\Policies\BuyerCompanyPolicy;
+use App\Policies\SupplierCompanyPolicy;
+use App\Policies\ConversationPolicy;
+
+
+
 
 // use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -33,6 +42,9 @@ class AuthServiceProvider extends ServiceProvider
         Warehouse::class => WarehousePolicy::class,
         ShippingTemplate::class => ShippingTemplatePolicy::class,
         Product::class => ProductPolicy::class,
+        Buyer::class => BuyerCompanyPolicy::class,
+        Supplier::class => SupplierCompanyPolicy::class,
+
         Order::class => OrderPolicy::class,
         
         User::class => TeamPolicy::class,
@@ -51,6 +63,13 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Gate::define('contactSupplier', function (
+            User $user,
+            Supplier $supplier
+        ) {
+            return app(
+                \App\Services\Company\ActiveContextService::class
+            )->isBuyer();
+        });
     }
 }

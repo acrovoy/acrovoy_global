@@ -4,7 +4,7 @@
 <section class="bg-[#F7F3EA] py-8">
     <div class="container mx-auto px-6">
 
-
+    <x-alerts />
 
 
         {{-- Breadcrumb --}}
@@ -62,27 +62,73 @@
 
                                 {{ $product1->name }}
 
-                                {{-- Wishlist --}}
-                                <button
-                                    class="wishlist-toggle text-gray-400 hover:text-red-500 transition"
-                                    data-product-id="{{ $product1->id }}"
-                                    title="Wishlist">
+                               
+{{-- Wishlist --}}
 
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="w-6 h-6 wishlist-icon transition {{ $inWishlist ? 'text-red-500' : 'text-gray-500' }}"
-                                        viewBox="0 0 24 24"
-                                        fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
-                                        stroke="currentColor"
-                                        stroke-width="2">
+@auth
 
-                                        <path stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
-                     l1.318-1.318a4.5 4.5 0 016.364 6.364
-                     L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
-                                    </svg>
+    @can('addToWishlist', $product1)
 
-                                </button>
+        <button
+            type="button"
+            class="wishlist-toggle text-gray-400 hover:text-red-500 transition"
+            data-product-id="{{ $product1->id }}"
+            title="Wishlist">
+
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-6 h-6 wishlist-icon transition {{ $inWishlist ? 'text-red-500' : 'text-gray-500' }}"
+                viewBox="0 0 24 24"
+                fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
+                stroke="currentColor"
+                stroke-width="2">
+
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
+                       l1.318-1.318a4.5 4.5 0 016.364 6.364
+                       L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+
+            </svg>
+
+        </button>
+
+    @endcan
+
+@else
+
+    <button
+        type="button"
+        onclick="dispatchAlert(
+            'guest',
+            'Please register or log in to add products to your wishlist.'
+        )"
+        class="wishlist-toggle text-gray-400 hover:text-red-500 transition"
+        title="Wishlist">
+
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-6 h-6 wishlist-icon transition"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2">
+
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
+                   l1.318-1.318a4.5 4.5 0 016.364 6.364
+                   L12 21.682l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+
+        </svg>
+
+    </button>
+
+@endauth
+
+
 
                             </h1>
 
@@ -151,6 +197,9 @@
                     {{-- RIGHT BLOCK ACTIONS --}}
                     <div class="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-3 lg:min-w-[200px]">
 
+                    @auth 
+                    @can('addToProject', $product1)
+
                         {{-- Add to project --}}
                         <div class="w-full sm:w-auto lg:w-[180px] text-left sm:text-left lg:text-right mb-2">
 
@@ -190,6 +239,51 @@
 
                         </div>
 
+
+                        @endcan 
+                        
+                        @else
+
+                        {{-- Add to project for guest--}}
+                        <div class="w-full sm:w-auto lg:w-[180px] text-left sm:text-left lg:text-right mb-2">
+
+                            <button
+                                type="button" onclick="dispatchAlert( 'guest', 'Please register or log in to add products to a project.' )" title="Add to project"
+                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2
+                           px-4 py-2
+                           rounded-lg
+                           bg-gray-500 text-white
+                           text-sm font-semibold
+                           shadow-sm
+                           hover:bg-gray-700 hover:shadow
+                           transition">
+
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor">
+
+                                        <path stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 4v16m8-8H4" />
+                                    </svg>
+                                </span>
+
+                                <span>Add to project</span>
+
+                            </button>
+
+                            <p class="mt-1 text-xs text-gray-500 leading-snug">
+                                Organize your products into projects — create a project in your dashboard first.
+                            </p>
+
+                        </div>
+
+
+                        @endauth
 
                         {{-- Edit --}}
                         @can('update', $product1)
@@ -381,42 +475,128 @@
                         </div>
                         <div>
 
-                            @if($product1->customization)
-                            <button
-    @click="showCustomizationBox = !showCustomizationBox"
-    title="Need Customization"
-    class="w-full flex items-center justify-center gap-2
-           px-4 py-2
-           rounded-lg
-           bg-gray-500 text-white
-           text-sm font-semibold
-           shadow-sm
-           hover:bg-gray-700 hover:shadow
-           transition">
-
-    <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 4v16m8-8H4"/>
-        </svg>
-    </span>
-
-    <span class="truncate">Customization</span>
-
-</button>
-                            @else
-                            <p class="text-gray-500">{{ __('product/product_show.customization') }}</p>
-                            <p class="font-semibold text-gray-900">
-                                Not available
-                            </p>
                             
-                            @endif
+                        
+                        
+
+@auth
+
+    @if($product1->customization)
+
+        @can('customize', $product1)
+
+            <button
+                @click="showCustomizationBox = !showCustomizationBox"
+                title="Need Customization"
+                class="w-full flex items-center justify-center gap-2
+                       px-4 py-2
+                       rounded-lg
+                       bg-gray-500 text-white
+                       text-sm font-semibold
+                       shadow-sm
+                       hover:bg-gray-700 hover:shadow
+                       transition">
+
+                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 shrink-0">
+
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"/>
+
+                    </svg>
+
+                </span>
+
+                <span class="truncate">Customization</span>
+
+            </button>
+
+        @endcan
+
+    @else
+
+        <p class="text-gray-500">
+            {{ __('product/product_show.customization') }}
+        </p>
+
+        <p class="font-semibold text-gray-900">
+            Not available
+        </p>
+
+    @endif
+
+@else
+
+    @if($product1->customization)
+
+        <button
+            type="button"
+            onclick="dispatchAlert(
+                'guest',
+                'Please register or log in to request product customization.'
+            )"
+            title="Need Customization"
+            class="w-full flex items-center justify-center gap-2
+                   px-4 py-2
+                   rounded-lg
+                   bg-gray-500 text-white
+                   text-sm font-semibold
+                   shadow-sm
+                   hover:bg-gray-700 hover:shadow
+                   transition">
+
+            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 shrink-0">
+
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"/>
+
+                </svg>
+
+            </span>
+
+            <span class="truncate">Customization</span>
+
+        </button>
+
+    @else
+
+        <p class="text-gray-500">
+            {{ __('product/product_show.customization') }}
+        </p>
+
+        <p class="font-semibold text-gray-900">
+            Not available
+        </p>
+
+    @endif
+
+@endauth
+
+
+
+
+
+
+
                             </p>
                         </div>
                     </div>
@@ -443,8 +623,9 @@
 
 
 
+@auth
 
-
+@can('addToProject', $product1)
                 {{-- CTA Panel --}}
                 <div class="mt-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
 
@@ -454,7 +635,7 @@
                         <button
                             type="submit"
                             class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
-               text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
+                                    text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
                             {{ __('product/product_show.checkout') }}
                         </button>
                     </form>
@@ -463,17 +644,17 @@
                         <button class="open-conversation w-full border border-gray-300 py-3 rounded-xl
                                    text-gray-800 font-medium shadow-sm
                                    hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105" data-subject-type="App\Models\Product"
-    data-subject-id="{{ $product1->id }}">
+                                    data-subject-id="{{ $product1->id }}">
                             {{ __('product/product_show.contact_supllire') }}
                         </button>
 
                         
 
-<x-conversation.drawer
-    subjectType="App\Models\Product"
-    :subjectId="$product1->id"
-    :messagesUrl="url('/dashboard/buyer/messenger/conversations')"
-/>
+                            <x-conversation.drawer
+                                subjectType="App\Models\Product"
+                                :subjectId="$product1->id"
+                                :messagesUrl="url('/dashboard/buyer/messenger/conversations')"
+                            />
 
 
                         <form method="POST" action="{{ route('buyer.cart.add', $product1->id) }}">
@@ -495,16 +676,77 @@
 
 
 
+                </div>
+
+@endcan
+
+@else
+<div class="mt-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
+
+                    
+
+                        <button
+                            type="button"
+                            onclick="dispatchAlert(
+            'guest',
+            'Please register or log in to proceed to checkout.'
+        )"
+                            class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
+                                    text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
+                            {{ __('product/product_show.checkout') }}
+                        </button>
+                 
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button 
+                        type="button"
+                        onclick="dispatchAlert(
+                'guest',
+                'Please register or log in to contact the supplier.'
+            )"
+                        class="w-full border border-gray-300 py-3 rounded-xl
+                                   text-gray-800 font-medium shadow-sm
+                                   hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105" data-subject-type="App\Models\Product"
+                                    data-subject-id="{{ $product1->id }}">
+                            {{ __('product/product_show.contact_supllire') }}
+                        </button>
+
+                        
+
+                            <x-conversation.drawer
+                                subjectType="App\Models\Product"
+                                :subjectId="$product1->id"
+                                :messagesUrl="url('/dashboard/buyer/messenger/conversations')"
+                            />
+
+
+                        
+                            @csrf
+                            <button
+                                type="button"
+                                onclick="dispatchAlert(
+                'guest',
+                'Please register or log in to add products to your cart.'
+            )"
+                                class="w-full border border-gray-300 py-3 rounded-xl
+                                        text-gray-800 font-medium shadow-sm
+                                        hover:border-black hover:text-black hover:shadow-md
+                                        transition-all transform hover:scale-105">
+                                {{ __('product/product_show.add_to_cart') }}
+                            </button>
+                     
 
 
 
 
-
-
+                    </div>
 
 
 
                 </div>
+
+
+@endif
 
                 <p class="text-gray-700 mb-2 leading-relaxed">{{ __('product/product_show.place_of_origin') }} <strong>{{ $product1->country?->name ?? 'Country not specified' }}</strong>
                 </p>

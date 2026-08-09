@@ -63,6 +63,9 @@ $company = $this->context->buyerProfile();
 
 abort_if(!$company, 404);
 
+$this->authorize('view', $company);
+
+
     $company->load([
         'businessTypes.translation',
         'country',
@@ -83,214 +86,8 @@ abort_if(!$company, 404);
 }
 
 
-
-    /**
-     * Показ страницы профиля компании
-     */
-    public function companyProfile()
-    {
-        
-
-    $company = $this->context->entity();
-
-        if ($company) {
-            $company->load([
-                'exportMarkets.translation',
-                'businessTypes.translation',
-                'country',
-                'media',
-                'profile'
-            ]);
-        } else {
-            $company = new \App\Models\Supplier();
-        }
-
-        $exportMarkets = \App\Models\ExportMarket::with('translations')->get();
-
-        $manufacturingCapabilities = \App\Models\ManufacturingCapability::visible()
-            ->ordered()
-            ->with('translations')
-            ->get();
-
-        $supplierTypes = \App\Models\BusinessType::with('translations')->get();
-
-        $countries = Country::withCurrentTranslation()
-            ->orderBy('name')
-            ->get();
-
-        $selectedTypes = $company->businessTypes?->pluck('id')->toArray() ?? [];
-
-        $selectedMarkets = $company->exportMarkets?->pluck('id')->toArray() ?? [];
-
-        $profile = $company->profile;
-
-$selectedmanufacturingCapabilities =
-    $profile?->manufacturingCapabilities?->pluck('id')->toArray() ?? [];
-
-        return view('dashboard.supplier.company-profile.company-profile', compact(
-            'company',
-            'countries',
-            'exportMarkets',
-            'businessTypes',
-            'selectedTypes',
-            'selectedMarkets',
-            'manufacturingCapabilities',
-            'selectedmanufacturingCapabilities'
-        ));
-    }
-
-    /**
-     * Обновление профиля компании
-     */
-    public function updateCompany(Request $request)
-    {
-       
-
-    $company = $this->context->entity();
- 
-        if (!$company) {
-            return back()->withErrors('Supplier not found');
-        }
-
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'short_description' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'email' => 'required|email',
-            'phone' => 'nullable|string|max:50',
-            'country_id' => 'nullable|integer',
-            'address' => 'nullable|string|max:500',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'catalog_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ]);
-
-        /** LOGO */
-        if ($request->hasFile('logo')) {
-
-            unset($data['logo']); 
-
-            $oldLogo = $company->media()
-                ->where('collection', 'company_logos')
-                ->first();
-
-            if ($oldLogo) {
-                DeleteMediaJob::dispatch($oldLogo->uuid);
-            }
-
-            $file = $request->file('logo');
-
-            $dto = new UploadMediaDTO(
-                file: $file,
-                model: $company,
-                collection: 'company_logos',
-                mediaRole: 'company_logo',
-                private: false,
-                originalFileName: $file?->getClientOriginalName(),
-                sortOrder: 0,      
-                isMain: true
-            );
-
-            $this->mediaService->upload($dto);
-        }
-
-        /** CATALOG IMAGE */
-        if ($request->hasFile('catalog_image')) {
-
-            if ($company->catalog_image) {
-                Storage::disk('public')->delete($company->catalog_image);
-            }
-
-            $data['catalog_image'] = $request->file('catalog_image')
-                ->store('company-catalog', 'public');
-        }
-
-        /** SLUG GENERATION */
-        $slug = Str::slug($data['name'], '-');
-
-        $originalSlug = $slug;
-        $counter = 1;
-
-        while (\App\Models\Supplier::where('slug', $slug)
-            ->where('id', '!=', $company->id)
-            ->exists()) {
-
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
-        }
-
-        $data['slug'] = $slug;
-
-        $company->update($data);
-
-        //Saveing profile details
-        $profileData = $request->only([
-            'about_us_description',
-            'founded_year',
-            'total_employees',
-            'manufacturing_description',
-            'factory_area',
-            'production_lines',
-            'monthly_capacity',
-            'moq',
-            'lead_time_days',
-            'annual_export_revenue',
-            'registration_capital'
-        ]);
-
-        if (!empty(array_filter($profileData))) {
-
-            $company->profile()->updateOrCreate(
-                ['supplier_id' => $company->id],
-                $profileData
-            );
-        }
-
-
-        /** SUPPLIER TYPES */
-        if ($request->filled('supplier_types_selected')) {
-
-            $typeIds = collect(
-                explode(',', $request->supplier_types_selected)
-            )->filter()->map(fn($id) => (int)$id)->values();
-
-            $company->supplierTypes()->sync($typeIds);
-        }
-
-
-        
-        /** MANUFACTURING CAPABILITIES */
-        if ($request->manufacturing_capabilities_selected) {
-
-            $ids = explode(',', $request->manufacturing_capabilities_selected);
-            $profile = $company->profile;
-
-             $profile->manufacturingCapabilities()->sync($ids);
-
-        } else {
-            $profile = $company->profile;
-
-             $profile->manufacturingCapabilities()->detach();
-        }
-
-
-        /** EXPORT MARKETS */
-        if ($request->filled('export_markets_selected')) {
-
-            $marketIds = collect(
-                explode(',', $request->export_markets_selected)
-            )->filter()->map(fn($id) => (int)$id)->values();
-
-            $company->exportMarkets()->sync($marketIds);
-        }
-
-        return redirect()
-            ->route('supplier.company.profile')
-            ->with('success', 'Company profile updated successfully.');
-    }
-
-    /**
-     * Delete certificate
-     */
+   
+  
     
 
     /**
@@ -298,30 +95,17 @@ $selectedmanufacturingCapabilities =
      */
     public function uploadCertificate(Request $request)
 {
+
+$buyer = $this->context->buyer();
+
+    abort_unless($buyer, 404);
+
+    $this->authorize('update', $buyer);
+
+
     $request->validate([
         'certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
     ]);
-
-    $buyer = $this->context->buyer();
-
-    if (!$buyer) {
-
-        $identity = $this->context->identity();
-
-        $buyer = \App\Models\Buyer::where(
-            'buyerable_type',
-            $identity['entity_type']
-        )->where(
-            'buyerable_id',
-            $identity['entity_id']
-        )->first();
-    }
-
-    if (!$buyer) {
-        return response()->json([
-            'message' => 'Buyer profile not found.'
-        ], 404);
-    }
 
     // Decode metadata JSON from frontend
     $metadata = [];
@@ -330,13 +114,15 @@ $selectedmanufacturingCapabilities =
         $metadata = json_decode($request->input('metadata'), true) ?? [];
     }
 
+    $file = $request->file('certificate');
+
     $dto = new UploadMediaDTO(
-        file: $request->file('certificate'),
+        file: $file,
         model: $buyer,
         collection: 'buyer_certificates',
         mediaRole: 'certificate',
         private: false,
-        originalFileName: $request->file('certificate')->getClientOriginalName(),
+        originalFileName: $file->getClientOriginalName(),
         metadata: $metadata,
         sortOrder: 0,
         isMain: true
@@ -353,6 +139,9 @@ $selectedmanufacturingCapabilities =
     ]);
 }
 
+  /**
+     * Delete certificate
+     */
     
 public function deleteCertificate($id)
 {
@@ -360,20 +149,9 @@ public function deleteCertificate($id)
 
         $buyer = $this->context->buyer();
 
-        if (!$buyer) {
-
-            $identity = $this->context->identity();
-
-            $buyer = \App\Models\Buyer::where(
-                'buyerable_type',
-                $identity['entity_type']
-            )->where(
-                'buyerable_id',
-                $identity['entity_id']
-            )->first();
-        }
-
         abort_unless($buyer, 404);
+
+        $this->authorize('update', $buyer);
 
         $media = $buyer->media()
             ->where('collection', 'buyer_certificates')
@@ -407,24 +185,9 @@ public function deleteCertificate($id)
 {
     $buyer = $this->context->buyer();
 
-    if (!$buyer) {
+    abort_unless($buyer, 404);
 
-        $identity = $this->context->identity();
-
-        $buyer = \App\Models\Buyer::where(
-            'buyerable_type',
-            $identity['entity_type']
-        )->where(
-            'buyerable_id',
-            $identity['entity_id']
-        )->first();
-    }
-
-    if (!$buyer) {
-        return response()->json([
-            'error' => 'Buyer not found'
-        ], 404);
-    }
+    $this->authorize('update', $buyer);
 
     $request->validate([
         'photos.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096',
@@ -466,20 +229,9 @@ public function deleteFactoryPhoto($id)
 {
     $buyer = $this->context->buyer();
 
-    if (!$buyer) {
-
-        $identity = $this->context->identity();
-
-        $buyer = \App\Models\Buyer::where(
-            'buyerable_type',
-            $identity['entity_type']
-        )->where(
-            'buyerable_id',
-            $identity['entity_id']
-        )->first();
-    }
-
     abort_unless($buyer, 404);
+
+    $this->authorize('update', $buyer);
 
     $media = $buyer->media()
         ->where('collection', 'factory_photos')
@@ -499,26 +251,9 @@ public function updateLogo(Request $request)
 {
     $company = $this->context->buyer();
 
-    if (!$company) {
+    abort_unless($company, 404);
 
-        $identity = $this->context->identity();
-
-        $company = \App\Models\Buyer::where(
-            'buyerable_type',
-            $identity['entity_type']
-        )
-        ->where(
-            'buyerable_id',
-            $identity['entity_id']
-        )
-        ->first();
-    }
-
-    if (!$company) {
-        return response()->json([
-            'message' => 'Buyer not found'
-        ], 404);
-    }
+    $this->authorize('update', $company);
 
     $request->validate([
         'logo' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
@@ -556,33 +291,32 @@ public function updateLogo(Request $request)
 
 public function drawer(string $section)
 {
-     $participant = $this->context->entity();
+    $participant = $this->context->entity();
 
+    if ($participant instanceof \App\Models\User) {
 
-if ($participant instanceof \App\Models\User) {
+        $company = Buyer::where(
+            'buyerable_type',
+            get_class($participant)
+        )
+        ->where(
+            'buyerable_id',
+            $participant->id
+        )
+        ->first();
 
-    $company = Buyer::where(
-        'buyerable_type',
-        get_class($participant)
-    )
-    ->where(
-        'buyerable_id',
-        $participant->id
-    )
-    ->first();
+    } else {
 
-} else {
+        $company = $participant;
+    }
 
-    $company = $participant;
-}
+    abort_unless($company, 404);
 
+    $this->authorize('update', $company);
 
-abort_unless($company,404);
-Log::info('Buyer update: final company', [
+    Log::info('Buyer update: final company', [
         'id' => $company->id,
         'name' => $company->name,
-        
-        
     ]);
 
     $data = [
@@ -594,24 +328,21 @@ Log::info('Buyer update: final company', [
         $data['countries'] = Country::orderBy('name')->get();
     }
 
-
     if ($section === 'overview') {
-               
+
         $targetType = $this->context->isPersonal()
-    ? 'buyer_individual'
-    : 'buyer_company';
+            ? 'buyer_individual'
+            : 'buyer_company';
 
-$data['businessTypes'] = BusinessType::with('translation')
-    ->where('target_type', $targetType)
-    ->orderBy('slug')
-    ->get();
-
+        $data['businessTypes'] = BusinessType::with('translation')
+            ->where('target_type', $targetType)
+            ->orderBy('slug')
+            ->get();
     }
 
-    
-   
-
     if ($section === 'members' && $this->context->isCompany()) {
+         $this->authorize('manageMembers', $company);
+         
         $data['members'] = $company->members()
             ->with('user')
             ->get();
@@ -627,11 +358,7 @@ public function update(Request $request, string $section)
 {
     $company = $this->context->buyer();
 
-    Log::info('Buyer update: context->buyer()', [
-        'company_id' => $company?->id,
-        'class' => $company ? get_class($company) : null,
-    ]);
-
+    
     if (!$company) {
 
         $identity = $this->context->identity();
@@ -651,7 +378,7 @@ public function update(Request $request, string $section)
 
     abort_unless($company, 404);
 
-   
+   $this->authorize('update', $company);
 
     return match ($section) {
 

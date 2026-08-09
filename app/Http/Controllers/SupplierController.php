@@ -112,6 +112,9 @@ class SupplierController extends Controller
 
 
 
+    $canContactSupplier = auth()->check()
+    && $this->context->isBuyer();
+
         $tabs = config('marketplace.supplier_tabs');
         $activeTab = $request->get('tab', 'profile');
 
@@ -371,6 +374,7 @@ class SupplierController extends Controller
             'wishlistIds',
             'activeCountries',
             'is_personal',
+            'canContactSupplier',
         ));
     }
 }

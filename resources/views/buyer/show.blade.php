@@ -151,48 +151,142 @@ default => '#d1d5db',
 
 
 
-                    {{-- CHAT --}}
-                    <div class="p-4 border-t border-gray-200">
+                   {{-- CHAT --}}
+<div class="p-4 border-t border-gray-200">
 
-                        <div class="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-semibold mb-3">
-                            Communication
-                        </div>
+    <div class="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-semibold mb-3">
+        Communication
+    </div>
 
-                        <button
-                            class="open-conversation
-        inline-flex
-        items-center
-        gap-2
-        px-3
-        py-1.5
-        rounded-lg
-        border
-        border-stone-200
-        bg-white
-        text-stone-600
-        text-xs
-        font-medium
-        hover:border-stone-300
-        hover:bg-stone-50
-        hover:text-stone-900
-        transition
-        shadow-sm">
+    @if(auth()->check())
 
-                            <svg class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                            </svg>
+        @if($canContactBuyer)
 
-                            Chat with Buyer
+            <button
+                type="button"
+                class="open-conversation
+                    inline-flex
+                    items-center
+                    gap-2
+                    px-3
+                    py-1.5
+                    rounded-lg
+                    border
+                    border-stone-200
+                    bg-white
+                    text-stone-600
+                    text-xs
+                    font-medium
+                    hover:border-stone-300
+                    hover:bg-stone-50
+                    hover:text-stone-900
+                    transition
+                    shadow-sm">
 
-                        </button>
+                <svg class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c0-4.418 3.582-8 9-8s9 3.582 9 8z" />
+                </svg>
 
-                    </div>
+                Chat with Buyer
+
+            </button>
+
+        @else
+
+            <button
+                type="button"
+                onclick="dispatchAlert(
+                    'info',
+                    'Only suppliers can contact buyers.'
+                )"
+                class="
+                    inline-flex
+                    items-center
+                    gap-2
+                    px-3
+                    py-1.5
+                    rounded-lg
+                    border
+                    border-stone-200
+                    bg-white
+                    text-stone-600
+                    text-xs
+                    font-medium
+                    hover:border-stone-300
+                    hover:bg-stone-50
+                    hover:text-stone-900
+                    transition
+                    shadow-sm">
+
+                <svg class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c-4.418 0-9 3.582-9 8s4.03 8 9 8z" />
+                </svg>
+
+                Chat with Buyer
+
+            </button>
+
+        @endif
+
+    @else
+
+        <button
+            type="button"
+            onclick="dispatchAlert(
+                'guest',
+                'Please register or log in to contact the buyer.'
+            )"
+            class="
+                inline-flex
+                items-center
+                gap-2
+                px-3
+                py-1.5
+                rounded-lg
+                border
+                border-stone-200
+                bg-white
+                text-stone-600
+                text-xs
+                font-medium
+                hover:border-stone-300
+                hover:bg-stone-50
+                hover:text-stone-900
+                transition
+                shadow-sm">
+
+            <svg class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24">
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8 10h8M8 14h5M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.2-3.2A7.7 7.7 0 013 12c-4.418 0-9 3.582-9 8s4.03 8 9 8z" />
+            </svg>
+
+            Chat with Buyer
+
+        </button>
+
+    @endif
+
+</div>
 
 
                  

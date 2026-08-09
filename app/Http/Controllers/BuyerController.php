@@ -23,6 +23,8 @@ class BuyerController extends Controller
     {
 
 
+    $canContactBuyer = auth()->check()
+    && $this->context->isSupplier();
 
         $tabs = config('marketplace.buyer_tabs');
         $activeTab = $request->get('tab', 'profile');
@@ -116,6 +118,7 @@ if ($buyer->buyerable_type == 'App\Models\User') {
             'activeTab',
             'activeCountries',
             'is_personal',
+            'canContactBuyer',
         ));
     }
 }
