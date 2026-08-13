@@ -1,3 +1,5 @@
+<x-alerts />
+
 {{-- Product Grid --}}
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3  xl:grid-cols-4 gap-8">
     @if($products->count())
@@ -168,6 +170,9 @@
 
                 <div class="flex justify-between items-center gap-2 mt-auto">
                     <div class="flex justify-between items-center gap-2">
+                        
+                    @auth
+                    @if(ActiveContext::isBuyer())
                         <!-- Кнопка Add to Cart -->
                         <form method="POST" action="{{ route('buyer.cart.add', $product->id) }}">
                             @csrf
@@ -193,33 +198,99 @@
 
                         <!-- Кнопка Add to Wishlist -->
                        <button
-    class="wishlist-toggle w-full border border-gray-300 p-1.5 rounded-sm
-           text-gray-800 font-medium shadow-sm
-           hover:border-black hover:text-black hover:shadow-md
-           transition-all transform hover:scale-105 text-sm"
+                            class="wishlist-toggle w-full border border-gray-300 p-1.5 rounded-sm
+                                text-gray-800 font-medium shadow-sm
+                                hover:border-black hover:text-black hover:shadow-md
+                                transition-all transform hover:scale-105 text-sm"
 
-    data-product-id="{{ $product->id }}"
+                            data-product-id="{{ $product->id }}"
 
-    title="Add to Wishlist">
+                            title="Add to Wishlist">
 
-    <svg xmlns="http://www.w3.org/2000/svg"
-         class="h-3 w-3 wishlist-icon {{ $inWishlist ? 'text-red-500' : '' }}"
-         fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
-         viewBox="0 0 24 24"
-         stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-3 w-3 wishlist-icon {{ $inWishlist ? 'text-red-500' : '' }}"
+                                fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
 
-        <path stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
-                 l1.318-1.318a4.5 4.5 0
-                 116.364 6.364L12 21.682
-                 l-7.682-7.682a4.5 4.5 0 010-6.364z" />
-    </svg>
+                                <path stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
+                                        l1.318-1.318a4.5 4.5 0
+                                        116.364 6.364L12 21.682
+                                        l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+                            </svg>
 
-</button>
+                        </button>
+@endif
+                    @else
+
+                     <!-- Кнопка Add to Cart -->
+                        <form method="POST" action="{{ route('buyer.cart.add', $product->id) }}">
+                            @csrf
+                            <button
+                                 type="button"
+                                    onclick="dispatchAlert(
+                                        'guest',
+                                        'Please register or log in to add products to your cart.'
+                                    )"
+                                class="w-full border border-gray-300 p-1.5 rounded-sm
+                                    text-gray-800 font-medium shadow-sm
+                                    hover:border-black hover:text-black hover:shadow-md
+                                    transition-all transform hover:scale-105 text-sm"
+                                title="Add to Cart">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-3 w-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13L17 13M7 13H5.4" />
+                                </svg>
+                            </button>
+                        </form>
+
+                        <!-- Кнопка Add to Wishlist -->
+                       <button
+
+                       type="button"
+                                    onclick="dispatchAlert(
+                                        'guest',
+                                        'Please register or log in to add products to your wishlist.'
+                                    )"
+
+                            class="wishlist-toggle w-full border border-gray-300 p-1.5 rounded-sm
+                                text-gray-800 font-medium shadow-sm
+                                hover:border-black hover:text-black hover:shadow-md
+                                transition-all transform hover:scale-105 text-sm"
+
+                            data-product-id="{{ $product->id }}"
+
+                            title="Add to Wishlist">
+
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-3 w-3 wishlist-icon {{ $inWishlist ? 'text-red-500' : '' }}"
+                                fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
+
+                                <path stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636
+                                        l1.318-1.318a4.5 4.5 0
+                                        116.364 6.364L12 21.682
+                                        l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+                            </svg>
+
+                        </button>
 
 
+                    @endauth
+                  
                     </div>
 
                     <!-- Цена -->

@@ -16,7 +16,7 @@ default => '#d1d5db',
 @endphp
 
 
-
+<x-alerts />
 
 
 
@@ -173,9 +173,9 @@ default => '#d1d5db',
                     <div class="p-4 border-t border-gray-200">
 
                         <div class="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-semibold mb-3">
-                            Communication
+                            Communication1
                         </div>
-                        @if(auth()->check())
+                        @auth
 
                             @if($canContactSupplier)
                             
@@ -300,7 +300,7 @@ default => '#d1d5db',
                                 Chat with Supplier
 
                             </button>
-                        @endif
+                        @endauth
 
 
                     </div>

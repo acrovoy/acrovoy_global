@@ -7,16 +7,16 @@ use Illuminate\Http\Request;
 use App\Facades\ActiveContext;
 use App\Services\Company\ActiveContextService;
 
-use App\Domain\Filters\Supplier\CountryFilter;
+
 use App\Domain\Filters\FilterFactory;
 
-use App\Filters\SupplierFilter;
+
 use App\Models\Supplier;
 use App\Models\Category;
 use App\Models\Country;
 use App\Models\ExportMarket;
 use App\Models\Product;
-use App\Models\User;
+use App\Models\Wishlist;
 
 class SupplierController extends Controller
 {
@@ -338,11 +338,14 @@ class SupplierController extends Controller
         $supplierRating = round($supplier->supplierReviews->avg('rating'), 1);
         $count = $supplier->supplierReviews->count();
 
-        $wishlistIds = auth()->check()
-            ? \App\Models\Wishlist::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
-            ->pluck('product_id')
-            ->toArray()
+        $buyer = ActiveContext::buyerProfile();
+
+        $wishlistIds = $buyer
+            ? Wishlist::query()
+                ->where('buyer_type', $buyer::class)
+                ->where('buyer_id', $buyer->getKey())
+                ->pluck('product_id')
+                ->toArray()
             : [];
 
         if ($supplier->supplierable_type == 'App\Models\User') {
