@@ -9,7 +9,7 @@ $isReadonly = $rfqStatus->isPublished() || $rfqStatus->isClosed();
 
 
 
-<div class="mt-8 pt-6 border-t border-gray-200">
+<div class="mt-8 pt-6 border-t border-gray-200 mb-4">
 
     {{-- HEADER --}}
     <div class="flex items-center justify-between mb-3">

@@ -5,6 +5,8 @@ namespace App\Domain\Negotiation\Actions;
 use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\Negotiation\Models\RfqOfferVersion;
 
+use App\Models\Supplier;
+
 class CreateOfferInitialVersionAction
 {
     public function execute(
@@ -36,7 +38,7 @@ class CreateOfferInitialVersionAction
             'status' => 'draft',
             'is_counter' => 0,
 
-            'owner_type' => get_class($supplier),
+            'owner_type' => Supplier::class,
             'owner_id' => $supplier->id,
 
             'created_by' => $context->user()->id,

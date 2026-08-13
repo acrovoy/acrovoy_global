@@ -5,6 +5,8 @@ namespace App\Domain\Negotiation\Actions;
 use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
 
+use App\Models\Buyer;
+
 class CreateCounterOfferAction
 {
     public function __construct(
@@ -69,7 +71,7 @@ class CreateCounterOfferAction
 
         if ($draftCounter) {
 
-        
+
             return [
                 'mode' => 'draft',
                 'offerVersion' => $supplierVersion,
@@ -90,15 +92,15 @@ class CreateCounterOfferAction
         if ($submittedCounter && $create == false) {
 
 
-        return [
-        'mode' => 'readonly',
-        'offerVersion' => $supplierVersion,
-        'counterVersion' => $submittedCounter,
-        'itemsByAttribute' => $supplierVersion->items->keyBy('attribute_id'),
-        'counterItemsByAttribute' => $submittedCounter->items->load('options')->keyBy('attribute_id'),
-        'versions' => $this->getVersions($offer),
-        'isReadonly' => true,
-        ];
+            return [
+                'mode' => 'readonly',
+                'offerVersion' => $supplierVersion,
+                'counterVersion' => $submittedCounter,
+                'itemsByAttribute' => $supplierVersion->items->keyBy('attribute_id'),
+                'counterItemsByAttribute' => $submittedCounter->items->load('options')->keyBy('attribute_id'),
+                'versions' => $this->getVersions($offer),
+                'isReadonly' => true,
+            ];
         }
 
         /*
@@ -140,32 +142,31 @@ class CreateCounterOfferAction
     private function getAllVersions(RfqOffer $offer)
     {
         return $offer->versions()
-          ->orderByDesc('created_at')
+            ->orderByDesc('created_at')
             ->get();
     }
 
 
     private function getVersionsForBuyerDraftMode(RfqOffer $offer)
-{
-    return $offer->versions()
-        ->where(function ($q) {
+    {
+        return $offer->versions()
+            ->where(function ($q) {
 
-            $q->where(function ($q) {
-                // supplier NON-draft versions
-                $q->where('is_counter', 0)
-                  ->where('status', '!=', 'draft');
+                $q->where(function ($q) {
+                    // supplier NON-draft versions
+                    $q->where('is_counter', 0)
+                        ->where('status', '!=', 'draft');
+                })
+
+                    ->orWhere(function ($q) {
+
+                        $q->where('is_counter', 1);
+                    });
             })
-
-            ->orWhere(function ($q) {
-                
-                $q->where('is_counter', 1);
-            });
-
-        })
-        ->orderByDesc('created_at')
-        ->with(['items.options'])
-        ->get();
-}
+            ->orderByDesc('created_at')
+            ->with(['items.options'])
+            ->get();
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -179,7 +180,8 @@ class CreateCounterOfferAction
         $context
     ) {
 
-   
+        $buyer = $context->buyerProfile();
+
         $newVersion = $offer->versions()->create([
             'version_number' => null,
             'status' => 'draft',
@@ -197,10 +199,8 @@ class CreateCounterOfferAction
             | ACTOR CONTEXT (USER OR COMPANY)
             |--------------------------------------------------------------------------
             */
-            'owner_type' => $context->isPersonal() ? 'App\Models\User' : 'App\Models\Buyer',
-            'owner_id' => $context->isPersonal()
-                ? $context->user()->id
-                : $context->company()->id,
+            'owner_type' => Buyer::class,
+            'owner_id' => $buyer->id,
 
             'total_price' => $supplierVersion->total_price,
         ]);

@@ -101,16 +101,6 @@
                             </button>
                         </form>
 
-
-
-                        {{-- =========================================
-                                CHAT (only when editable or submitted)
-                            ========================================= --}}
-                        <button type="button"
-                            class="px-4 py-1 border border-gray-500 text-gray-500 rounded-lg opacity-50 hover:bg-gray-50 hover:text-gray-800">
-                            Chat with Supplier
-                        </button>
-
                         <form method="POST"
                             action="{{ route('buyer.rfqs.counter.submit', [
                                     'rfq' => $rfq->id,

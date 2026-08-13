@@ -21,7 +21,7 @@ use App\Domain\Negotiation\Actions\SubmitOfferVersionAction;
 use App\Domain\Negotiation\Actions\SubmitCounterOfferAction;
 use App\Domain\Negotiation\Actions\DeleteDraftOfferVersionAction;
 use App\Domain\Negotiation\Actions\DeleteCounterOfferDraftAction;
-use App\Models\User;
+use App\Models\Supplier;
 
 
 
@@ -182,23 +182,19 @@ class RfqOfferController extends Controller
          * UNIFIED IDENTITY
          * =========================
          */
-        $identity = [
-            'type' => $context->isCompany()
-                ? $context->type()
-                : User::class,
 
-            'id' => $context->id(),
-        ];
+        $supplier = $context->supplierProfile();
+        
 
         /**
          * =========================================
          * GET OFFER
          * =========================================
          */
-        $offer = \App\Domain\Negotiation\Models\RfqOffer::query()
+        $offer = RfqOffer::query()
             ->where('rfq_id', $rfq->id)
-            ->where('participant_type', $identity['type'])
-            ->where('participant_id', $identity['id'])
+            ->where('participant_type', Supplier::class)
+            ->where('participant_id', $supplier->id)
             ->firstOrFail();
 
         /**
@@ -224,8 +220,8 @@ class RfqOfferController extends Controller
         $newVersion = $offer->versions()->create([
             'version_number' => null,
             'status' => 'draft',
-            'owner_type' => $identity['type'],
-            'owner_id' => $identity['id'],
+            'owner_type' => Supplier::class,
+            'owner_id' => $supplier->id,
             'created_by' => $context->user()->id,
         ]);
 
@@ -354,15 +350,7 @@ return redirect()->route(
         abort(403);
     }
 
-    $user = $context->user();
-
-    /*
-    |--------------------------------------------------------------------------
-    | OWNERSHIP CHECK
-    |--------------------------------------------------------------------------
-    */
-
-   
+     
 
     /*
     |--------------------------------------------------------------------------
@@ -497,14 +485,17 @@ public function comparison(Rfq $rfq)
         'attributeValues.attribute.options',
         'attributeValues.options',
         'offers.participant',
-        'offers.versions.items.options',
+        'offers.versions' => function ($query) {
+            $query
+                ->where('status', 'submitted')
+                ->where('is_counter', false)
+                ->where('owner_type', \App\Models\Supplier::class)
+                ->with('items.options');
+        },
     ]);
 
     $offers = $rfq->offers->filter(function ($offer) {
-
-        return $offer->versions
-            ->whereIn('status', ['submitted', 'accepted', 'rejected'])
-            ->isNotEmpty();
+        return $offer->versions->isNotEmpty();
     });
 
     return view('rfq.workspace.offer-comparison', [

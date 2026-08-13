@@ -20,6 +20,7 @@ use App\Models\Category;
 use App\Models\UserAddress;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Supplier;
 
 class Rfq extends Model
 {
@@ -54,6 +55,9 @@ class Rfq extends Model
         'visibility_type' => RfqVisibilityType::class,
         'customization' => 'boolean',
     ];
+
+
+
 
     public function buyer()
 {
@@ -236,9 +240,19 @@ public function currentShippingDimensions()
 {
     $context = app(ActiveContextService::class);
 
+    if (!$context->isSupplier()) {
+        return null;
+    }
+
+    $supplier = $context->supplierProfile();
+
+    if (!$supplier) {
+        return null;
+    }
+
     return $this->shippingDimensions()
-        ->where('supplier_type', $context->type())
-        ->where('supplier_id', $context->id())
+        ->where('supplier_type', Supplier::class)
+        ->where('supplier_id', $supplier->id)
         ->first();
 }
 

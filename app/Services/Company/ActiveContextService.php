@@ -203,16 +203,17 @@ class ActiveContextService
     return $this->supplierProfile();
 }
 
-    public function supplierParticipant(): ?array
+    public function supplierParticipant(): ?Supplier
 {
     if (!$this->isSupplier()) {
         return null;
     }
 
-    return [
-        'type' => $this->entityType(),
-        'id'   => $this->entityId(),
-    ];
+    $supplier = $this->supplierProfile();
+
+    return $supplier instanceof Supplier
+        ? $supplier
+        : null;
 }
 
     public function buyer(): ?Buyer

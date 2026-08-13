@@ -6,7 +6,7 @@ use App\Domain\Negotiation\Services\OfferVersionBuilder;
 use App\Domain\RFQ\Models\Rfq;
 use Illuminate\Http\Request;
 use App\Services\Company\ActiveContextService;
-use App\Models\User;
+use App\Models\Supplier;
 
 class OfferVersionItemAutosaveAction
 {
@@ -33,13 +33,9 @@ class OfferVersionItemAutosaveAction
          * UNIFIED IDENTITY
          * =========================
          */
-        $identity = [
-            'type' => $context->isCompany()
-                ? $context->type()
-                : User::class,
 
-            'id' => $context->id(),
-        ];
+        $supplier = $context->supplierProfile();
+        
 
         /**
          * =========================
@@ -48,8 +44,8 @@ class OfferVersionItemAutosaveAction
          */
         $version = $this->builder->getDraftVersion(
             rfqId: $rfq->id,
-            participantType: $identity['type'],
-            participantId: $identity['id']
+            participantType: Supplier::class,
+            participantId: $supplier->id
         );
 
         /**

@@ -10,8 +10,16 @@ use App\Domain\Negotiation\Models\RfqOffer;
 use App\Models\ShippingDimensions;
 use Illuminate\Http\Request;
 
+
+
 class SupplierRfqController extends Controller
 {
+
+public function __construct(
+        private ActiveContextService $context
+    ) {}
+
+
     /**
      * RFQ LIST (incoming RFQs for supplier)
      */
@@ -145,14 +153,18 @@ public function updateShippingDimensions(Request $request, Rfq $rfq,
         'shipping.package_type' => ['required', 'in:box,pallet,set'],
     ]);
 
+    $supplier = $this->context->supplierProfile();
+
+    abort_unless($supplier, 403);
+
     $shipping = $validated['shipping'];
 
     $rfq->shippingDimensions()->updateOrCreate(
     [
         'dimensionable_type' => $rfq->getMorphClass(),
         'dimensionable_id'   => $rfq->id,
-        'supplier_type'      => $activeContext->type(),
-        'supplier_id'        => $activeContext->id(),
+        'supplier_type'      => $supplier::class,
+        'supplier_id'        => $supplier->getKey(),
     ],
     [
         'length'       => $shipping['length'],

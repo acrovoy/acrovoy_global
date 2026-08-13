@@ -4,6 +4,8 @@ namespace App\Domain\Negotiation\Resolvers;
 
 use App\Domain\Negotiation\Models\RfqOffer;
 
+use App\Models\Buyer;
+
 class OfferVersionResolver
 {
     public function resolve(
@@ -167,19 +169,18 @@ public function latestVisibleVersion(RfqOffer $offer)
         $context
     ) {
 
-        $ownerType = $context->isPersonal()
-            ? \App\Models\User::class
-            : \App\Models\Buyer::class;
+    $buyer = $context->buyerProfile();
+    if (!$buyer) {
+        return null;
+    }
 
-        $ownerId = $context->isPersonal()
-            ? auth()->user()->id
-            : $context->company()->id;
+        
 
         return $offer->versions()
             ->where('is_counter', 1)
             ->where('status', $status)
-            ->where('owner_type', $ownerType)
-            ->where('owner_id', $ownerId)
+            ->where('owner_type', Buyer::class)
+            ->where('owner_id', $buyer->id)
             ->latest()
             ->first();
     }

@@ -10,12 +10,14 @@ use App\Models\Category;
 use App\Models\UserAddress;
 use App\Models\Country;
 use App\Models\User;
+use App\Models\Buyer;
 use App\Models\ShippingTemplate;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
 use App\Domain\RFQ\Enums\RfqStatus;
 use App\Models\Supplier;
 use App\Models\Attribute;
 use App\Models\AttributeGroup;
+use App\Models\Location;
 use App\Domain\RFQ\Models\RfqAttributeValue;
 use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
@@ -23,9 +25,6 @@ use App\Domain\RFQ\Actions\GetRfqCategoriesAction;
 use App\Domain\RFQ\Services\RfqRequirementsLoader;
 
 use App\Domain\Negotiation\Actions\CreateRfqOfferAction;
-
-use App\Facades\ActiveContext;
-
 
 
 class RfqController extends Controller
@@ -89,14 +88,45 @@ class RfqController extends Controller
         $categories = null;
         $selectedCategory = null;
         $attributes = collect();
+        $availableAttributes = collect();
+        $availableAttributesGrouped = collect();
+        $attachedAttributes = collect();
+        $groups = collect();
+        $canCreateRevision = false;
+        $versions = collect();
+        $currentDraft = null;
+        $offerVersion = null;
+        $offer = null;
+        $offers = null;
+        $counterVersion = null;
+        $isReadonly = true;
+        $isCounter = false;
+        $supplierOfferVersionToCounter = null;
+        $shippingTemplates = collect();
+        $requirementsCompleted = null;
+        $participantsCompleted = null;
+        $deliveryCompleted = null;
+        $canPublish = null;
+        $isOrdered = null;
+        $counterOffers = collect();
+        $counterItemsByAttribute = collect();
+        $lastsubmittedVersion = collect();
+        $existingDraftCounter = null;
+        $supplierOfferVersion = null;
+        $shippingTemplates = collect();
+        $savedAddresses = collect();
+        $lastAddress = null;
+        $currentSavedAddress = null;
+        $currentAddressId = null;
 
+
+        //////////////////////////////////////////////////////////////////////////////////////
+        // BUYER REQUIREMENTS
+        /////////////////////////////////////////////////////////////////////////////////////
 
         if ($activeTab === 'requirements') {
 
             app(RfqRequirementsLoader::class)->load($rfq);
-
-
-
 
             /*
             |--------------------------------------------------------------------------
@@ -123,7 +153,6 @@ class RfqController extends Controller
             $categoryId = $request->get('category_id') ?? $rfq->category_id;
 
             if ($categoryId) {
-
                 $selectedCategory = Category::query()
                     ->with([
                         'translations',
@@ -144,7 +173,6 @@ class RfqController extends Controller
 
                     $hiddenIds = $rfq->hiddenAttributes->pluck('id')->toArray();
 
-
                     $attributes = $selectedCategory->attributes
                         ->whereNotIn('id', $hiddenIds)
                         ->sortBy('pivot.sort_order')
@@ -153,44 +181,99 @@ class RfqController extends Controller
                             $value = $savedValues->get($attribute->id);
 
                             $attribute->saved_value = match ($attribute->type) {
-
                                 'select' => $value?->attribute_option_id,
-
                                 'number',
                                 'decimal' => $value?->value_number,
-
                                 'boolean' => $value?->value_boolean,
-
                                 'date' => $value?->value_date,
-
                                 default => $value?->value_text,
                             };
-
                             $attribute->saved_options = $value?->options?->pluck('id')->toArray() ?? [];
-
                             return $attribute;
                         });
                 }
+
+                $buyer = $this->context->buyerProfile();
+
+                $ownerType = Buyer::class;
+                $ownerId = $buyer->id;
+
+                $customRequirementIds = $rfq->customAttributeValues
+                    ->pluck('attribute_id')
+                    ->unique();
+
+                $availableAttributes = Attribute::query()
+                    ->where('entity_type', 'rfq')
+                    ->where('context', 'requirement')
+                    ->where('is_custom', 1)
+                    ->where('is_active', true)
+                    ->where('owner_type', $ownerType)
+                    ->where('owner_id', $ownerId)
+                    ->whereNotIn('id', $customRequirementIds) // 💥 важно
+                    ->get();
+
+                $availableAttributesGrouped = $availableAttributes
+                    ->load('group')
+                    ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
+                    ->sortBy(function ($attrs, $groupName) {
+                        return strtolower($groupName) === 'general' ? 0 : 1;
+                    });
+
+                $attachedAttributes = $rfq->customAttributeValues()
+                    ->with([
+                        'attribute.group',
+                        'attribute.options.translations',
+                        'options.translations',
+                    ])
+                    ->get()
+                    ->map(function ($value) {
+
+                        $attribute = $value->attribute;
+
+                        /*
+                        |--------------------------------------------------------------
+                        | SAVED VALUE BY ATTRIBUTE TYPE
+                        |--------------------------------------------------------------
+                        */
+
+                        $attribute->saved_value = match ($attribute->type) {
+                            'select' => $value->attribute_option_id,
+                            'number',
+                            'decimal' => $value->value_number,
+                            'boolean' => $value->value_boolean,
+                            'date' => $value->value_date,
+                            default => $value->value_text,
+                        };
+
+                        /*
+                        |--------------------------------------------------------------
+                        | MULTISELECT OPTIONS
+                        |--------------------------------------------------------------
+                        */
+
+                        $attribute->saved_options =
+                            $value->options?->pluck('id')->toArray() ?? [];
+
+                        return $attribute;
+                    })
+                    ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
+                    ->sortBy(
+                        fn($_, $group) =>
+                        strtolower($group) === 'general' ? 0 : 1
+                    );
+
+
+                $groups = AttributeGroup::where('owner_type', $ownerType)
+                    ->where('owner_id', $ownerId)
+                    ->get();
             }
         }
 
-        $canCreateRevision = false;
-        $versions = collect();
-        $currentDraft = null;
-        $offerVersion = null;
-        $offer = null;
-        $offers = null;
-        $counterVersion = null;
-        $isReadonly = true;
-        $isCounter = false;
-        $supplierOfferVersionToCounter = null;
-        $shippingTemplates = collect();
-        $requirementsCompleted = null;
-        $participantsCompleted = null;
-        $deliveryCompleted = null;
-        $canPublish = null;
-        $isOrdered = null;
+        
 
+        //////////////////////////////////////////////////////////////////////////////////////
+        // SUPPLIER REQUIREMENTS
+        /////////////////////////////////////////////////////////////////////////////////////
         if ($activeTab === 's-requirements') {
 
             $rfq->loadMissing([
@@ -264,115 +347,10 @@ class RfqController extends Controller
 
 
 
-
-
-
-
-
-
-
-        $ownerType = $this->context->type();
-
-        $ownerId = $this->context->id();
-
-
-
-        $customRequirementIds = $rfq->customAttributeValues
-            ->pluck('attribute_id')
-            ->unique();
-
-        $availableAttributes = Attribute::query()
-            ->where('entity_type', 'rfq')
-            ->where('context', 'requirement')
-            ->where('is_custom', 1)
-            ->where('is_active', true)
-            ->where('owner_type', $ownerType)
-            ->where('owner_id', $ownerId)
-            ->whereNotIn('id', $customRequirementIds) // 💥 важно
-            ->get();
-
-        $availableAttributesGrouped = $availableAttributes
-            ->load('group')
-            ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
-            ->sortBy(function ($attrs, $groupName) {
-                return strtolower($groupName) === 'general' ? 0 : 1;
-            });
-
-
-
-
-        $attachedAttributes = $rfq->customAttributeValues()
-            ->with([
-                'attribute.group',
-                'attribute.options.translations',
-                'options.translations',
-            ])
-            ->get()
-            ->map(function ($value) {
-
-                $attribute = $value->attribute;
-
-                /*
-        |--------------------------------------------------------------
-        | SAVED VALUE BY ATTRIBUTE TYPE
-        |--------------------------------------------------------------
-        */
-
-                $attribute->saved_value = match ($attribute->type) {
-
-                    'select' => $value->attribute_option_id,
-
-                    'number',
-                    'decimal' => $value->value_number,
-
-                    'boolean' => $value->value_boolean,
-
-                    'date' => $value->value_date,
-
-                    default => $value->value_text,
-                };
-
-                /*
-        |--------------------------------------------------------------
-        | MULTISELECT OPTIONS
-        |--------------------------------------------------------------
-        */
-
-                $attribute->saved_options =
-                    $value->options?->pluck('id')->toArray() ?? [];
-
-                return $attribute;
-            })
-            ->groupBy(fn($attr) => $attr->group?->name ?? 'General')
-            ->sortBy(
-                fn($_, $group) =>
-                strtolower($group) === 'general' ? 0 : 1
-            );
-
-
-
-
-
-
-        $ownerType = $this->context->type();
-
-        $ownerId = $this->context->id();
-
-        $groups = AttributeGroup::where('owner_type', $ownerType)
-            ->where('owner_id', $ownerId)
-            ->get();
-
-        $counterOffers = collect();
-        $counterItemsByAttribute = collect();
-        $lastsubmittedVersion = collect();
-        $existingDraftCounter = null;
-        $supplierOfferVersion = null;
-
-
-
+        //////////////////////////////////////////////////////////////////////////////////////
+        // BUYER OFFER FROM SUPPLIER
+        /////////////////////////////////////////////////////////////////////////////////////
         if ($activeTab === 'offers') {
-
-
 
             $rfq->loadMissing([
                 'offers.participant',
@@ -380,13 +358,18 @@ class RfqController extends Controller
                 'offers.versions.items.options',
             ]);
 
+            $buyer = $this->context->buyerProfile();
+
+                $ownerType = Buyer::class;
+                $ownerId = $buyer->id;
+
             $addressa = UserAddress::find($rfq->delivery_address_id);
 
             if (!$addressa) {
                 $cityId = null;
             } else {
 
-                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                $eexistingLocation = Location::where('name', $addressa->city)
                     ->where('parent_id', $addressa->region)
                     ->first();
 
@@ -397,10 +380,12 @@ class RfqController extends Controller
             $supplierType = $supplierOffer->participant_type;
             $supplierId = $supplierOffer->participant_id;
 
-            $shippingTemplates = collect();
+
+
+            
 
             if ($cityId) {
-                $shippingTemplates = \App\Models\ShippingTemplate::with([
+                $shippingTemplates = ShippingTemplate::with([
                     'translations',
                     'warehouse',
                     'warehouse.location.parent',
@@ -568,16 +553,9 @@ class RfqController extends Controller
         }
 
 
-
-
-
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | LOAD REQUIREMENTS ONLY WHEN NEEDED
-        |--------------------------------------------------------------------------
-        */
+        /////////////////////////////////////////////////////////////////////
+        //OVERVIEW
+        ////////////////////////////////////////////////////////////////////
 
         if ($activeTab === 'overview') {
 
@@ -595,12 +573,16 @@ class RfqController extends Controller
                 $cityId = null;
             } else {
 
-                $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                $eexistingLocation = Location::where('name', $addressa->city)
                     ->where('parent_id', $addressa->region)
                     ->first();
 
                 $cityId = $eexistingLocation?->id;
             }
+
+            $identity = $this->context->identity();
+            $ownerType = $identity['entity_type'];
+            $ownerId = $identity['entity_id'];
 
             $shippingTemplates = ShippingTemplate::with('translations', 'locations')
                 ->where('provider_type', $ownerType)
@@ -650,24 +632,30 @@ class RfqController extends Controller
         $countries = Country::withCurrentTranslation()
             ->orderBy('name')->get();
 
+        if($this->context->isBuyer()){
+            
+            $buyer = $this->context->buyerProfile();
+            $buyerType = Buyer::class;
+                $buyerId = $buyer->id;
 
-        $buyerType = $this->context->type();
-        $buyerId = $this->context->id();
+
+                $savedAddresses = UserAddress::query()
+                    ->where('user_id', $buyerId)
+                    ->where('user_type', $buyerType)
+                    ->orderByDesc('updated_at')->get();
+
+                // Опционально: последний использованный адрес
+                $lastAddress = $savedAddresses->first();
+
+                $currentSavedAddress = UserAddress::query()
+                    ->where('id', $rfq->delivery_address_id)
+                    ->first();
+
+                $currentAddressId = $rfq->delivery_address_id;
 
 
-        $savedAddresses = UserAddress::query()
-            ->where('user_id', $buyerId)
-            ->where('user_type', $buyerType)
-            ->orderByDesc('updated_at')->get();
-
-        // Опционально: последний использованный адрес
-        $lastAddress = $savedAddresses->first();
-
-        $currentSavedAddress = UserAddress::query()
-            ->where('id', $rfq->delivery_address_id)
-            ->first();
-
-        $currentAddressId = $rfq->delivery_address_id;
+        }
+        
 
 
 
@@ -771,22 +759,23 @@ class RfqController extends Controller
         ]);
     }
 
-    
+
 
     private function isSupplierParticipant(Rfq $rfq): bool
-    {
-        if ($this->context->isGuest()) {
-            return false;
-        }
-
-        if (!$this->context->isSupplier()) {
-            return false;
-        }
-
-        return $rfq->participants()
-            ->where('participant_id', $this->context->id())
-            ->exists();
+{
+    if ($this->context->isGuest()) {
+        return false;
     }
+
+    if (!$this->context->isSupplier()) {
+        return false;
+    }
+
+    return $rfq->participants()
+        ->where('participant_type', Supplier::class)
+        ->where('participant_id', $this->context->id())
+        ->exists();
+}
 
 
 
@@ -809,11 +798,12 @@ class RfqController extends Controller
 
         $addressId = $request->saved_address_id;
 
+        $buyer = $this->context->buyerProfile();
         // 1. ЕСЛИ ВЫБРАН СУЩЕСТВУЮЩИЙ
         if ($addressId) {
             $address = UserAddress::where('id', $addressId)
-                ->where('user_id', ActiveContext::id())
-                ->where('user_type', ActiveContext::type())
+                ->where('user_id', $buyer->id)
+                ->where('user_type', Buyer::class)
                 ->firstOrFail();
         }
 
@@ -826,14 +816,14 @@ class RfqController extends Controller
 
             // 1️⃣ Если пользователь ввёл новый город вручную
             if ($request->filled('city_manual')) {
-                $existingLocation = \App\Models\Location::where('name', $finalCity)
+                $existingLocation = Location::where('name', $finalCity)
                     ->where('parent_id', $request->region)
                     ->first();
 
                 if ($existingLocation) {
                     $cityId = $existingLocation->id;
                 } else {
-                    $newLocation = \App\Models\Location::create([
+                    $newLocation = Location::create([
                         'name'       => $finalCity,
                         'parent_id'  => $request->region ?: null,
                         'country_id' => $request->country,
@@ -848,13 +838,13 @@ class RfqController extends Controller
                 $cityId = (int) $request->city;
             }
 
-            $cityModel = \App\Models\Location::find($cityId);
+            $cityModel = Location::find($cityId);
             $finalCity = $cityModel?->name ?? '';
 
 
             $address = UserAddress::create([
-                'user_id' => ActiveContext::id(),
-                'user_type' => ActiveContext::type(),
+                'user_id' => $buyer->id,
+                'user_type' => Buyer::class,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'country' => $request->country,

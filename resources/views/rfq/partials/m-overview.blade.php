@@ -8,6 +8,7 @@ $isClosed = $rfq->status->isClosed();
     $isLocked = $rfq->status->isLocked();
     $unitPrice = null;
     $shippingDimensions = $rfq->currentShippingDimensions();
+    
 @endphp
 
 

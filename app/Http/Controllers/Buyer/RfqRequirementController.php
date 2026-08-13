@@ -10,6 +10,7 @@ use App\Domain\RFQ\Models\Rfq;
 use App\Models\Category;
 use App\Models\Attribute;
 use App\Models\AttributeGroup;
+use App\Models\Buyer;
 
 
 use App\Domain\RFQ\Actions\SaveRfqRequirementsAction;
@@ -93,10 +94,9 @@ class RfqRequirementController extends Controller
         ActiveContextService $context
     ) {
 
-        $buyerType = $context->isPersonal() ? 'App\Models\User' : 'App\Models\Buyer';
-        $buyer = $context->isPersonal()
-            ? auth()->user()
-            : $context->company();
+    $buyer = $context->buyerProfile();
+    
+        
 
         $validated = $request->validate([
             'rfq_id' => ['required', 'exists:rfqs,id'],
@@ -189,10 +189,9 @@ class RfqRequirementController extends Controller
         ActiveContextService $context)
     {
 
-    $buyerType = $context->isPersonal() ? 'App\Models\User' : 'App\Models\Buyer';
-        $buyer = $context->isPersonal()
-            ? auth()->user()
-            : $context->company();
+    $buyer = $context->buyerProfile();
+    $buyerType = Buyer::class;
+        
 
 
         $data = $request->validate([

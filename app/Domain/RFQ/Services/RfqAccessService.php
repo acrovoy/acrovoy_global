@@ -6,7 +6,6 @@ use App\Domain\RFQ\Models\Rfq;
 use App\Domain\RFQ\Enums\RfqStatus;
 use App\Domain\RFQ\Models\RfqParticipant;
 use App\Services\Company\ActiveContextService;
-use App\Models\Supplier;
 use App\Domain\RFQ\Enums\RfqVisibilityType;
 
 class RfqAccessService
@@ -20,24 +19,17 @@ class RfqAccessService
      */
     public function canViewRfq(Rfq $rfq, int $userId): bool
 {
-    $context = $this->context;
-
-    // 1. owner
-    if ($rfq->created_by === $userId) {
-        return true;
-    }
-
-    // 2. buyer company owner
+    // 1. buyer company owner
     if ($this->isBuyerCompanyOwner($rfq)) {
         return true;
     }
 
-    // 3. public
+    // 2. public
     if ($rfq->visibility_type === 'platform') {
         return true;
     }
 
-    // 4. supplier participant
+    // 3. supplier participant
     if ($this->isSupplierParticipant($rfq)) {
         return true;
     }
@@ -52,32 +44,39 @@ class RfqAccessService
 {
 
 
+    $supplier = $this->context->supplierProfile();
+
     
+    if (!$supplier) {
+        return Rfq::query()->whereRaw('1 = 0')->get();
+    }
 
-    $supplierId = $this->context->id();
-    $supplierType = $this->context->type();
-
-       
+    $supplierId = $supplier->getKey();
+    $supplierType = $supplier::class;
 
     return Rfq::query()
-    ->where('status', RfqStatus::PUBLISHED)
-    ->where(function ($q) use ($supplierId, $supplierType) {
+        ->where('status', RfqStatus::PUBLISHED)
+        ->where(function ($q) use ($supplierId, $supplierType) {
 
-        $q->whereIn('visibility_type', [
-            RfqVisibilityType::OPEN,
-            RfqVisibilityType::PLATFORM,
-        ])
+            $q->whereIn('visibility_type', [
+                RfqVisibilityType::OPEN,
+                RfqVisibilityType::PLATFORM,
+            ])
 
-        ->orWhereHas('participants', function ($q) use ($supplierId, $supplierType) {
-
-            $q->where('participant_type', $supplierType)
-              ->where('participant_id', $supplierId)
-              ->whereIn('status', ['invited', 'accepted']);
-        });
-
-    })
-    ->latest()
-    ->get();
+            ->orWhereHas('participants', function ($q) use (
+                $supplierId,
+                $supplierType
+            ) {
+                $q->where('participant_type', $supplierType)
+                    ->where('participant_id', $supplierId)
+                    ->whereIn('status', [
+                        'invited',
+                        'accepted',
+                    ]);
+            });
+        })
+        ->latest()
+        ->get();
 }
 
 /**
@@ -85,8 +84,14 @@ class RfqAccessService
  */
 public function getClosedRfqsForSupplier()
 {
-    $supplierId = $this->context->id();
-    $supplierType = $this->context->type();
+    $supplier = $this->context->supplierProfile();
+
+    if (!$supplier) {
+        return Rfq::query()->whereRaw('1 = 0')->get();
+    }
+
+    $supplierId = $supplier->getKey();
+    $supplierType = $supplier::class;
 
     return Rfq::query()
         ->where('status', RfqStatus::CLOSED)
@@ -97,13 +102,17 @@ public function getClosedRfqsForSupplier()
                 RfqVisibilityType::PLATFORM,
             ])
 
-            ->orWhereHas('participants', function ($q) use ($supplierId, $supplierType) {
-
+            ->orWhereHas('participants', function ($q) use (
+                $supplierId,
+                $supplierType
+            ) {
                 $q->where('participant_type', $supplierType)
-                  ->where('participant_id', $supplierId)
-                  ->whereIn('status', ['invited', 'accepted']);
+                    ->where('participant_id', $supplierId)
+                    ->whereIn('status', [
+                        'invited',
+                        'accepted',
+                    ]);
             });
-
         })
         ->latest()
         ->get();
@@ -115,18 +124,20 @@ public function getClosedRfqsForSupplier()
      */
     private function isSupplierParticipant(Rfq $rfq): bool
 {
-    $supplierId = $this->context->entityId();
-    $supplierType = $this->context->type();
+    $supplier = $this->context->supplierProfile();
 
-    if (!$supplierId) {
+    if (!$supplier) {
         return false;
     }
 
     return RfqParticipant::query()
         ->where('rfq_id', $rfq->id)
-        ->where('participant_type', $supplierType)
-        ->where('participant_id', $supplierId)
-        ->whereIn('status', ['invited', 'accepted'])
+        ->where('participant_type', $supplier::class)
+        ->where('participant_id', $supplier->getKey())
+        ->whereIn('status', [
+            'invited',
+            'accepted',
+        ])
         ->exists();
 }
 

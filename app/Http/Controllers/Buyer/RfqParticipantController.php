@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Domain\RFQ\Models\Rfq;
 use App\Domain\RFQ\Models\RfqParticipant;
 use App\Domain\RFQ\Services\RfqParticipantService;
-use App\Models\Supplier;
+
 
 class RfqParticipantController extends Controller
 {

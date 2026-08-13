@@ -211,289 +211,475 @@ $isReadonly = $rfqStatus->isPublished() || $rfqStatus->isClosed();
 
 </div>
 
+
 {{-- DRAWER create new attribute --}}
 <div id="attribute-drawer"
-    class="fixed right-0 top-0 h-full w-[420px]
-            bg-white shadow-xl z-50
-            transform translate-x-full transition-transform duration-300 p-6">
+    class="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl z-50
+           transform translate-x-full transition-transform duration-300
+           flex flex-col">
 
-    <h3 class="text-lg font-semibold mb-4" id="attribute-title">
-        Create attribute
-    </h3>
+    {{-- HEADER --}}
+    <div class="px-6 py-5 border-b bg-gray-50">
 
-    <form method="POST" action="{{ route('rfqs.custom-attributes.store', $rfq->id) }}">
+        <h3
+            class="text-lg font-semibold text-gray-900"
+            id="attribute-title">
+
+            Create attribute
+
+        </h3>
+
+        <p class="text-sm text-gray-500 mt-1">
+            Create a custom attribute for this RFQ.
+        </p>
+
+    </div>
+
+
+    <form
+        method="POST"
+        action="{{ route('rfqs.custom-attributes.store', $rfq->id) }}"
+        class="flex flex-col flex-1">
+
         @csrf
 
-        <input type="hidden" name="id" id="attr-id">
+        <input
+            type="hidden"
+            name="id"
+            id="attr-id">
 
 
-        {{-- GROUP --}}
-        <div class="mb-3">
+        {{-- BODY --}}
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
-            <label class="text-xs text-gray-500">Group</label>
 
-            <select
-                id="attr-group-id"
-                name="group_id"
-                class="w-full border rounded-lg px-3 py-2 text-sm ">
-                <option value="">— No group —</option>
+            {{-- GROUP --}}
+            <div>
 
-                @foreach($groups ?? [] as $group)
-                <option value="{{ $group->id }}">
-                    {{ $group->name ?? $group->code }}
-                </option>
-                @endforeach
-            </select>
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Group
+                </label>
+
+                <select
+                    id="attr-group-id"
+                    name="group_id"
+                    class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+
+                    <option value="">
+                        — No group —
+                    </option>
+
+                    @foreach($groups ?? [] as $group)
+
+                        <option value="{{ $group->id }}">
+                            {{ $group->name ?? $group->code }}
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+            </div>
+
+
+            {{-- OR CREATE NEW GROUP --}}
+            <div>
+
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Or create new group
+                </label>
+
+                <input
+                    type="text"
+                    id="attr-group-name"
+                    name="group_name"
+                    placeholder="New group name"
+                    class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+
+            </div>
+
+
+            {{-- TYPE --}}
+            <div>
+
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Attribute Type
+                </label>
+
+                <select
+                    id="attr-type"
+                    name="type"
+                    onchange="toggleDrawerOptions()"
+                    class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+
+                    <option value="text">
+                        Text
+                    </option>
+
+                    <option value="number">
+                        Number
+                    </option>
+
+                    <option value="select">
+                        Select
+                    </option>
+
+                    <option value="multiselect">
+                        Multi Select
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            {{-- KEY --}}
+            <div>
+
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Name
+                </label>
+
+                <input
+                    type="text"
+                    id="attr-key"
+                    name="key"
+                    class="w-full mt-2 border border-gray-200 rounded-lg px-3 py-2 text-sm
+                           focus:outline-none focus:ring-2 focus:ring-gray-900/10">
+
+            </div>
+
+
+            {{-- OPTIONS --}}
+            <div id="drawer-options" class="hidden">
+
+                <label class="text-xs text-gray-500 uppercase tracking-wide">
+                    Options
+                </label>
+
+                <div
+                    id="options-container"
+                    class="space-y-2 mt-2">
+                </div>
+
+                <button
+                    type="button"
+                    onclick="addDrawerOption()"
+                    class="mt-3 text-sm text-gray-600 hover:text-gray-900 transition">
+
+                    + Add option
+
+                </button>
+
+            </div>
 
         </div>
 
-        {{-- OR CREATE NEW GROUP --}}
-        <div class="mb-3">
 
-            <label class="text-xs text-gray-500">Or create new group</label>
+        {{-- FOOTER --}}
+        <div
+            class="border-t bg-white px-6 py-4
+                   flex items-center justify-between gap-2">
 
-            <input
-                type="text"
-                id="attr-group-name"
-                name="group_name"
-                placeholder="New group name"
-                class="w-full border rounded-lg px-3 py-2 text-sm">
-
-        </div>
-
-
-
-        {{-- TYPE --}}
-        <div class="mb-3">
-            <label class="text-xs text-gray-500">Type</label>
-            <select id="attr-type" name="type"
-                onchange="toggleDrawerOptions()"
-                class="w-full border rounded-lg px-3 py-2 text-sm">
-
-                <option value="text">Text</option>
-                <option value="number">Number</option>
-                <option value="select">Select</option>
-                <option value="multiselect">Multi Select</option>
-
-            </select>
-        </div>
-
-
-        {{-- KEY --}}
-        <div class="mb-3">
-            <label class="text-xs text-gray-500">Code</label>
-            <input type="text" id="attr-key" name="key"
-                class="w-full border rounded-lg px-3 py-2 text-sm">
-        </div>
-
-
-
-        <!-- {{-- VALUE --}}
-         <div id="drawer-value" class="mb-3">
-             <label class="text-xs text-gray-500">Value</label>
-             <input type="text" id="attr-value" name="value"
-                 class="w-full border rounded-lg px-3 py-2 text-sm">
-         </div> -->
-
-        {{-- OPTIONS --}}
-        <div id="drawer-options" class="hidden">
-
-            <label class="text-xs text-gray-500">Options</label>
-
-            <div id="options-container" class="space-y-2 mt-1"></div>
-
-            <button type="button"
-                onclick="addDrawerOption()"
-                class="text-xs text-gray-500 mt-2">
-                + Add option
-            </button>
-
-        </div>
-
-
-
-
-        {{-- ACTIONS --}}
-        <div class="flex justify-end gap-2 mt-6">
-
-            <button type="button"
+            <button
+                type="button"
                 onclick="closeAllDrawers()"
-                class="px-4 py-2 bg-gray-200 rounded-lg">
+                class="px-4 py-2 text-sm rounded-lg border border-gray-200
+                       text-gray-600 hover:bg-gray-50 transition">
+
                 Cancel
+
             </button>
 
-            <button type="submit"
-                class="px-4 py-2 bg-gray-900 text-white rounded-lg">
+            <button
+                type="submit"
+                class="px-4 py-2 text-sm rounded-lg bg-gray-900 text-white
+                       hover:bg-gray-800 transition shadow-sm">
+
                 Save
+
             </button>
 
         </div>
 
     </form>
+
 </div>
+
+
+
 
 
 {{-- DRAWER: attach existing attributes --}}
 <div id="attribute-picker-drawer"
-    class="fixed right-0 top-0 h-full w-[420px]
-            bg-white shadow-xl z-50
-            transform translate-x-full transition-transform duration-300 p-6">
-    <div class="flex justify-between items-center">
-        <h3 class="text-lg font-semibold mb-4">
-            Add attributes
-        </h3>
-        <div class="flex items-center gap-2">
+    class="fixed right-0 top-0 h-full w-[460px]
+           bg-white shadow-2xl z-50
+           transform translate-x-full transition-transform duration-300
+           flex flex-col">
 
-            <button type="button"
-                onclick="openAttributeDrawer()"
-                class="px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition mb-4">
 
-                + Create attribute
-            </button>
+    {{-- HEADER --}}
+    <div class="px-6 py-5 border-b bg-gray-50">
 
-        </div>
-    </div>
+        <div class="flex justify-between items-start gap-4">
 
-    <form method="POST" action="{{ route('rfqs.custom-attributes.attach', $rfq->id) }}">
-        @csrf
+            <div>
 
-        <div class="space-y-2 max-h-[70vh] overflow-y-auto">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Add attributes
+                </h3>
 
-            @foreach($availableAttributesGrouped as $groupName => $attrs)
+                <p class="text-sm text-gray-500 mt-1">
+                    Select existing attributes to attach to this RFQ.
+                </p>
 
-            @php
-            $isGeneral = strtolower($groupName) === 'general';
-            @endphp
+            </div>
 
-            <div class="mb-3 border rounded-lg overflow-hidden">
 
-                {{-- GROUP HEADER --}}
-                <button type="button"
-                    class="w-full flex justify-between items-center px-3 py-2 text-left
-                   bg-gradient-to-r from-[#F7F3EA] via-[#EADCC5]/80 to-orange-200
-                   hover:from-[#F7F3EA] hover:via-[#EADCC5]/50 hover:to-orange-200
-                   transition-colors duration-200"
-                    onclick="toggleAttrGroup(this)">
+            <div class="flex items-center gap-2">
 
-                    <div class="flex items-center gap-2">
+                <button
+                    type="button"
+                    onclick="openAttributeDrawer()"
+                    class="inline-flex items-center gap-2 px-4 py-2
+                           text-sm font-medium text-gray-700
+                           bg-white border border-gray-200
+                           rounded-lg
+                           hover:bg-gray-50 hover:border-gray-300
+                           transition shadow-sm">
 
-                        <div class="text-xs font-semibold text-gray-600 uppercase">
-                            {{ $groupName }}
-                        </div>
+                    <span class="text-lg leading-none">+</span>
 
-                        <div class="text-[10px] px-2 py-[1px] rounded bg-white text-gray-600">
-                            {{ count($attrs) }}
-                        </div>
-
-                    </div>
-
-                    <span class="text-xs text-white arrow">
-                        {{ $isGeneral ? '▲' : '▼' }}
+                    <span>
+                        Create attribute
                     </span>
 
                 </button>
 
-                {{-- GROUP BODY --}}
-                <div class="{{ $isGeneral ? '' : 'hidden' }} p-2 space-y-2 bg-white">
+            </div>
 
-                    @foreach($attrs as $attr)
-                    <label class="flex items-center gap-2 p-2 rounded hover:bg-gray-50">
+        </div>
 
-                        <input class="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                            type="checkbox"
-                            name="attributes[]"
-                            value="{{ $attr->id }} ">
+    </div>
 
-                        <div class="flex-1">
-                            <div class="text-sm font-medium text-gray-800">
-                                {{ $attr->name }}
+
+    <form
+        method="POST"
+        action="{{ route('rfqs.custom-attributes.attach', $rfq->id) }}"
+        class="flex flex-col flex-1">
+
+        @csrf
+
+
+        {{-- BODY --}}
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-3">
+
+            @foreach($availableAttributesGrouped as $groupName => $attrs)
+
+                @php
+                    $isGeneral = strtolower($groupName) === 'general';
+                @endphp
+
+
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+
+
+                    {{-- GROUP HEADER --}}
+                    <button
+                        type="button"
+                        class="w-full flex justify-between items-center px-4 py-3 text-left
+                               bg-gray-50 hover:bg-gray-100 transition"
+                        onclick="toggleAttrGroup(this)">
+
+                        <div class="flex items-center gap-2">
+
+                            <div class="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                {{ $groupName }}
                             </div>
 
-                            <div class="text-xs text-gray-400 mt-0.5 flex flex-wrap gap-1">
+                            <div
+                                class="text-[10px] px-2 py-[1px] rounded
+                                       bg-white border border-gray-200 text-gray-600">
 
-                                @if(in_array($attr->type, ['select', 'multiselect']))
-
-                                @foreach($attr->options->take(5) as $option)
-
-                                <span class="px-1.5 py-[1px] rounded bg-gray-100 border border-gray-200">
-                                    {{ $option->translatedValue() }}
-                                </span>
-
-                                @endforeach
-
-                                @if($attr->options->count() > 5)
-
-                                <span class="text-gray-300">
-                                    +{{ $attr->options->count() - 5 }}
-                                </span>
-
-                                @endif
-
-                                @else
-
-                                <span class="italic text-gray-300">
-                                    {{ ucfirst($attr->type) }}
-                                </span>
-
-                                @endif
+                                {{ count($attrs) }}
 
                             </div>
+
                         </div>
 
-                    </label>
-                    @endforeach
+
+                        <span class="text-xs text-gray-500 arrow">
+                            {{ $isGeneral ? '▲' : '▼' }}
+                        </span>
+
+                    </button>
+
+
+                    {{-- GROUP BODY --}}
+                    <div
+                        class="{{ $isGeneral ? '' : 'hidden' }}
+                               p-2 space-y-2 bg-white">
+
+
+                        @foreach($attrs as $attr)
+
+                            <div
+                                class="flex items-start gap-2 p-2 rounded-lg
+                                       hover:bg-gray-50 transition">
+
+
+                                {{-- CHECKBOX --}}
+                                <input
+                                    class="mt-1 rounded border-gray-300
+                                           text-gray-900
+                                           focus:ring-gray-900/10"
+                                    type="checkbox"
+                                    name="attributes[]"
+                                    value="{{ $attr->id }}"
+                                    id="rfq-attribute-{{ $attr->id }}"
+                                />
+
+
+                                {{-- CONTENT --}}
+                                <label
+                                    for="rfq-attribute-{{ $attr->id }}"
+                                    class="flex-1 cursor-pointer">
+
+                                    <div class="text-sm font-medium text-gray-800">
+
+                                        {{ $attr->name }}
+
+                                    </div>
+
+
+                                    <div
+                                        class="text-xs text-gray-400 mt-0.5
+                                               flex flex-wrap gap-1">
+
+
+                                        @if(in_array($attr->type, ['select', 'multiselect']))
+
+                                            @foreach($attr->options->take(5) as $option)
+
+                                                <span
+                                                    class="px-1.5 py-[1px] rounded
+                                                           bg-gray-100
+                                                           border border-gray-200">
+
+                                                    {{ $option->translatedValue() }}
+
+                                                </span>
+
+                                            @endforeach
+
+
+                                            @if($attr->options->count() > 5)
+
+                                                <span class="text-gray-300">
+
+                                                    +{{ $attr->options->count() - 5 }}
+
+                                                </span>
+
+                                            @endif
+
+                                        @else
+
+                                            <span class="italic text-gray-300">
+
+                                                {{ ucfirst($attr->type) }}
+
+                                            </span>
+
+                                        @endif
+
+                                    </div>
+
+                                </label>
+
+                            </div>
+
+                        @endforeach
+
+                    </div>
 
                 </div>
-
-            </div>
 
             @endforeach
 
         </div>
 
-        <div class="mt-5 pt-4 flex items-center justify-between">
 
-            {{-- LEFT ACTIONS --}}
-            <div class="flex items-center gap-2">
+        {{-- FOOTER --}}
+        <div
+            class="border-t bg-white px-6 py-4
+                   flex items-center justify-between gap-2">
 
 
+            {{-- LEFT --}}
+            <div>
 
-            </div>
-
-            {{-- RIGHT ACTIONS --}}
-            <div class="flex items-center gap-2">
-
-                {{-- archive --}}
                 <button
                     type="submit"
                     formaction="{{ route('rfqs.custom-attributes.bulk-archive', $rfq) }}"
                     formmethod="POST"
                     onclick="return confirm('Archive selected attributes?')"
-                    class="px-4 py-2 text-sm text-red-600 border border-red-600 rounded-lg hover:bg-red-500 hover:text-white transition">
+                    class="px-4 py-2 text-sm rounded-lg
+                           border border-red-200
+                           text-red-600
+                           hover:bg-red-50
+                           transition">
 
                     Delete selected
+
                 </button>
 
-                <button type="button"
+            </div>
+
+
+            {{-- RIGHT --}}
+            <div class="flex items-center gap-2">
+
+
+                {{-- CANCEL --}}
+                <button
+                    type="button"
                     onclick="closeAllDrawers()"
-                    class="text-sm  px-4 py-2 bg-gray-200 rounded-lg hover:text-gray-700 transition">
+                    class="px-4 py-2 text-sm rounded-lg
+                           border border-gray-200
+                           text-gray-600
+                           hover:bg-gray-50
+                           transition">
 
                     Cancel
+
                 </button>
 
-                <button class="px-4 py-2 text-sm bg-black text-white rounded-lg hover:bg-gray-800 transition">
+
+                {{-- PRIMARY --}}
+                <button
+                    type="submit"
+                    class="px-4 py-2 text-sm rounded-lg
+                           bg-gray-900 text-white
+                           hover:bg-gray-800
+                           transition shadow-sm">
 
                     Attach selected
+
                 </button>
 
             </div>
 
         </div>
 
-
-
     </form>
+
 </div>
+
+
 
  <script>
      function toggleAttrGroup(btn) {

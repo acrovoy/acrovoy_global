@@ -31,6 +31,7 @@ use App\Domain\Project\Models\Project;
 class BuyerRfqController extends Controller
 {
     public function __construct(
+        private ActiveContextService $context,
         private CreateRfqAction $createRfqAction,
         private UpdateRfqAction $updateRfqAction,
         private CreateCustomizationRfqAction $createCustomizationRfqAction,
@@ -41,28 +42,19 @@ class BuyerRfqController extends Controller
     /**
      * RFQ LIST
      */
-    public function index(ActiveContextService $context)
-    {
-        /**
-         * CONTEXT OWNER
-         */
+    public function index()
+{
+    $buyer = $this->context->buyerProfile();
 
-        $buyerType = $context->type();
-        $buyerId   = $context->id();
+    abort_unless($buyer, 403);
+    
+    $result = $this->listBuyerRfqsAction->execute($buyer);
 
-
-        /**
-         * LOAD RFQs
-         */
-
-        $result = $this->listBuyerRfqsAction->execute($context);
-
-
-        return view('rfq.buyer.index', [
-            'rfqs' => $result['active'],
-            'closedRfqs' => $result['closed'],
-        ]);
-    }
+    return view('rfq.buyer.index', [
+        'rfqs' => $result['active'],
+        'closedRfqs' => $result['closed'],
+    ]);
+}
 
     /**
      * CREATE PAGE
@@ -75,176 +67,143 @@ class BuyerRfqController extends Controller
     /**
      * STORE RFQ
      */
-    public function store(
-        CreateRfqRequest $request,
-        ActiveContextService $context
-    ) {
+    public function store(CreateRfqRequest $request)
+{
+    $buyer = $this->context->buyerProfile();
+
+    abort_unless($buyer, 403);
+
+    $dto = CreateRfqData::fromArray(
+        $request->validated()
+    );
+
+    $rfq = $this->createRfqAction->execute(
+        $dto,
+        $buyer->getKey(),
+        $buyer::class,
+        auth()->id()
+    );
+
+    return redirect()
+        ->route('rfqs.workspace', $rfq)
+        ->with('success', 'RFQ created successfully');
+}
 
 
-        /**
-         * RESOLVE BUYER OWNER FROM CONTEXT
-         */
 
-        $buyerType = $context->type();
-        $buyerId = $context->id();
+    public function storeCustomization(CreateRfqRequest $request)
+{
+    $product = Product::findOrFail($request->product_id);
 
+    /**
+     * RESOLVE BUYER OWNER
+     */
+    $buyer = $this->context->buyerProfile();
 
+    abort_unless($buyer, 403);
 
-        /**
-         * DTO
-         */
+    $buyerType = $buyer::class;
+    $buyerId   = $buyer->getKey();
 
-        $dto = CreateRfqData::fromArray(
-            $request->validated()
-        );
+    /**
+     * DTO
+     */
+    $dto = CreateRfqData::fromArray(
+        $request->validated()
+    );
 
-        /**
-         * CREATE RFQ
-         */
+    /**
+     * CREATE RFQ
+     */
+    $rfq = $this->createCustomizationRfqAction->execute(
+        $dto,
+        $buyerId,
+        $buyerType,
+        auth()->id(),
+        $product->supplier_type,
+        $product->supplier_id,
+        $product->id,
+        $request->project_id,
+    );
 
-        $rfq = $this->createRfqAction->execute(
-            $dto,
-            $buyerId,
-            $buyerType,
-            auth()->id()
-        );
+    /**
+     * COPY PRODUCT ATTRIBUTES
+     */
+    $this->copyProductAttributesToRfqAction->execute(
+        $product,
+        $rfq
+    );
 
+    if ($request->project_id) {
         return redirect()
-            ->route('rfqs.workspace', $rfq)
-            ->with('success', 'RFQ created successfully');
+            ->route('buyer.projects.show', $request->project_id)
+            ->with('success', 'Product added to project successfully');
     }
 
-    public function storeCustomization(
-        CreateRfqRequest $request,
-        ActiveContextService $context
-    ) {
-
-        $product = Product::findOrFail($request->product_id);
-
-        /**
-         * RESOLVE BUYER OWNER FROM CONTEXT
-         */
-
-        $buyerType = $context->type();
-        $buyerId = $context->id();
-
-
-        /**
-         * DTO
-         */
-
-        $dto = CreateRfqData::fromArray(
-            $request->validated()
-        );
-
-        /**
-         * CREATE RFQ
-         */
-
-        $rfq = $this->createCustomizationRfqAction->execute(
-            $dto,
-            $buyerId,
-            $buyerType,
-            auth()->id(),
-            $product->supplier_type,
-            $product->supplier_id,
-            $product->id,
-            $request->project_id,
-        );
-
-        $this->copyProductAttributesToRfqAction->execute(
-            $product,
-            $rfq
-        );
-
-        if ($request->project_id) {
-            return redirect()
-                ->route('buyer.projects.show', $request->project_id)
-                ->with('success', 'Product added to project successfully');
-        } else {
-
-            return redirect()
-                ->route('rfqs.workspace', $rfq)
-                ->with('success', 'RFQ created successfully');
-        }
-    }
+    return redirect()
+        ->route('rfqs.workspace', $rfq)
+        ->with('success', 'RFQ created successfully');
+}
 
 
     /**
      * EDIT PAGE
      */
-    public function edit(
-        Rfq $rfq,
-        ActiveContextService $context
-    ) {
-        $this->authorizeAccess($rfq, $context);
 
-        return view('rfq.buyer.edit', compact('rfq'));
-    }
+    public function edit(Rfq $rfq)
+{
+    $this->authorizeAccess($rfq);
+
+    return view('rfq.buyer.edit', compact('rfq'));
+}
+
+    
 
     /**
      * UPDATE RFQ
      */
     public function update(
-        UpdateRfqRequest $request,
-        Rfq $rfq,
-        ActiveContextService $context
-    ) {
-        $this->authorizeAccess($rfq, $context);
+    UpdateRfqRequest $request,
+    Rfq $rfq
+) {
+    $this->authorizeAccess($rfq);
 
-
-        if ($rfq->status->isPublished()) {
-
-            return back()->with('error', 'Published RFQ cannot be edited.');
-        }
-
-
-        $dto = UpdateRfqData::fromArray(
-            $request->validated()
+    if ($rfq->status->isPublished()) {
+        return back()->with(
+            'error',
+            'Published RFQ cannot be edited.'
         );
-
-        $this->updateRfqAction->execute(
-            $rfq,
-            $dto
-        );
-
-        return redirect()
-            ->route('buyer.rfqs.workspace', $rfq)
-            ->with('success', 'RFQ updated successfully');
     }
+
+    $dto = UpdateRfqData::fromArray(
+        $request->validated()
+    );
+
+    $this->updateRfqAction->execute(
+        $rfq,
+        $dto
+    );
+
+    return redirect()
+        ->route('buyer.rfqs.workspace', $rfq)
+        ->with('success', 'RFQ updated successfully');
+}
 
     /**
      * ACCESS CONTROL
      */
-    private function authorizeAccess(
-        Rfq $rfq,
-        ActiveContextService $context
-    ): void {
-        /**
-         * PERSONAL MODE
-         */
+    private function authorizeAccess(Rfq $rfq): void
+{
+    $buyer = $this->context->buyerProfile();
 
-        if ($context->isPersonal()) {
+    abort_unless($buyer, 403);
 
-            abort_if(
-                $rfq->buyer_type !== auth()->user()::class
-                    || $rfq->buyer_id !== auth()->id(),
-                403
-            );
-
-            return;
-        }
-
-        /**
-         * COMPANY MODE
-         */
-
-        abort_if(
-            $rfq->buyer_type !== $context->type()
-                || $rfq->buyer_id !== $context->id(),
-            403
-        );
-    }
+    abort_if(
+        $rfq->buyer_type !== $buyer::class ||
+        $rfq->buyer_id !== $buyer->getKey(),
+        403
+    );
+}
 
     public function updateField(Request $request, Rfq $rfq)
     {
