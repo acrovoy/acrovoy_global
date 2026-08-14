@@ -40,6 +40,7 @@ class MediaController extends Controller
     $allowedModels = [
         \App\Models\User::class,
         \App\Models\Supplier::class,
+        \App\Models\Buyer::class,
         \App\Models\Product::class
     ];
 

@@ -6,6 +6,7 @@ use App\Models\CompanyUser;
 use App\Models\Supplier;
 use App\Models\Buyer;
 use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Database\Eloquent\Model;
 
 class ActiveContextService
@@ -57,6 +58,25 @@ class ActiveContextService
             return;
         }
 
+        if ($mode === 'admin') {
+
+            $admin = $user->admin;
+
+            if (!$admin || $admin->status !== 'active') {
+                $this->fallbackPersonal($user);
+                return;
+            }
+
+            $this->context = [
+                'mode' => 'admin',
+                'user' => $user,
+                'company_id' => $admin->id,
+                'company_type' => Admin::class,
+                'role' => $admin->role,
+            ];
+
+            return;
+        }
 
         if ($mode === 'company' && $type && $id) {
 
@@ -255,7 +275,7 @@ public function isBuyer(): bool
             'mode' => 'personal',
             'user' => $user,
             'company_id' => $user->id,
-            'company_type' => \App\Models\User::class,
+            'company_type' => User::class,
             'role' => $personalMode,
         ];
     }
@@ -307,6 +327,15 @@ public function entity(): ?Model
         return $this->resolvedCompany;
     }
 
+    /**
+     * ADMIN
+     */
+    if ($this->isAdmin()) {
+        return $this->user()->admin;
+    }
+
+
+    
     /**
      * COMPANY MODE
      */
@@ -362,6 +391,11 @@ public function entityId(): ?int
 
 public function platformRole(): ?string
 {
+
+ if ($this->isAdmin()) {
+        return 'admin';
+    }
+
     if ($this->isCompany()) {
 
         return match ($this->type()) {
@@ -385,6 +419,11 @@ public function platformRole(): ?string
  */
 public function companyRole(): ?string
 {
+
+ if ($this->isAdmin()) {
+        return $this->ctx()['role'] ?? null;
+    }
+    
     if (!$this->isCompany()) {
         return null;
     }
@@ -425,5 +464,10 @@ public function buyerProfile(): ?Buyer
         : null;
 }
 
+public function isAdmin(): bool
+{
+    return $this->user()?->admin !== null
+        && $this->user()->admin->status === 'active';
+}
 
 }

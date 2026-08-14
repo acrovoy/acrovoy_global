@@ -6,6 +6,8 @@ use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\DTO\AddParticipantData;
 use App\Models\Product;
 use App\Domain\RFQ\Models\Rfq;
+use App\Models\Buyer;
+use App\Models\Supplier;
 
 
 class AddSubjectParticipantsAction
@@ -30,6 +32,12 @@ class AddSubjectParticipantsAction
                 ),
 
              
+
+                Buyer::class =>
+                $this->addBuyer($conversation),
+
+            Supplier::class =>
+                $this->addSupplier($conversation),
 
             
 
@@ -104,6 +112,82 @@ class AddSubjectParticipantsAction
 
     }
 
+
+      private function addBuyer(
+        Conversation $conversation
+    ): void {
+
+        $buyer = Buyer::find(
+            $conversation->subject_id
+        );
+
+        if (!$buyer) {
+            return;
+        }
+
+        $this->addParticipant->execute(
+
+            new AddParticipantData(
+
+                conversationId:
+                    $conversation->id,
+
+                actorType:
+                    Buyer::class,
+
+                actorId:
+                    $buyer->id,
+
+                contextType:
+                    Buyer::class,
+
+                contextId:
+                    $buyer->id,
+
+                platformRole:
+                    'buyer',
+            )
+        );
+    }
+
+
+    private function addSupplier(
+        Conversation $conversation
+    ): void {
+
+        $supplier = Supplier::find(
+            $conversation->subject_id
+        );
+
+        if (!$supplier) {
+            return;
+        }
+
+        $this->addParticipant->execute(
+
+            new AddParticipantData(
+
+                conversationId:
+                    $conversation->id,
+
+                actorType:
+                    Supplier::class,
+
+                actorId:
+                    $supplier->id,
+
+                contextType:
+                    Supplier::class,
+
+                contextId:
+                    $supplier->id,
+
+                platformRole:
+                    'supplier',
+            )
+        );
+    }
+    
     
     
 }

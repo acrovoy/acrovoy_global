@@ -6,6 +6,7 @@ use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\Models\ConversationParticipant;
 use App\Domain\Conversation\Models\Message;
 use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Support\Facades\DB;
 
 use App\Models\Supplier;
@@ -33,9 +34,8 @@ class RequestSupportAction
             |--------------------------------------------------------------------------
             */
 
-            $admin = User::query()
-                ->where('role', 'admin')
-                ->firstOrFail();
+            $admin = Admin::where('status', 'active')
+    ->firstOrFail();
 
             /*
             |--------------------------------------------------------------------------
@@ -45,17 +45,23 @@ class RequestSupportAction
 
             ConversationParticipant::firstOrCreate(
 
-                [
-                    'conversation_id' => $conversation->id,
-                    'context_type'    => User::class,
-                    'context_id'      => $admin->id,
-                ],
+    [
+        'conversation_id' => $conversation->id,
 
-                [
-                    'role' => 'support',
-                ]
+        'context_type' => Admin::class,
+        'context_id'   => $admin->id,
 
-            );
+        'actor_type' => User::class,
+        'actor_id'   => $admin->user_id,
+
+        'platform_role' => 'support',
+    ],
+
+    [
+        'role' => 'support',
+    ]
+
+);
 
             /*
             |--------------------------------------------------------------------------

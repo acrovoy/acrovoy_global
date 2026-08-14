@@ -15,16 +15,11 @@ use App\Domain\Conversation\DTO\CreateMessageData;
 use App\Domain\Conversation\Enums\MessageType;
 
 use App\Domain\Conversation\Services\ConversationHeaderService;
-use App\Domain\Conversation\Resolvers\ProductHeaderResolver;
-use App\Domain\Conversation\Resolvers\NoticeConversationHeaderResolver;
-use App\Domain\Conversation\Resolvers\RfqHeaderResolver;
-use App\Domain\Conversation\Resolvers\ProjectHeaderResolver;
-use App\Domain\Conversation\Resolvers\UserHeaderResolver;
 use App\Services\Company\ActiveContextService;
 use App\Models\User;
+use App\Models\Admin;
 use App\Models\Product;
 use App\Domain\Conversation\Enums\ConversationType;
-use App\Domain\Project\Models\Project;
 use App\Domain\RFQ\Models\RFQ;
 use App\Domain\Negotiation\Models\RfqOffer;
 
@@ -75,6 +70,7 @@ $subject = $data['subject_type']::findOrFail(
 );
         
         $identity = $this->context->identity();
+
         $conversationType = null;
 
 if (
@@ -279,6 +275,11 @@ if ($subject instanceof User) {
     ]);
 
 
+    $identity = $this->context->identity();
+
+
+
+
     $message =
         $this->conversationService
         ->sendMessage(
@@ -287,8 +288,8 @@ if ($subject instanceof User) {
 
                 conversationId:
                     $data['conversation_id'],
-                senderType: $this->context->type(),
-                senderId: $this->context->id(),
+                senderType: $identity['entity_type'],
+                senderId: $identity['entity_id'],
                 messageType: MessageType::TEXT,
                 createdBy: auth()->id(),
                 message: $data['message'],
@@ -297,15 +298,20 @@ if ($subject instanceof User) {
 
         $message->load('sender');
 
-    return response()->json([
-
-    'message' => $this->formatMessage->execute(
+        $formattedMessage = $this->formatMessage->execute(
     $message,
     auth()->user()->timezone ?? config('app.timezone'),
-    $this->context->type(),
-    $this->context->id(),
-),
+    $identity['entity_type'],
+    $identity['entity_id'],
+);
 
+Log::info('MESSAGE RESPONSE DEBUG', [
+    'message_id' => $message->id,
+    'sender' => $formattedMessage['sender'],
+]);
+
+return response()->json([
+    'message' => $formattedMessage,
 ]);
 }
 
@@ -316,6 +322,8 @@ public function messages(Conversation $conversation)
         
     ]);
 
+    $identity = $this->context->identity();
+
     return response()->json([
         'messages' => $conversation->messages
     ->sortBy('created_at')
@@ -323,8 +331,8 @@ public function messages(Conversation $conversation)
     ->map(fn ($message) => $this->formatMessage->execute(
         $message,
         auth()->user()->timezone ?? config('app.timezone'),
-        $this->context->type(),
-        $this->context->id(),
+        $identity['entity_type'],
+        $identity['entity_id'],
     )),
     ]);
 }

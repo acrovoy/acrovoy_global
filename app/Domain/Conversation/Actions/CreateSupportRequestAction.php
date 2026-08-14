@@ -7,6 +7,7 @@ use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\Models\ConversationParticipant;
 use App\Domain\Conversation\Models\Message;
 use App\Models\User;
+use App\Models\Admin;
 use Illuminate\Support\Facades\Log;
 
 use App\Domain\Conversation\Enums\ConversationType;
@@ -56,15 +57,23 @@ public function execute(
 
         'context_id' => $requesterId,
 
+        'actor_type' => \App\Models\User::class,
+        'actor_id' => auth()->id(),
+
         'platform_role' => $requesterPlatformRole,
 
     ]);
 
     
 
-    $admin = User::where('role', 'admin')->first();
+    $admin = Admin::where('status', 'active')
+            ->first();
 
-    
+     if (!$admin) {
+            throw new \RuntimeException(
+                'No active admin available for support conversation.'
+            );
+        }
 
     
 
@@ -72,7 +81,10 @@ public function execute(
 
         'conversation_id' => $conversation->id,
 
-        'context_type' => User::class,
+        'context_type' => Admin::class,
+
+        'actor_type' => User::class,
+        'actor_id' => $admin->user_id,
 
         'context_id' => $admin->id,
 

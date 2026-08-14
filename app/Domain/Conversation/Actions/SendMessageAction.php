@@ -7,7 +7,7 @@ use App\Domain\Conversation\Events\MessageCreated;
 use App\Domain\Conversation\Models\Conversation;
 use App\Domain\Conversation\Models\Message;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
 use App\Domain\Conversation\Enums\MessageType;
 use App\Domain\Conversation\Enums\ConversationType;
 

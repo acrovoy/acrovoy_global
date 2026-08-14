@@ -108,7 +108,7 @@ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 
       {{-- ДЕБАГ БАР --}}
-   <!-- <x-debug.active-context-panel /> -->
+   <x-debug.active-context-panel /> 
 
 
     

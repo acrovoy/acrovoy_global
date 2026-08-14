@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Domain\Conversation\Actions;
-
+use Illuminate\Support\Facades\Log;
 use App\Domain\Conversation\Models\Message;
 use App\Models\User;
+use App\Models\Admin;
 
 class FormatConversationMessageAction
 {
@@ -14,10 +15,17 @@ class FormatConversationMessageAction
         int $currentId
     ): array {
 
+
+     
+
+
         $isMine =
             $message->sender_type === $currentType
             &&
             (int)$message->sender_id === (int)$currentId;
+
+
+            
 
         return [
 
@@ -51,17 +59,35 @@ class FormatConversationMessageAction
                     $message->sender?->id,
 
                 'name' =>
-                    $message->creator?->role === 'admin'
-                        ? 'ACROVOY'
-                        : match ($message->sender_type) {
+                    match ($message->sender_type) {
 
-                            User::class => trim(
-                                ($message->sender?->name ?? '') . ' ' .
-                                ($message->sender?->last_name ?? '')
-                            ),
+                        /*
+                        |--------------------------------------------------------------------------
+                        | ADMIN
+                        |--------------------------------------------------------------------------
+                        */
 
-                            default => $message->sender?->name,
-                        },
+                        Admin::class => 'ACROVOY',
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | USER
+                        |--------------------------------------------------------------------------
+                        */
+
+                        User::class => trim(
+                            ($message->sender?->name ?? '') . ' ' .
+                            ($message->sender?->last_name ?? '')
+                        ),
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | OTHER ENTITIES
+                        |--------------------------------------------------------------------------
+                        */
+
+                        default => $message->sender?->name ?? 'Unknown',
+                    },
 
                 /*
                 |--------------------------------------------------------------------------

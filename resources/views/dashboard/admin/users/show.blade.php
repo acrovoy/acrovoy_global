@@ -37,6 +37,44 @@
 
         </div>
 
+       @php
+
+    $settings = $user->settings->keyBy('key');
+
+    $platformMode = $settings->get('platform_mode')?->value;
+
+    $conversationSubjectType = \App\Models\User::class;
+    $conversationSubjectId = $user->id;
+
+    if ($platformMode === 'buyer') {
+
+        $profile = \App\Models\Buyer::query()
+            ->where('buyerable_type', \App\Models\User::class)
+            ->where('buyerable_id', $user->id)
+            ->first();
+
+        if ($profile) {
+            $conversationSubjectType = \App\Models\Buyer::class;
+            $conversationSubjectId = $profile->id;
+        }
+
+    } elseif ($platformMode === 'supplier') {
+
+        $profile = \App\Models\Supplier::query()
+            ->where('supplierable_type', \App\Models\User::class)
+            ->where('supplierable_id', $user->id)
+            ->first();
+
+        if ($profile) {
+            $conversationSubjectType = \App\Models\Supplier::class;
+            $conversationSubjectId = $profile->id;
+        }
+
+    }
+
+@endphp
+
+
         <div class="flex items-center gap-3">
 
             <div class="flex flex-wrap items-center gap-3">
@@ -44,7 +82,8 @@
                 {{-- Chat --}}
                 <button
                     class="open-conversation inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg
-               hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-150 shadow-sm" data-subject-type="App\Models\User" data-subject-id="{{ $user->id }}">
+               hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 transition-all duration-150 shadow-sm" data-subject-type="{{ $conversationSubjectType }}"
+    data-subject-id="{{ $conversationSubjectId }}">
                     <span>Chat with User</span>
                 </button>
 
@@ -193,8 +232,8 @@
 </div>
 
 <x-conversation.drawer
-    subjectType="App\Models\User"
-    :subjectId="$user->id"
+    :subjectType="$conversationSubjectType"
+    :subjectId="$conversationSubjectId"
     :messagesUrl="url('/dashboard/admin/messenger/conversations')" />
 
 <script>

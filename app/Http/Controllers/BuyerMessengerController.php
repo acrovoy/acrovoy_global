@@ -17,7 +17,7 @@ use App\Domain\Conversation\Actions\MarkConversationReadAction;
 use App\Domain\Conversation\Actions\RequestSupportAction;
 use App\Domain\Conversation\Actions\LoadNewMessagesAction;
 use App\Services\Date\UserDateFormatter;
-
+use App\Models\Admin;
 use App\Domain\Conversation\Enums\ConversationType;
 
 use App\Domain\Conversation\Services\ConversationHeaderService;
@@ -158,10 +158,11 @@ $search = request('search');
      */
     public function show(Conversation $conversation)
 {
-    
+     
+$identity = $this->context->identity();
 
-    $currentType = $this->context->type();
-$currentId   = $this->context->id();
+    $currentType = $identity['entity_type'];
+$currentId   = $identity['entity_id'];
 
     $conversation->load([
     'messages.sender',
@@ -236,12 +237,20 @@ $currentId   = $this->context->id();
                                     $message->sender?->id,
 
                                 'name' =>
-                                    $message->sender_type === \App\Models\User::class
-                                        ? trim(
-                                            ($message->sender?->name ?? '') . ' ' .
-                                            ($message->sender?->last_name ?? '')
-                                        )
-                                        : $message->sender?->name,
+                                    match ($message->sender_type) {
+
+                                        Admin::class =>
+                                            'ACROVOY',
+
+                                        \App\Models\User::class =>
+                                            trim(
+                                                ($message->sender?->name ?? '') . ' ' .
+                                                ($message->sender?->last_name ?? '')
+                                            ),
+
+                                        default =>
+                                            $message->sender?->name ?? 'Unknown',
+                                    },
 
                                 'avatar' =>
                                     $message->creator?->avatar()?->cdn_url
@@ -261,10 +270,16 @@ $currentId   = $this->context->id();
  */
 public function markAsRead(Conversation $conversation)
 {
+
+$identity = $this->context->identity();
+
+$currentType = $identity['entity_type'];
+$currentId   = $identity['entity_id'];
+
     $this->markConversationRead->execute(
         $conversation->id,
-        $this->context->type(),
-        $this->context->id()
+        $currentType,
+        $currentId
     );
 
     return response()->json([
@@ -283,10 +298,16 @@ public function requestSupport(
         'reason' => ['nullable', 'string', 'max:1000'],
     ]);
 
+    $identity = $this->context->identity();
+
+$currentType = $identity['entity_type'];
+$currentId   = $identity['entity_id'];
+
+
     $message = $this->requestSupportAction->execute(
         conversation: $conversation,
-        requesterType: $this->context->type(),
-        requesterId: $this->context->id(),
+        requesterType: $currentType,
+        requesterId: $currentId,
         reason: $request->input('reason')
     );
 
@@ -335,6 +356,10 @@ public function newMessages(
     Request $request
 ) {
 
+ $identity = $this->context->identity();
+
+$currentType = $identity['entity_type'];
+$currentId   = $identity['entity_id'];
 
     return response()->json([
 
@@ -344,9 +369,9 @@ public function newMessages(
 
                 conversation: $conversation,
 
-                currentType: $this->context->type(),
+                currentType: $currentType,
 
-                currentId: $this->context->id(),
+                currentId: $currentId,
 
                 after: (int) $request->get('after', 0),
 

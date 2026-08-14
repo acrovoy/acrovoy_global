@@ -75,7 +75,7 @@ class AdminMessengerController extends Controller
     public function conversations(Request $request)
     {
 
-    $search = request('search');
+        $search = request('search');
 
         $conversations =
             $this->supportConversations
@@ -90,27 +90,46 @@ class AdminMessengerController extends Controller
             'conversations' =>
             $conversations->map(function ($conversation) {
 
+                $identity = $this->context->identity();
+
                 $lastMessage = $conversation->lastMessage;
 
-                $adminId = auth()->id();
+                $currentType = $identity['entity_type'];
+                $currentId   = $identity['entity_id'];
 
+                $raw = \DB::table('conversation_participants')
+                    ->where('conversation_id', $conversation->id)
+                    ->get();
+
+                Log::info('RAW DB PARTICIPANTS', [
+                    'conversation_id' => $conversation->id,
+                    'rows' => $raw->map(fn($row) => [
+                        'id' => $row->id,
+                        'context_type' => $row->context_type,
+                        'context_id' => $row->context_id,
+                        'role' => $row->role,
+                    ])->toArray(),
+                ]);
 
                 $participant =
                     $conversation
                     ->participants
-                    ->first(function ($participant) use ($adminId) {
+                    ->first(function ($participant) use ($currentType, $currentId) {
 
                         return
-                            $participant->context_type === User::class
+                            $participant->context_type === $currentType
                             &&
-                            (int)$participant->context_id === (int)$adminId;
+                            (int)$participant->context_id === (int)$currentId;
                     });
 
-
-
-
-
-
+                Log::info('ADMIN PARTICIPANT DEBUG', [
+                    'conversation_id' => $conversation->id,
+                    'identity' => $identity,
+                    'current_type' => $currentType,
+                    'current_id' => $currentId,
+                    'participant' => $participant?->toArray(),
+                    'unread' => $participant?->unreadCount(),
+                ]);
                 return [
 
                     'id' =>
@@ -138,6 +157,8 @@ class AdminMessengerController extends Controller
                     $conversation->participants
                         ->contains(function ($participant) {
 
+
+
                             return $participant->role === 'support';
                         }),
 
@@ -150,7 +171,7 @@ class AdminMessengerController extends Controller
     public function allConversations(Request $request)
     {
 
-    $search = request('search');
+        $search = request('search');
 
         $conversations =
             $this->allConversations
@@ -165,20 +186,23 @@ class AdminMessengerController extends Controller
             'conversations' =>
             $conversations->map(function ($conversation) {
 
-                $lastMessage = $conversation->lastMessage;
+                $identity = $this->context->identity();
 
-                $adminId = auth()->id();
+                $currentType = $identity['entity_type'];
+                $currentId   = $identity['entity_id'];
+
+                $lastMessage = $conversation->lastMessage;
 
 
                 $participant =
                     $conversation
                     ->participants
-                    ->first(function ($participant) use ($adminId) {
+                    ->first(function ($participant) use ($currentType, $currentId) {
 
                         return
-                            $participant->context_type === User::class
+                            $participant->context_type === $currentType
                             &&
-                            (int)$participant->context_id === (int)$adminId;
+                            (int)$participant->context_id === (int)$currentId;
                     });
 
 
@@ -234,7 +258,7 @@ class AdminMessengerController extends Controller
             ->get();
 
 
-            
+
 
 
         return response()->json([
@@ -244,18 +268,22 @@ class AdminMessengerController extends Controller
 
                 $lastMessage = $conversation->lastMessage;
 
-                $adminId = auth()->id();
+                $identity = $this->context->identity();
+
+                $currentType = $identity['entity_type'];
+                $currentId   = $identity['entity_id'];
+
 
 
                 $participant =
                     $conversation
                     ->participants
-                    ->first(function ($participant) use ($adminId) {
+                    ->first(function ($participant) use ($currentType, $currentId) {
 
                         return
-                            $participant->context_type === User::class
+                            $participant->context_type === $currentType
                             &&
-                            (int)$participant->context_id === (int)$adminId;
+                            (int)$participant->context_id === (int)$currentId;
                     });
 
 
@@ -310,8 +338,12 @@ class AdminMessengerController extends Controller
     {
 
 
-        $currentType = $this->context->type();
-        $currentId   = $this->context->id();
+        $identity = $this->context->identity();
+
+        $currentType = $identity['entity_type'];
+        $currentId   = $identity['entity_id'];
+
+
 
 
         $participant =
@@ -370,7 +402,7 @@ class AdminMessengerController extends Controller
                 ->sortBy('created_at')
                 ->map(function ($message) use ($currentType, $currentId) {
 
-                  
+
                     return [
 
                         'id' =>
@@ -426,8 +458,10 @@ class AdminMessengerController extends Controller
     {
 
 
-        $currentType = $this->context->type();
-        $currentId   = $this->context->id();
+        $identity = $this->context->identity();
+
+        $currentType = $identity['entity_type'];
+        $currentId   = $identity['entity_id'];
 
 
         $participant =
@@ -486,7 +520,7 @@ class AdminMessengerController extends Controller
                 ->sortBy('created_at')
                 ->map(function ($message) use ($currentType, $currentId) {
 
-                   
+
                     return [
 
                         'id' =>
@@ -541,10 +575,12 @@ class AdminMessengerController extends Controller
     public function showNotice(Conversation $conversation)
     {
 
-    $isAdmin = $this->context->identity()['platform_role'] === 'admin';
+        $isAdmin = $this->context->identity()['platform_role'] === 'admin';
 
-        $currentType = $this->context->type();
-        $currentId   = $this->context->id();
+        $identity = $this->context->identity();
+
+        $currentType = $identity['entity_type'];
+        $currentId   = $identity['entity_id'];
 
 
         $participant =
@@ -606,12 +642,7 @@ class AdminMessengerController extends Controller
                 ->map(function ($message) use ($currentType, $currentId) {
 
 
-                    Log::info('Creator', [
-                        'message_id' => $message->id,
-                        'creator_by' => $message->created_by,
-                        'creator_loaded' => $message->relationLoaded('creator'),
-                        'creator' => $message->creator?->id,
-                    ]);
+
 
 
                     return [
@@ -667,10 +698,17 @@ class AdminMessengerController extends Controller
 
     public function markAsRead(Conversation $conversation)
     {
+
+        $identity = $this->context->identity();
+
+        $currentType = $identity['entity_type'];
+        $currentId   = $identity['entity_id'];
+
+
         $this->markConversationRead->execute(
             $conversation->id,
-            $this->context->type(),
-            $this->context->id()
+            $currentType,
+            $currentId
         );
 
         return response()->json([
@@ -683,7 +721,10 @@ class AdminMessengerController extends Controller
         Request $request
     ) {
 
+        $identity = $this->context->identity();
 
+        $currentType = $identity['entity_type'];
+        $currentId   = $identity['entity_id'];
 
         return response()->json([
 
@@ -693,9 +734,9 @@ class AdminMessengerController extends Controller
 
                 conversation: $conversation,
 
-                currentType: $this->context->type(),
+                currentType: $currentType,
 
-                currentId: $this->context->id(),
+                currentId: $currentId,
 
                 after: (int) $request->get('after', 0),
 

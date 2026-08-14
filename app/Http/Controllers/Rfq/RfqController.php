@@ -771,9 +771,11 @@ class RfqController extends Controller
         return false;
     }
 
+    $identity = $this->context->identity();
+
     return $rfq->participants()
-        ->where('participant_type', Supplier::class)
-        ->where('participant_id', $this->context->id())
+        ->where('participant_type', $identity['entity_type'])
+        ->where('participant_id', $identity['entity_id'])
         ->exists();
 }
 

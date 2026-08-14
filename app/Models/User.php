@@ -207,6 +207,11 @@ public function profileContact()
         ->where('show_in_profile', true);
 }
 
+public function admin()
+{
+    return $this->hasOne(Admin::class);
+}
+
 
 
 }

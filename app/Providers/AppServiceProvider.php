@@ -24,6 +24,8 @@ use App\Domain\Conversation\Resolvers\RfqHeaderResolver;
 use App\Domain\Conversation\Resolvers\RfqOfferHeaderResolver;
 use App\Domain\Conversation\Resolvers\ProjectHeaderResolver;
 use App\Domain\Conversation\Contracts\ConversationHeaderResolver;
+use App\Domain\Conversation\Resolvers\BuyerHeaderResolver;
+use App\Domain\Conversation\Resolvers\SupplierHeaderResolver;
 
 use App\Domain\Media\Services\MediaProcessingService;
 
@@ -48,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(ProductHeaderResolver::class),
                 $app->make(SupportConversationHeaderResolver::class),
                 $app->make(UserHeaderResolver::class),
+                $app->make(BuyerHeaderResolver::class),
+                $app->make(SupplierHeaderResolver::class),
                 $app->make(NoticeConversationHeaderResolver::class),
                 $app->make(RfqHeaderResolver::class),
                 $app->make(RfqOfferHeaderResolver::class),
