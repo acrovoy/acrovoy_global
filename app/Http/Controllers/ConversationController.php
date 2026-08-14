@@ -305,10 +305,6 @@ if ($subject instanceof User) {
     $identity['entity_id'],
 );
 
-Log::info('MESSAGE RESPONSE DEBUG', [
-    'message_id' => $message->id,
-    'sender' => $formattedMessage['sender'],
-]);
 
 return response()->json([
     'message' => $formattedMessage,
