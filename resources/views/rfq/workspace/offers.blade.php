@@ -13,7 +13,7 @@
 <x-alerts />
 
 
-<div class="grid grid-cols-12 gap-6">
+<div class="grid grid-cols-12 gap-6 mt-4">
 
     {{-- LEFT BIG BLOCK --}}
     <div class="col-span-8">
@@ -72,43 +72,44 @@
                         </div>
 
                     </div>
-
+@if(!$rfq->status->isClosed())
                     <div class="flex items-center gap-4 text-sm">
 
                          {{-- =========================================
                             CHAT (only when editable or submitted)
                         ========================================= --}}
                         <button
-    type="button"
-    class="
-        open-conversation
-        inline-flex
-        items-center
-        gap-2
-        px-3
-        py-1.5
-        rounded-lg
-        border
-        border-stone-200
-        bg-white
-        text-stone-600
-        text-xs
-        font-medium
-        hover:border-stone-300
-        hover:bg-stone-50
-        hover:text-stone-900
-        transition
-        shadow-sm
-    "
-    data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
-    data-subject-id="{{ $offer->id }}"
->
-    
+                            type="button"
+                            class="
+                                open-conversation
+                                inline-flex
+                                items-center
+                                gap-2
+                                px-3
+                                py-1.5
+                                rounded-lg
+                                border
+                                border-stone-200
+                                bg-white
+                                text-stone-600
+                                text-xs
+                                font-medium
+                                hover:border-stone-300
+                                hover:bg-stone-50
+                                hover:text-stone-900
+                                transition
+                                shadow-sm
+                            "
+                            data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
+                            data-subject-id="{{ $offer->id }}"
+                        >
+                            
 
-    Chat
-</button>
+                            Chat
+                        </button>
 
                     </div>
+                    @endif
 
                 </div>
 
@@ -425,9 +426,7 @@ $isCounter  = $activeVersion->is_counter ?? false;
                     ⚠️ Accepting this offer will automatically mark all other supplier offers as <b>Rejected</b>.
                 </div>
 
-                <div class="p-3 rounded-lg bg-red-50 border border-red-100 text-xs text-red-800">
-                    ❌ Rejecting will exclude this supplier from further consideration.
-                </div>
+                
 
                 {{-- ACTION TYPE --}}
                 <input type="hidden" name="decision" id="close-decision" value="accept">
@@ -462,13 +461,7 @@ $isCounter  = $activeVersion->is_counter ?? false;
 
             <div class="flex gap-2">
 
-                {{-- REJECT --}}
-                <button type="submit"
-                    onclick="document.getElementById('close-decision').value='reject'"
-                    class="px-4 py-2 text-sm rounded-lg border border-red-200
-                       text-red-600 hover:bg-red-50 transition">
-                    Reject
-                </button>
+                
 
                 {{-- ACCEPT --}}
                 <button type="submit"

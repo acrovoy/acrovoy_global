@@ -105,12 +105,13 @@ $completed =
                     @endphp
                     @php
                         use App\Facades\ActiveContext;
+                        $identity = ActiveContext::identity();
 
-                        $supplierId = ActiveContext::entityId();
+                        $supplierId = $identity['entity_id'];
 
                         $offer = $rfq->offers
-                            ->where('participant_type', ActiveContext::type())
-                            ->where('participant_id', ActiveContext::id())
+                            ->where('participant_type', $identity['entity_type'])
+                            ->where('participant_id', $identity['entity_id'])
                             ->sortByDesc('id')
                             ->first();
 
@@ -260,137 +261,210 @@ $completed =
     {{-- Header --}}
     <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
 
-        <div>
-            <h3 class="text-base font-semibold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
-               @if($isOrdered)
-               Order Created
-               @else
-            Create Order
+        @if($selectedOfferVersion)
+
+            <div>
+                <h3 class="text-base font-semibold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
+                    @if($isOrdered)
+                        Order Created
+                    @else
+                        Create Order
+                    @endif
+                </h3>
+
+                @if($supplier)
+                    <div class="mt-1 text-sm {{ $isOrdered ? 'text-gray-400' : 'text-gray-600' }}">
+                        Supplier :
+                        <span class="p-1 border rounded-md font-semibold
+                            {{ $isOrdered
+                                ? 'border-gray-200 bg-gray-100 text-gray-500'
+                                : 'border-green-200 bg-green-50 text-gray-900' }}">
+                            {{ $supplier->last_name ? $supplier->name .' '. $supplier->last_name : $supplier->name }}
+                        </span>
+                    </div>
+                @endif
+
+                <p class="text-sm text-gray-500 mt-2">
+                    Review the accepted offer and proceed to checkout.
+                </p>
+            </div>
+
+            @if(!$isOrdered)
+
+                <form
+                    method="GET"
+                    action="{{ route('buyer.orders.rfq-checkout', $selectedOfferVersion) }}"
+                >
+
+                    @csrf
+
+                    <input
+                        id="checkout-quantity-hidden"
+                        type="hidden"
+                        name="quantity"
+                        value="{{ $quantity }}"
+                    >
+
+                    <button
+                        type="submit"
+                        class="px-6 h-10 rounded-lg bg-blue-900 text-white text-sm font-medium hover:bg-blue-800 transition"
+                    >
+                        Checkout
+                    </button>
+
+                </form>
+
+            @else
+
+                <a
+                    href="{{ route('buyer.orders.show', $rfq->order_id) }}"
+                    class="whitespace-nowrap inline-flex items-center px-2 h-10 rounded-lg bg-slate-700 text-white text-xs hover:bg-slate-800 transition"
+                >
+                    Open Order
+                </a>
+
             @endif
-            </h3>
-
-            @if($supplier)
-                <div class="mt-1 text-sm {{ $isOrdered ? 'text-gray-400' : 'text-gray-600' }}">
-                    Supplier :
-                    <span class="p-1 border rounded-md font-semibold
-                        {{ $isOrdered
-                            ? 'border-gray-200 bg-gray-100 text-gray-500'
-                            : 'border-green-200 bg-green-50 text-gray-900' }}">
-                        {{ $supplier->last_name ? $supplier->name .' '. $supplier->last_name : $supplier->name }}
-                    </span>
-                </div>
-            @endif
-
-            <p class="text-sm text-gray-500 mt-2">
-                Review the accepted offer and proceed to checkout.
-            </p>
-        </div>
-
-        @if(!$isOrdered)
-
-            <form method="GET"
-                  action="{{ route('buyer.orders.rfq-checkout', $selectedOfferVersion) }}">
-
-                @csrf
-
-                <input
-                    id="checkout-quantity-hidden"
-                    type="hidden"
-                    name="quantity"
-                    value="{{ $quantity }}">
-
-                <button
-                    type="submit"
-                    class="px-6 h-10 rounded-lg bg-blue-900 text-white text-sm font-medium hover:bg-blue-800 transition">
-                    Checkout
-                </button>
-
-            </form>
 
         @else
 
-            <a
-                href="{{ route('buyer.orders.show', $rfq->order_id) }}"
-                class="whitespace-nowrap inline-flex items-center px-2 h-10 rounded-lg bg-slate-700 text-white text-xs  hover:bg-slate-800 transition">
-                Open Order
-            </a>
+            <div>
+                <h3 class="text-base font-semibold text-gray-500">
+                    RFQ Closed
+                </h3>
+
+                <p class="text-sm text-gray-500 mt-2">
+                    This RFQ has been closed and no order was created.
+                </p>
+            </div>
 
         @endif
 
     </div>
 
-    {{-- Content --}}
-    <div class="flex items-end justify-between gap-3 px-6 py-5 flex-wrap">
 
-        {{-- Unit price --}}
-        <div class="min-w-[120px]">
+    @if($selectedOfferVersion)
 
-            <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
-                Unit Price
+        {{-- Content --}}
+        <div class="flex items-end justify-between gap-3 px-6 py-5 flex-wrap">
+
+            {{-- Unit price --}}
+            <div class="min-w-[120px]">
+
+                <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
+                    Unit Price
+                </div>
+
+                <div class="text-2xl font-semibold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
+                    ${{ number_format($unitPrice, 2) }}
+                </div>
+
             </div>
 
-            <div class="text-2xl font-semibold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
-                ${{ number_format($unitPrice, 2) }}
+
+            {{-- Quantity --}}
+            <div class="min-w-[180px]">
+
+                <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
+                    Quantity
+                </div>
+
+                <div class="inline-flex items-center border rounded-lg overflow-hidden
+                    {{ $isOrdered ? 'border-gray-200 bg-gray-100' : 'border-gray-300' }}">
+
+                    <button
+                        type="button"
+                        id="qty-minus"
+                        class="w-10 h-10 {{ $isOrdered ? 'bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none' : 'bg-gray-50 hover:bg-gray-100 transition' }}"
+                    >
+                        −
+                    </button>
+
+                    <input
+                        id="checkout-quantity"
+                        type="number"
+                        min="1"
+                        value="{{ $quantity }}"
+                        class="w-20 h-10 text-center border-x outline-none
+                            {{ $isOrdered
+                                ? 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
+                                : 'border-gray-300' }}"
+                        @disabled($isOrdered)
+                    >
+
+                    <button
+                        type="button"
+                        id="qty-plus"
+                        class="w-10 h-10 {{ $isOrdered ? 'bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none' : 'bg-gray-50 hover:bg-gray-100 transition' }}"
+                    >
+                        +
+                    </button>
+
+                </div>
+
             </div>
 
-        </div>
 
-        {{-- Quantity --}}
-        <div class="min-w-[180px]">
+            {{-- Total --}}
+            <div class="min-w-[150px] ml-auto text-right">
 
-            <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
-                Quantity
-            </div>
+                <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
+                    Order Total
+                </div>
 
-            <div class="inline-flex items-center border rounded-lg overflow-hidden
-                {{ $isOrdered ? 'border-gray-200 bg-gray-100' : 'border-gray-300' }}">
-
-                <button
-                    type="button"
-                    id="qty-minus"
-                    class="w-10 h-10 {{ $isOrdered ? 'bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none' : 'bg-gray-50 hover:bg-gray-100 transition' }}">
-                    −
-                </button>
-
-                <input
-                    id="checkout-quantity"
-                    type="number"
-                    min="1"
-                    value="{{ $quantity }}"
-                    class="w-20 h-10 text-center border-x outline-none
-                        {{ $isOrdered
-                            ? 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
-                            : 'border-gray-300' }}"
-                    @disabled($isOrdered)
+                <div
+                    id="checkout-total"
+                    class="text-3xl font-bold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}"
                 >
-
-                <button
-                    type="button"
-                    id="qty-plus"
-                    class="w-10 h-10 {{ $isOrdered ? 'bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none' : 'bg-gray-50 hover:bg-gray-100 transition' }}">
-                    +
-                </button>
+                    ${{ number_format($unitPrice * $quantity, 2) }}
+                </div>
 
             </div>
 
         </div>
 
-        {{-- Total --}}
-        <div class="min-w-[150px] ml-auto text-right">
+    @else
 
-            <div class="text-[11px] uppercase tracking-wider {{ $isOrdered ? 'text-gray-300' : 'text-gray-400' }} mb-2">
-                Order Total
-            </div>
+        {{-- Closed RFQ without accepted offer --}}
+        <div class="px-6 py-5">
 
-            <div
-                id="checkout-total"
-                class="text-3xl font-bold {{ $isOrdered ? 'text-gray-500' : 'text-gray-900' }}">
-                ${{ number_format($unitPrice * $quantity, 2) }}
+            <div class="flex items-center gap-3">
+
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.8"
+                        stroke="currentColor"
+                        class="h-5 w-5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+
+                </div>
+
+                <div>
+
+                    <div class="text-sm font-medium text-gray-700">
+                        No accepted offer
+                    </div>
+
+                    <div class="text-sm text-gray-400 mt-0.5">
+                        This RFQ was closed without creating an order.
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
 
-    </div>
+    @endif
 
 </div>
 
@@ -458,14 +532,21 @@ $completed =
 
                                 @if($canPublish)
 
-                                <form method="POST" action="{{ route('buyer.rfqs.publish', $rfq) }}">
-                                    @csrf
+                                <form
+    id="publish-rfq-form"
+    method="POST"
+    action="{{ route('buyer.rfqs.publish', $rfq) }}"
+>
+    @csrf
 
-                                    <button
-                                        class="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-black transition shadow-sm">
-                                        Publish RFQ
-                                    </button>
-                                </form>
+    <button
+        type="button"
+        id="publish-rfq-button"
+        class="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-black transition shadow-sm"
+    >
+        Publish RFQ
+    </button>
+</form>
 
                                 
                                 @else
@@ -495,14 +576,21 @@ $completed =
 
                             @if($rfq->status->canClose())
 
-                           <form method="POST" action="{{ route('buyer.rfqs.close', $rfq) }}">
-                                @csrf
+                            <form
+        id="close-rfq-form"
+        method="POST"
+        action="{{ route('buyer.rfqs.close', $rfq) }}"
+    >
+        @csrf
 
-                                <button
-                                    class="px-5 py-2.5 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition">
-                                    Close
-                                </button>
-                            </form>
+        <button
+            type="button"
+            id="close-rfq-button"
+            class="px-5 py-2.5 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition"
+        >
+            Close
+        </button>
+    </form>
 
                             @endif
 
@@ -1096,6 +1184,84 @@ $completed =
 </div>
 
 @include('dashboard.buyer.orders.modals.select_saved_address')
+
+<script> 
+    document.addEventListener('DOMContentLoaded', () => {
+
+    const publishButton = document.getElementById('publish-rfq-button');
+    const publishForm = document.getElementById('publish-rfq-form');
+
+    if (!publishButton || !publishForm) {
+        return;
+    }
+
+    publishButton.addEventListener('click', () => {
+
+        window.confirmModal.open({
+
+            type: 'warning',
+
+            title: 'Publish RFQ',
+
+            description: 'This action cannot be undone.',
+
+            message:
+                'Once published, this RFQ will become available to suppliers and you will no longer be able to edit its main details. Do you want to continue?',
+
+            cancelText: 'Cancel',
+
+            confirmText: 'Publish RFQ',
+
+            onConfirm: () => {
+                publishForm.submit();
+            }
+
+        });
+
+    });
+
+});
+
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const closeButton = document.getElementById('close-rfq-button');
+    const closeForm = document.getElementById('close-rfq-form');
+
+    if (!closeButton || !closeForm) {
+        return;
+    }
+
+    closeButton.addEventListener('click', () => {
+
+        window.confirmModal.open({
+
+            type: 'warning',
+
+            title: 'Close RFQ',
+
+            description: 'This action cannot be undone.',
+
+            message:
+                'Closing this RFQ will end all active negotiations. Suppliers will no longer be able to submit or continue offers. This action cannot be undone.',
+
+            cancelText: 'Cancel',
+
+            confirmText: 'Close RFQ',
+
+            onConfirm: () => {
+                closeForm.submit();
+            }
+
+        });
+
+    });
+
+});
+
+
+
+</script>
 
 <script>
 /**

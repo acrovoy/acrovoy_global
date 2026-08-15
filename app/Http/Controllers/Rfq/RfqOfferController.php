@@ -22,11 +22,17 @@ use App\Domain\Negotiation\Actions\SubmitCounterOfferAction;
 use App\Domain\Negotiation\Actions\DeleteDraftOfferVersionAction;
 use App\Domain\Negotiation\Actions\DeleteCounterOfferDraftAction;
 use App\Models\Supplier;
-
+use App\Models\Buyer;
+use App\Domain\Conversation\Actions\CloseRfqConversationsAction;
 
 
 class RfqOfferController extends Controller
 {
+
+    public function __construct(
+        private ActiveContextService $context,
+
+    ) {}
 
 
     public function index(Rfq $rfq)
@@ -45,65 +51,74 @@ class RfqOfferController extends Controller
      * BUYER: accept specific OFFER VERSION (NOT offer itself)
      */
     public function accept(
-         Rfq $rfq,
+        Rfq $rfq,
         RfqOffer $offer,
-    RfqOfferVersion $version,
-    OfferDecisionService $service,
-    ActiveContextService $context
+        RfqOfferVersion $version,
+        OfferDecisionService $service,
+        CloseRfqConversationsAction $closeConversations
     ) {
-    
- /**
-     * 1. CHECK RFQ OWNERSHIP (SECURITY)
-     */
-    if (
-        $rfq->buyer_type !== $context->type() ||
-        $rfq->buyer_id !== $context->id()
-    ) {
-        abort(403, 'Unauthorized RFQ access');
+
+        /**
+         * 1. CHECK RFQ OWNERSHIP (SECURITY)
+         */
+        $identity = $this->context->identity();
+
+        if (
+            $identity['entity_type'] !== Buyer::class ||
+            $rfq->buyer_type !== Buyer::class ||
+            $rfq->buyer_id !== $identity['entity_id']
+        ) {
+            abort(403, 'Unauthorized RFQ access');
+        }
+
+        /**
+         * 2. CHECK OFFER BELONGS TO RFQ
+         */
+        if ($offer->rfq_id !== $rfq->id) {
+            abort(404, 'Offer does not belong to RFQ');
+        }
+
+        /**
+         * 3. CHECK VERSION BELONGS TO OFFER
+         */
+        if ($version->rfq_offer_id !== $offer->id) {
+            abort(404, 'Version does not belong to Offer');
+        }
+
+        /**
+         * 4. BUSINESS LOGIC
+         */
+        $service->accept(
+            $version,
+            auth()->id()
+        );
+
+        $closeConversations->execute($rfq);
+
+        return redirect()
+            ->route('buyer.rfqs.offer-comparison', [
+                'rfq' => $rfq->id
+            ])
+            ->with('success', 'Offer version accepted');
     }
-
-    /**
-     * 2. CHECK OFFER BELONGS TO RFQ
-     */
-    if ($offer->rfq_id !== $rfq->id) {
-        abort(404, 'Offer does not belong to RFQ');
-    }
-
-    /**
-     * 3. CHECK VERSION BELONGS TO OFFER
-     */
-    if ($version->	rfq_offer_id !== $offer->id) {
-        abort(404, 'Version does not belong to Offer');
-    }
-
-    /**
-     * 4. BUSINESS LOGIC
-     */
-    $service->accept(
-        $version,
-        auth()->id()
-    );
-
-    return redirect()
-    ->route('buyer.rfqs.offer-comparison', [
-        'rfq' => $rfq->id
-    ])
-    ->with('success', 'Offer version accepted');
-}
 
     /**
      * BUYER: reject whole offer (all versions)
      */
     public function reject(
         RfqOffer $offer,
-        OfferDecisionService $service,
-        ActiveContextService $context
+        OfferDecisionService $service
     ) {
-        abort_if($context->role() !== 'buyer', 403);
+        $identity = $this->context->identity();
+
+        abort_if(
+            $identity['platform_role'] !== 'buyer',
+            403
+        );
 
         $service->reject(
             $offer,
-            $context->user()->id
+            $identity['user_id']
         );
 
         return back()->with('success', 'Offer rejected');
@@ -112,34 +127,53 @@ class RfqOfferController extends Controller
 
 
 
-   public function submitOfferVersion(
-    Rfq $rfq,
-    RfqOfferVersion $version,
-    ActiveContextService $context,
-    SubmitOfferVersionAction $action
-) {
-    if ($context->isGuest()) {
-        abort(403);
-    }
+    public function submitOfferVersion(
+        Rfq $rfq,
+        RfqOfferVersion $version,
+        ActiveContextService $context,
+        SubmitOfferVersionAction $action
+    ) {
+        if ($context->isGuest()) {
+            abort(403);
+        }
 
-    if ($version->status !== 'draft') {
-        abort(422);
-    }
+        if ($version->status !== 'draft') {
+            abort(422);
+        }
 
-    $submittedVersion = $action->execute($version);
+        $submittedVersion = $action->execute($version);
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | RFQ belongs to Project
     |--------------------------------------------------------------------------
     */
 
-    if ($rfq->project) {
+        if ($rfq->project) {
+
+            return redirect()
+                ->route('supplier.projects.rfq.requirements', [
+                    'project' => $rfq->project,
+                    'rfq'     => $rfq,
+                ])
+                ->with(
+                    'success',
+                    'Offer submitted successfully.'
+                );
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Standalone RFQ
+    |--------------------------------------------------------------------------
+    */
 
         return redirect()
-            ->route('supplier.projects.rfq.requirements', [
-                'project' => $rfq->project,
+            ->route('rfqs.workspace', [
                 'rfq'     => $rfq,
+                'tab'     => 's-requirements',
+                'offer'   => $version->rfq_offer_id,
+                'version' => $submittedVersion->id,
             ])
             ->with(
                 'success',
@@ -147,33 +181,14 @@ class RfqOfferController extends Controller
             );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Standalone RFQ
-    |--------------------------------------------------------------------------
-    */
-
-    return redirect()
-        ->route('rfqs.workspace', [
-            'rfq'     => $rfq,
-            'tab'     => 's-requirements',
-            'offer'   => $version->rfq_offer_id,
-            'version' => $submittedVersion->id,
-        ])
-        ->with(
-            'success',
-            'Offer submitted successfully.'
-        );
-}
 
 
 
 
 
-
-    public function createRevision(Rfq $rfq, ActiveContextService $context)
+    public function createRevision(Rfq $rfq)
     {
-        if (!$context->isSupplier()) {
+        if (!$this->context->isSupplier()) {
             abort(403);
         }
 
@@ -183,8 +198,10 @@ class RfqOfferController extends Controller
          * =========================
          */
 
-        $supplier = $context->supplierProfile();
-        
+        $identity = $this->context->identity();
+
+        $supplier = $this->context->supplierProfile();
+
 
         /**
          * =========================================
@@ -222,7 +239,7 @@ class RfqOfferController extends Controller
             'status' => 'draft',
             'owner_type' => Supplier::class,
             'owner_id' => $supplier->id,
-            'created_by' => $context->user()->id,
+            'created_by' => $identity['user_id'],
         ]);
 
         /**
@@ -275,43 +292,42 @@ class RfqOfferController extends Controller
 |--------------------------------------------------------------------------
 */
 
-if ($rfq->project) {
+        if ($rfq->project) {
 
-    return redirect()->route(
-        'supplier.projects.rfq.requirements',
-        [
-            'project' => $rfq->project,
-            'rfq'     => $rfq,
-        ]
-    );
-}
+            return redirect()->route(
+                'supplier.projects.rfq.requirements',
+                [
+                    'project' => $rfq->project,
+                    'rfq'     => $rfq,
+                ]
+            );
+        }
 
-/*
+        /*
 |--------------------------------------------------------------------------
 | STANDALONE RFQ
 |--------------------------------------------------------------------------
 */
 
-return redirect()->route(
-    'rfqs.workspace',
-    [
-        'rfq'     => $rfq,
-        'tab'     => 's-requirements',
-        'version' => $newVersion->id,
-    ]
-);
+        return redirect()->route(
+            'rfqs.workspace',
+            [
+                'rfq'     => $rfq,
+                'tab'     => 's-requirements',
+                'version' => $newVersion->id,
+            ]
+        );
     }
 
 
     public function createCounterOffer(
         Rfq $rfq,
         RfqOffer $offer,
-        ActiveContextService $context,
         CreateCounterOfferAction $action
     ) {
-        $buyer = $context->isPersonal()
-            ? auth()->user()
-            : $context->company();
+        $identity = $this->context->identity();
+
+        $buyer = $this->context->buyerProfile();
 
         if (!$buyer) {
             abort(403);
@@ -321,8 +337,8 @@ return redirect()->route(
 
         $result = $action->execute(
             $offer,
-            $context->user()->id,
-            $context,
+            $identity['user_id'],
+            $this->context,
             request()->boolean('create')
         );
 
@@ -340,36 +356,36 @@ return redirect()->route(
 
 
     public function submitCounterOfferVersion(
-    Rfq $rfq,
-    RfqOfferVersion $version,
-    ActiveContextService $context,
-    SubmitCounterOfferAction $action
-) {
+        Rfq $rfq,
+        RfqOfferVersion $version,
+        ActiveContextService $context,
+        SubmitCounterOfferAction $action
+    ) {
 
-    if ($context->isGuest()) {
-        abort(403);
-    }
+        if ($context->isGuest()) {
+            abort(403);
+        }
 
-     
 
-    /*
+
+        /*
     |--------------------------------------------------------------------------
     | EXECUTE
     |--------------------------------------------------------------------------
     */
 
-    $submitted = $action->execute($version);
+        $submitted = $action->execute($version);
 
-    return redirect()->route(
-        'rfqs.workspace',
-        [
-            'rfq' => $version->offer->rfq_id,
-            'tab' => 'offers',
-            'offer' => $version->rfq_offer_id,
-            'version' => $submitted->id,
-        ]
-    )->with('success', 'Counter offer submitted.');
-}
+        return redirect()->route(
+            'rfqs.workspace',
+            [
+                'rfq' => $version->offer->rfq_id,
+                'tab' => 'offers',
+                'offer' => $version->rfq_offer_id,
+                'version' => $submitted->id,
+            ]
+        )->with('success', 'Counter offer submitted.');
+    }
 
 
 
@@ -379,7 +395,7 @@ return redirect()->route(
         OfferVersionItemAutosaveAction $action,
         ActiveContextService $context
     ) {
-        
+
 
         return $action->execute(
             rfq: $rfq,
@@ -409,100 +425,95 @@ return redirect()->route(
     }
 
     public function deleteDraftVersion(
-    Rfq $rfq,
-    RfqOfferVersion $version,
-    ActiveContextService $context,
-    DeleteDraftOfferVersionAction $action
-) {
+        Rfq $rfq,
+        RfqOfferVersion $version,
+        ActiveContextService $context,
+        DeleteDraftOfferVersionAction $action
+    ) {
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | AUTH CHECK
     |--------------------------------------------------------------------------
     */
 
-    if ($context->isGuest()) {
-        abort(403);
-    }
+        if ($context->isGuest()) {
+            abort(403);
+        }
 
-    $user = $context->user();
 
-    $isOwner = false;
 
-   
-
-    /*
+        /*
     |--------------------------------------------------------------------------
     | DELETE
     |--------------------------------------------------------------------------
     */
 
-    $offerId = $version->rfq_offer_id;
+        $offerId = $version->rfq_offer_id;
 
-    $action->execute($version);
+        $action->execute($version);
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | REDIRECT BACK TO WORKSPACE
     |--------------------------------------------------------------------------
     */
 
-    return redirect()->route(
-        'rfqs.workspace',
-        [
-            'rfq' => $version->offer->rfq_id,
-            'tab' => 's-requirements',
-            'offer' => $offerId,
-        ]
-    )->with('success', 'Draft deleted successfully.');
-}
+        return redirect()->route(
+            'rfqs.workspace',
+            [
+                'rfq' => $version->offer->rfq_id,
+                'tab' => 's-requirements',
+                'offer' => $offerId,
+            ]
+        )->with('success', 'Draft deleted successfully.');
+    }
 
 
-public function deleteDraftCounterOfferVersion(
-    Rfq $rfq,
-    RfqOffer $offer,
-    RfqOfferVersion $version,
-    ActiveContextService $context,
-    DeleteCounterOfferDraftAction $action
-) {
-    abort_unless($version->rfq_offer_id === $offer->id, 403);
+    public function deleteDraftCounterOfferVersion(
+        Rfq $rfq,
+        RfqOffer $offer,
+        RfqOfferVersion $version,
+        ActiveContextService $context,
+        DeleteCounterOfferDraftAction $action
+    ) {
+        abort_unless($version->rfq_offer_id === $offer->id, 403);
 
-    $action->execute($version, $context);
+        $action->execute($version, $context);
 
-    return redirect()
-        ->route('rfqs.workspace', [
-            'rfq' => $offer->rfq_id,
-            'tab' => 'offers',
-            'offer' => $offer->id,
-        ])
-        ->with('success', 'Draft counter offer deleted');
-}
-
-
-public function comparison(Rfq $rfq)
-{
-    $rfq->load([
-        'attributeValues.attribute.options',
-        'attributeValues.options',
-        'offers.participant',
-        'offers.versions' => function ($query) {
-            $query
-                ->where('status', 'submitted')
-                ->where('is_counter', false)
-                ->where('owner_type', \App\Models\Supplier::class)
-                ->with('items.options');
-        },
-    ]);
-
-    $offers = $rfq->offers->filter(function ($offer) {
-        return $offer->versions->isNotEmpty();
-    });
-
-    return view('rfq.workspace.offer-comparison', [
-        'rfq' => $rfq,
-        'offers' => $offers,
-    ]);
-}
+        return redirect()
+            ->route('rfqs.workspace', [
+                'rfq' => $offer->rfq_id,
+                'tab' => 'offers',
+                'offer' => $offer->id,
+            ])
+            ->with('success', 'Draft counter offer deleted');
+    }
 
 
+    public function comparison(Rfq $rfq)
+    {
+        $rfq->load([
+    'attributeValues.attribute.options',
+    'attributeValues.options',
+    'offers.participant',
+    'offers.versions' => function ($query) {
+
+        $query
+            ->where('status', '!=', 'draft')
+            ->where('is_counter', false)
+            ->where('owner_type', \App\Models\Supplier::class)
+            ->with('items.options');
+    },
+]);
+
+        $offers = $rfq->offers->filter(function ($offer) {
+            return $offer->versions->isNotEmpty();
+        });
+
+        return view('rfq.workspace.offer-comparison', [
+            'rfq' => $rfq,
+            'offers' => $offers,
+        ]);
+    }
 }

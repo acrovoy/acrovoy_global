@@ -31,7 +31,7 @@
 
 
 
-    <div class="flex items-start justify-between gap-6">
+    <div class="flex items-start justify-between gap-6 mt-4">
 
         {{-- LEFT --}}
         <div class="flex-1 min-w-0">
@@ -200,59 +200,69 @@
 
 
 
-                            {{-- ACTIONS --}}
+{{-- ACTIONS --}}
 <div class="mt-auto pt-2 flex gap-2">
 
-    @if(optional($version)->status === 'submitted')
+    @if(optional($version)->status === 'submitted' && !$rfq->status->isClosed())
 
         <form method="POST"
-              action="{{ route('buyer.rfqs.offers.versions.accept', [
-                    'rfq' => $rfq->id,
-                    'offer' => $offer->id,
-                    'version' => $version->id,
-              ]) }}">
-            @csrf
+      action="{{ route('buyer.rfqs.offers.versions.accept', [
+            'rfq' => $rfq->id,
+            'offer' => $offer->id,
+            'version' => $version->id,
+      ]) }}"
+      onsubmit="event.preventDefault(); confirmModal.open({
+          type: 'success',
+          title: 'Accept this offer?',
+          message: 'You are about to accept this supplier offer.',
+          description: 'After acceptance, this offer will become the selected offer for this RFQ. Other offers will no longer be available for acceptance.',
+          cancelText: 'Cancel',
+          confirmText: 'Accept Offer',
+          onConfirm: () => this.submit()
+      });">
 
-            <button type="submit"
-                class="px-3 py-1 text-[11px] font-medium rounded-md
-                       border border-green-200 text-green-700
-                       bg-green-50 hover:bg-green-100 transition">
-                Accept
-            </button>
-        </form>
+    @csrf
+
+    <button type="submit"
+        class="px-3 py-1 text-[11px] font-medium rounded-md
+               border border-green-200 text-green-700
+               bg-green-50 hover:bg-green-100 transition">
+        Accept
+    </button>
+</form>
 
          {{-- =========================================
                             CHAT (only when editable or submitted)
                         ========================================= --}}
                         <button
-    type="button"
-    class="
-        open-conversation
-        inline-flex
-        items-center
-        gap-2
-        px-3
-        py-1.5
-        rounded-lg
-        border
-        border-stone-200
-        bg-white
-        text-stone-600
-        text-xs
-        font-medium
-        hover:border-stone-300
-        hover:bg-stone-50
-        hover:text-stone-900
-        transition
-        shadow-sm
-    "
-    data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
-    data-subject-id="{{ $offer->id }}"
->
-    
+                            type="button"
+                            class="
+                                open-conversation
+                                inline-flex
+                                items-center
+                                gap-2
+                                px-3
+                                py-1.5
+                                rounded-lg
+                                border
+                                border-stone-200
+                                bg-white
+                                text-stone-600
+                                text-xs
+                                font-medium
+                                hover:border-stone-300
+                                hover:bg-stone-50
+                                hover:text-stone-900
+                                transition
+                                shadow-sm
+                            "
+                            data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
+                            data-subject-id="{{ $offer->id }}"
+                        >
+                            
 
-    Chat
-</button>
+                            Chat
+                        </button>
 
     @elseif(optional($version)->status === 'accepted')
 
@@ -264,8 +274,15 @@
     @elseif(optional($version)->status === 'rejected')
 
         <span class="px-3 py-1 text-[11px] font-medium rounded-md
-                     bg-gray-100 text-gray-500 border border-gray-200">
+                     bg-red-100 text-red-700 border border-red-200">
             Rejected
+        </span>
+
+    @elseif($rfq->status->isClosed())
+
+        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                     bg-gray-100 text-gray-500 border border-gray-200">
+            Closed
         </span>
 
     @else

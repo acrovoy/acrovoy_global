@@ -25,6 +25,7 @@ use App\Domain\RFQ\Actions\GetRfqCategoriesAction;
 use App\Domain\RFQ\Services\RfqRequirementsLoader;
 
 use App\Domain\Negotiation\Actions\CreateRfqOfferAction;
+use App\Domain\Conversation\Actions\CloseRfqConversationsAction;
 
 
 class RfqController extends Controller
@@ -32,6 +33,7 @@ class RfqController extends Controller
     public function __construct(
         private ActiveContextService $context,
         private OfferVersionResolver $offerVersionResolver,
+        private CloseRfqConversationsAction $closeConversations,
     ) {}
 
     public function show(Request $request, Rfq $rfq)
@@ -907,6 +909,8 @@ class RfqController extends Controller
             'status' => RfqStatus::CLOSED,
             'closed_at' => now(),
         ]);
+
+        $this->closeConversations->execute($rfq);
 
         return back()->with('success', 'RFQ closed successfully.');
     }

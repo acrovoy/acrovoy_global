@@ -197,17 +197,21 @@
             <tbody class="divide-y divide-gray-100">
 
                 @foreach($closedRfqs as $rfq)
-@php
- $supplierId = ActiveContext::id();
-        $supplierType = ActiveContext::type();
-$offer = $rfq->offers
-            ->where('participant_type', $supplierType)
-            ->where('participant_id', $supplierId)
-            ->sortByDesc('id')
-            ->first();
 
-        $status = $offer?->status;
-@endphp
+                @php
+                
+                $identity = ActiveContext::identity();
+                $supplierId = $identity['entity_id'];
+                        $supplierType = $identity['entity_type'];
+                $offer = $rfq->offers
+                            ->where('participant_type', $supplierType)
+                            ->where('participant_id', $supplierId)
+                            ->sortByDesc('id')
+                            ->first();
+
+                $status = $offer?->status;
+
+                @endphp
 @php
     $rowClass = match($status) {
         'accepted' => 'bg-green-50 hover:bg-green-100',

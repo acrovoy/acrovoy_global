@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Services\Company\ActiveContextService;
 
 use App\Models\Product;
+use App\Models\Buyer;
 use App\Domain\Project\Models\Project;
 
 class BuyerRfqController extends Controller
@@ -102,8 +103,10 @@ class BuyerRfqController extends Controller
 
     abort_unless($buyer, 403);
 
-    $buyerType = $buyer::class;
-    $buyerId   = $buyer->getKey();
+    $buyerType = Buyer::class;
+    $buyerId   = $buyer->id;
+
+    
 
     /**
      * DTO
@@ -120,7 +123,7 @@ class BuyerRfqController extends Controller
         $buyerId,
         $buyerType,
         auth()->id(),
-        $product->supplier_type,
+        $product->Supplier::class,
         $product->supplier_id,
         $product->id,
         $request->project_id,
