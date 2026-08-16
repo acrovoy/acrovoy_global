@@ -39,7 +39,7 @@ class RfqController extends Controller
     public function show(Request $request, Rfq $rfq)
     {
 
-
+        $this->authorize('view', $rfq);
 
         $buyerSnapshotMap = $rfq->attributeValues
             ->keyBy('attribute_id');
@@ -785,6 +785,10 @@ class RfqController extends Controller
 
     public function attachAddress(Request $request, Rfq $rfq)
     {
+
+    $this->authorize('update', $rfq);
+
+
         $request->validate([
             'saved_address_id' => 'nullable|exists:user_addresses,id',
             'first_name' => 'nullable|string',
@@ -874,6 +878,9 @@ class RfqController extends Controller
 
     public function publish(Rfq $rfq)
     {
+
+    $this->authorize('publish', $rfq);
+
         // безопасность: публикуем только draft
         if (!$rfq->status->canPublish()) {
             return back()->with('error', 'RFQ cannot be published.');
@@ -900,6 +907,9 @@ class RfqController extends Controller
 
     public function close(Rfq $rfq)
     {
+
+     $this->authorize('close', $rfq);
+     
         // можно закрывать только опубликованные / в переговорах
         if (!$rfq->status->canClose()) {
             return back()->with('error', 'RFQ cannot be closed in current status.');

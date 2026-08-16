@@ -42,6 +42,7 @@
                          {{-- =========================================
                             CHAT (only when editable or submitted)
                         ========================================= --}}
+                        @if(!$rfq->status->isClosed())
                         <button
     type="button"
     class="
@@ -71,7 +72,7 @@
 
     Chat with Buyer
 </button>
-
+@endif
 
                     </div>
 
@@ -86,6 +87,7 @@
                         {{-- =========================================
                             DELETE DRAFT (only editable)
                         ========================================= --}}
+                    @if(!$rfq->status->isClosed())
                         @if(!$isReadonly)
                         <form
                             method="POST"
@@ -134,6 +136,7 @@
                             </button>
                         </form>
                         @endif
+                    @endif
 
                         {{-- =========================================
     CREATE NEW VERSION (REVISION)
@@ -144,7 +147,7 @@
     $isReadonlyBecauseClose = $rfq->status->isClosed();
    
 @endphp
-
+@if(!$rfq->status->isClosed())
 @if($canCreateRevision)
     <form method="POST"
         action="{{ route('supplier.rfq.offer.create-revision', $rfq) }}">
@@ -155,6 +158,7 @@
             Create New Version
         </button>
     </form>
+@endif
 @endif
 
                     </div>

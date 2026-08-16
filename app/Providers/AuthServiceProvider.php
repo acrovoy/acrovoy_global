@@ -4,8 +4,9 @@ namespace App\Providers;
 use App\Models\Product;
 use App\Models\ShippingTemplate;
 use App\Models\Order;
-use App\Models\Rfq;
+
 use App\Domain\Negotiation\Models\RfqOffer;
+use App\Domain\Negotiation\Models\RfqOfferVersion;
 use App\Models\Warehouse;
 use App\Models\User;
 use App\Models\Buyer;
@@ -15,8 +16,12 @@ use App\Models\Supplier;
 use App\Policies\ProductPolicy;
 use App\Policies\ShippingTemplatePolicy;
 use App\Policies\OrderPolicy;
-use App\Policies\RfqPolicy;
+
+use App\Domain\RFQ\Models\Rfq;
+use App\Domain\RFQ\Policies\RfqPolicy;
 use App\Domain\Negotiation\Policies\RfqOfferPolicy;
+use App\Domain\Negotiation\Policies\RfqOfferVersionPolicy;
+
 use App\Policies\WarehousePolicy;
 use App\Policies\TeamPolicy;
 use App\Policies\BuyerCompanyPolicy;
@@ -44,6 +49,7 @@ class AuthServiceProvider extends ServiceProvider
         Product::class => ProductPolicy::class,
         Buyer::class => BuyerCompanyPolicy::class,
         Supplier::class => SupplierCompanyPolicy::class,
+        Rfq::class => RfqPolicy::class,
 
         Order::class => OrderPolicy::class,
         
@@ -52,8 +58,7 @@ class AuthServiceProvider extends ServiceProvider
 
     
         \App\Domain\Negotiation\Policies\RfqOfferParticipantPolicy::class,
-        \App\Domain\Negotiation\Models\RfqOfferVersion::class
-        => \App\Domain\Negotiation\Policies\RfqOfferVersionPolicy::class,
+        RfqOfferVersion::class => RfqOfferVersionPolicy::class,
     ];
 
     /**
@@ -61,6 +66,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+
+    
         $this->registerPolicies();
 
         Gate::define('contactSupplier', function (

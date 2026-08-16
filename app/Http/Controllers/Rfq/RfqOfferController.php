@@ -37,6 +37,9 @@ class RfqOfferController extends Controller
 
     public function index(Rfq $rfq)
     {
+
+    $this->authorize('view', [RfqOffer::class, $rfq]);
+
         $offers = RfqOffer::query()
             ->where('rfq_id', $rfq->id)
             ->with('versions')
@@ -57,6 +60,8 @@ class RfqOfferController extends Controller
         OfferDecisionService $service,
         CloseRfqConversationsAction $closeConversations
     ) {
+
+    $this->authorize( 'accept', [RfqOffer::class, $rfq, $offer, $version] );
 
         /**
          * 1. CHECK RFQ OWNERSHIP (SECURITY)
@@ -133,6 +138,10 @@ class RfqOfferController extends Controller
         ActiveContextService $context,
         SubmitOfferVersionAction $action
     ) {
+
+    $this->authorize('submit', [RfqOffer::class, $rfq, $version]);
+
+
         if ($context->isGuest()) {
             abort(403);
         }
@@ -188,6 +197,9 @@ class RfqOfferController extends Controller
 
     public function createRevision(Rfq $rfq)
     {
+
+     $this->authorize('createRevision', [RfqOffer::class, $rfq]);
+
         if (!$this->context->isSupplier()) {
             abort(403);
         }
@@ -325,6 +337,10 @@ class RfqOfferController extends Controller
         RfqOffer $offer,
         CreateCounterOfferAction $action
     ) {
+
+     $this->authorize('createCounterOffer', [RfqOffer::class, $rfq, $offer]);
+
+
         $identity = $this->context->identity();
 
         $buyer = $this->context->buyerProfile();
@@ -362,6 +378,9 @@ class RfqOfferController extends Controller
         SubmitCounterOfferAction $action
     ) {
 
+    $this->authorize('submitCounter', [RfqOffer::class, $rfq, $version]);
+
+
         if ($context->isGuest()) {
             abort(403);
         }
@@ -396,6 +415,8 @@ class RfqOfferController extends Controller
         ActiveContextService $context
     ) {
 
+     $this->authorize('autosave', [RfqOffer::class, $rfq]);
+
 
         return $action->execute(
             rfq: $rfq,
@@ -413,6 +434,9 @@ class RfqOfferController extends Controller
         CounterOfferVersionItemAutosaveAction $action,
         ActiveContextService $context
     ) {
+
+    $this->authorize('buyerCounterAutosave', [RfqOffer::class, $rfq, $offer, $version]);
+
         abort_unless($version->rfq_offer_id === $offer->id, 403);
         abort_unless($version->status === 'draft', 403);
         abort_unless($version->is_counter, 403);
@@ -430,6 +454,8 @@ class RfqOfferController extends Controller
         ActiveContextService $context,
         DeleteDraftOfferVersionAction $action
     ) {
+
+    $this->authorize('deleteDraft', [RfqOffer::class, $rfq, $version]);
 
         /*
     |--------------------------------------------------------------------------
@@ -477,6 +503,10 @@ class RfqOfferController extends Controller
         ActiveContextService $context,
         DeleteCounterOfferDraftAction $action
     ) {
+
+    $this->authorize('deleteCounterDraft', [RfqOffer::class, $rfq, $offer, $version]);
+
+
         abort_unless($version->rfq_offer_id === $offer->id, 403);
 
         $action->execute($version, $context);
@@ -493,6 +523,9 @@ class RfqOfferController extends Controller
 
     public function comparison(Rfq $rfq)
     {
+
+    $this->authorize('comparison', $rfq);
+
         $rfq->load([
     'attributeValues.attribute.options',
     'attributeValues.options',
