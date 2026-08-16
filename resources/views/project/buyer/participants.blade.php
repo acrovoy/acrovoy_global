@@ -111,9 +111,9 @@
 
         @include('project.components.participants-invite-panel', [
             'project' => $project,
-            'suppliers' => $allparticipants,
+            'suppliers' => $allSuppliers,
             'visibility' => $project->visibility_type->value,
-            'allparticipants' => $allparticipants,
+            'allSuppliers' => $allSuppliers,
         ])
 
     @else
@@ -132,52 +132,70 @@
 
     @endif
 
-    {{-- PARTICIPANTS LIST --}}
-    <div class="space-y-3 mt-4">
+    {{-- LIST --}}
+<div class="space-y-3 mt-4">
 
-        @forelse($participants as $participant)
+    @forelse($participants as $participant)
 
-        <div class="group flex items-center justify-between p-4 border border-gray-100 rounded-lg bg-white hover:border-gray-200 transition">
+        @php
+            $supplier = $participant->participant;
+        @endphp
+
+        <div
+            class="group flex items-center justify-between
+                   p-4 border border-gray-100 rounded-lg
+                   bg-white hover:border-gray-200 transition"
+        >
 
             {{-- LEFT --}}
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 min-w-0">
 
-                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500">
-                    {{ strtoupper(substr($participant->participant?->name ?? 'S', 0, 1)) }}
+                {{-- LOGO --}}
+                <div
+                    class="w-10 h-10 shrink-0
+                           rounded-lg overflow-hidden
+                           border border-gray-200
+                           bg-gray-50
+                           flex items-center justify-center"
+                >
+
+                    @if($supplier?->logo?->cdn_url)
+
+                        <img
+                            src="{{ $supplier->logo->cdn_url }}"
+                            alt="{{ $supplier->name }}"
+                            class="w-full h-full object-cover"
+                        >
+
+                    @else
+
+                        <span class="text-xs font-semibold text-gray-500">
+                            {{ strtoupper(substr($supplier?->name ?? 'S', 0, 1)) }}
+                        </span>
+
+                    @endif
+
                 </div>
 
-                <div>
+                {{-- SUPPLIER INFO --}}
+                <div class="min-w-0">
 
-                    <div class="text-sm font-medium text-gray-900">
-
-                        @php($supplier = $participant->participant)
-
-                        @if($supplier instanceof \App\Models\User)
-
-                            {{ trim($supplier->name.' '.$supplier->last_name) }}
-
-                            <span class="text-xs text-gray-400">
-                                ({{ $supplier->email }})
-                            </span>
-
-                        @else
-
-                            {{ $supplier?->name ?? 'Unknown supplier' }}
-
-                        @endif
-
+                    <div class="text-sm font-medium text-gray-900 truncate">
+                        {{ $supplier?->name ?? 'Unknown supplier' }}
                     </div>
 
                     <div class="text-xs text-gray-500">
-                        Invited {{ optional($participant->invited_at)->format('d M Y H:i') ?? '—' }}
+                        Invited
+                        {{ optional($participant->invited_at)->format('d M Y H:i') ?? '—' }}
                     </div>
 
                 </div>
 
             </div>
 
+
             {{-- RIGHT --}}
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 shrink-0">
 
                 <span class="{{ $participant->status->badge() }}">
                     {{ $participant->status->label() }}
@@ -185,22 +203,21 @@
 
                 @if(!$isClosed)
 
-                <form
-                    method="POST"
-                    action="{{ route('buyer.projects.participants.remove', [$project, $participant]) }}">
+                    <form
+                        method="POST"
+                        action="{{ route('buyer.projects.participants.remove', [$project, $participant]) }}"
+                    >
+                        @csrf
+                        @method('PATCH')
 
-                    @csrf
-                    @method('PATCH')
+                        <button
+                            type="submit"
+                            class="text-xs text-gray-400 hover:text-red-600"
+                        >
+                            Remove
+                        </button>
 
-                    <button
-                        type="submit"
-                        class="text-xs text-gray-400 hover:text-red-600">
-
-                        Remove
-
-                    </button>
-
-                </form>
+                    </form>
 
                 @endif
 
@@ -208,7 +225,7 @@
 
         </div>
 
-        @empty
+    @empty
 
         <div class="p-6 border border-dashed border-gray-200 rounded-lg text-center">
 
@@ -218,9 +235,9 @@
 
         </div>
 
-        @endforelse
+    @endforelse
 
-    </div>
+</div>
 
 </div>
 

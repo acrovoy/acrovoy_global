@@ -589,31 +589,22 @@ $selectedCategory = Category::find($selectedCategoryId);
     |--------------------------------------------------------------------------
     */
 
-    $allparticipants = collect()
+     $allSuppliers = Supplier::query()
+    ->where('id', '!=', 1)
+    ->orderBy('name')
+    ->get()
+    ->map(function ($supplier) {
 
-    ->merge(
-        Supplier::query()
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($supplier) => [
-                'id'    => $supplier->id,
-                'type'  => Supplier::class,
-                'label' => $supplier->name,
-            ])
-    )
+        return [
+            'id' => $supplier->id,
+            'name' => $supplier->name,
+            'logo' => $supplier->logo?->cdn_url,
+            'initial' => strtoupper(
+                substr($supplier->name ?? '?', 0, 1)
+            ),
+        ];
 
-    ->merge(
-        User::query()
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($user) => [
-                'id'    => $user->id,
-                'type'  => User::class,
-                'label' => trim($user->name . ' ' . $user->last_name),
-            ])
-    )
-
-    ->sortBy('label')
+    })
     ->values();
 
     /*
@@ -642,7 +633,7 @@ $selectedCategory = Category::find($selectedCategoryId);
         [
             'project'             => $project,
             'participants'        => $project->participants,
-            'allparticipants'     => $allparticipants,
+            'allSuppliers'     => $allSuppliers,
             'allCategories'       => $allCategories,
             'selectedCategoryIds' => $selectedCategoryIds,
             'visibility'          => $project->visibility_type->value,

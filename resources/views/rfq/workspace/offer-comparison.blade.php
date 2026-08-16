@@ -102,33 +102,33 @@
                                 {{-- LOGO --}}
                                 <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border">
 
-    @if($isUser)
+                                    @if($isUser)
 
-        <img src="{{ $supplier->avatar()?->cdn_url ?? asset('images/default-avatar.png') }}"
-             class="w-full h-full object-cover">
+                                    <img src="{{ $supplier->avatar()?->cdn_url ?? asset('images/default-avatar.png') }}"
+                                        class="w-full h-full object-cover">
 
-    @elseif($isSupplierCompany)
+                                    @elseif($isSupplierCompany)
 
-        @if($supplier->logo?->cdn_url)
-            <img src="{{ $supplier->logo->cdn_url }}"
-                 class="w-full h-full object-cover">
-        @else
-            <div class="w-full h-full flex items-center justify-center bg-gray-200">
-                <span class="text-xs font-semibold text-gray-500">
-                    {{ strtoupper(substr($supplier->name, 0, 1)) }}
-                </span>
-            </div>
-        @endif
+                                    @if($supplier->logo?->cdn_url)
+                                    <img src="{{ $supplier->logo->cdn_url }}"
+                                        class="w-full h-full object-cover">
+                                    @else
+                                    <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                                        <span class="text-xs font-semibold text-gray-500">
+                                            {{ strtoupper(substr($supplier->name, 0, 1)) }}
+                                        </span>
+                                    </div>
+                                    @endif
 
-    @else
+                                    @else
 
-        <div class="w-full h-full flex items-center justify-center bg-gray-200">
-            <span class="text-xs text-gray-500">?</span>
-        </div>
+                                    <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                                        <span class="text-xs text-gray-500">?</span>
+                                    </div>
 
-    @endif
+                                    @endif
 
-</div>
+                                </div>
 
 
 
@@ -200,43 +200,43 @@
 
 
 
-{{-- ACTIONS --}}
-<div class="mt-auto pt-2 flex gap-2">
+                            {{-- ACTIONS --}}
+                            <div class="mt-auto pt-2 flex gap-2">
 
-    @if(optional($version)->status === 'submitted' && !$rfq->status->isClosed())
+                                @if(optional($version)->status === 'submitted' && !$rfq->status->isClosed())
 
-        <form method="POST"
-      action="{{ route('buyer.rfqs.offers.versions.accept', [
-            'rfq' => $rfq->id,
-            'offer' => $offer->id,
-            'version' => $version->id,
-      ]) }}"
-      onsubmit="event.preventDefault(); confirmModal.open({
-          type: 'success',
-          title: 'Accept this offer?',
-          message: 'You are about to accept this supplier offer.',
-          description: 'After acceptance, this offer will become the selected offer for this RFQ. Other offers will no longer be available for acceptance.',
-          cancelText: 'Cancel',
-          confirmText: 'Accept Offer',
-          onConfirm: () => this.submit()
-      });">
+                                <form method="POST"
+                                    action="{{ route('buyer.rfqs.offers.versions.accept', [
+                                            'rfq' => $rfq->id,
+                                            'offer' => $offer->id,
+                                            'version' => $version->id,
+                                    ]) }}"
+                                    onsubmit="event.preventDefault(); confirmModal.open({
+                                    type: 'success',
+                                    title: 'Accept this offer?',
+                                    message: 'You are about to accept this supplier offer.',
+                                    description: 'After acceptance, this offer will become the selected offer for this RFQ. Other offers will no longer be available for acceptance.',
+                                    cancelText: 'Cancel',
+                                    confirmText: 'Accept Offer',
+                                    onConfirm: () => this.submit()
+                                });">
 
-    @csrf
+                                    @csrf
 
-    <button type="submit"
-        class="px-3 py-1 text-[11px] font-medium rounded-md
-               border border-green-200 text-green-700
-               bg-green-50 hover:bg-green-100 transition">
-        Accept
-    </button>
-</form>
+                                    <button type="submit"
+                                        class="px-3 py-1 text-[11px] font-medium rounded-md
+                                            border border-green-200 text-green-700
+                                            bg-green-50 hover:bg-green-100 transition">
+                                        Accept
+                                    </button>
+                                </form>
 
-         {{-- =========================================
+                                {{-- =========================================
                             CHAT (only when editable or submitted)
                         ========================================= --}}
-                        <button
-                            type="button"
-                            class="
+                                <button
+                                    type="button"
+                                    class="
                                 open-conversation
                                 inline-flex
                                 items-center
@@ -256,45 +256,44 @@
                                 transition
                                 shadow-sm
                             "
-                            data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
-                            data-subject-id="{{ $offer->id }}"
-                        >
-                            
+                                    data-subject-type="App\Domain\Negotiation\Models\RfqOffer"
+                                    data-subject-id="{{ $offer->id }}">
 
-                            Chat
-                        </button>
 
-    @elseif(optional($version)->status === 'accepted')
+                                    Chat
+                                </button>
 
-        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                                @elseif(optional($version)->status === 'accepted')
+
+                                <span class="px-3 py-1 text-[11px] font-medium rounded-md
                      bg-green-100 text-green-700 border border-green-200">
-            Accepted
-        </span>
+                                    Accepted
+                                </span>
 
-    @elseif(optional($version)->status === 'rejected')
+                                @elseif(optional($version)->status === 'rejected')
 
-        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                                <span class="px-3 py-1 text-[11px] font-medium rounded-md
                      bg-red-100 text-red-700 border border-red-200">
-            Rejected
-        </span>
+                                    Rejected
+                                </span>
 
-    @elseif($rfq->status->isClosed())
+                                @elseif($rfq->status->isClosed())
 
-        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                                <span class="px-3 py-1 text-[11px] font-medium rounded-md
                      bg-gray-100 text-gray-500 border border-gray-200">
-            Closed
-        </span>
+                                    Closed
+                                </span>
 
-    @else
+                                @else
 
-        <span class="px-3 py-1 text-[11px] font-medium rounded-md
+                                <span class="px-3 py-1 text-[11px] font-medium rounded-md
                      bg-gray-50 text-gray-500 border border-gray-200">
-            {{ ucfirst(optional($version)->status) }}
-        </span>
+                                    {{ ucfirst(optional($version)->status) }}
+                                </span>
 
-    @endif
+                                @endif
 
-</div>
+                            </div>
 
                         </div>
 
@@ -452,7 +451,7 @@
 
                 </tr>
 
-                
+
                 @endforeach
 
 
@@ -460,38 +459,38 @@
 
                 <tr class="border-b bg-gray-50">
 
-    <td class="sticky left-0 z-10 px-4 py-4 border-r bg-gray-50 text-sm font-semibold text-gray-900 leading-snug">
-        Grand Total
-    </td>
+                    <td class="sticky left-0 z-10 px-4 py-4 border-r bg-gray-50 text-sm font-semibold text-gray-900 leading-snug">
+                        Grand Total
+                    </td>
 
-    @foreach($offers as $offer)
+                    @foreach($offers as $offer)
 
-        @php
-            $version = $offer->versions
-                ->where('status', '!=', 'draft')
-                ->sortByDesc('id')
-                ->first();
-        @endphp
+                    @php
+                    $version = $offer->versions
+                    ->where('status', '!=', 'draft')
+                    ->sortByDesc('id')
+                    ->first();
+                    @endphp
 
-        <td class="px-5 py-4 border-r align-middle">
+                    <td class="px-5 py-4 border-r align-middle">
 
-            @if($version?->total_price)
+                        @if($version?->total_price)
 
-                <div class="text-lg font-semibold text-gray-900">
-                    ${{ number_format((float)$version->total_price, 2) }}
-                </div>
+                        <div class="text-lg font-semibold text-gray-900">
+                            ${{ number_format((float)$version->total_price, 2) }}
+                        </div>
 
-            @else
+                        @else
 
-                <span class="text-gray-400">—</span>
+                        <span class="text-gray-400">—</span>
 
-            @endif
+                        @endif
 
-        </td>
+                    </td>
 
-    @endforeach
+                    @endforeach
 
-</tr>
+                </tr>
 
 
 
@@ -508,30 +507,30 @@
                         @php
                         $addressa = App\Models\UserAddress::find($rfq->delivery_address_id);
 
-    if (!$addressa) {
-        $cityId = null;
-    } else {
-        $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
-            ->where('parent_id', $addressa->region)
-            ->first();
+                        if (!$addressa) {
+                        $cityId = null;
+                        } else {
+                        $eexistingLocation = \App\Models\Location::where('name', $addressa->city)
+                        ->where('parent_id', $addressa->region)
+                        ->first();
 
-        $cityId = $eexistingLocation?->id;
-    }
+                        $cityId = $eexistingLocation?->id;
+                        }
 
-    $participant = $offer->participant;
+                        $participant = $offer->participant;
 
-    $shippingTemplates = collect();
+                        $shippingTemplates = collect();
 
-    if ($participant && $cityId && method_exists($participant, 'shippingTemplates')) {
+                        if ($participant && $cityId && method_exists($participant, 'shippingTemplates')) {
 
-        $shippingTemplates = collect($participant->shippingTemplates ?? [])
-            ->filter(fn ($template) =>
-                $template->locations?->contains('id', $cityId)
-            );
-    }
+                        $shippingTemplates = collect($participant->shippingTemplates ?? [])
+                        ->filter(fn ($template) =>
+                        $template->locations?->contains('id', $cityId)
+                        );
+                        }
 
 
-                       
+
                         @endphp
 
                         @forelse($shippingTemplates as $shippingTemplate)
@@ -583,7 +582,6 @@
 <x-conversation.drawer
     subjectType="App\Domain\Negotiation\Models\RfqOffer"
     :subjectId="$offer->id"
-    :messagesUrl="url('/dashboard/supplier/messenger/conversations')"
-/>
+    :messagesUrl="url('/dashboard/supplier/messenger/conversations')" />
 
 @endsection

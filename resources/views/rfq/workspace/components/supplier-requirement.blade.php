@@ -235,19 +235,15 @@ $price = $item?->unit_price ?? '';
     {{-- PRICE + FILE --}}
     <div class="flex items-center justify-between gap-3">
 
-        @if(!$isReadonly)
+       
 
-        <div class="w-12 h-12 border-dashed border rounded-lg flex items-center justify-center text-gray-400">
-            +
-        </div>
-
-        @else
+        
 
         <div class="text-xs text-gray-500">
-            Attachments submitted
+           
         </div>
 
-        @endif
+       
 
 
 

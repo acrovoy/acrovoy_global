@@ -185,30 +185,44 @@
                         </div>
 
                         @else
-                        <div class="flex justify-between text-xs text-gray-500 font-medium">
-                            <div class="uppercase"> Supplier Proposal
-                            </div>
+                        <div class="flex justify-between items-start text-xs text-gray-500 font-medium">
 
-                            {{-- FINAL CHECKBOX --}}
-                            <label class="flex items-center gap-2 cursor-pointer select-none">
+    {{-- LEFT --}}
+    <div class="uppercase pt-1">
+        Supplier Proposal
+    </div>
 
-                                <input
-                                    type="checkbox"
-                                    name="is_final"
-                                    value="1"
-                                    @checked($offerVersion?->is_final)
-                                class="w-4 h-4 rounded border-gray-300
-                                text-gray-900 focus:ring-0 focus:outline-none"
-                                >
+    {{-- RIGHT --}}
+    <div class="flex flex-col items-end">
 
-                                <span class="text-[11px] text-gray-600">
-                                    Mark as Final Offer
-                                </span>
+        <label class="flex items-center gap-2 cursor-pointer select-none">
 
-                            </label>
+            <input
+                type="checkbox"
+                name="is_final"
+                value="1"
+                @checked($offerVersion?->is_final)
+                data-autosave
+                data-field="is_final"
+                class="w-4 h-4 rounded border-gray-300
+                    text-gray-900 focus:ring-0 focus:outline-none"
+            >
 
+            <span class="text-[11px] text-gray-600">
+                Mark as Final Offer
+            </span>
 
-                        </div>
+        </label>
+
+        <div class="mt-1 max-w-[280px] text-right text-[10px] leading-relaxed text-gray-400">
+            By marking this offer as final, you confirm that you will not
+            submit another offer. The buyer will only be able to
+            accept or reject it.
+        </div>
+
+    </div>
+
+</div>
                         @endif
 
 
@@ -474,6 +488,24 @@ $supplierTotalPrice = $offerVersion->total_price;
 
         if (!el.hasAttribute('data-autosave')) return;
 
+
+
+         // =========================================
+        // FINAL OFFER
+        // =========================================
+        if (el.dataset.field === 'is_final') {
+
+            autosave(el.name, {
+                is_final: el.checked ? 1 : 0
+            });
+
+            return;
+        }
+
+
+        // =========================================
+        // CHECKBOX OPTIONS
+        // =========================================
         if (el.type === 'checkbox') {
 
             const group = document.querySelectorAll(

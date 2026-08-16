@@ -679,23 +679,23 @@ class RfqController extends Controller
             ->toArray();
 
 
-        $allparticipants = collect()
-            ->merge(
-                Supplier::where('id', '!=', 1)
-                    ->get()
-                    ->map(fn($s) => [
-                        'id' => $s->id,
-                        'type' => Supplier::class,
-                        'label' => $s->name,
-                    ])
-            )
-            ->merge(
-                User::all()->map(fn($u) => [
-                    'id' => $u->id,
-                    'type' => User::class,
-                    'label' => trim($u->name . ' ' . $u->last_name) . ' (' . $u->email . ')',
-                ])
-            );
+        $allSuppliers = Supplier::query()
+    ->where('id', '!=', 1)
+    ->orderBy('name')
+    ->get()
+    ->map(function ($supplier) {
+
+        return [
+            'id' => $supplier->id,
+            'name' => $supplier->name,
+            'logo' => $supplier->logo?->cdn_url,
+            'initial' => strtoupper(
+                substr($supplier->name ?? '?', 0, 1)
+            ),
+        ];
+
+    })
+    ->values();
 
 
 
@@ -755,7 +755,7 @@ class RfqController extends Controller
             // Флаги заполененности
             'requirementsCompleted' => $requirementsCompleted,
             'participantsCompleted' => $participantsCompleted,
-            'allparticipants' => $allparticipants,
+            'allSuppliers' => $allSuppliers,
             'deliveryCompleted' => $deliveryCompleted,
             'canPublish' => $canPublish,
         ]);

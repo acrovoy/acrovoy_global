@@ -239,7 +239,7 @@ if ($isCounter) {
 
         {{-- ATTACHMENTS --}}
         <div class="text-xs text-gray-500">
-            Attachments submitted
+           
         </div>
         <div>
             {{-- PRICE --}}

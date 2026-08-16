@@ -48,6 +48,25 @@ class OfferVersionItemAutosaveAction
             participantId: $supplier->id
         );
 
+
+         /**
+         * =========================
+         * FINAL OFFER
+         * =========================
+         */
+        if ($request->has('is_final')) {
+
+            $version->update([
+                'is_final' => $request->boolean('is_final'),
+            ]);
+
+            return response()->json([
+                'ok' => true,
+            ]);
+        }
+
+
+        
         /**
          * =========================
          * UPDATE VERSION TOTAL PRICE

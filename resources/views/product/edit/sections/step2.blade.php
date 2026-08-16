@@ -19,24 +19,50 @@
 
     <h3 class="text-xl font-semibold mb-4">Category
 
-    <x-help-tooltip width="w-80">
-            <div class="space-y-2 leading-relaxed">
-                <div class="font-semibold text-white">Category & Basic Specifications</div>
-                <div class="text-gray-200 text-sm">
-                    Выберите категорию соответствующую товару и система автоматически подтянет
-                    стандартные характеристики (например, размеры, материал, цвет и т.д.).
-
-                </div>
-                <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
-
-                    <li>Вы сможете добавить дополнительные спецификации в разделе "Additional Specifications"</li>
-                    <li>Старайтесь не выбирать категории «Общее» . Если подходящего раздела нет, напишите на support@acrovoy.com</li>
-                </ul>
-                <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
-                    Пример: <span class="text-gray-200">Двухместный диван для зоны ожидания» нужно добавить в «Furniture ➝ Indoor Furniture ➝ Sofas».</span>
-                </div>
+   <x-help-tooltip width="w-96">
+        <div class="space-y-3 leading-relaxed">
+            <div class="font-semibold text-white">
+                RFQ Visibility
             </div>
-        </x-help-tooltip>
+            <div class="text-gray-200 text-sm">
+                Выберите, кто сможет увидеть ваш RFQ и отправить на него предложение.
+                Чем шире видимость, тем больше потенциальных поставщиков сможет откликнуться.
+            </div>
+            <ul class="text-gray-300 text-xs space-y-2">
+                <li>
+                    <span class="text-white font-medium">🔒 Private</span>
+                    — RFQ увидят только поставщики, которых вы пригласите.
+                    Подходит для работы с конкретными или проверенными поставщиками.
+                </li>
+                <li>
+                    <span class="text-white font-medium">🧭 Category</span>
+                    — RFQ будет доступен поставщикам, работающим в выбранной категории.
+                    Это поможет получить предложения от подходящих специалистов.
+                </li>
+                <li>
+                    <span class="text-white font-medium">🌐 Platform</span>
+                    — RFQ смогут увидеть все зарегистрированные поставщики платформы.
+                    Подходит, если вы хотите получить больше предложений и сравнить поставщиков.
+                </li>
+                <li>
+                    <span class="text-white font-medium">🚀 Open</span>
+                    — RFQ станет публичным и сможет отображаться в открытом разделе RFQ.
+                    Его смогут увидеть даже незарегистрированные посетители сайта.
+                    Для отправки предложения поставщику потребуется зарегистрироваться.
+                </li>
+            </ul>
+            <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+                Совет:
+                <span class="text-gray-200">
+                    Используйте Private для конкретных поставщиков,
+                    Category для поиска профильных поставщиков,
+                    Platform для максимального охвата внутри Acrovoy,
+                    а Open — если хотите привлечь новых поставщиков через публичный сайт.
+                </span>
+            </div>
+
+        </div>
+    </x-help-tooltip>
 
     </h3>
 

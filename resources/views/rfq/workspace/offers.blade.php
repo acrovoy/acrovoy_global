@@ -132,15 +132,20 @@
                             Close negotiation
                         </button>
                         @endif
-                        <a
-                            href="{{ route('buyer.rfqs.counter-offer.create', [
-            'rfq' => $rfq->id,
-            'offer' => $offer->id,
-            'create' => true,
-        ]) }}"
-                            class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
-                            Create Counter Offer
-                        </a>
+                            {{-- CREATE COUNTER OFFER --}}
+                            @if(
+                                !$lastsubmittedVersion->is_final
+                            )
+                                <a
+                                    href="{{ route('buyer.rfqs.counter-offer.create', [
+                                        'rfq' => $rfq->id,
+                                        'offer' => $offer->id,
+                                        'create' => true,
+                                    ]) }}"
+                                    class="px-4 py-1 border rounded bg-white hover:bg-gray-50">
+                                    Create Counter Offer
+                                </a>
+                            @endif
 
                         @endif
 
@@ -154,7 +159,34 @@
 
                             <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">
                                 Supplier Offer
+
+                                @if($offerVersion?->is_final)
+                                <span class="ml-2 inline-flex items-center gap-1
+                                            px-2 py-0.5
+                                            rounded-full
+                                            bg-blue-50
+                                            text-blue-700
+                                            border border-blue-100
+                                            text-[10px]
+                                            font-medium
+                                            uppercase tracking-wide">
+
+                                    <svg class="w-3 h-3"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="m5 12 4 4L19 7"/>
+                                    </svg>
+
+                                    Supplier Marked Offer as Final
+                                </span>
+                            @endif
+
                             </div>
+                            
 
                             <div class="px-2 py-1 rounded bg-green-100 text-green-700 text-xs">
                                 Read only
@@ -179,12 +211,12 @@
                         ])
 
                         @endforeach
-@php
+                        @php
 
 
-    $supplierTotalPrice = $supplierOfferVersion?->total_price;
-$isCounter  = $activeVersion->is_counter ?? false;
-@endphp
+                            $supplierTotalPrice = $supplierOfferVersion?->total_price;
+                        $isCounter  = $activeVersion->is_counter ?? false;
+                        @endphp
 
                    {{-- GRAND TOTAL --}}
 

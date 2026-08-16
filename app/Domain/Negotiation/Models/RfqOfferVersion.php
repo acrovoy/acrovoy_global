@@ -27,8 +27,12 @@ class RfqOfferVersion extends Model
         'accepted_at',
         'accepted_by',
         'status',
+        'is_final',
     ];
 
+    protected $casts = [
+        'is_final' => 'boolean',
+    ];
 
     public function offer()
     {
