@@ -57,7 +57,7 @@ class SyncProductAttributeAction
                         ]);
                         break;
 
-                   
+
 
                     case 'select':
                         $pav->options()->create([
@@ -71,17 +71,28 @@ class SyncProductAttributeAction
                         break;
 
                     case 'multiselect':
-                        foreach ($value as $optionId) {
+
+                        foreach ((array) $value as $optionId) {
                             $pav->options()->create([
                                 'attribute_option_id' => $optionId,
                             ]);
                         }
-                        $translatedValue = implode(', ', $pav->options->map(fn($opt) => $opt->translated_value));
+
+                        $options = $pav->options()
+                            ->with('option.translations')
+                            ->get();
+
+                        $translatedValue = $options
+                            ->map(fn($item) => $item->option?->translatedValue('en'))
+                            ->filter()
+                            ->implode(', ');
+
                         ProductAttributeValueTranslation::create([
                             'product_attribute_value_id' => $pav->id,
                             'locale' => 'en',
                             'value' => $translatedValue,
                         ]);
+
                         break;
 
                     case 'boolean':

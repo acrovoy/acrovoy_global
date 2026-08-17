@@ -17,11 +17,20 @@ use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 
+use App\Domain\Auth\Actions\CreateBuyerBusinessProfileAction;
+use App\Domain\Auth\Actions\CreateSupplierBusinessProfileAction;
+use App\Domain\Auth\Actions\CreateUserSettingsAction;
+
+use Illuminate\Support\Facades\DB;
+
 class RegisteredUserController extends Controller
 {
 
 public function __construct(
         protected ContactService $contactService,
+        protected CreateBuyerBusinessProfileAction $createBuyerBusinessProfile,
+        protected CreateSupplierBusinessProfileAction $createSupplierBusinessProfile,
+        protected CreateUserSettingsAction $createUserSettings,
     ) {
     }
     /**
@@ -48,6 +57,8 @@ public function __construct(
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        $user = DB::transaction(function () use ($request) {
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -55,21 +66,34 @@ public function __construct(
             'role' => 'buyer',
         ]);
 
-       
+        // User settings
+        $this->createUserSettings->execute($user);
 
+        // Personal Buyer profile
+        $this->createBuyerBusinessProfile->execute($user);
+
+        // Personal Supplier profile
+        $this->createSupplierBusinessProfile->execute($user);
+
+        // Personal email contact
         $this->contactService->create([
-    'contactable_type' => User::class,
-    'contactable_id'   => $user->id,
-    'created_by' => $user->id,
+            'contactable_type' => User::class,
+            'contactable_id'   => $user->id,
+            'created_by'       => $user->id,
 
-    'type' => 'email',
-    'value' => $user->email,
-    'label' => 'Personal',
+            'type' => 'email',
+            'value' => $user->email,
+            'label' => 'Personal',
 
-    'is_primary' => true,
-    'is_public' => true,
-    'show_in_profile' => true,
-]);
+            'is_primary' => true,
+            'is_public' => true,
+            'show_in_profile' => true,
+        ]);
+
+        event(new Registered($user));
+
+        return $user;
+    });
 
 
         event(new Registered($user));
@@ -79,57 +103,7 @@ public function __construct(
         return redirect(RouteServiceProvider::HOME);
     }
 
-    public function createManufacturer(): View
-    {
-        return view('auth.register-manufacturer');
-    }
 
-    public function storeManufacturer(Request $request): RedirectResponse
-{
-    // Валидация формы
-    $request->validate([
-        'name' => ['required', 'string', 'max:255'], // название компании
-        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-    ]);
-
-    \DB::transaction(function () use ($request) {
-
-        $user = User::create([
-            'name' => 'Your name',
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'manufacturer',
-        ]);
-
-        $this->contactService->create([
-    'contactable_type' => User::class,
-    'contactable_id'   => $user->id,
-    'created_by' => $user->id,
-
-    'type' => 'email',
-    'value' => $user->email,
-    'label' => 'Personal',
-
-    'is_primary' => true,
-    'is_public' => true,
-    'show_in_profile' => true,
-]);
-
-
-        $supplier = Supplier::create([
-        'user_id' => $user->id, // сразу ставим user_id
-        'name' => $request->name,
-        'slug' => Str::slug($request->name, '-'),
-        'status' => 'pending', // можно сразу добавить
-    ]);
-
-        event(new Registered($user));
-        Auth::login($user);
-    });
-
-    return redirect()->route('manufacturer.home');
-}
 
     
 

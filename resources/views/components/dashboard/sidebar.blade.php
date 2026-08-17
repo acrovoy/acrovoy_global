@@ -7,7 +7,7 @@
 {{-- COMPANY SWITCHER --}}
 <div class="mb-6 relative">
 
-    @if($companies->count())
+    
 
     {{-- BUTTON --}}
     <button
@@ -152,13 +152,7 @@
 
     </div>
 
-    @else
-
-    <div class="px-3 py-2 bg-gray-50 border rounded-md text-sm text-gray-600">
-        Personal account ({{ ucfirst($role ?? 'buyer') }})
-    </div>
-
-    @endif
+    
 
 </div>
 

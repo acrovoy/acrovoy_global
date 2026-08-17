@@ -10,7 +10,7 @@ use App\Domain\Media\Models\Media;
 use App\Domain\Contact\Traits\HasContacts;
 use App\Domain\Contact\Models\Contact;
 use App\Models\BusinessType;
-use App\Models\Collection;
+use App\Domain\Collection\Models\ProductCollection;
 
 class Supplier extends Model
 {
@@ -18,6 +18,10 @@ class Supplier extends Model
 
     protected $fillable = [
         'user_id',
+
+        'supplierable_type',
+        'supplierable_id',
+
         'name',
         'email',
         'slug',
@@ -291,11 +295,15 @@ public function primaryAddress()
 public function collections(): MorphToMany
 {
     return $this->morphToMany(
-        Collection::class,
+        ProductCollection::class,
         'collectionable'
     )->withPivot('sort_order')
      ->withTimestamps();
 }
 
+public function supplierable()
+{
+    return $this->morphTo();
+}
 
 }

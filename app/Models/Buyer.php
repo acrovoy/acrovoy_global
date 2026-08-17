@@ -144,4 +144,9 @@ public function profileMembers()
     ->where('show_in_profile', true);
 }
 
+public function buyerable()
+{
+    return $this->morphTo();
+}
+
 }
