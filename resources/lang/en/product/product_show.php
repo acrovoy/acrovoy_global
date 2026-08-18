@@ -30,6 +30,8 @@ return [
     'supplier' => 'Supplier:',
     'chat_with' => 'Chat with:',
     'send' => 'Send',
-    'type_your_message' => 'Type your message...',    
+    'type_your_message' => 'Type your message...',   
+    'yes' => 'Yes',
+'no' => 'No', 
     
 ];

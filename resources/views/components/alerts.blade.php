@@ -183,7 +183,10 @@ function alertComponent() {
             @endif
 
             @if($errors->any())
-                this.showAlert('warning', @js($errors->implode("\n")));
+                this.showAlert(
+        'warning',
+        @js($errors->all())
+    );
             @endif
 
             window.addEventListener('app-alert', (e) => {

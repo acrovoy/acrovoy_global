@@ -53,6 +53,27 @@ public function __construct(
             ->firstOrFail();
 
 
+            $product1->loadMissing([
+    'category.attributes',
+]);
+
+$attributeOrder = $product1->category
+    ? $product1->category->attributes
+        ->pluck('pivot.sort_order', 'id')
+    : collect();
+
+$product1->setRelation(
+    'attributeValues',
+    $product1->attributeValues
+        ->sortBy(function ($attrValue) use ($attributeOrder) {
+            return $attributeOrder->get(
+                $attrValue->attribute_id,
+                PHP_INT_MAX
+            );
+        })
+        ->values()
+);
+
 
 
         $projects = collect();

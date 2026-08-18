@@ -105,28 +105,112 @@ public function getOptionValues(): string
 
 public function getDisplayValueAttribute(): string
 {
-    if (!in_array($this->attribute->type, ['select', 'multiselect'])) {
-        return $this->translations
-            ->firstWhere('locale', app()->getLocale())
-            ?->value ?? '';
+    $attribute = $this->attribute;
+
+    if (!$attribute) {
+        return '';
     }
 
-    $values = $this->options->map(function ($opt) {
+    $locale = app()->getLocale();
 
-        $option = $opt->option;
+    /*
+    |--------------------------------------------------------------------------
+    | BOOLEAN
+    |--------------------------------------------------------------------------
+    */
 
-        if (!$option) return null;
+    if ($attribute->type === 'boolean') {
 
-        $translation = $option->translations
-            ->firstWhere('locale', app()->getLocale());
+        // Получаем значение для текущего языка
+        $value = $this->translations
+            ->firstWhere('locale', $locale)
+            ?->value;
 
-        return $translation?->value ?? $option->translations->first()?->value;
-    })
-    ->filter()
-    ->values()
-    ->all();
+        // Если перевода нет — берем любой доступный
+        if ($value === null || $value === '') {
+            $value = $this->translations
+                ->first()
+                ?->value;
+        }
 
-    return implode(', ', $values);
+        // Нет значения
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        // Приводим разные варианты true к boolean
+        $isTrue = in_array(
+            strtolower(trim((string) $value)),
+            [
+                '1',
+                'true',
+                'yes',
+                'on',
+                'y',
+            ],
+            true
+        );
+
+        // FALSE вообще не выводим в карточке товара
+        if (!$isTrue) {
+            return '';
+        }
+
+        return __('product/product_show.yes');
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT / MULTISELECT
+    |--------------------------------------------------------------------------
+    */
+
+    if (in_array($attribute->type, ['select', 'multiselect'])) {
+
+        $values = $this->options
+            ->map(function ($opt) use ($locale) {
+
+                $option = $opt->option;
+
+                if (!$option) {
+                    return null;
+                }
+
+                $translation = $option->translations
+                    ->firstWhere('locale', $locale);
+
+                return $translation?->value
+                    ?? $option->translations->first()?->value
+                    ?? $option->code
+                    ?? null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return implode(', ', $values);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TEXT / NUMBER / OTHER
+    |--------------------------------------------------------------------------
+    */
+
+    $value = $this->translations
+        ->firstWhere('locale', $locale)
+        ?->value;
+
+    // Если текущего языка нет — берем первый доступный перевод
+    if ($value === null || $value === '') {
+        $value = $this->translations
+            ->first()
+            ?->value;
+    }
+
+    return $value ?? '';
 }
 
 

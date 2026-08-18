@@ -58,20 +58,104 @@
         @error('commission_percent') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
     </div>
 
-    <div class="border rounded-xl p-4 space-y-4">
-        <h3 class="font-medium text-gray-700 text-sm">Attributes</h3>
-        @foreach($attributes as $attribute)
-            <div class="flex items-center gap-2">
-                <input type="checkbox"
-                       name="attributes[]"
-                       value="{{ $attribute->id }}"
-                       id="attr-{{ $attribute->id }}">
-                <label for="attr-{{ $attribute->id }}" class="text-gray-700">
-                    {{ $attribute->name }}
-                </label>
-            </div>
-        @endforeach
+    <div class="border border-gray-200 rounded-xl overflow-hidden">
+
+    <div class="px-5 py-4 bg-gray-50 border-b border-gray-200">
+        <h3 class="font-semibold text-gray-800 text-sm">
+            Category Attributes
+        </h3>
+
+        <p class="text-xs text-gray-500 mt-1">
+            Select attributes and configure whether they are required and their display order.
+        </p>
     </div>
+
+    <div class="divide-y divide-gray-100">
+
+        @foreach($attributes as $attribute)
+
+            <div class="px-5 py-4">
+
+                <div class="grid grid-cols-12 gap-4 items-center">
+
+                    {{-- ATTRIBUTE --}}
+                    <div class="col-span-6 flex items-center gap-3">
+
+                        <input
+                            type="checkbox"
+                            name="attributes[{{ $attribute->id }}][enabled]"
+                            value="1"
+                            id="attr-{{ $attribute->id }}"
+                            class="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-400"
+                            @checked(old("attributes.{$attribute->id}.enabled"))
+                        >
+
+                        <label
+                            for="attr-{{ $attribute->id }}"
+                            class="text-sm font-medium text-gray-800 cursor-pointer"
+                        >
+                            {{ $attribute->name }}
+                        </label>
+
+                    </div>
+
+
+                    {{-- REQUIRED --}}
+                    <div class="col-span-3">
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+
+                            <input
+                                type="checkbox"
+                                name="attributes[{{ $attribute->id }}][is_required]"
+                                value="1"
+                                class="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-400"
+                                @checked(old("attributes.{$attribute->id}.is_required"))
+                            >
+
+                            <span class="text-sm text-gray-600">
+                                Required
+                            </span>
+
+                        </label>
+
+                    </div>
+
+
+                    {{-- SORT ORDER --}}
+                    <div class="col-span-3">
+
+                        <div class="flex items-center gap-2">
+
+                            <label
+                                for="sort-{{ $attribute->id }}"
+                                class="text-sm text-gray-500 whitespace-nowrap"
+                            >
+                                Order
+                            </label>
+
+                            <input
+                                type="number"
+                                name="attributes[{{ $attribute->id }}][sort_order]"
+                                id="sort-{{ $attribute->id }}"
+                                min="0"
+                                value="{{ old("attributes.{$attribute->id}.sort_order", $attribute->sort_order ?? 0) }}"
+                                class="w-20 h-9 px-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        @endforeach
+
+    </div>
+
+</div>
 
 
 @php

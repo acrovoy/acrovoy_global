@@ -89,7 +89,7 @@
         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Category Attributes</h3>
 
-            <div id="category-attributes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="category-attributes" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6"></div>
 
             <div id="category-attributes-empty" class="hidden text-sm text-gray-400 italic">
                 No specifications available for this category
@@ -204,6 +204,7 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
             const query = this.initialProductId ? `?product_id=${this.initialProductId}` : '';
             const res = await fetch(`/dashboard/category-selector/attributes/${categoryId}${query}`);
             const attributes = await res.json();
+            console.log('ATTRIBUTES:', attributes);
 
             const container = document.getElementById('category-attributes');
             const emptyBlock = document.getElementById('category-attributes-empty');
@@ -215,73 +216,378 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
             }
             emptyBlock.classList.add('hidden');
 
-            attributes.forEach(attr => {
-                const requiredStar = attr.is_required ? `<span class="text-red-500 ml-1">*</span>` : '';
-                const requiredAttr = attr.is_required ? 'required' : '';
-                const unitBadge = attr.unit ? `<span class="ml-2 text-[10px] text-red-400">(${attr.unit})</span>` : '';
 
-                let fieldHtml = `<input type="text" name="attributes[${attr.id}]" class="input w-full" value="${attr.value ?? ''}" ${requiredAttr}>`;
 
-                if (attr.type === 'number') {
-                    fieldHtml = `<input type="number" name="attributes[${attr.id}]" class="input w-full" value="${attr.value ?? ''}" ${requiredAttr}>`;
-                } else if (attr.type === 'select' && attr.options) {
-                    const optionsHtml = attr.options.map(o => `<option value="${o.value}" ${attr.value == o.value ? 'selected' : ''}>${o.label}</option>`).join('');
-                    fieldHtml = `<select name="attributes[${attr.id}]" class="input w-full" ${requiredAttr}><option value="">Select...</option>${optionsHtml}</select>`;
-                } else if (attr.type === 'multiselect' && attr.options) {
-                    const selectedValues = Array.isArray(attr.value) ? attr.value.map(String) : [];
-                    const optionsHtml = attr.options
-                        .map(o => `
-                            <label class="flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox"
-                                       name="attributes[${attr.id}][]"
-                                       value="${o.value}"
-                                       class="rounded border-gray-300"
-                                       ${selectedValues.includes(String(o.value)) ? 'checked' : ''}>
-                                ${o.label}
-                            </label>
-                        `)
-                        .join('');
-                    fieldHtml = `
-                        <div class="flex flex-col gap-2">
-                            ${optionsHtml}
-                        </div>
-                    `;
-                } else if (attr.type === 'boolean') {
-                    const checked = attr.value ? 'checked' : '';
-                    fieldHtml = `
-                        <label class="flex items-center gap-2 text-sm text-gray-700">
-                            <input type="checkbox"
-                                   name="attributes[${attr.id}]"
-                                   value="1"
-                                   class="rounded border-gray-300"
-                                   ${checked}>
-                            Yes
-                        </label>
-                    `;
+
+
+
+
+            // ==========================================================================
+// SORT ATTRIBUTES BY TYPE
+// ==========================================================================
+
+const typeOrder = {
+    select: 1,
+    multiselect: 2,
+    number: 3,
+    text: 4,
+    boolean: 5,
+};
+
+attributes.sort((a, b) => {
+    return (typeOrder[a.type] ?? 99) - (typeOrder[b.type] ?? 99);
+});
+
+
+// ==========================================================================
+// FORM ATTRIBUTES
+// ==========================================================================
+
+attributes.forEach(attr => {
+
+    const requiredStar = attr.is_required
+        ? `<span class="text-red-500 ml-1">*</span>`
+        : '';
+
+    const requiredAttr = '';
+
+    const unitBadge = attr.unit
+        ? `
+            <span class="ml-2 text-[11px] font-medium text-gray-400">
+                ${attr.unit}
+            </span>
+        `
+        : '';
+
+    let fieldHtml = `
+        <input
+            type="text"
+            name="attributes[${attr.id}]"
+            class="w-full h-11 px-3.5 rounded-lg
+                   border border-gray-200
+                   bg-gray-50
+                   text-sm text-gray-900
+                   placeholder:text-gray-400
+                   outline-none
+                   transition
+                   focus:bg-white
+                   focus:border-gray-400
+                   focus:ring-2
+                   focus:ring-gray-100"
+            value="${attr.value ?? ''}"
+            ${requiredAttr}
+        >
+    `;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | NUMBER
+    |--------------------------------------------------------------------------
+    */
+
+    if (attr.type === 'number') {
+
+        fieldHtml = `
+            <div class="relative">
+
+                <input
+                    type="number"
+                    name="attributes[${attr.id}]"
+                    class="w-full h-11 px-3.5
+                           ${attr.unit ? 'pr-16' : ''}
+                           rounded-lg
+                           border border-gray-200
+                           bg-gray-50
+                           text-sm text-gray-900
+                           outline-none
+                           transition
+                           focus:bg-white
+                           focus:border-gray-400
+                           focus:ring-2
+                           focus:ring-gray-100"
+                    value="${attr.value ?? ''}"
+                    ${requiredAttr}
+                >
+
+                ${
+                    attr.unit
+                        ? `
+                            <span
+                                class="absolute right-3 top-1/2
+                                       -translate-y-1/2
+                                       text-xs font-medium
+                                       text-gray-400
+                                       pointer-events-none"
+                            >
+                                ${attr.unit}
+                            </span>
+                        `
+                        : ''
                 }
 
-                const div = document.createElement('div');
-                div.className = 'flex flex-col';
-                div.innerHTML = `
-        <label class="text-sm font-medium text-gray-700 mb-1 flex items-center">
-            ${attr.name}
-            ${requiredStar}
-            
-            ${unitBadge}
-        </label>
+            </div>
+        `;
+    }
 
-        ${fieldHtml}
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELECT
+    |--------------------------------------------------------------------------
+    */
+
+    else if (attr.type === 'select' && attr.options) {
+
+        const optionsHtml = attr.options
+            .map(o => `
+                <option
+                    value="${o.value}"
+                    ${attr.value == o.value ? 'selected' : ''}
+                >
+                    ${o.label}
+                </option>
+            `)
+            .join('');
+
+        fieldHtml = `
+            <select
+                name="attributes[${attr.id}]"
+                class="w-full h-11 px-3.5
+                       rounded-lg
+                       border border-gray-200
+                       bg-gray-50
+                       text-sm text-gray-900
+                       outline-none
+                       transition
+                       focus:bg-white
+                       focus:border-gray-400
+                       focus:ring-2
+                       focus:ring-gray-100"
+                ${requiredAttr}
+            >
+                <option value="">Select...</option>
+                ${optionsHtml}
+            </select>
+        `;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MULTISELECT
+    |--------------------------------------------------------------------------
+    */
+
+    else if (attr.type === 'multiselect' && attr.options) {
+
+        const selectedValues = Array.isArray(attr.value)
+            ? attr.value.map(String)
+            : [];
+
+        const optionsHtml = attr.options
+            .map(o => `
+                <label
+                    class="flex items-center gap-3
+                           px-3 py-2.5
+                           rounded-md
+                           cursor-pointer
+                           transition
+                           hover:bg-white"
+                >
+
+                    <input
+                        type="checkbox"
+                        name="attributes[${attr.id}][]"
+                        value="${o.value}"
+                        class="w-4 h-4
+                               rounded
+                               border-gray-300
+                               text-gray-900
+                               focus:ring-gray-400"
+                        ${selectedValues.includes(String(o.value)) ? 'checked' : ''}
+                    >
+
+                    <span class="text-sm text-gray-700">
+                        ${o.label}
+                    </span>
+
+                </label>
+            `)
+            .join('');
+
+        fieldHtml = `
+            <div
+                class="rounded-lg
+                       border border-gray-200
+                       bg-gray-50
+                       p-1.5
+                       max-h-60
+                       overflow-y-auto"
+            >
+
+                ${optionsHtml}
+
+            </div>
+        `;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BOOLEAN
+    |--------------------------------------------------------------------------
+    */
+
+    else if (attr.type === 'boolean') {
+
+    const checked = attr.value
+        ? 'checked'
+        : '';
+
+    fieldHtml = `
+        <label
+            class="inline-flex items-center gap-3
+                   min-h-11
+                   px-3.5
+                   rounded-lg
+                   border border-gray-200
+                   bg-gray-50
+                   cursor-pointer
+                   transition
+                   hover:bg-white"
+        >
+
+        <input
+            type="hidden"
+            name="attributes[${attr.id}]"
+            value="0"
+        >
+
+
+            <input
+                type="checkbox"
+                name="attributes[${attr.id}]"
+                value="1"
+                class="w-4 h-4
+                       rounded
+                       border-gray-300
+                       text-gray-900
+                       focus:ring-gray-400"
+                ${checked}
+            >
+
+            <span class="text-sm font-medium text-gray-700">
+                Yes
+            </span>
+
+        </label>
+    `;
+}
+
+
+else if (attr.type === 'boolean') {
+
+    const checked = attr.value
+        ? 'checked'
+        : '';
+
+    fieldHtml = `
+        <label
+            class="inline-flex items-center gap-3
+                   min-h-11
+                   px-3.5
+                   rounded-lg
+                   border border-gray-200
+                   bg-gray-50
+                   cursor-pointer
+                   transition
+                   hover:bg-white"
+        >
+
+            <input
+                type="checkbox"
+                name="attributes[${attr.id}]"
+                value="1"
+                class="w-4 h-4
+                       rounded
+                       border-gray-300
+                       text-gray-900
+                       focus:ring-gray-400"
+                ${checked}
+            >
+
+            <span class="text-sm font-medium text-gray-700">
+                Yes
+            </span>
+
+        </label>
+    `;
+}
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATTRIBUTE ROW
+    |--------------------------------------------------------------------------
+    */
+
+    const div = document.createElement('div');
+
+    div.className = `
+        group
+        flex flex-col
+        min-w-0
+    `;
+
+    div.innerHTML = `
+
+        <div class="flex items-center min-h-[24px] mb-1.5">
+
+            <label
+                class="text-[13px]
+                       font-semibold
+                       tracking-[-0.01em]
+                       text-gray-800"
+            >
+                ${attr.name}
+                ${requiredStar}
+            </label>
+
+            ${unitBadge}
+
+        </div>
+
+
+        <div class="w-full">
+            ${fieldHtml}
+        </div>
+
 
         ${
-            attr.is_required
-            ? `<span class="text-[11px] text-red-400 mt-1">
-                    This field is required for this category
-               </span>`
-            : ''
-        }
+    attr.is_required
+        ? `
+            <div
+                data-required-error="${attr.id}"
+                class="hidden mt-1.5 text-[11px] text-red-500"
+            >
+                This field is required for this category
+            </div>
+          `
+        : ''
+}
+
     `;
-                container.appendChild(div);
-            });
+
+    container.appendChild(div);
+});
+
+
+
+
+
+
+
+
         }
     }
 }

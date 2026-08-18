@@ -290,22 +290,105 @@ class ProductController extends Controller
                 ]);
         } elseif ($step == 2) {
 
-            $dto = $dtoFactory->fromUpdateCategoryRequest($request);
+         /*
+    |--------------------------------------------------------------------------
+    | VALIDATE REQUIRED CATEGORY ATTRIBUTES
+    |--------------------------------------------------------------------------
+    */
+
+    $attributes = $request->input('attributes', []);
+
+    $requiredAttributes = $product->category
+        ->attributes()
+        ->wherePivot('is_required', true)
+        ->get();
+
+    $errors = [];
+
+    foreach ($requiredAttributes as $attribute) {
+
+        $attributeId = (string) $attribute->id;
+
+        $value = $attributes[$attributeId] ?? null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | BOOLEAN
+        |--------------------------------------------------------------------------
+        */
+
+        if ($attribute->type === 'boolean') {
+
+            if (!array_key_exists($attributeId, $attributes)) {
+                $errors["attributes.$attributeId"] =
+                    "{$attribute->name} is required.";
+            }
+
+            continue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MULTISELECT
+        |--------------------------------------------------------------------------
+        */
+
+        if ($attribute->type === 'multiselect') {
+
+            if (
+                !is_array($value) ||
+                empty(array_filter($value, fn ($v) => $v !== null && $v !== ''))
+            ) {
+                $errors["attributes.$attributeId"] =
+                    "{$attribute->name} is required.";
+            }
+
+            continue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SELECT / NUMBER / TEXT
+        |--------------------------------------------------------------------------
+        */
+
+        if ($value === null || $value === '') {
+
+            $errors["attributes.$attributeId"] =
+                "{$attribute->name} is required.";
+        }
+    }
+
+    if (!empty($errors)) {
+
+        return redirect()
+            ->back()
+            ->withErrors($errors)
+            ->withInput();
+    }
 
 
-            $updateProductCategoryAction->execute(
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE CATEGORY + ATTRIBUTES
+    |--------------------------------------------------------------------------
+    */
 
-                product: $product,
-                data: $dto,
+    $dto = $dtoFactory->fromUpdateCategoryRequest($request);
 
-            );
+    $updateProductCategoryAction->execute(
+        product: $product,
+        data: $dto,
+    );
+
+    return redirect()
+        ->route('supplier.products.edit-step', [
+            'product' => $product->id,
+            'step' => $nextstep,
+        ]);
 
 
-            return redirect()
-                ->route('supplier.products.edit-step', [
-                    'product' => $product->id,
-                    'step' => $nextstep,
-                ]);
+           
         } elseif ($step == 3) {
 
 
