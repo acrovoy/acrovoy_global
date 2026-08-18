@@ -90,7 +90,11 @@ public function attributes($categoryId)
     }
 
     $attributes = $category->attributes()
-        ->with(['translations', 'options.translations'])
+        ->with([
+            'translations',
+            'options' => fn($query) => $query->orderBy('sort_order'),
+            'options.translations',
+        ])
         ->orderBy('category_attributes.sort_order')
         ->get(['attributes.id', 'attributes.type', 'attributes.unit']);
 

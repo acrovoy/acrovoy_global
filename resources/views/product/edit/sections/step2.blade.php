@@ -339,16 +339,17 @@ attributes.forEach(attr => {
 
     else if (attr.type === 'select' && attr.options) {
 
-        const optionsHtml = attr.options
-            .map(o => `
-                <option
-                    value="${o.value}"
-                    ${attr.value == o.value ? 'selected' : ''}
-                >
-                    ${o.label}
-                </option>
-            `)
-            .join('');
+        const optionsHtml = [...attr.options]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map(o => `
+        <option
+            value="${o.value}"
+            ${attr.value == o.value ? 'selected' : ''}
+        >
+            ${o.label}
+        </option>
+    `)
+    .join('');
 
         fieldHtml = `
             <select

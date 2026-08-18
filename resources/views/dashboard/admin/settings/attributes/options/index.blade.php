@@ -58,6 +58,119 @@
     @endphp
 
 
+
+{{-- ============================================================
+    SAVED OPTIONS
+============================================================= --}}
+
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+    <div class="px-5 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+
+        <div>
+
+            <h3 class="font-semibold text-gray-800 text-sm">
+                Saved Options
+            </h3>
+
+            <p class="text-xs text-gray-500 mt-1">
+                All saved values for this attribute.
+            </p>
+
+        </div>
+
+        <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-200 text-gray-600 text-xs">
+            {{ $options->count() }} {{ $options->count() === 1 ? 'option' : 'options' }}
+        </span>
+
+    </div>
+
+
+    @if($options->count())
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-white border-b border-gray-100">
+
+                    <tr>
+
+                        <th class="px-5 py-3 text-left font-medium text-gray-500">
+                            #
+                        </th>
+
+                        @foreach($languages as $lang)
+
+                            <th class="px-5 py-3 text-left font-medium text-gray-500">
+                                {{ strtoupper($lang->code) }}
+                            </th>
+
+                        @endforeach
+
+                        <th class="px-5 py-3 text-left font-medium text-gray-500">
+                            Sort
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody class="divide-y divide-gray-100">
+
+                    @foreach($options as $option)
+
+                        <tr class="hover:bg-gray-50 transition">
+
+                            <td class="px-5 py-3">
+
+                                <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 text-xs font-semibold text-gray-600">
+                                    {{ $option->id }}
+                                </span>
+
+                            </td>
+
+
+                            @foreach($languages as $lang)
+
+                                <td class="px-5 py-3 text-gray-800">
+
+                                    {{ $option->translations
+                                        ->where('locale', $lang->code)
+                                        ->first()?->value ?? '—' }}
+
+                                </td>
+
+                            @endforeach
+
+
+                            <td class="px-5 py-3 text-gray-600">
+                                {{ $option->sort_order }}
+                            </td>
+
+                        </tr>
+
+                    @endforeach
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    @else
+
+        <div class="px-5 py-8 text-center text-sm text-gray-400">
+            No saved options yet.
+        </div>
+
+    @endif
+
+</div>
+
+
+
     {{-- ============================================================
         ADD OPTION
     ============================================================= --}}

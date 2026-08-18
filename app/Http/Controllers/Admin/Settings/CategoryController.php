@@ -16,15 +16,155 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $categories = Category::with('types', 'translations', 'parent')->orderBy('id')->get();
+    public function index(Request $request)
+{
+    $query = Category::with('types', 'translations', 'parent');
 
-        $categories_map = Category::with('translations')
+    /*
+    |--------------------------------------------------------------------------
+    | SEARCH
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('search')) {
+        $search = trim($request->input('search'));
+
+        $query->where(function ($q) use ($search) {
+            $q->where('slug', 'like', "%{$search}%")
+                ->orWhereHas('translations', function ($translationQuery) use ($search) {
+                    $translationQuery->where('name', 'like', "%{$search}%");
+                });
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PARENT CATEGORY
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('parent_id')) {
+        $query->where('parent_id', $request->input('parent_id'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LEVEL
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('level')) {
+        $query->where('level', $request->input('level'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SELECTABLE
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('is_selectable')) {
+        $query->where('is_selectable', $request->boolean('is_selectable'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LEAF
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('is_leaf')) {
+        $query->where('is_leaf', $request->boolean('is_leaf'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VISIBLE
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('is_visible')) {
+        $query->where('is_visible', $request->boolean('is_visible'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORTING
+    |--------------------------------------------------------------------------
+    */
+
+    $allowedSorts = [
+        'name',
+        'slug',
+        'level',
+        'sort_order',
+        'created_at',
+    ];
+
+    $sort = $request->input('sort', 'sort_order');
+
+    if (!in_array($sort, $allowedSorts, true)) {
+        $sort = 'sort_order';
+    }
+
+    $direction = $request->input('direction', 'asc');
+
+    if (!in_array($direction, ['asc', 'desc'], true)) {
+        $direction = 'asc';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT BY TRANSLATED NAME
+    |--------------------------------------------------------------------------
+    */
+
+    if ($sort === 'name') {
+        $query->orderBy(
+            CategoryTranslation::select('name')
+                ->whereColumn(
+                    'category_translations.category_id',
+                    'categories.id'
+                )
+                ->where('locale', app()->getLocale())
+                ->limit(1),
+            $direction
+        );
+    } else {
+        $query->orderBy($sort, $direction);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SECONDARY SORT
+    |--------------------------------------------------------------------------
+    */
+
+    $query->orderBy('id', 'asc');
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET CATEGORIES
+    |--------------------------------------------------------------------------
+    */
+
+    $categories = $query->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | CATEGORIES MAP
+    |--------------------------------------------------------------------------
+    |
+    | Used for category tree / parent category selection.
+    | It must contain all categories regardless of active filters.
+    |
+    */
+
+    $categories_map = Category::with('translations')
         ->orderBy('level')
         ->orderBy('sort_order')
         ->get()
-        ->map(function($cat) {
+        ->map(function ($cat) {
             return [
                 'id' => $cat->id,
                 'name' => $cat->name,
@@ -35,9 +175,14 @@ class CategoryController extends Controller
             ];
         });
 
-
-        return view('dashboard.admin.settings.categories.index', compact('categories', 'categories_map'));
-    }
+    return view(
+        'dashboard.admin.settings.categories.index',
+        compact(
+            'categories',
+            'categories_map'
+        )
+    );
+}
 
     public function create()
     {
