@@ -94,9 +94,11 @@ public function attributes($categoryId)
             'translations',
             'options' => fn($query) => $query->orderBy('sort_order'),
             'options.translations',
+            'unit.translations',
+            
         ])
         ->orderBy('category_attributes.sort_order')
-        ->get(['attributes.id', 'attributes.type', 'attributes.unit']);
+        ->get(['attributes.id', 'attributes.type', 'attributes.unit_id']);
 
     $attributes = $attributes->map(function ($attr) use ($product) {
         $value = null;
@@ -122,7 +124,12 @@ public function attributes($categoryId)
             'id' => $attr->id,
             'name' => $attr->translation()?->name ?? '—',
             'type' => $attr->type,
-            'unit' => $attr->unit,
+            'unit' => $attr->unit ? [
+    'id' => $attr->unit->id,
+    'code' => $attr->unit->code,
+    'symbol' => $attr->unit->symbol,
+    'name' => $attr->unit->name,
+] : null,
             'options' => $attr->options
                 ? collect($attr->options)->map(fn($o) => [
                     'value' => $o->id,

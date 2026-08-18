@@ -359,7 +359,7 @@ $languages = Language::where('is_active', true)
 <div>
 
     <label
-        for="unit"
+        for="unit_id"
         class="block text-[13px] font-semibold text-gray-800"
     >
         Unit
@@ -370,12 +370,9 @@ $languages = Language::where('is_active', true)
         Measurement unit displayed next to numeric attribute values.
     </p>
 
-    <input
-        type="text"
-        name="unit"
-        id="unit"
-        value="{{ old('unit') }}"
-        placeholder="cm / kg / mm"
+    <select
+        name="unit_id"
+        id="unit_id"
         class="
             mt-2
             w-full
@@ -386,7 +383,6 @@ $languages = Language::where('is_active', true)
             bg-gray-50
             text-sm
             text-gray-900
-            placeholder:text-gray-400
             outline-none
             transition
             focus:bg-white
@@ -395,6 +391,41 @@ $languages = Language::where('is_active', true)
             focus:ring-gray-100
         "
     >
+
+        <option value="">
+            No unit
+        </option>
+
+        @foreach($units as $group => $groupUnits)
+
+            <optgroup label="{{ ucfirst(str_replace('_', ' ', $group)) }}">
+
+                @foreach($groupUnits as $unit)
+
+                    <option
+                        value="{{ $unit->id }}"
+                        @selected(old('unit_id') == $unit->id)
+                    >
+                        {{ $unit->symbol }}
+                        —
+                        {{ $unit->translation()?->name ?? $unit->code }}
+                    </option>
+
+                @endforeach
+
+            </optgroup>
+
+        @endforeach
+
+    </select>
+
+    @error('unit_id')
+
+        <p class="mt-1 text-xs text-red-500">
+            {{ $message }}
+        </p>
+
+    @enderror
 
 </div>
 

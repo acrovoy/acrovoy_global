@@ -497,12 +497,29 @@
                         <span class="font-medium text-gray-900">
 
                             @php
-                                $unit = $attrValue->attribute->unit
-                                    ? ' ' . $attrValue->attribute->unit
-                                    : '';
+                                $attribute = $attrValue->attribute;
+                                $unit = $attribute?->unit;
+
+                                $displayValue = $attrValue->display_value;
+
+                                $unitName = $unit?->translations
+                                    ?->firstWhere('locale', app()->getLocale())
+                                    ?->name;
+
+                                // Fallback на английский
+                                if (!$unitName) {
+                                    $unitName = $unit?->translations
+                                        ?->firstWhere('locale', 'en')
+                                        ?->name;
+                                }
+
+                                // Последний fallback
+                                $unitName = $unitName
+                                    ?: $unit?->name
+                                    ?: $unit?->code;
                             @endphp
 
-                            {{ $attrValue->display_value }}{{ $unit }}
+                            {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
 
                         </span>
 
@@ -530,12 +547,29 @@
                                 <span class="font-medium text-gray-900">
 
                                     @php
-                                        $unit = $attrValue->attribute->unit
-                                            ? ' ' . $attrValue->attribute->unit
-                                            : '';
+                                        $attribute = $attrValue->attribute;
+                                        $unit = $attribute?->unit;
+
+                                        $displayValue = $attrValue->display_value;
+
+                                        $unitName = $unit?->translations
+                                            ?->firstWhere('locale', app()->getLocale())
+                                            ?->name;
+
+                                        // Fallback на английский
+                                        if (!$unitName) {
+                                            $unitName = $unit?->translations
+                                                ?->firstWhere('locale', 'en')
+                                                ?->name;
+                                        }
+
+                                        // Последний fallback
+                                        $unitName = $unitName
+                                            ?: $unit?->name
+                                            ?: $unit?->code;
                                     @endphp
 
-                                    {{ $attrValue->display_value }}{{ $unit }}
+                                    {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
 
                                 </span>
 

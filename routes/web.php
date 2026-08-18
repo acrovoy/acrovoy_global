@@ -83,6 +83,7 @@ use App\Http\Controllers\Admin\Settings\LocationController;
 use App\Http\Controllers\Admin\Settings\AttributeOptionController;
 use App\Http\Controllers\Admin\Settings\AttributeController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
+use App\Http\Controllers\Admin\Settings\UnitController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
 use App\Http\Controllers\Admin\ProductCollectionController;
@@ -865,6 +866,15 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
         Route::post('attributes/{attribute}/options', [AttributeOptionController::class, 'store'])->name('attributes.options.store');
         Route::put('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'update'])->name('attributes.options.update');
         Route::delete('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'destroy'])->name('attributes.options.destroy');
+    
+        // Units
+        Route::get('units', [UnitController::class, 'index'])->name('units.index');
+        Route::get('units/create', [UnitController::class, 'create'])->name('units.create');
+        Route::post('units', [UnitController::class, 'store'])->name('units.store');
+        Route::get('units/{unit}/edit', [UnitController::class, 'edit'])->name('units.edit');
+        Route::put('units/{unit}', [UnitController::class, 'update'])->name('units.update');
+        Route::delete('units/{unit}', [UnitController::class, 'destroy'])->name('units.destroy');
+    
     });
 
     // === Help Center ===

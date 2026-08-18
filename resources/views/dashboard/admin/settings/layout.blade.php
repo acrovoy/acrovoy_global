@@ -128,6 +128,25 @@
                 <span class="text-sm font-medium">Attributes</span>
             </a>
 
+
+            {{-- UNITS --}}
+            <a
+                href="{{ route('admin.settings.units.index') }}"
+                class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
+                {{ request()->routeIs('admin.settings.units.*')
+                    ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
+            >
+                <span class="flex items-center justify-center w-8 h-8 rounded-lg
+                    {{ request()->routeIs('admin.settings.units.*') ? 'bg-white/10' : 'bg-gray-100' }}">
+                    <svg class="w-4 h-4 {{ request()->routeIs('admin.settings.units.*') ? 'text-white' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 4v16M17 4v16M4 7h6M14 17h6M4 17h6M14 7h6"/>
+                    </svg>
+                </span>
+                <span class="text-sm font-medium">Units</span>
+            </a>
+
+            
             {{-- BUSINESS TYPES --}}
             <a
                 href="{{ route('admin.settings.business-types.index') }}"
@@ -162,22 +181,7 @@
                 <span class="text-sm font-medium">Manufacturing</span>
             </a>
 
-            {{-- CONSTANTS --}}
-            <a
-                href="{{ route('admin.settings.constants') }}"
-                class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
-                {{ request()->routeIs('admin.settings.constants*')
-                    ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
-            >
-                <span class="flex items-center justify-center w-8 h-8 rounded-lg
-                    {{ request()->routeIs('admin.settings.constants*') ? 'bg-white/10' : 'bg-gray-100' }}">
-                    <svg class="w-4 h-4 {{ request()->routeIs('admin.settings.constants*') ? 'text-white' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 4h12v16H6zM9 8h6M9 12h4M9 16h6"/>
-                    </svg>
-                </span>
-                <span class="text-sm font-medium">Constants</span>
-            </a>
+           
 
         </div>
     </div>

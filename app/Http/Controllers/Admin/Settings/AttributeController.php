@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Models\Attribute;
 use App\Models\AttributeTranslation;
+use App\Models\Unit;
 
 
 class AttributeController extends Controller
@@ -215,8 +216,18 @@ class AttributeController extends Controller
 
     public function create()
     {
+
+     $units = Unit::query()
+        ->where('is_active', true)
+        ->with('translations')
+        ->orderBy('unit_group')
+        ->orderBy('sort_order')
+        ->get()
+        ->groupBy('unit_group');
+
         return view(
-            'dashboard.admin.settings.attributes.create'
+            'dashboard.admin.settings.attributes.create',
+        compact('units')
         );
     }
 
@@ -227,6 +238,7 @@ class AttributeController extends Controller
             'code' => 'required|unique:attributes,code',
             'type' => 'required',
             'translations' => 'required|array',
+            'unit_id' => [ 'nullable', 'integer', 'exists:units,id', ],
         ]);
 
 
@@ -236,7 +248,7 @@ class AttributeController extends Controller
             'entity_type' => $request->entity_type,
             'context' => $request->context,
             'group_name' => $request->group_name,
-            'unit' => $request->unit,
+            'unit_id' => $request->input('unit_id'),
             'is_required' => $request->boolean('is_required'),
             'is_filterable' => $request->boolean('is_filterable'),
             'is_offerable' => $request->boolean('is_offerable'),
@@ -267,14 +279,20 @@ class AttributeController extends Controller
 
 
     public function edit(Attribute $attribute)
-    {
-        $attribute->load('translations');
+{
+    $units = Unit::query()
+        ->where('is_active', true)
+        ->with('translations')
+        ->orderBy('unit_group')
+        ->orderBy('sort_order')
+        ->get()
+        ->groupBy('unit_group');
 
-        return view(
-            'dashboard.admin.settings.attributes.edit',
-            compact('attribute')
-        );
-    }
+    return view(
+        'dashboard.admin.settings.attributes.edit',
+        compact('attribute', 'units')
+    );
+}
 
 
     public function update(Request $request, Attribute $attribute)
@@ -283,6 +301,7 @@ class AttributeController extends Controller
             'code' => 'required|unique:attributes,code,' . $attribute->id,
             'type' => 'required',
             'translations' => 'required|array',
+            'unit_id' => [ 'nullable', 'integer', 'exists:units,id', ],
         ]);
 
 
@@ -293,6 +312,7 @@ class AttributeController extends Controller
             'context' => $request->context,
             'group_name' => $request->group_name,
             'unit' => $request->unit,
+            'unit_id' => $request->input('unit_id'),
             'is_required' => $request->boolean('is_required'),
             'is_filterable' => $request->boolean('is_filterable'),
             'is_offerable' => $request->boolean('is_offerable'),

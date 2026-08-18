@@ -249,21 +249,49 @@ attributes.forEach(attr => {
         ? `<span class="text-red-500 ml-1">*</span>`
         : '';
 
-    const requiredAttr = '';
+    const requiredAttr = attr.is_required
+        ? 'required'
+        : '';
 
-    const unitBadge = attr.unit
+    /*
+    |--------------------------------------------------------------------------
+    | UNIT
+    |--------------------------------------------------------------------------
+    |
+    | attr.unit comes from Unit relation:
+    |
+    | {
+    |     id: 2,
+    |     code: "cm",
+    |     symbol: "cm",
+    |     name: "Centimeter"
+    | }
+    |
+    */
+
+    const unitSymbol = attr.unit?.name ?? '';
+
+    const unitBadge = unitSymbol
         ? `
             <span class="ml-2 text-[11px] font-medium text-gray-400">
-                ${attr.unit}
+                ${unitSymbol}
             </span>
         `
         : '';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DEFAULT FIELD
+    |--------------------------------------------------------------------------
+    */
 
     let fieldHtml = `
         <input
             type="text"
             name="attributes[${attr.id}]"
-            class="w-full h-11 px-3.5 rounded-lg
+            class="w-full h-11 px-3.5
+                   rounded-lg
                    border border-gray-200
                    bg-gray-50
                    text-sm text-gray-900
@@ -295,7 +323,7 @@ attributes.forEach(attr => {
                     type="number"
                     name="attributes[${attr.id}]"
                     class="w-full h-11 px-3.5
-                           ${attr.unit ? 'pr-16' : ''}
+                           ${unitSymbol ? 'pr-16' : ''}
                            rounded-lg
                            border border-gray-200
                            bg-gray-50
@@ -311,7 +339,7 @@ attributes.forEach(attr => {
                 >
 
                 ${
-                    attr.unit
+                    unitSymbol
                         ? `
                             <span
                                 class="absolute right-3 top-1/2
@@ -320,7 +348,7 @@ attributes.forEach(attr => {
                                        text-gray-400
                                        pointer-events-none"
                             >
-                                ${attr.unit}
+                                ${unitSymbol}
                             </span>
                         `
                         : ''
@@ -340,16 +368,20 @@ attributes.forEach(attr => {
     else if (attr.type === 'select' && attr.options) {
 
         const optionsHtml = [...attr.options]
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-    .map(o => `
-        <option
-            value="${o.value}"
-            ${attr.value == o.value ? 'selected' : ''}
-        >
-            ${o.label}
-        </option>
-    `)
-    .join('');
+            .sort(
+                (a, b) =>
+                    (a.sort_order ?? 0) -
+                    (b.sort_order ?? 0)
+            )
+            .map(o => `
+                <option
+                    value="${o.value}"
+                    ${attr.value == o.value ? 'selected' : ''}
+                >
+                    ${o.label}
+                </option>
+            `)
+            .join('');
 
         fieldHtml = `
             <select
@@ -368,7 +400,9 @@ attributes.forEach(attr => {
                 ${requiredAttr}
             >
                 <option value="">Select...</option>
+
                 ${optionsHtml}
+
             </select>
         `;
     }
@@ -442,89 +476,49 @@ attributes.forEach(attr => {
 
     else if (attr.type === 'boolean') {
 
-    const checked = attr.value
-        ? 'checked'
-        : '';
+        const checked = attr.value
+            ? 'checked'
+            : '';
 
-    fieldHtml = `
-        <label
-            class="inline-flex items-center gap-3
-                   min-h-11
-                   px-3.5
-                   rounded-lg
-                   border border-gray-200
-                   bg-gray-50
-                   cursor-pointer
-                   transition
-                   hover:bg-white"
-        >
-
-        <input
-            type="hidden"
-            name="attributes[${attr.id}]"
-            value="0"
-        >
-
-
-            <input
-                type="checkbox"
-                name="attributes[${attr.id}]"
-                value="1"
-                class="w-4 h-4
-                       rounded
-                       border-gray-300
-                       text-gray-900
-                       focus:ring-gray-400"
-                ${checked}
+        fieldHtml = `
+            <label
+                class="inline-flex items-center gap-3
+                       min-h-11
+                       px-3.5
+                       rounded-lg
+                       border border-gray-200
+                       bg-gray-50
+                       cursor-pointer
+                       transition
+                       hover:bg-white"
             >
 
-            <span class="text-sm font-medium text-gray-700">
-                Yes
-            </span>
+                <input
+                    type="hidden"
+                    name="attributes[${attr.id}]"
+                    value="0"
+                >
 
-        </label>
-    `;
-}
+                <input
+                    type="checkbox"
+                    name="attributes[${attr.id}]"
+                    value="1"
+                    class="w-4 h-4
+                           rounded
+                           border-gray-300
+                           text-gray-900
+                           focus:ring-gray-400"
+                    ${checked}
+                >
 
+                <span class="text-sm font-medium text-gray-700">
+                    Yes
+                </span>
 
-else if (attr.type === 'boolean') {
+            </label>
+        `;
+    }
 
-    const checked = attr.value
-        ? 'checked'
-        : '';
-
-    fieldHtml = `
-        <label
-            class="inline-flex items-center gap-3
-                   min-h-11
-                   px-3.5
-                   rounded-lg
-                   border border-gray-200
-                   bg-gray-50
-                   cursor-pointer
-                   transition
-                   hover:bg-white"
-        >
-
-            <input
-                type="checkbox"
-                name="attributes[${attr.id}]"
-                value="1"
-                class="w-4 h-4
-                       rounded
-                       border-gray-300
-                       text-gray-900
-                       focus:ring-gray-400"
-                ${checked}
-            >
-
-            <span class="text-sm font-medium text-gray-700">
-                Yes
-            </span>
-
-        </label>
-    `;
-}
 
     /*
     |--------------------------------------------------------------------------
@@ -551,7 +545,9 @@ else if (attr.type === 'boolean') {
                        text-gray-800"
             >
                 ${attr.name}
+
                 ${requiredStar}
+
             </label>
 
             ${unitBadge}
@@ -565,23 +561,22 @@ else if (attr.type === 'boolean') {
 
 
         ${
-    attr.is_required
-        ? `
-            <div
-                data-required-error="${attr.id}"
-                class="hidden mt-1.5 text-[11px] text-red-500"
-            >
-                This field is required for this category
-            </div>
-          `
-        : ''
-}
+            attr.is_required
+                ? `
+                    <div
+                        data-required-error="${attr.id}"
+                        class="hidden mt-1.5 text-[11px] text-red-500"
+                    >
+                        This field is required for this category
+                    </div>
+                `
+                : ''
+        }
 
     `;
 
     container.appendChild(div);
 });
-
 
 
 

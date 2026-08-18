@@ -439,47 +439,80 @@
 
 
     {{-- UNIT --}}
-    <div>
+<div>
 
-        <label
-            for="unit"
-            class="block text-[13px] font-semibold text-gray-800"
-        >
-            Unit
-            <span class="font-medium text-gray-400">(optional)</span>
-        </label>
+    <label
+        for="unit_id"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        Unit
+        <span class="font-medium text-gray-400">(optional)</span>
+    </label>
 
-        <p class="mt-1 text-[11px] text-gray-400">
-            Measurement unit displayed next to the value.
+    <p class="mt-1 text-[11px] text-gray-400">
+        Measurement unit displayed next to the value.
+    </p>
+
+    <select
+        name="unit_id"
+        id="unit_id"
+        class="
+            mt-2
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+    >
+
+        <option value="">
+            No unit
+        </option>
+
+        @foreach($units as $group => $groupUnits)
+
+            <optgroup
+                label="{{ ucfirst(str_replace('_', ' ', $group)) }}"
+            >
+
+                @foreach($groupUnits as $unit)
+
+                    <option
+                        value="{{ $unit->id }}"
+                        @selected(
+                            old('unit_id', $attribute->unit_id) == $unit->id
+                        )
+                    >
+                        {{ $unit->symbol }}
+                        —
+                        {{ $unit->translation()?->name ?? $unit->code }}
+                    </option>
+
+                @endforeach
+
+            </optgroup>
+
+        @endforeach
+
+    </select>
+
+    @error('unit_id')
+        <p class="mt-1 text-xs text-red-500">
+            {{ $message }}
         </p>
+    @enderror
 
-        <input
-            type="text"
-            name="unit"
-            id="unit"
-            value="{{ old('unit', $attribute->unit) }}"
-            placeholder="cm / kg / mm"
-            class="
-                mt-2
-                w-full
-                h-10
-                px-3
-                rounded-lg
-                border border-gray-200
-                bg-gray-50
-                text-sm
-                text-gray-900
-                placeholder:text-gray-400
-                outline-none
-                transition
-                focus:bg-white
-                focus:border-gray-400
-                focus:ring-2
-                focus:ring-gray-100
-            "
-        >
-
-    </div>
+</div>
 
 </div>
 

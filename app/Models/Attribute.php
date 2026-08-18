@@ -13,7 +13,7 @@ class Attribute extends Model
         'context',
         'group_id',
         'type',
-        'unit',
+        'unit_id',
         'is_required',
         'is_filterable',
         'is_offerable',
@@ -85,5 +85,9 @@ class Attribute extends Model
     return $this->belongsTo(AttributeGroup::class);
 }
 
+public function unit()
+{
+    return $this->belongsTo(\App\Models\Unit::class);
+}
 
 }
