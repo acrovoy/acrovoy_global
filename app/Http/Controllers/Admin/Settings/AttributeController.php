@@ -7,21 +7,210 @@ use Illuminate\Http\Request;
 
 use App\Models\Attribute;
 use App\Models\AttributeTranslation;
-use App\Models\Language;
+
 
 class AttributeController extends Controller
 {
-    public function index()
-    {
-        $attributes = Attribute::with('translations')
-            ->orderBy('sort_order')
-            ->paginate(20);
+    public function index(Request $request)
+{
+    $query = Attribute::query()
+        ->with('translations');
 
-        return view(
-            'dashboard.admin.settings.attributes.index',
-            compact('attributes')
+    /*
+    |--------------------------------------------------------------------------
+    | SEARCH
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('search')) {
+
+        $search = trim($request->input('search'));
+
+        $query->where(function ($q) use ($search) {
+
+            $q->where('code', 'like', "%{$search}%")
+                ->orWhereHas('translations', function ($translationQuery) use ($search) {
+
+                    $translationQuery->where('name', 'like', "%{$search}%");
+
+                });
+
+        });
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ENTITY TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('entity_type')) {
+
+        $query->where(
+            'entity_type',
+            $request->input('entity_type')
         );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATTRIBUTE TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('type')) {
+
+        $query->where(
+            'type',
+            $request->input('type')
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | NEW
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->boolean('new')) {
+        $query->where('created_at', '>=', now()->subDays(7));
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORTING
+    |--------------------------------------------------------------------------
+    */
+
+    $allowedSorts = [
+        'name',
+        'code',
+        'sort_order',
+        'created_at',
+    ];
+
+    $sort = $request->input('sort', 'sort_order');
+
+    if (!in_array($sort, $allowedSorts, true)) {
+        $sort = 'sort_order';
+    }
+
+
+    $direction = $request->input('direction', 'asc');
+
+    if (!in_array($direction, ['asc', 'desc'], true)) {
+        $direction = 'asc';
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT BY TRANSLATED NAME
+    |--------------------------------------------------------------------------
+    |
+    | Name находится в translations, поэтому сортируем через subquery.
+    |
+    */
+
+    if ($sort === 'name') {
+
+        $query->orderBy(
+            AttributeTranslation::select('name')
+                ->whereColumn(
+                    'attribute_translations.attribute_id',
+                    'attributes.id'
+                )
+                ->where('locale', app()->getLocale())
+                ->limit(1),
+            $direction
+        );
+
+    } else {
+
+        $query->orderBy($sort, $direction);
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SECONDARY SORT
+    |--------------------------------------------------------------------------
+    */
+
+    $query->orderBy('id', 'asc');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET ATTRIBUTES
+    |--------------------------------------------------------------------------
+    */
+
+    $attributes = $query->get();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SPLIT SYSTEM / CUSTOM
+    |--------------------------------------------------------------------------
+    */
+
+    $systemAttributes = $attributes
+        ->where('is_custom', false)
+        ->values();
+
+    $customAttributes = $attributes
+        ->where('is_custom', true)
+        ->values();
+
+        
+
+          /*
+    |--------------------------------------------------------------------------
+    | NEW CUSTOM ATTRIBUTES
+    |--------------------------------------------------------------------------
+    |
+    | Custom attributes created during the last 7 days.
+    |
+    */
+
+    $newCustomSince = now()->subDays(7);
+
+    $newCustomAttributes = $customAttributes
+        ->filter(function ($attribute) use ($newCustomSince) {
+
+            return $attribute->created_at
+                && $attribute->created_at->gte($newCustomSince);
+
+        })
+        ->values();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | NEW CUSTOM ATTRIBUTES COUNT
+    |--------------------------------------------------------------------------
+    */
+
+    $newCustomAttributesCount = $newCustomAttributes->count();
+
+
+    return view(
+        'dashboard.admin.settings.attributes.index',
+        compact(
+            'systemAttributes',
+            'customAttributes',
+            'newCustomAttributes',
+            'newCustomAttributesCount'
+        )
+    );
+}
+
+
 
 
     public function create()

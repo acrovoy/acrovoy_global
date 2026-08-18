@@ -265,8 +265,9 @@ class CategoryController extends Controller
     |
     */
 
-    $attributes = Attribute::orderBy('sort_order')
-        ->get();
+    $attributes = Attribute::where('is_custom', false)
+    ->orderBy('sort_order')
+    ->get();
 
 
     /*

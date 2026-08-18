@@ -1,19 +1,53 @@
 @extends('dashboard.admin.settings.layout')
 
 @section('settings-content')
-<div class="flex flex-col gap-6 max-w-3xl">
+
+<div class="flex flex-col gap-6 max-w-4xl">
 
     <x-alerts />
 
-    {{-- Header --}}
-    <div>
-        <h2 class="text-2xl font-semibold text-gray-900">
-            Options for: {{ $attribute->name }}
-        </h2>
-        <p class="text-sm text-gray-500 mt-1">
-            Code: {{ $attribute->code }}
-        </p>
+    {{-- ============================================================
+        HEADER
+    ============================================================= --}}
+
+    <div class="flex items-center justify-between">
+
+        <div>
+
+            <h2 class="text-2xl font-semibold text-gray-900">
+                Attribute Options
+            </h2>
+
+            <p class="text-sm text-gray-500 mt-1">
+                Manage options for:
+                <span class="font-medium text-gray-700">
+                    {{ $attribute->name }}
+                </span>
+
+                <span class="text-gray-400">
+                    · {{ $attribute->code }}
+                </span>
+            </p>
+
+        </div>
+
+        <a
+            href="{{ route('admin.settings.attributes.index') }}"
+            class="inline-flex items-center
+                   px-4 py-2
+                   text-sm font-medium
+                   text-gray-700
+                   bg-white
+                   border border-gray-200
+                   rounded-lg
+                   hover:bg-gray-50
+                   transition"
+        >
+            ← Attributes
+        </a>
+
     </div>
+
 
     @php
         use App\Models\Language;
@@ -23,118 +57,467 @@
             ->get();
     @endphp
 
-    {{-- CREATE OPTION FORM --}}
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-        <form method="POST"
-              action="{{ route('admin.settings.attributes.options.store', $attribute->id) }}"
-              class="p-6 flex flex-col gap-6">
+
+    {{-- ============================================================
+        ADD OPTION
+    ============================================================= --}}
+
+    <div
+        class="bg-white
+               border border-gray-200
+               rounded-xl
+               shadow-sm
+               overflow-hidden"
+    >
+
+        {{-- HEADER --}}
+
+        <div class="px-5 py-4 bg-gray-50 border-b border-gray-200">
+
+            <h3 class="font-semibold text-gray-800 text-sm">
+                Add Option
+            </h3>
+
+            <p class="text-xs text-gray-500 mt-1">
+                Create a new option and provide its translations.
+            </p>
+
+        </div>
+
+
+        <form
+            method="POST"
+            action="{{ route('admin.settings.attributes.options.store', $attribute->id) }}"
+            class="p-5 space-y-5"
+        >
 
             @csrf
 
-            {{-- Translations --}}
-            <div class="border rounded-xl p-4 space-y-4">
+
+            {{-- ====================================================
+                TRANSLATIONS
+            ===================================================== --}}
+
+            <div
+                class="border border-gray-200
+                       rounded-xl
+                       p-4
+                       space-y-4"
+            >
+
                 <h3 class="font-medium text-gray-700 text-sm">
                     Translations
                 </h3>
 
-                @foreach($languages as $lang)
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">
-                            Value ({{ strtoupper($lang->code) }})
-                        </label>
 
-                        <input type="text"
-                               name="translations[{{ $lang->code }}]"
-                               value="{{ old('translations.' . $lang->code) }}"
-                               class="w-full border border-gray-300 rounded px-3 py-2"
-                               required>
-                    </div>
-                @endforeach
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    @foreach($languages as $lang)
+
+                        <div>
+
+                            <label
+                                class="block text-sm
+                                       text-gray-600
+                                       mb-1"
+                            >
+                                Value
+                                <span class="text-gray-400">
+                                    ({{ strtoupper($lang->code) }})
+                                </span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="translations[{{ $lang->code }}]"
+                                value="{{ old('translations.' . $lang->code) }}"
+                                class="w-full h-10
+                                       px-3
+                                       rounded-lg
+                                       border border-gray-200
+                                       bg-white
+                                       text-sm text-gray-800
+                                       focus:border-gray-400
+                                       focus:ring-2
+                                       focus:ring-gray-100"
+                                required
+                            >
+
+                        </div>
+
+                    @endforeach
+
+                </div>
+
             </div>
 
-            {{-- Sort Order --}}
-            <div>
-                <label class="block font-medium mb-1">
+
+            {{-- ====================================================
+                SORT ORDER
+            ===================================================== --}}
+
+            <div class="max-w-xs">
+
+                <label
+                    class="block text-sm
+                           text-gray-600
+                           mb-1"
+                >
                     Sort order
                 </label>
-                <input type="number"
-                       name="sort_order"
-                       value="{{ old('sort_order', 0) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2">
+
+                <input
+                    type="number"
+                    name="sort_order"
+                    min="0"
+                    value="{{ old('sort_order', 0) }}"
+                    class="w-full h-10
+                           px-3
+                           rounded-lg
+                           border border-gray-200
+                           bg-white
+                           text-sm text-gray-800
+                           focus:border-gray-400
+                           focus:ring-2
+                           focus:ring-gray-100"
+                >
+
             </div>
 
-            {{-- Actions --}}
-            <div class="flex justify-end gap-3 pt-4 border-t">
-                <a href="{{ route('admin.settings.attributes.index') }}"
-                   class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+
+            {{-- ====================================================
+                ACTIONS
+            ===================================================== --}}
+
+            <div
+                class="flex justify-end
+                       gap-3
+                       pt-4
+                       border-t border-gray-200"
+            >
+
+                <a
+                    href="{{ route('admin.settings.attributes.index') }}"
+                    class="px-4 py-2
+                           text-sm
+                           font-medium
+                           text-gray-700
+                           bg-white
+                           border border-gray-200
+                           rounded-lg
+                           hover:bg-gray-50
+                           transition"
+                >
                     Cancel
                 </a>
 
-                <button type="submit"
-                        class="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
+                <button
+                    type="submit"
+                    class="px-5 py-2
+                           text-sm
+                           font-medium
+                           bg-gray-900
+                           text-white
+                           rounded-lg
+                           hover:bg-gray-800
+                           transition
+                           shadow-sm"
+                >
                     Add Option
                 </button>
+
             </div>
+
         </form>
+
     </div>
 
-    {{-- OPTIONS TABLE --}}
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="bg-gray-50 border-b">
-                <tr>
-                    <th class="px-5 py-3 text-left font-medium text-gray-600">Name</th>
-                    <th class="px-5 py-3 text-left font-medium text-gray-600">Sort order</th>
-                    <th class="px-5 py-3 text-right font-medium text-gray-600">Action</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
-                @foreach($options as $option)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-5 py-3">
-                            <form method="POST"
-                                  action="{{ route('admin.settings.attributes.options.update', [$attribute->id, $option->id]) }}"
-                                  class="flex flex-col gap-2">
-                                @csrf
-                                @method('PUT')
 
-                                <div class="grid grid-cols-2 gap-4">
-                                    @foreach($languages as $lang)
-                                        <input type="text"
-                                               name="translations[{{ $lang->code }}]"
-                                               value="{{ $option->translations->where('locale', $lang->code)->first()?->value ?? '' }}"
-                                               class="w-full border border-gray-300 rounded px-3 py-2">
-                                    @endforeach
+
+    {{-- ============================================================
+        EXISTING OPTIONS
+    ============================================================= --}}
+
+    <div class="space-y-4">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+
+                <h3 class="text-sm font-semibold text-gray-800">
+                    Existing Options
+                </h3>
+
+                <p class="text-xs text-gray-500 mt-1">
+                    Edit translations and sort order of existing options.
+                </p>
+
+            </div>
+
+            <span
+                class="inline-flex items-center
+                       px-2.5 py-1
+                       rounded-md
+                       bg-gray-100
+                       text-gray-600
+                       text-xs"
+            >
+                {{ $options->count() }}
+                {{ $options->count() === 1 ? 'option' : 'options' }}
+            </span>
+
+        </div>
+
+
+        @forelse($options as $option)
+
+            {{-- ====================================================
+                OPTION CARD
+            ===================================================== --}}
+
+            <div
+                class="bg-white
+                       border border-gray-200
+                       rounded-xl
+                       shadow-sm
+                       overflow-hidden"
+            >
+
+                {{-- OPTION HEADER --}}
+
+                <div
+                    class="px-5 py-3
+                           bg-gray-50
+                           border-b border-gray-200
+                           flex items-center
+                           justify-between"
+                >
+
+                    <div class="flex items-center gap-3">
+
+                        <span
+                            class="inline-flex items-center
+                                   justify-center
+                                   w-7 h-7
+                                   rounded-lg
+                                   bg-gray-200
+                                   text-xs
+                                   font-semibold
+                                   text-gray-600"
+                        >
+                            {{ $option->sort_order }}
+                        </span>
+
+                        <div>
+
+                            <div class="text-sm font-semibold text-gray-800">
+                                Option #{{ $option->id }}
+                            </div>
+
+                            <div class="text-xs text-gray-500">
+                                Sort order: {{ $option->sort_order }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {{-- OPTION FORM --}}
+
+                <form
+                    method="POST"
+                    action="{{ route(
+                        'admin.settings.attributes.options.update',
+                        [$attribute->id, $option->id]
+                    ) }}"
+                    class="p-5"
+                >
+
+                    @csrf
+                    @method('PUT')
+
+
+                    {{-- TRANSLATIONS --}}
+
+                    <div
+                        class="border border-gray-200
+                               rounded-xl
+                               p-4
+                               space-y-4"
+                    >
+
+                        <h4 class="font-medium text-gray-700 text-sm">
+                            Translations
+                        </h4>
+
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                            @foreach($languages as $lang)
+
+                                <div>
+
+                                    <label
+                                        class="block text-sm
+                                               text-gray-600
+                                               mb-1"
+                                    >
+                                        Value
+                                        <span class="text-gray-400">
+                                            ({{ strtoupper($lang->code) }})
+                                        </span>
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="translations[{{ $lang->code }}]"
+                                        value="{{ $option->translations
+                                            ->where('locale', $lang->code)
+                                            ->first()?->value ?? '' }}"
+                                        class="w-full h-10
+                                               px-3
+                                               rounded-lg
+                                               border border-gray-200
+                                               bg-white
+                                               text-sm text-gray-800
+                                               focus:border-gray-400
+                                               focus:ring-2
+                                               focus:ring-gray-100"
+                                    >
+
                                 </div>
 
-                                <input type="number"
-                                       name="sort_order"
-                                       value="{{ $option->sort_order }}"
-                                       class="w-full border border-gray-300 rounded px-3 py-2 mt-2">
+                            @endforeach
 
-                                <div class="flex justify-end gap-2 mt-2">
-                                    <button class="px-4 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
-                                        Save
-                                    </button>
-                            </form>
+                        </div>
 
-                            <form method="POST"
-                                  action="{{ route('admin.settings.attributes.options.destroy', [$attribute->id, $option->id]) }}">
+                    </div>
+
+
+                    {{-- SORT + ACTIONS --}}
+
+                    <div
+                        class="flex items-end
+                               justify-between
+                               gap-4
+                               mt-5
+                               pt-4
+                               border-t border-gray-200"
+                    >
+
+                        <div class="w-32">
+
+                            <label
+                                class="block text-sm
+                                       text-gray-600
+                                       mb-1"
+                            >
+                                Sort order
+                            </label>
+
+                            <input
+                                type="number"
+                                name="sort_order"
+                                min="0"
+                                value="{{ $option->sort_order }}"
+                                class="w-full h-10
+                                       px-3
+                                       rounded-lg
+                                       border border-gray-200
+                                       bg-white
+                                       text-sm text-gray-800
+                                       focus:border-gray-400
+                                       focus:ring-2
+                                       focus:ring-gray-100"
+                            >
+
+                        </div>
+
+
+                        <div class="flex items-center gap-2">
+
+                            <button
+                                type="submit"
+                                class="px-4 py-2
+                                       text-sm
+                                       font-medium
+                                       bg-gray-900
+                                       text-white
+                                       rounded-lg
+                                       hover:bg-gray-800
+                                       transition
+                                       shadow-sm"
+                            >
+                                Save
+                            </button>
+
+                </form>
+
+
+                            {{-- DELETE --}}
+
+                            <form
+                                method="POST"
+                                action="{{ route(
+                                    'admin.settings.attributes.options.destroy',
+                                    [$attribute->id, $option->id]
+                                ) }}"
+                                onsubmit="return confirm('Delete this option?')"
+                            >
+
                                 @csrf
                                 @method('DELETE')
-                                <button class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-500 transition">
+
+                                <button
+                                    type="submit"
+                                    class="px-4 py-2
+                                           text-sm
+                                           font-medium
+                                           text-red-600
+                                           bg-white
+                                           border border-red-200
+                                           rounded-lg
+                                           hover:bg-red-50
+                                           transition"
+                                >
                                     Delete
                                 </button>
+
                             </form>
-                                </div>
-                        </td>
-                        <td class="px-5 py-3">{{ $option->sort_order }}</td>
-                        <td></td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+
+                        </div>
+
+                    </div>
+
+            </div>
+
+        @empty
+
+            <div
+                class="bg-white
+                       border border-gray-200
+                       rounded-xl
+                       px-5 py-10
+                       text-center"
+            >
+
+                <div class="text-sm font-medium text-gray-700">
+                    No options yet
+                </div>
+
+                <p class="text-xs text-gray-500 mt-1">
+                    Add the first option using the form above.
+                </p>
+
+            </div>
+
+        @endforelse
+
     </div>
 
 </div>
+
 @endsection

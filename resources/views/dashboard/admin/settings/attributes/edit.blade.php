@@ -7,24 +7,75 @@
     <x-alerts />
 
 
-    {{-- Header --}}
+   {{-- ============================================================
+     HEADER
+============================================================ --}}
+
+<div class="flex items-start justify-between gap-4 mb-6">
 
     <div>
 
-        <h2 class="text-2xl font-semibold text-gray-900">
-            Редактировать атрибут: {{ $attribute->code }}
-            <span class="px-5 py-3 text-sm {{ $attribute->is_custom ? 'text-blue-700' : 'text-red-700' }}">
+        <div class="flex items-center gap-3">
 
+            <h2 class="text-2xl font-semibold text-gray-900">
+                Edit Attribute
+            </h2>
+
+            {{-- ATTRIBUTE TYPE --}}
+            <span
+                class="
+                    inline-flex
+                    items-center
+                    px-2.5
+                    py-1
+                    rounded-md
+                    text-xs
+                    font-medium
+                    border
+                    {{ $attribute->is_custom
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-gray-50 text-gray-600 border-gray-200'
+                    }}
+                "
+            >
                 {{ $attribute->is_custom ? 'Custom' : 'System' }}
-
             </span>
-        </h2>
 
-        <p class="text-sm text-gray-500 mt-1">
-            Изменение характеристики товара
+        </div>
+
+
+        {{-- ATTRIBUTE CODE --}}
+        <div class="flex items-center gap-2 mt-1.5">
+
+            <span class="text-sm text-gray-500">
+                Attribute:
+            </span>
+
+            <code
+                class="
+                    px-2
+                    py-0.5
+                    rounded
+                    bg-gray-100
+                    border border-gray-200
+                    text-xs
+                    font-mono
+                    text-gray-700
+                "
+            >
+                {{ $attribute->code }}
+            </code>
+
+        </div>
+
+
+        <p class="text-sm text-gray-500 mt-2">
+            Edit attribute configuration, translations and display settings.
         </p>
 
     </div>
+
+</div>
 
 
 
@@ -56,21 +107,54 @@
             @endphp
 
 
-            {{-- Entity Type --}}
+           {{-- ============================================================
+     ENTITY TYPE
+============================================================ --}}
 
 <div>
 
-    <label class="block font-medium mb-1">
+    <label
+        for="entity_type"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
         Entity Type
     </label>
 
+    <p class="mt-1 text-[11px] text-gray-400">
+        Defines which type of entity this attribute belongs to.
+    </p>
+
     <select
         name="entity_type"
-        class="w-full border border-gray-300 rounded px-3 py-2"
+        id="entity_type"
+        class="
+            mt-2
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
     >
 
         <option value="">
             Select entity type
+        </option>
+
+        <option
+            value="product"
+            @selected(old('entity_type', $attribute->entity_type ?? '') === 'product')
+        >
+            Product
         </option>
 
         <option
@@ -108,14 +192,13 @@
             User
         </option>
 
-        <option
-            value="product"
-            @selected(old('entity_type', $attribute->entity_type ?? '') === 'product')
-        >
-            Product
-        </option>
-
     </select>
+
+    @error('entity_type')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
 
 </div>
 
@@ -124,7 +207,7 @@
             <div>
 
                 <label class="block font-medium mb-1">
-                    Context
+                    Context OLD Type
                 </label>
 
                 <input
@@ -138,247 +221,652 @@
 
 
 
-            {{-- Translations --}}
+          {{-- ============================================================
+     TRANSLATIONS
+============================================================ --}}
 
-            <div class="border rounded-xl p-4 space-y-4">
+<div class="border border-gray-200 rounded-xl overflow-hidden">
 
-                <h3 class="font-medium text-gray-700 text-sm">
-                    Translations
-                </h3>
+    {{-- HEADER --}}
+    <div class="px-5 py-4 bg-gray-50 border-b border-gray-200">
+
+        <h3 class="font-semibold text-gray-800 text-sm">
+            Translations
+        </h3>
+
+        <p class="text-xs text-gray-500 mt-1">
+            Manage the attribute name for each available language.
+        </p>
+
+    </div>
 
 
-                @foreach($languages as $lang)
+    {{-- LANGUAGES --}}
+    <div class="p-5">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            @foreach($languages as $lang)
 
                 <div>
 
-                    <label class="block text-sm text-gray-600 mb-1">
-                        Name ({{ strtoupper($lang->code) }})
+                    <label
+                        for="translation-{{ $lang->code }}"
+                        class="block text-[13px] font-semibold text-gray-800"
+                    >
+                        Name
+                        <span class="text-gray-400 font-medium">
+                            ({{ strtoupper($lang->code) }})
+                        </span>
                     </label>
 
                     <input
                         type="text"
                         name="translations[{{ $lang->code }}]"
-                        value="{{ old('translations.' . $lang->code,
-                                $translations[$lang->code] ?? '') }}"
-                        class="w-full border border-gray-300 rounded px-3 py-2">
+                        id="translation-{{ $lang->code }}"
+                        value="{{ old(
+                            'translations.' . $lang->code,
+                            $translations[$lang->code] ?? ''
+                        ) }}"
+                        class="
+                            mt-2
+                            w-full
+                            h-10
+                            px-3
+                            rounded-lg
+                            border border-gray-200
+                            bg-gray-50
+                            text-sm
+                            text-gray-900
+                            placeholder:text-gray-400
+                            outline-none
+                            transition
+                            focus:bg-white
+                            focus:border-gray-400
+                            focus:ring-2
+                            focus:ring-gray-100
+                        "
+                    >
+
+                    @error('translations.' . $lang->code)
+                        <span class="block mt-1.5 text-xs text-red-500">
+                            {{ $message }}
+                        </span>
+                    @enderror
 
                 </div>
 
-                @endforeach
+            @endforeach
 
-            </div>
+        </div>
+
+    </div>
+
+</div>
 
 
 
-            {{-- Code --}}
+          {{-- ============================================================
+     ATTRIBUTE CODE
+============================================================ --}}
 
-            <div>
+<div>
 
-                <label class="block font-medium mb-1">
-                    Code
-                </label>
+    <label
+        for="code"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        Code
+    </label>
+
+    <p class="mt-1 text-[11px] text-gray-400">
+        Unique technical identifier used by the system.
+    </p>
+
+    <input
+        type="text"
+        name="code"
+        id="code"
+        value="{{ old('code', $attribute->code) }}"
+        class="
+            mt-2
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            font-mono
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+        required
+    >
+
+    @error('code')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
+
+</div>
+
+
+
+           {{-- ============================================================
+     TYPE & UNIT
+============================================================ --}}
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    {{-- TYPE --}}
+    <div>
+
+        <label
+            for="type"
+            class="block text-[13px] font-semibold text-gray-800"
+        >
+            Type
+        </label>
+
+        <p class="mt-1 text-[11px] text-gray-400">
+            Defines how the attribute value is entered.
+        </p>
+
+        <select
+            name="type"
+            id="type"
+            class="
+                mt-2
+                w-full
+                h-10
+                px-3
+                rounded-lg
+                border border-gray-200
+                bg-gray-50
+                text-sm
+                text-gray-900
+                outline-none
+                transition
+                focus:bg-white
+                focus:border-gray-400
+                focus:ring-2
+                focus:ring-gray-100
+            "
+            required
+        >
+
+            <option value="text"
+                @selected(old('type', $attribute->type) === 'text')>
+                Text
+            </option>
+
+            <option value="number"
+                @selected(old('type', $attribute->type) === 'number')>
+                Number
+            </option>
+
+            <option value="select"
+                @selected(old('type', $attribute->type) === 'select')>
+                Select
+            </option>
+
+            <option value="multiselect"
+                @selected(old('type', $attribute->type) === 'multiselect')>
+                Multiselect
+            </option>
+
+            <option value="boolean"
+                @selected(old('type', $attribute->type) === 'boolean')>
+                Boolean
+            </option>
+
+        </select>
+
+        @error('type')
+            <span class="block mt-1.5 text-xs text-red-500">
+                {{ $message }}
+            </span>
+        @enderror
+
+    </div>
+
+
+    {{-- UNIT --}}
+    <div>
+
+        <label
+            for="unit"
+            class="block text-[13px] font-semibold text-gray-800"
+        >
+            Unit
+            <span class="font-medium text-gray-400">(optional)</span>
+        </label>
+
+        <p class="mt-1 text-[11px] text-gray-400">
+            Measurement unit displayed next to the value.
+        </p>
+
+        <input
+            type="text"
+            name="unit"
+            id="unit"
+            value="{{ old('unit', $attribute->unit) }}"
+            placeholder="cm / kg / mm"
+            class="
+                mt-2
+                w-full
+                h-10
+                px-3
+                rounded-lg
+                border border-gray-200
+                bg-gray-50
+                text-sm
+                text-gray-900
+                placeholder:text-gray-400
+                outline-none
+                transition
+                focus:bg-white
+                focus:border-gray-400
+                focus:ring-2
+                focus:ring-gray-100
+            "
+        >
+
+    </div>
+
+</div>
+
+
+{{-- ============================================================
+     ATTRIBUTE FLAGS
+============================================================ --}}
+
+<div class="border border-gray-200 rounded-xl overflow-hidden">
+
+    <div class="px-5 py-4 bg-gray-50 border-b border-gray-200">
+
+        <h3 class="font-semibold text-gray-800 text-sm">
+            Attribute Settings
+        </h3>
+
+        <p class="text-xs text-gray-500 mt-1">
+            Configure how this attribute behaves across the platform.
+        </p>
+
+    </div>
+
+
+    <div class="p-5">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+
+            {{-- REQUIRED --}}
+            <label
+                class="
+                    flex items-start gap-3
+                    p-3
+                    rounded-lg
+                    border border-gray-200
+                    bg-white
+                    cursor-pointer
+                    transition
+                    hover:bg-gray-50
+                "
+            >
 
                 <input
-                    type="text"
-                    name="code"
-                    value="{{ old('code',$attribute->code) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2"
-                    required>
+                    type="checkbox"
+                    name="is_required"
+                    value="1"
+                    class="
+                        mt-0.5
+                        w-4 h-4
+                        rounded
+                        border-gray-300
+                        text-gray-900
+                        focus:ring-gray-400
+                    "
+                    @checked(old('is_required', $attribute->is_required))
+                >
 
-            </div>
+                <span>
+                    <span class="block text-sm font-medium text-gray-800">
+                        Required
+                    </span>
 
+                    <span class="block mt-0.5 text-[11px] text-gray-400">
+                        Value must be provided
+                    </span>
+                </span>
 
-
-            {{-- Type --}}
-
-            <div>
-
-                <label class="block font-medium mb-1">
-                    Type
-                </label>
-
-                <select
-                    name="type"
-                    class="w-full border border-gray-300 rounded px-3 py-2"
-                    required>
-
-                    <option value="text"
-                        @if($attribute->type=='text') selected @endif>
-                        Text
-                    </option>
+            </label>
 
 
-                    <option value="number"
-                        @if($attribute->type=='number') selected @endif>
-                        Number
-                    </option>
-
-
-                    <option value="select"
-                        @if($attribute->type=='select') selected @endif>
-                        Select
-                    </option>
-
-
-                    <option value="multiselect"
-                        @if($attribute->type=='multiselect') selected @endif>
-                        Multiselect
-                    </option>
-
-
-                    <option value="boolean"
-                        @if($attribute->type=='boolean') selected @endif>
-                        Boolean
-                    </option>
-
-                </select>
-
-            </div>
-
-
-
-            {{-- Unit --}}
-
-            <div>
-
-                <label class="block font-medium mb-1">
-                    Unit
-                </label>
+            {{-- FILTERABLE --}}
+            <label
+                class="
+                    flex items-start gap-3
+                    p-3
+                    rounded-lg
+                    border border-gray-200
+                    bg-white
+                    cursor-pointer
+                    transition
+                    hover:bg-gray-50
+                "
+            >
 
                 <input
-                    type="text"
-                    name="unit"
-                    value="{{ old('unit',$attribute->unit) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2">
+                    type="checkbox"
+                    name="is_filterable"
+                    value="1"
+                    class="
+                        mt-0.5
+                        w-4 h-4
+                        rounded
+                        border-gray-300
+                        text-gray-900
+                        focus:ring-gray-400
+                    "
+                    @checked(old('is_filterable', $attribute->is_filterable))
+                >
 
-            </div>
+                <span>
+                    <span class="block text-sm font-medium text-gray-800">
+                        Filterable
+                    </span>
 
+                    <span class="block mt-0.5 text-[11px] text-gray-400">
+                        Available in product filters
+                    </span>
+                </span>
 
-
-            {{-- Flags --}}
-
-            <div class="flex gap-6">
-
-                <label class="flex items-center gap-2">
-
-                    <input
-                        type="checkbox"
-                        name="is_required"
-                        value="1"
-                        {{ old('is_required',$attribute->is_required) ? 'checked' : '' }}>
-
-                    Required
-
-                </label>
-
-
-                <label class="flex items-center gap-2">
-
-                    <input
-                        type="checkbox"
-                        name="is_filterable"
-                        value="1"
-                        {{ old('is_filterable',$attribute->is_filterable) ? 'checked' : '' }}>
-
-                    Filterable
-
-                </label>
-
-                <label class="flex items-center gap-2">
-
-                    <input
-                        type="checkbox"
-                        name="is_custom"
-                        value="1"
-                        {{ old('is_custom',$attribute->is_custom) ? 'checked' : '' }}>
-
-                    Custom
-
-                </label>
+            </label>
 
 
-                <label class="flex items-center gap-2">
-
-                    <input
-                        type="checkbox"
-                        name="is_offerable"
-                        value="1"
-                        {{ old('is_offerable',$attribute->is_offerable) ? 'checked' : '' }}>
-
-                    Offerable
-
-                </label>
-
-            </div>
-
-
-
-            {{-- Sort Order --}}
-
-            <div>
-
-                <label class="block font-medium mb-1">
-                    Sort order
-                </label>
+            {{-- CUSTOM --}}
+            <label
+                class="
+                    flex items-start gap-3
+                    p-3
+                    rounded-lg
+                    border border-gray-200
+                    bg-white
+                    cursor-pointer
+                    transition
+                    hover:bg-gray-50
+                "
+            >
 
                 <input
-                    type="number"
-                    name="sort_order"
-                    value="{{ old('sort_order',$attribute->sort_order) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2">
+                    type="checkbox"
+                    name="is_custom"
+                    value="1"
+                    class="
+                        mt-0.5
+                        w-4 h-4
+                        rounded
+                        border-gray-300
+                        text-gray-900
+                        focus:ring-gray-400
+                    "
+                    @checked(old('is_custom', $attribute->is_custom))
+                >
 
-            </div>
+                <span>
+                    <span class="block text-sm font-medium text-gray-800">
+                        Custom
+                    </span>
 
-            {{-- OwnerType --}}
+                    <span class="block mt-0.5 text-[11px] text-gray-400">
+                        Supplier-specific attribute
+                    </span>
+                </span>
 
+            </label>
+
+
+            {{-- OFFERABLE --}}
+            <label
+                class="
+                    flex items-start gap-3
+                    p-3
+                    rounded-lg
+                    border border-gray-200
+                    bg-white
+                    cursor-pointer
+                    transition
+                    hover:bg-gray-50
+                "
+            >
+
+                <input
+                    type="checkbox"
+                    name="is_offerable"
+                    value="1"
+                    class="
+                        mt-0.5
+                        w-4 h-4
+                        rounded
+                        border-gray-300
+                        text-gray-900
+                        focus:ring-gray-400
+                    "
+                    @checked(old('is_offerable', $attribute->is_offerable))
+                >
+
+                <span>
+                    <span class="block text-sm font-medium text-gray-800">
+                        Offerable
+                    </span>
+
+                    <span class="block mt-0.5 text-[11px] text-gray-400">
+                        Available in supplier offers
+                    </span>
+                </span>
+
+            </label>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{{-- ============================================================
+     SORT ORDER
+============================================================ --}}
+
+<div>
+
+    <label
+        for="sort_order"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        Sort Order
+    </label>
+
+    <p class="mt-1 text-[11px] text-gray-400">
+        Defines the default display order of this attribute.
+    </p>
+
+    <input
+        type="number"
+        name="sort_order"
+        id="sort_order"
+        min="0"
+        value="{{ old('sort_order', $attribute->sort_order) }}"
+        class="
+            mt-2
+            w-32
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+    >
+
+    @error('sort_order')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
+
+</div>
+
+
+{{-- ============================================================
+     SYSTEM INFORMATION
+============================================================ --}}
+
+<div class="border border-gray-200 rounded-xl overflow-hidden">
+
+    <div class="px-5 py-4 bg-gray-50 border-b border-gray-200">
+
+        <h3 class="font-semibold text-gray-800 text-sm">
+            System Information
+        </h3>
+
+        <p class="text-xs text-gray-500 mt-1">
+            Ownership and creation information for this attribute.
+        </p>
+
+    </div>
+
+
+    <div class="p-5">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
+            {{-- OWNER TYPE --}}
             <div>
 
-                <label class="block font-medium mb-1">
+                <label
+                    for="owner_type"
+                    class="block text-[13px] font-semibold text-gray-800"
+                >
                     Owner Type
                 </label>
 
                 <input
                     type="text"
                     name="owner_type"
-                    value="{{ old('owner_type',$attribute->owner_type) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2"
-                    >
+                    id="owner_type"
+                    value="{{ old('owner_type', $attribute->owner_type) }}"
+                    class="
+                        mt-2
+                        w-full
+                        h-10
+                        px-3
+                        rounded-lg
+                        border border-gray-200
+                        bg-gray-100
+                        text-sm
+                        font-mono
+                        text-gray-600
+                        outline-none
+                        focus:border-gray-300
+                    "
+                >
 
             </div>
 
-            {{-- OwnerId --}}
 
+            {{-- OWNER ID --}}
             <div>
 
-                <label class="block font-medium mb-1">
-                    OwnerId
+                <label
+                    for="owner_id"
+                    class="block text-[13px] font-semibold text-gray-800"
+                >
+                    Owner ID
                 </label>
 
                 <input
                     type="text"
                     name="owner_id"
-                    value="{{ old('owner_id',$attribute->owner_id) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2"
-                    >
+                    id="owner_id"
+                    value="{{ old('owner_id', $attribute->owner_id) }}"
+                    class="
+                        mt-2
+                        w-full
+                        h-10
+                        px-3
+                        rounded-lg
+                        border border-gray-200
+                        bg-gray-100
+                        text-sm
+                        font-mono
+                        text-gray-600
+                        outline-none
+                        focus:border-gray-300
+                    "
+                >
 
             </div>
 
-            {{-- Created by User --}}
 
-            <div>
+            {{-- CREATED BY --}}
+            <div class="md:col-span-2">
 
-                <label class="block font-medium mb-1">
-                    Created by User
+                <label
+                    for="created_by"
+                    class="block text-[13px] font-semibold text-gray-800"
+                >
+                    Created By User
                 </label>
+
+                <p class="mt-1 text-[11px] text-gray-400">
+                    User who originally created this attribute.
+                </p>
 
                 <input
                     type="text"
                     name="created_by"
-                    value="{{ old('created_by',$attribute->created_by) }}"
-                    class="w-full border border-gray-300 rounded px-3 py-2"
-                    disabled>
+                    id="created_by"
+                    value="{{ old('created_by', $attribute->created_by) }}"
+                    class="
+                        mt-2
+                        w-full
+                        h-10
+                        px-3
+                        rounded-lg
+                        border border-gray-200
+                        bg-gray-100
+                        text-sm
+                        font-mono
+                        text-gray-500
+                        cursor-not-allowed
+                    "
+                    disabled
+                >
 
             </div>
+
+        </div>
+
+    </div>
+
+</div>
 
             {{-- Actions --}}
 
