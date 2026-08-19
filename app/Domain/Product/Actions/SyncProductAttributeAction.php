@@ -11,79 +11,255 @@ use Illuminate\Support\Facades\DB;
 class SyncProductAttributeAction
 {
     /**
-     * Обновляет значения атрибутов продукта
+     * Обновляет значения атрибутов продукта.
      *
-     * @param Product $product
-     * @param array $attributes // ['1' => 'Белый', '3' => ['3','5'], ...]
+     * Обычные:
+     *
+     * attributes:
+     * [
+     *     '1' => 'Белый',
+     *     '3' => ['3', '5'],
+     *     '10' => '120',
+     * ]
+     *
+     * Measurement:
+     *
+     * attributes:
+     * [
+     *     '10' => [
+     *         'value' => '120',
+     *         'unit_id' => '2',
+     *     ],
+     * ]
      */
-    public function execute(Product $product, array $attributes): void
-    {
-        DB::transaction(function () use ($product, $attributes) {
+    public function execute(
+        Product $product,
+        array $attributes
+    ): void {
+
+        DB::transaction(function () use (
+            $product,
+            $attributes
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | EXISTING MULTISELECT VALUES
+            |--------------------------------------------------------------------------
+            |
+            | Если пользователь снял все checkbox'ы, браузер вообще не отправит
+            | этот attribute в request.
+            |
+            | Поэтому заранее получаем существующие multiselect-значения продукта.
+            |
+            */
+
+            $existingMultiselectValues = ProductAttributeValue::where(
+                'product_id',
+                $product->id
+            )
+                ->whereHas('attribute', function ($query) {
+                    $query->where('type', 'multiselect');
+                })
+                ->get();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | SYNC INCOMING ATTRIBUTES
+            |--------------------------------------------------------------------------
+            */
 
             foreach ($attributes as $attributeId => $value) {
 
-                // Пропускаем пустые значения
-                if ($value === null || $value === '' || (is_array($value) && empty($value))) {
+                /*
+                |--------------------------------------------------------------------------
+                | ATTRIBUTE
+                |--------------------------------------------------------------------------
+                */
+
+                $attribute = Attribute::with('options')
+                    ->find($attributeId);
+
+                if (!$attribute) {
                     continue;
                 }
 
-                $attribute = Attribute::with('options')->find($attributeId);
-                if (!$attribute) continue;
 
-                // Получаем или создаём запись product_attribute_values
+                /*
+                |--------------------------------------------------------------------------
+                | MEASUREMENT
+                |--------------------------------------------------------------------------
+                */
+
+                $unitId = null;
+
+                if ($attribute->type === 'measurement') {
+
+                    $unitId = $value['unit_id']
+                        ?? $attribute->unit_id;
+
+                    $value = $value['value']
+                        ?? null;
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | EMPTY VALUES
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $value === null ||
+                    $value === '' ||
+                    (
+                        $attribute->type === 'multiselect' &&
+                        is_array($value) &&
+                        empty($value)
+                    )
+                ) {
+
+                    /*
+                    |--------------------------------------------------------------
+                    | MULTISELECT EMPTY
+                    |--------------------------------------------------------------
+                    |
+                    | Если multiselect пришёл как пустой массив,
+                    | удаляем существующее значение.
+                    |
+                    */
+
+                    if ($attribute->type === 'multiselect') {
+
+                        $existingValue = ProductAttributeValue::where([
+                            'product_id' => $product->id,
+                            'attribute_id' => $attributeId,
+                        ])->first();
+
+                        if ($existingValue) {
+
+                            $existingValue->options()->delete();
+                            $existingValue->translations()->delete();
+                            $existingValue->delete();
+                        }
+                    }
+
+                    continue;
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | PRODUCT ATTRIBUTE VALUE
+                |--------------------------------------------------------------------------
+                */
+
+                $updateData = [];
+
+                if ($attribute->type === 'measurement') {
+                    $updateData['unit_id'] = $unitId;
+                }
+
                 $pav = ProductAttributeValue::updateOrCreate(
                     [
                         'product_id' => $product->id,
                         'attribute_id' => $attributeId,
                     ],
-                    []
+                    $updateData
                 );
 
-                // Удаляем старые переводы
-                $pav->translations()->delete();
 
-                // Удаляем старые опции (для мультиселект)
+                /*
+                |--------------------------------------------------------------------------
+                | OLD VALUES
+                |--------------------------------------------------------------------------
+                */
+
+                $pav->translations()->delete();
                 $pav->options()->delete();
 
-                // Вставляем новые значения/переводы
+
+                /*
+                |--------------------------------------------------------------------------
+                | SAVE VALUE
+                |--------------------------------------------------------------------------
+                */
+
                 switch ($attribute->type) {
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | NUMBER
+                    |--------------------------------------------------------------------------
+                    */
+
                     case 'number':
-                    case 'text':
+
                         ProductAttributeValueTranslation::create([
                             'product_attribute_value_id' => $pav->id,
                             'locale' => 'en',
-                            'value' => (string)$value,
+                            'value' => (string) $value,
                         ]);
+
                         break;
 
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | MEASUREMENT
+                    |--------------------------------------------------------------------------
+                    */
+
+                    case 'measurement':
+
+                        ProductAttributeValueTranslation::create([
+                            'product_attribute_value_id' => $pav->id,
+                            'locale' => 'en',
+                            'value' => (string) $value,
+                        ]);
+
+                        break;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | TEXT
+                    |--------------------------------------------------------------------------
+                    */
+
+                    case 'text':
+
+                        ProductAttributeValueTranslation::create([
+                            'product_attribute_value_id' => $pav->id,
+                            'locale' => 'en',
+                            'value' => (string) $value,
+                        ]);
+
+                        break;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SELECT
+                    |--------------------------------------------------------------------------
+                    */
 
                     case 'select':
+
                         $pav->options()->create([
                             'attribute_option_id' => $value,
                         ]);
-                        ProductAttributeValueTranslation::create([
-                            'product_attribute_value_id' => $pav->id,
-                            'locale' => 'en',
-                            'value' => $pav->options->map(fn($opt) => $opt->translated_value)->implode(', '),
-                        ]);
-                        break;
-
-                    case 'multiselect':
-
-                        foreach ((array) $value as $optionId) {
-                            $pav->options()->create([
-                                'attribute_option_id' => $optionId,
-                            ]);
-                        }
 
                         $options = $pav->options()
                             ->with('option.translations')
                             ->get();
 
                         $translatedValue = $options
-                            ->map(fn($item) => $item->option?->translatedValue('en'))
+                            ->map(
+                                fn ($item) =>
+                                    $item->option?->translatedValue('en')
+                            )
                             ->filter()
                             ->implode(', ');
 
@@ -95,21 +271,101 @@ class SyncProductAttributeAction
 
                         break;
 
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | MULTISELECT
+                    |--------------------------------------------------------------------------
+                    */
+
+                    case 'multiselect':
+
+                        foreach ((array) $value as $optionId) {
+
+                            $pav->options()->create([
+                                'attribute_option_id' => $optionId,
+                            ]);
+                        }
+
+                        $options = $pav->options()
+                            ->with('option.translations')
+                            ->get();
+
+                        $translatedValue = $options
+                            ->map(
+                                fn ($item) =>
+                                    $item->option?->translatedValue('en')
+                            )
+                            ->filter()
+                            ->implode(', ');
+
+                        ProductAttributeValueTranslation::create([
+                            'product_attribute_value_id' => $pav->id,
+                            'locale' => 'en',
+                            'value' => $translatedValue,
+                        ]);
+
+                        break;
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | BOOLEAN
+                    |--------------------------------------------------------------------------
+                    */
+
                     case 'boolean':
+
                         ProductAttributeValueTranslation::create([
                             'product_attribute_value_id' => $pav->id,
                             'locale' => 'en',
                             'value' => $value ? '1' : '0',
                         ]);
+
                         break;
 
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DEFAULT
+                    |--------------------------------------------------------------------------
+                    */
+
                     default:
+
                         ProductAttributeValueTranslation::create([
                             'product_attribute_value_id' => $pav->id,
                             'locale' => 'en',
-                            'value' => (string)$value,
+                            'value' => (string) $value,
                         ]);
+
                         break;
+                }
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | REMOVE CLEARED MULTISELECT ATTRIBUTES
+            |--------------------------------------------------------------------------
+            |
+            | Если checkbox'ы multiselect были сняты ВСЕ,
+            | браузер не отправляет attribute вообще.
+            |
+            | Поэтому удаляем существующие multiselect, которых
+            | нет среди входящих attributes.
+            |
+            */
+
+            foreach ($existingMultiselectValues as $existingValue) {
+
+                $attributeId = (string) $existingValue->attribute_id;
+
+                if (!array_key_exists($attributeId, $attributes)) {
+
+                    $existingValue->options()->delete();
+                    $existingValue->translations()->delete();
+                    $existingValue->delete();
                 }
             }
         });

@@ -10,6 +10,7 @@ class ProductAttributeValue extends Model
     protected $fillable = [
         'product_id',
         'attribute_id',
+        'unit_id',
     ];
 
     public function product()
@@ -226,5 +227,9 @@ public function attributeOptions()
     );
 }
 
+public function unit()
+{
+    return $this->belongsTo(Unit::class);
+}
 
 }

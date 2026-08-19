@@ -290,105 +290,140 @@ class ProductController extends Controller
                 ]);
         } elseif ($step == 2) {
 
-         /*
+            /*
     |--------------------------------------------------------------------------
     | VALIDATE REQUIRED CATEGORY ATTRIBUTES
     |--------------------------------------------------------------------------
     */
 
-    $attributes = $request->input('attributes', []);
+            $attributes = $request->input('attributes', []);
 
-    $requiredAttributes = $product->category
-        ->attributes()
-        ->wherePivot('is_required', true)
-        ->get();
+            $requiredAttributes = $product->category
+                ->attributes()
+                ->wherePivot('is_required', true)
+                ->get();
 
-    $errors = [];
+            $errors = [];
 
-    foreach ($requiredAttributes as $attribute) {
+            foreach ($requiredAttributes as $attribute) {
 
-        $attributeId = (string) $attribute->id;
+                $attributeId = (string) $attribute->id;
 
-        $value = $attributes[$attributeId] ?? null;
+                $value = $attributes[$attributeId] ?? null;
 
-        /*
+                /*
         |--------------------------------------------------------------------------
         | BOOLEAN
         |--------------------------------------------------------------------------
         */
 
-        if ($attribute->type === 'boolean') {
+                if ($attribute->type === 'boolean') {
 
-            if (!array_key_exists($attributeId, $attributes)) {
-                $errors["attributes.$attributeId"] =
-                    "{$attribute->name} is required.";
-            }
+                    if (!array_key_exists($attributeId, $attributes)) {
+                        $errors["attributes.$attributeId"] =
+                            "{$attribute->name} is required.";
+                    }
 
-            continue;
-        }
+                    continue;
+                }
 
-        /*
+                /*
         |--------------------------------------------------------------------------
         | MULTISELECT
         |--------------------------------------------------------------------------
         */
 
-        if ($attribute->type === 'multiselect') {
+                if ($attribute->type === 'multiselect') {
 
-            if (
-                !is_array($value) ||
-                empty(array_filter($value, fn ($v) => $v !== null && $v !== ''))
-            ) {
-                $errors["attributes.$attributeId"] =
-                    "{$attribute->name} is required.";
-            }
+                    if (
+                        !is_array($value) ||
+                        empty(array_filter($value, fn($v) => $v !== null && $v !== ''))
+                    ) {
+                        $errors["attributes.$attributeId"] =
+                            "{$attribute->name} is required.";
+                    }
 
-            continue;
-        }
+                    continue;
+                }
 
-        /*
+
+                /*
+|--------------------------------------------------------------------------
+| MEASUREMENT
+|--------------------------------------------------------------------------
+*/
+
+                if ($attribute->type === 'measurement') {
+
+                    $measurement = $attributes[$attributeId] ?? null;
+
+                    $value = is_array($measurement)
+                        ? ($measurement['value'] ?? null)
+                        : null;
+
+                    $unitId = is_array($measurement)
+                        ? ($measurement['unit_id'] ?? null)
+                        : null;
+
+                    if ($value === null || $value === '' || !is_numeric($value) || (float) $value <= 0) {
+
+    $errors["attributes.$attributeId.value"] =
+        "{$attribute->name} must be greater than 0.";
+}
+
+                    if (!$unitId) {
+
+                        $errors["attributes.$attributeId.unit_id"] =
+                            "{$attribute->name} unit is required.";
+                    }
+
+                    continue;
+                }
+
+
+                /*
         |--------------------------------------------------------------------------
         | SELECT / NUMBER / TEXT
         |--------------------------------------------------------------------------
         */
 
-        if ($value === null || $value === '') {
+                if ($value === null || $value === '') {
 
-            $errors["attributes.$attributeId"] =
-                "{$attribute->name} is required.";
-        }
-    }
+                    $errors["attributes.$attributeId"] =
+                        "{$attribute->name} is required.";
+                }
+            }
 
-    if (!empty($errors)) {
+            if (!empty($errors)) {
 
-        return redirect()
-            ->back()
-            ->withErrors($errors)
-            ->withInput();
-    }
+                return redirect()
+                    ->back()
+                    ->withErrors($errors)
+                    ->withInput();
+            }
 
 
-    /*
+            $attributeUnits = $request->input('attribute_units', []);
+            
+
+            /*
     |--------------------------------------------------------------------------
     | SAVE CATEGORY + ATTRIBUTES
     |--------------------------------------------------------------------------
     */
 
-    $dto = $dtoFactory->fromUpdateCategoryRequest($request);
+            $dto = $dtoFactory->fromUpdateCategoryRequest($request);
 
-    $updateProductCategoryAction->execute(
-        product: $product,
-        data: $dto,
-    );
+            $updateProductCategoryAction->execute(
+                product: $product,
+                data: $dto,
+            );
 
-    return redirect()
-        ->route('supplier.products.edit-step', [
-            'product' => $product->id,
-            'step' => $nextstep,
-        ]);
-
-
-           
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
         } elseif ($step == 3) {
 
 
@@ -829,51 +864,47 @@ class ProductController extends Controller
     }
 
     public function deleteAttribute(
-    Product $product,
-    Attribute $attribute
-) {
-    Log::info('DELETE ATTRIBUTE START', [
-        'product_id' => $product->id,
-        'attribute_id' => $attribute->id,
-    ]);
-
-    $this->authorize('update', $product);
-
-    $owner = $this->context->supplier();
-
-    
-
-    abort_unless(
-        $attribute->is_custom &&
-        $attribute->owner_type === $owner::class &&
-        $attribute->owner_id == $owner->id,
-        403
-    );
-
-    DB::transaction(function () use ($attribute) {
-
-        
-
-        $deleted = ProductAttributeValue::where('attribute_id', $attribute->id)
-            ->delete();
-
-        
-
-        
-
-        $updated = $attribute->update([
-            'is_active' => 0,
+        Product $product,
+        Attribute $attribute
+    ) {
+        Log::info('DELETE ATTRIBUTE START', [
+            'product_id' => $product->id,
+            'attribute_id' => $attribute->id,
         ]);
 
-        
-    });
+        $this->authorize('update', $product);
 
-    
-
-    return response()->json([
-        'success' => true,
-    ]);
-}
+        $owner = $this->context->supplier();
 
 
+
+        abort_unless(
+            $attribute->is_custom &&
+                $attribute->owner_type === $owner::class &&
+                $attribute->owner_id == $owner->id,
+            403
+        );
+
+        DB::transaction(function () use ($attribute) {
+
+
+
+            $deleted = ProductAttributeValue::where('attribute_id', $attribute->id)
+                ->delete();
+
+
+
+
+
+            $updated = $attribute->update([
+                'is_active' => 0,
+            ]);
+        });
+
+
+
+        return response()->json([
+            'success' => true,
+        ]);
+    }
 }

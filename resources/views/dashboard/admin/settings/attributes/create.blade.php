@@ -138,7 +138,67 @@ $languages = Language::where('is_active', true)
 
 
 
-{{-- Translations --}}
+
+
+{{-- Attribute Group --}}
+
+<div>
+
+    <label
+        for="group_id"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        Attribute Group
+    </label>
+
+    <select
+        name="group_id"
+        id="group_id"
+        class="
+            mt-1.5
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+    >
+
+        <option value="">
+            No group
+        </option>
+
+        @foreach($attributeGroups as $group)
+
+            <option
+                value="{{ $group->id }}"
+                @selected(old('group_id') == $group->id)
+            >
+                {{ $group->name }}
+            </option>
+
+        @endforeach
+
+    </select>
+
+    @error('group_id')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
+
+</div>
+
+
 
 {{-- ============================================================
      ATTRIBUTE TRANSLATIONS
@@ -318,26 +378,50 @@ $languages = Language::where('is_active', true)
         required
     >
 
-        <option value="">Select type</option>
+        <option value="">
+            Select type
+        </option>
 
-        <option value="text" @selected(old('type') === 'text')}>
+        <option
+            value="text"
+            @selected(old('type') === 'text')
+        >
             Text
         </option>
 
-        <option value="number" @selected(old('type') === 'number')}>
+        <option
+            value="number"
+            @selected(old('type') === 'number')
+        >
             Number
         </option>
 
-        <option value="select" @selected(old('type') === 'select')}>
+        <option
+            value="select"
+            @selected(old('type') === 'select')
+        >
             Select
         </option>
 
-        <option value="multiselect" @selected(old('type') === 'multiselect')}>
+        <option
+            value="multiselect"
+            @selected(old('type') === 'multiselect')
+        >
             Multiselect
         </option>
 
-        <option value="boolean" @selected(old('type') === 'boolean')}>
+        <option
+            value="boolean"
+            @selected(old('type') === 'boolean')
+        >
             Boolean
+        </option>
+
+        <option
+            value="measurement"
+            @selected(old('type') === 'measurement')
+        >
+            Measurement
         </option>
 
     </select>
@@ -351,12 +435,99 @@ $languages = Language::where('is_active', true)
 </div>
 
 
+{{-- ============================================================
+     ATTRIBUTE UNIT GROUP
+============================================================ --}}
+
+<div
+    id="unit-group-wrapper"
+    class="{{ old('type') === 'measurement' ? '' : 'hidden' }}"
+>
+
+    <label
+        for="unit_group"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        Unit Group
+    </label>
+
+    <p class="mt-1 text-[11px] text-gray-400">
+        Defines the measurement category used by this attribute.
+    </p>
+
+    <select
+        name="unit_group"
+        id="unit_group"
+        class="
+            mt-2
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+    >
+
+        <option value="">
+            Select unit group
+        </option>
+
+        <option
+            value="length"
+            @selected(old('unit_group') === 'length')
+        >
+            Length
+        </option>
+
+        <option
+            value="weight"
+            @selected(old('unit_group') === 'weight')
+        >
+            Weight
+        </option>
+
+        <option
+            value="area"
+            @selected(old('unit_group') === 'area')
+        >
+            Area
+        </option>
+
+        <option
+            value="volume"
+            @selected(old('unit_group') === 'volume')
+        >
+            Volume
+        </option>
+
+    </select>
+
+    @error('unit_group')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
+
+</div>
+
 
 {{-- ============================================================
      ATTRIBUTE UNIT
 ============================================================ --}}
 
-<div>
+<div
+    id="unit-wrapper"
+    class="{{ old('type') === 'measurement' ? '' : 'hidden' }}"
+>
 
     <label
         for="unit_id"
@@ -367,7 +538,7 @@ $languages = Language::where('is_active', true)
     </label>
 
     <p class="mt-1 text-[11px] text-gray-400">
-        Measurement unit displayed next to numeric attribute values.
+        Default measurement unit used for this attribute.
     </p>
 
     <select
@@ -393,17 +564,21 @@ $languages = Language::where('is_active', true)
     >
 
         <option value="">
-            No unit
+            Select unit
         </option>
 
         @foreach($units as $group => $groupUnits)
 
-            <optgroup label="{{ ucfirst(str_replace('_', ' ', $group)) }}">
+            <optgroup
+                label="{{ ucfirst(str_replace('_', ' ', $group)) }}"
+                data-unit-group="{{ $group }}"
+            >
 
                 @foreach($groupUnits as $unit)
 
                     <option
                         value="{{ $unit->id }}"
+                        data-unit-group="{{ $group }}"
                         @selected(old('unit_id') == $unit->id)
                     >
                         {{ $unit->symbol }}
@@ -420,11 +595,9 @@ $languages = Language::where('is_active', true)
     </select>
 
     @error('unit_id')
-
         <p class="mt-1 text-xs text-red-500">
             {{ $message }}
         </p>
-
     @enderror
 
 </div>
@@ -713,5 +886,183 @@ class="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 tra
 </div>
 
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const typeSelect = document.getElementById('type');
+
+    const unitGroupWrapper = document.getElementById('unit-group-wrapper');
+    const unitGroupSelect = document.getElementById('unit_group');
+
+    const unitWrapper = document.getElementById('unit-wrapper');
+    const unitSelect = document.getElementById('unit_id');
+
+    if (!typeSelect) {
+        return;
+    }
+
+
+    function updateMeasurementFields() {
+
+    const type = typeSelect.value;
+
+    const isMeasurement = type === 'measurement';
+    const isNumber = type === 'number';
+
+
+    // ==========================================
+    // UNIT GROUP
+    // Only Measurement
+    // ==========================================
+
+    if (isMeasurement) {
+
+        unitGroupWrapper.classList.remove('hidden');
+
+    } else {
+
+        unitGroupWrapper.classList.add('hidden');
+        unitGroupSelect.value = '';
+
+    }
+
+
+    // ==========================================
+    // UNIT
+    // Number + Measurement
+    // ==========================================
+
+    if (isMeasurement || isNumber) {
+
+        unitWrapper.classList.remove('hidden');
+
+    } else {
+
+        unitWrapper.classList.add('hidden');
+        unitSelect.value = '';
+
+    }
+
+
+    // ==========================================
+    // FILTER UNITS
+    // ==========================================
+
+    filterUnits();
+}
+
+
+    function filterUnits() {
+
+    const type = typeSelect.value;
+    const selectedGroup = unitGroupSelect.value;
+
+    const options = unitSelect.querySelectorAll(
+        'option[data-unit-group]'
+    );
+
+
+    options.forEach(option => {
+
+        const optionGroup = option.dataset.unitGroup;
+
+
+        // ==========================================
+        // NUMBER
+        // Show all units
+        // ==========================================
+
+        if (type === 'number') {
+
+            option.hidden = false;
+
+            return;
+        }
+
+
+        // ==========================================
+        // MEASUREMENT
+        // Filter by Unit Group
+        // ==========================================
+
+        if (type === 'measurement') {
+
+            if (!selectedGroup) {
+
+                option.hidden = false;
+
+            } else {
+
+                option.hidden =
+                    optionGroup !== selectedGroup;
+
+            }
+
+            return;
+        }
+
+
+        // ==========================================
+        // OTHER TYPES
+        // ==========================================
+
+        option.hidden = true;
+
+    });
+
+
+    // Reset invalid selected unit
+
+    const selectedOption =
+        unitSelect.options[unitSelect.selectedIndex];
+
+
+    if (
+        type === 'measurement' &&
+        selectedOption &&
+        selectedOption.dataset.unitGroup &&
+        selectedOption.dataset.unitGroup !== selectedGroup
+    ) {
+
+        unitSelect.value = '';
+
+    }
+
+}
+
+
+    // ==========================================
+    // TYPE CHANGE
+    // ==========================================
+
+    typeSelect.addEventListener('change', function () {
+
+        updateMeasurementFields();
+
+    });
+
+
+    // ==========================================
+    // UNIT GROUP CHANGE
+    // ==========================================
+
+    unitGroupSelect.addEventListener('change', function () {
+
+        filterUnits();
+
+    });
+
+
+    // ==========================================
+    // INITIAL STATE
+    // ==========================================
+
+    updateMeasurementFields();
+
+});
+</script>
+
 
 @endsection

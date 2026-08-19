@@ -447,6 +447,32 @@
                 return false;
             }
 
+
+ /*
+            |--------------------------------------------------------------------------
+            | MEASUREMENT ATTRIBUTES
+            |--------------------------------------------------------------------------
+            |
+            | Размеры выводятся в отдельном блоке.
+            | Поэтому здесь их исключаем из Specification.
+            |
+            */
+
+            if ($attribute->type === 'measurement') {
+                return false;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | BOOLEAN ATTRIBUTES
+            |--------------------------------------------------------------------------
+            |
+            | Boolean = 0 → не показываем.
+            | Boolean = 1 → показываем.
+            |
+            */
+
+
             if ($attribute->type === 'boolean') {
 
                 $value = $attrValue->translations
@@ -665,6 +691,167 @@
 
 
                 @include('product.partials.materials-table', ['product1' => $product1])
+
+
+
+
+{{-- =========================================================
+    PRODUCT DIMENSIONS
+========================================================= --}}
+
+@php
+
+    $measurementAttributes = $product1->attributeValues
+    ->filter(function ($attrValue) {
+
+        $value = $attrValue->display_value;
+
+        return $attrValue->attribute?->type === 'measurement'
+            && filled($value)
+            && (float) $value > 0;
+
+    })
+    ->values();
+
+@endphp
+
+
+@if($measurementAttributes->isNotEmpty())
+
+<div class="mb-6">
+
+    <div class="relative overflow-hidden rounded-2xl bg-white shadow">
+
+        {{-- =====================================================
+            HEADER
+        ====================================================== --}}
+
+        <div class="px-6 pt-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Dimensions
+                    </h3>
+
+                    <p class="mt-1 text-sm text-gray-500">
+                        Product measurements
+                    </p>
+
+                </div>
+
+                <div
+                    class="text-[10px]
+                           font-medium
+                           uppercase
+                           tracking-[0.18em]
+                           text-gray-400"
+                >
+                    DIM
+                </div>
+
+            </div>
+
+        </div>
+
+
+       
+
+
+        {{-- =====================================================
+            VALUES
+        ====================================================== --}}
+
+        <div class="p-6">
+
+            <div
+                class="grid
+                       grid-cols-2
+                       md:grid-cols-4
+                       gap-x-6
+                       gap-y-5"
+            >
+
+                @foreach($measurementAttributes as $attrValue)
+
+                    @php
+
+                        $attribute = $attrValue->attribute;
+
+                        $unit = $attrValue->unit
+                            ?? $attribute?->unit;
+
+                        $unitName = $unit?->translations
+                            ?->firstWhere(
+                                'locale',
+                                app()->getLocale()
+                            )
+                            ?->name;
+
+                        $unitName ??= $unit?->translations
+                            ?->firstWhere('locale', 'en')
+                            ?->name;
+
+                        $unitName ??=
+                            $unit?->name
+                            ?? $unit?->code;
+
+                    @endphp
+
+
+                    <div>
+
+                        <div
+                            class="text-[11px]
+                                   text-gray-500
+                                   mb-1"
+                        >
+                            {{ $attribute->name ?? $attribute->code }}
+                        </div>
+
+                        <div
+                            class="flex
+                                   items-baseline
+                                   gap-1.5"
+                        >
+
+                            <span
+                                class="text-lg
+                                       font-semibold
+                                       tracking-tight
+                                       text-gray-900"
+                            >
+                                {{ $attrValue->display_value }}
+                            </span>
+
+                            @if($unitName)
+
+                                <span
+                                    class="text-xs
+                                           text-gray-400"
+                                >
+                                    {{ $unitName }}
+                                </span>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                @endforeach
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@endif
 
 
 

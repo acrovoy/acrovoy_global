@@ -221,6 +221,74 @@
 
 
 
+            {{-- ============================================================
+    ATTRIBUTE GROUP
+============================================================ --}}
+
+<div>
+
+    <label
+        for="group_id"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        Attribute Group
+    </label>
+
+    <p class="mt-1 text-[11px] text-gray-400">
+        Select the group this attribute belongs to.
+    </p>
+
+    <select
+        name="group_id"
+        id="group_id"
+        class="
+            mt-2
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+    >
+
+        <option value="">
+            No Group
+        </option>
+
+        @foreach($attributeGroups as $group)
+
+            <option
+                value="{{ $group->id }}"
+                @selected(
+                    old('group_id', $attribute->group_id) == $group->id
+                )
+            >
+                {{ $group->name }}
+            </option>
+
+        @endforeach
+
+    </select>
+
+    @error('group_id')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
+
+</div>
+
+
+
           {{-- ============================================================
      TRANSLATIONS
 ============================================================ --}}
@@ -427,6 +495,11 @@
                 Boolean
             </option>
 
+            <option value="measurement"
+                @selected(old('type', $attribute->type) === 'measurement')>
+                Measurement
+            </option>
+
         </select>
 
         @error('type')
@@ -439,80 +512,82 @@
 
 
     {{-- UNIT --}}
-<div>
+    <div>
 
-    <label
-        for="unit_id"
-        class="block text-[13px] font-semibold text-gray-800"
-    >
-        Unit
-        <span class="font-medium text-gray-400">(optional)</span>
-    </label>
+        <label
+            for="unit_id"
+            class="block text-[13px] font-semibold text-gray-800"
+        >
+            Unit
+            <span class="font-medium text-gray-400">(optional)</span>
+        </label>
 
-    <p class="mt-1 text-[11px] text-gray-400">
-        Measurement unit displayed next to the value.
-    </p>
-
-    <select
-        name="unit_id"
-        id="unit_id"
-        class="
-            mt-2
-            w-full
-            h-10
-            px-3
-            rounded-lg
-            border border-gray-200
-            bg-gray-50
-            text-sm
-            text-gray-900
-            outline-none
-            transition
-            focus:bg-white
-            focus:border-gray-400
-            focus:ring-2
-            focus:ring-gray-100
-        "
-    >
-
-        <option value="">
-            No unit
-        </option>
-
-        @foreach($units as $group => $groupUnits)
-
-            <optgroup
-                label="{{ ucfirst(str_replace('_', ' ', $group)) }}"
-            >
-
-                @foreach($groupUnits as $unit)
-
-                    <option
-                        value="{{ $unit->id }}"
-                        @selected(
-                            old('unit_id', $attribute->unit_id) == $unit->id
-                        )
-                    >
-                        {{ $unit->symbol }}
-                        —
-                        {{ $unit->translation()?->name ?? $unit->code }}
-                    </option>
-
-                @endforeach
-
-            </optgroup>
-
-        @endforeach
-
-    </select>
-
-    @error('unit_id')
-        <p class="mt-1 text-xs text-red-500">
-            {{ $message }}
+        <p class="mt-1 text-[11px] text-gray-400">
+            Measurement or numeric unit displayed next to the value.
         </p>
-    @enderror
 
-</div>
+        <select
+            name="unit_id"
+            id="unit_id"
+            class="
+                mt-2
+                w-full
+                h-10
+                px-3
+                rounded-lg
+                border border-gray-200
+                bg-gray-50
+                text-sm
+                text-gray-900
+                outline-none
+                transition
+                focus:bg-white
+                focus:border-gray-400
+                focus:ring-2
+                focus:ring-gray-100
+            "
+        >
+
+            <option value="">
+                No unit
+            </option>
+
+            @foreach($units as $group => $groupUnits)
+
+                <optgroup
+                    label="{{ ucfirst(str_replace('_', ' ', $group)) }}"
+                    data-unit-group="{{ $group }}"
+                >
+
+                    @foreach($groupUnits as $unit)
+
+                        <option
+                            value="{{ $unit->id }}"
+                            data-unit-group="{{ $group }}"
+                            @selected(
+                                old('unit_id', $attribute->unit_id) == $unit->id
+                            )
+                        >
+                            {{ $unit->symbol }}
+                            —
+                            {{ $unit->translation()?->name ?? $unit->code }}
+                        </option>
+
+                    @endforeach
+
+                </optgroup>
+
+            @endforeach
+
+        </select>
+
+        @error('unit_id')
+            <p class="mt-1 text-xs text-red-500">
+                {{ $message }}
+            </p>
+        @enderror
+
+    </div>
 
 </div>
 
@@ -930,5 +1005,206 @@
     </div>
 
 </div>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const typeSelect = document.getElementById('type');
+    const unitSelect = document.getElementById('unit_id');
+
+    if (!typeSelect || !unitSelect) {
+        return;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Current attribute unit group
+    |--------------------------------------------------------------------------
+    */
+
+    function getSelectedUnitGroup() {
+
+        const selectedOption =
+            unitSelect.options[unitSelect.selectedIndex];
+
+        return selectedOption?.dataset.unitGroup ?? null;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Filter units
+    |--------------------------------------------------------------------------
+    */
+
+    function filterUnits() {
+
+        const type = typeSelect.value;
+
+        const selectedGroup = getSelectedUnitGroup();
+
+
+        const options = unitSelect.querySelectorAll(
+            'option[data-unit-group]'
+        );
+
+
+        options.forEach(option => {
+
+            const optionGroup =
+                option.dataset.unitGroup;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | NUMBER
+            |
+            | Number can use any unit.
+            |--------------------------------------------------------------------------
+            */
+
+            if (type === 'number') {
+
+                option.hidden = false;
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | MEASUREMENT
+            |
+            | Measurement uses the unit group of the selected unit.
+            |--------------------------------------------------------------------------
+            */
+
+            if (type === 'measurement') {
+
+                /*
+                 * No unit selected yet.
+                 * Show all units so the admin can choose one.
+                 */
+
+                if (!selectedGroup) {
+
+                    option.hidden = false;
+
+                    return;
+                }
+
+
+                /*
+                 * Once a unit is selected,
+                 * show only units from the same group.
+                 */
+
+                option.hidden =
+                    optionGroup !== selectedGroup;
+
+                return;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | OTHER TYPES
+            |--------------------------------------------------------------------------
+            */
+
+            option.hidden = true;
+
+        });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hide "No unit" for unsupported types
+        |--------------------------------------------------------------------------
+        */
+
+        const noUnitOption =
+            unitSelect.querySelector('option[value=""]');
+
+        if (noUnitOption) {
+
+            noUnitOption.hidden =
+                type !== 'number' &&
+                type !== 'measurement';
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clear unit for types that do not support units
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            type !== 'number' &&
+            type !== 'measurement'
+        ) {
+
+            unitSelect.value = '';
+
+        }
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TYPE CHANGE
+    |--------------------------------------------------------------------------
+    */
+
+    typeSelect.addEventListener('change', function () {
+
+        filterUnits();
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | UNIT CHANGE
+    |--------------------------------------------------------------------------
+    */
+
+    unitSelect.addEventListener('change', function () {
+
+        /*
+         * When Measurement is selected,
+         * changing the unit establishes the unit group.
+         *
+         * After that only units from the same group
+         * remain available.
+         */
+
+        if (typeSelect.value === 'measurement') {
+
+            filterUnits();
+
+        }
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | INITIAL STATE
+    |--------------------------------------------------------------------------
+    */
+
+    filterUnits();
+
+});
+</script>
+
+
 
 @endsection

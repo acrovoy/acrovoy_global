@@ -22,6 +22,14 @@
 
 
         <a
+    href="{{ route('admin.settings.attribute-groups.index') }}"
+    class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+>
+    Manage attribute group
+</a>
+
+
+        <a
             href="{{ route('admin.settings.attributes.create') }}"
             class="inline-flex items-center gap-2
                    px-4 py-2
@@ -94,10 +102,12 @@
                 <label for="attribute-type" class="block text-xs font-medium text-gray-600 mb-1">
                     Attribute Type
                 </label>
+
                 <select id="attribute-type" name="type" class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:border-gray-400 focus:ring-2 focus:ring-gray-100">
                     <option value="">All types</option>
                     <option value="text" @selected(request('type') === 'text')>Text</option>
                     <option value="number" @selected(request('type') === 'number')>Number</option>
+                    <option value="measurement" @selected(request('type') === 'measurement')>Measurement</option>
                     <option value="select" @selected(request('type') === 'select')>Select</option>
                     <option value="multiselect" @selected(request('type') === 'multiselect')>Multiselect</option>
                     <option value="boolean" @selected(request('type') === 'boolean')>Boolean</option>
@@ -376,6 +386,24 @@
                                                 Edit
                                             </a>
 
+
+                                                 <form
+                                                    method="POST"
+                                                    action="{{ route('admin.settings.attributes.destroy', $attribute) }}"
+                                                    class="attribute-delete-form"
+                                                    data-attribute-name="{{ $attribute->name ?? $attribute->code }}"
+                                                >
+                                                    @csrf
+                                                    @method('DELETE')
+
+                                                    <button
+                                                        type="submit"
+                                                        class="text-sm text-red-600 hover:text-red-800"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </form>
+
                                         </td>
 
                                     </tr>
@@ -491,10 +519,19 @@
                                     <a href="{{ route('admin.settings.attributes.edit', $attribute->id) }}" class="text-sm text-gray-600 hover:text-gray-900 hover:underline mr-3">
                                         Edit
                                     </a>
-                                    <form action="{{ route('admin.settings.attributes.destroy', $attribute->id) }}" method="POST" class="inline" onsubmit="return confirm('Delete attribute?')">
+                                    <form
+                                        action="{{ route('admin.settings.attributes.destroy', $attribute->id) }}"
+                                        method="POST"
+                                        class="inline attribute-delete-form"
+                                        data-attribute-name="{{ $attribute->name ?? $attribute->code }}"
+                                    >
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-sm text-red-600 hover:underline">
+
+                                        <button
+                                            type="submit"
+                                            class="text-sm text-red-600 hover:underline"
+                                        >
                                             Delete
                                         </button>
                                     </form>
@@ -516,6 +553,47 @@
 
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    document.querySelectorAll('.attribute-delete-form').forEach(form => {
+
+        form.addEventListener('submit', function (event) {
+
+            event.preventDefault();
+
+            const attributeName =
+                form.dataset.attributeName || 'this attribute';
+
+            window.confirmModal.open({
+
+                type: 'danger',
+
+                title: 'Delete attribute',
+
+                description: 'This action cannot be undone.',
+
+                message:
+                    `Are you sure you want to delete "${attributeName}"?`,
+
+                cancelText: 'Cancel',
+
+                confirmText: 'Delete',
+
+                onConfirm: () => {
+
+                    form.submit();
+
+                }
+
+            });
+
+        });
+
+    });
+
+});
+</script>
 
 {{-- ================================================================
     COLLAPSE SCRIPT

@@ -90,4 +90,10 @@ public function unit()
     return $this->belongsTo(\App\Models\Unit::class);
 }
 
+
+public function attributeGroup()
+{
+    return $this->belongsTo(AttributeGroup::class, 'group_id');
+}
+
 }

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Attribute;
 use App\Models\AttributeTranslation;
 use App\Models\Unit;
+use App\Models\AttributeGroup;
 
 
 class AttributeController extends Controller
@@ -225,9 +226,16 @@ class AttributeController extends Controller
         ->get()
         ->groupBy('unit_group');
 
+    $attributeGroups = AttributeGroup::query()
+        ->where('is_active', true)
+        ->whereNull('owner_type')
+        ->whereNull('owner_id')
+        ->orderBy('name')
+        ->get();
+
         return view(
             'dashboard.admin.settings.attributes.create',
-        compact('units')
+        compact('units', 'attributeGroups')
         );
     }
 
@@ -238,7 +246,17 @@ class AttributeController extends Controller
             'code' => 'required|unique:attributes,code',
             'type' => 'required',
             'translations' => 'required|array',
-            'unit_id' => [ 'nullable', 'integer', 'exists:units,id', ],
+            'unit_id' => [
+                'nullable',
+                'integer',
+                'exists:units,id',
+                'required_if:type,measurement',
+            ],
+            'group_id' => [
+                'nullable',
+                'integer',
+                'exists:attribute_groups,id',
+            ],
         ]);
 
 
@@ -247,7 +265,7 @@ class AttributeController extends Controller
             'type' => $request->type,
             'entity_type' => $request->entity_type,
             'context' => $request->context,
-            'group_name' => $request->group_name,
+            'group_id'    => $request->group_id,
             'unit_id' => $request->input('unit_id'),
             'is_required' => $request->boolean('is_required'),
             'is_filterable' => $request->boolean('is_filterable'),
@@ -288,9 +306,16 @@ class AttributeController extends Controller
         ->get()
         ->groupBy('unit_group');
 
+    $attributeGroups = AttributeGroup::query()
+        ->where('is_active', true)
+        ->whereNull('owner_type')
+        ->whereNull('owner_id')
+        ->orderBy('name')
+        ->get();
+
     return view(
         'dashboard.admin.settings.attributes.edit',
-        compact('attribute', 'units')
+        compact('attribute', 'units', 'attributeGroups')
     );
 }
 
@@ -301,7 +326,17 @@ class AttributeController extends Controller
             'code' => 'required|unique:attributes,code,' . $attribute->id,
             'type' => 'required',
             'translations' => 'required|array',
-            'unit_id' => [ 'nullable', 'integer', 'exists:units,id', ],
+            'unit_id' => [
+                'nullable',
+                'integer',
+                'exists:units,id',
+                'required_if:type,measurement',
+            ],
+            'group_id' => [
+                'nullable',
+                'integer',
+                'exists:attribute_groups,id',
+            ],
         ]);
 
 
@@ -310,7 +345,7 @@ class AttributeController extends Controller
             'type' => $request->type,
             'entity_type' => $request->entity_type,
             'context' => $request->context,
-            'group_name' => $request->group_name,
+            'group_id' => $request->input('group_id'),
             'unit' => $request->unit,
             'unit_id' => $request->input('unit_id'),
             'is_required' => $request->boolean('is_required'),

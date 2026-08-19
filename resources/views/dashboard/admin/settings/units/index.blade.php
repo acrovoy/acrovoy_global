@@ -462,10 +462,9 @@
                             <form
                                 action="{{ route('admin.settings.units.destroy', $unit) }}"
                                 method="POST"
-                                class="inline"
-                                onsubmit="return confirm('Delete unit?')"
+                                class="inline unit-delete-form"
+                                data-unit-name="{{ $unit->name }}"
                             >
-
                                 @csrf
                                 @method('DELETE')
 
@@ -475,7 +474,6 @@
                                 >
                                     Delete
                                 </button>
-
                             </form>
 
                         </td>
@@ -518,5 +516,49 @@
 
 
 </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    document.querySelectorAll('.unit-delete-form').forEach(form => {
+
+        form.addEventListener('submit', function (event) {
+
+            event.preventDefault();
+
+            const unitName =
+                form.dataset.unitName || 'this unit';
+
+            window.confirmModal.open({
+
+                type: 'danger',
+
+                title: 'Delete unit',
+
+                description: 'This action cannot be undone.',
+
+                message:
+                    `Are you sure you want to delete "${unitName}"?`,
+
+                cancelText: 'Cancel',
+
+                confirmText: 'Delete',
+
+                onConfirm: () => {
+
+                    form.submit();
+
+                }
+
+            });
+
+        });
+
+    });
+
+});
+</script>
+
 
 @endsection

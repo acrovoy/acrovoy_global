@@ -82,6 +82,7 @@ use App\Http\Controllers\Admin\Settings\CategoryController;
 use App\Http\Controllers\Admin\Settings\LocationController;
 use App\Http\Controllers\Admin\Settings\AttributeOptionController;
 use App\Http\Controllers\Admin\Settings\AttributeController;
+use App\Http\Controllers\Admin\Settings\AttributeGroupController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Settings\UnitController;
 use App\Http\Controllers\Admin\Help\AdminHelpController;
@@ -867,6 +868,14 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
         Route::put('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'update'])->name('attributes.options.update');
         Route::delete('attributes/{attribute}/options/{option}', [AttributeOptionController::class, 'destroy'])->name('attributes.options.destroy');
     
+        // ATTRIBUTE GROUPS
+        Route::get('attribute-groups', [AttributeGroupController::class, 'index'])->name('attribute-groups.index');
+        Route::get('attribute-groups/create', [AttributeGroupController::class, 'create'])->name('attribute-groups.create');
+        Route::post('attribute-groups', [AttributeGroupController::class, 'store'])->name('attribute-groups.store');
+        Route::get('attribute-groups/{group}/edit', [AttributeGroupController::class, 'edit'])->name('attribute-groups.edit');
+        Route::put('attribute-groups/{group}', [AttributeGroupController::class, 'update'])->name('attribute-groups.update');
+        Route::delete('attribute-groups/{group}', [AttributeGroupController::class, 'destroy'])->name('attribute-groups.destroy');
+
         // Units
         Route::get('units', [UnitController::class, 'index'])->name('units.index');
         Route::get('units/create', [UnitController::class, 'create'])->name('units.create');
