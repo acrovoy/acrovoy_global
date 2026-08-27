@@ -12,7 +12,7 @@
         $categoryClass .= ' font-normal text-black';
     } else {
         // Подкатегории (не конечные)
-        $categoryClass .= ' font-semibold text-blue-800';
+        $categoryClass .= ' font-semibold text-blue-400';
     }
 @endphp
 

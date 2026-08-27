@@ -79,6 +79,21 @@
                             </th>
 
                             <th
+    class="
+        px-5
+        py-3
+        text-left
+        text-xs
+        font-semibold
+        text-gray-500
+        uppercase
+        tracking-wide
+    "
+>
+    Sort Order
+</th>
+
+                            <th
                                 class="
                                     px-5
                                     py-3
@@ -173,6 +188,32 @@
                                     </span>
 
                                 </td>
+
+                                {{-- SORT ORDER --}}
+
+<td class="px-5 py-4">
+
+    <span
+        class="
+            inline-flex
+            items-center
+            justify-center
+            min-w-8
+            h-7
+            px-2
+            rounded-md
+            bg-gray-100
+            border
+            border-gray-200
+            text-xs
+            font-semibold
+            text-gray-600
+        "
+    >
+        {{ $group->sort_order ?? 0 }}
+    </span>
+
+</td>
 
 
                                 {{-- NAME --}}

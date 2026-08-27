@@ -13,6 +13,7 @@ class RfqAttributeValue extends Model
 
         'rfq_id',
         'attribute_id',
+        'unit_id',
 
         'value_text',
         'value_number',
@@ -23,6 +24,13 @@ class RfqAttributeValue extends Model
         'is_source',
 
     ];
+
+    protected $casts = [
+    'value_number' => 'decimal:2',
+    'value_boolean' => 'boolean',
+    'value_date' => 'date',
+    'is_source' => 'boolean',
+];
 
 
     public function rfq()
@@ -60,4 +68,10 @@ class RfqAttributeValue extends Model
 
         );
     }
+
+    public function unit()
+{
+    return $this->belongsTo(\App\Models\Unit::class);
+}
+
 }

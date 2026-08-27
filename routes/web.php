@@ -828,7 +828,15 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
 
         // Главная страница Settings
         Route::get('/', [SettingsController::class, 'index'])->name('index');
+
+        Route::get(
+    'categories/category-map',
+    [CategoryController::class, 'categoryMap']
+)->name('categories.category.map');
+
         Route::resource('categories', CategoryController::class);
+        
+
         Route::resource('countries', CountriesController::class)->except(['show']);
         Route::get('constants', [ConstantsController::class, 'index'])->name('constants');
 
@@ -861,7 +869,7 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
 
         //ATTRIBUTES
         Route::resource('attributes', AttributeController::class);
-
+        
         //ATTRIBUTES OPTIONS (select / multiselect)
         Route::get('attributes/{attribute}/options', [AttributeOptionController::class, 'index'])->name('attributes.options.index');
         Route::post('attributes/{attribute}/options', [AttributeOptionController::class, 'store'])->name('attributes.options.store');

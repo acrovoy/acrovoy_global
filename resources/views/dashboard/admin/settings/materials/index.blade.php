@@ -14,7 +14,7 @@
        class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md
               hover:bg-gray-800 text-sm shadow-sm">
         <span class="text-lg leading-none">+</span>
-        + Add Material
+        Add Material
     </a>
 </div>
 

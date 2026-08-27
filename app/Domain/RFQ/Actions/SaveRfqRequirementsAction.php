@@ -64,10 +64,10 @@ class SaveRfqRequirementsAction
             }
 
             /*
-            |--------------------------------------------------------------------------
-            | MULTISELECT
-            |--------------------------------------------------------------------------
-            */
+|--------------------------------------------------------------------------
+| MULTISELECT
+|--------------------------------------------------------------------------
+*/
 
             if ($attribute->type === 'multiselect') {
 
@@ -89,17 +89,53 @@ class SaveRfqRequirementsAction
             }
 
 
+            /*
+|--------------------------------------------------------------------------
+| MEASUREMENT
+|--------------------------------------------------------------------------
+*/
+
+           if ($attribute->type === 'measurement') {
+
+    $number = $value['value'] ?? null;
+
+    $unitId = $value['unit_id']
+        ?? $attribute->unit_id;
+
+    RfqAttributeValue::updateOrCreate(
+        [
+            'rfq_id' => $rfqId,
+            'attribute_id' => $attributeId,
+        ],
+        [
+            'value_number' => $number,
+            'unit_id' => $unitId,
+
+            'value_text' => null,
+            'value_boolean' => null,
+            'value_date' => null,
+            'attribute_option_id' => null,
+        ]
+    );
+
+    continue;
+}
+
+
+            /*
+|--------------------------------------------------------------------------
+| OTHER ARRAY VALUES
+|--------------------------------------------------------------------------
+*/
+
             if (is_array($value)) {
 
                 $record = RfqAttributeValue::updateOrCreate(
-
                     [
                         'rfq_id' => $rfqId,
                         'attribute_id' => $attributeId,
                     ],
-
                     []
-
                 );
 
                 $record->options()->sync($value);

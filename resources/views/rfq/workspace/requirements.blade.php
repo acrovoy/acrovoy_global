@@ -131,16 +131,377 @@ $isReadonly = $rfqStatus->isPublished() || $rfqStatus->isClosed();
 
 
 
-        {{-- ATTRIBUTES --}}
-        <div class="space-y-5">
+       {{-- ATTRIBUTES --}}
+@php
 
-            @foreach($attributes as $attribute)
-            @include('rfq.workspace.components.attribute-field', [
-            'attribute' => $attribute
-            ])
-            @endforeach
+    /*
+    |--------------------------------------------------------------------------
+    | GROUP ATTRIBUTES
+    |--------------------------------------------------------------------------
+    */
+
+    $groupedAttributes = [];
+    $ungroupedAttributes = [];
+    $measurementAttributes = [];
+
+    foreach ($attributes as $attribute) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | MEASUREMENTS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($attribute->type === 'measurement') {
+
+            $measurementAttributes[] = $attribute;
+
+            continue;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GROUP
+        |--------------------------------------------------------------------------
+        */
+
+        $groupId =
+            $attribute->group_id
+            ?? $attribute->group?->id
+            ?? null;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | UNGROUPED
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$groupId) {
+
+            $ungroupedAttributes[] = $attribute;
+
+            continue;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE GROUP
+        |--------------------------------------------------------------------------
+        */
+
+        if (!isset($groupedAttributes[$groupId])) {
+
+            $groupedAttributes[$groupId] = [
+                'id' => $groupId,
+
+                'name' =>
+                    $attribute->group?->name
+                    ?? $attribute->group_name
+                    ?? 'Other',
+
+                'sort_order' =>
+                    $attribute->group?->sort_order
+                    ?? 0,
+
+                'attributes' => [],
+            ];
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ADD ATTRIBUTE
+        |--------------------------------------------------------------------------
+        */
+
+        $groupedAttributes[$groupId]['attributes'][] = $attribute;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT GROUPS
+    |--------------------------------------------------------------------------
+    */
+
+    $attributeGroups = array_values($groupedAttributes);
+
+usort($attributeGroups, function ($a, $b) {
+    return
+        ($a['sort_order'] ?? 0)
+        <=>
+        ($b['sort_order'] ?? 0);
+});
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT ATTRIBUTES INSIDE GROUPS
+    |--------------------------------------------------------------------------
+    */
+
+    foreach ($attributeGroups as &$group) {
+
+        usort($group['attributes'], function ($a, $b) {
+
+            return
+                ($a->sort_order ?? 0)
+                <=>
+                ($b->sort_order ?? 0);
+        });
+    }
+
+    unset($group);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT UNGROUPED
+    |--------------------------------------------------------------------------
+    */
+
+    usort($ungroupedAttributes, function ($a, $b) {
+
+        return
+            ($a->sort_order ?? 0)
+            <=>
+            ($b->sort_order ?? 0);
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT MEASUREMENTS
+    |--------------------------------------------------------------------------
+    */
+
+    usort($measurementAttributes, function ($a, $b) {
+
+        return
+            ($a->sort_order ?? 0)
+            <=>
+            ($b->sort_order ?? 0);
+    });
+
+@endphp
+
+
+<div class="space-y-8">
+
+
+    {{-- ================================================================
+        ATTRIBUTE GROUPS
+    ================================================================= --}}
+
+    @foreach($attributeGroups as $groupIndex => $group)
+
+        <div
+            class="
+                {{ $groupIndex > 0
+                    ? 'pt-6 border-t border-gray-200'
+                    : ''
+                }}
+            "
+        >
+
+            {{-- GROUP HEADER --}}
+            <div class="mb-4">
+
+                <h3
+                    class="
+                        text-base
+                        font-semibold
+                        tracking-[-0.01em]
+                        text-gray-900
+                    "
+                >
+                    {{ $group['name'] }}
+                </h3>
+
+            </div>
+
+
+            {{-- GROUP ATTRIBUTES --}}
+            <div
+                class="
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    gap-x-6
+                    gap-y-5
+                    rounded-xl
+                    border
+                    border-gray-200
+                    bg-gray-50/50
+                    p-5
+                "
+            >
+
+                @foreach($group['attributes'] as $attribute)
+
+                    @include('rfq.workspace.components.attribute-field', [
+                        'attribute' => $attribute
+                    ])
+
+                @endforeach
+
+            </div>
 
         </div>
+
+    @endforeach
+
+
+
+    {{-- ================================================================
+        UNGROUPED ATTRIBUTES
+    ================================================================= --}}
+
+    @if(count($ungroupedAttributes))
+
+        <div
+            class="
+                pt-6
+                border-t
+                border-gray-200
+            "
+        >
+
+            <div class="mb-4">
+
+                <h3
+                    class="
+                        text-base
+                        font-semibold
+                        tracking-[-0.01em]
+                        text-gray-900
+                    "
+                >
+                    Other Attributes
+                </h3>
+
+                <p
+                    class="
+                        mt-1
+                        text-xs
+                        text-gray-500
+                    "
+                >
+                    Additional product attributes.
+                </p>
+
+            </div>
+
+
+            <div
+                class="
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    gap-x-6
+                    gap-y-5
+                    rounded-xl
+                    border
+                    border-gray-200
+                    bg-gray-50/50
+                    p-5
+                "
+            >
+
+                @foreach($ungroupedAttributes as $attribute)
+
+                    @include('rfq.workspace.components.attribute-field', [
+                        'attribute' => $attribute
+                    ])
+
+                @endforeach
+
+            </div>
+
+        </div>
+
+    @endif
+
+
+
+    {{-- ================================================================
+        MEASUREMENTS
+    ================================================================= --}}
+
+    @if(count($measurementAttributes))
+
+        <div
+            class="
+                pt-6
+                border-t
+                border-gray-200
+            "
+        >
+
+            <div class="mb-4">
+
+                <h3
+                    class="
+                        text-base
+                        font-semibold
+                        tracking-[-0.01em]
+                        text-gray-900
+                    "
+                >
+                    Measurements
+                </h3>
+
+                <p
+                    class="
+                        mt-1
+                        text-xs
+                        text-gray-500
+                    "
+                >
+                    Specify the required product dimensions and measurements.
+                </p>
+
+            </div>
+
+
+            <div
+                class="
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    gap-x-6
+                    gap-y-5
+                    rounded-xl
+                    border
+                    border-gray-200
+                    bg-gray-50/50
+                    p-5
+                "
+            >
+
+                @foreach($measurementAttributes as $attribute)
+
+                    @include('rfq.workspace.components.attribute-field', [
+                        'attribute' => $attribute
+                    ])
+
+                @endforeach
+
+            </div>
+
+        </div>
+
+    @endif
+
+</div>
+
+
+
+
+
 
 
         @include('rfq.workspace.components.custom-attributes')
@@ -272,11 +633,11 @@ $isReadonly = $rfqStatus->isPublished() || $rfqStatus->isClosed();
 
                     @foreach($groups ?? [] as $group)
 
-                        <option value="{{ $group->id }}">
-                            {{ $group->name ?? $group->code }}
-                        </option>
+    <option value="{{ $group['id'] }}">
+        {{ $group['name'] ?? $group['code'] ?? '' }}
+    </option>
 
-                    @endforeach
+@endforeach
 
                 </select>
 

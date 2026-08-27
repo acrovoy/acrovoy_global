@@ -712,5 +712,208 @@ public function root()
         ]);
 }
 
+public function categoryMap()
+{
+    $categories = \App\Models\Category::query()
+        ->with([
+            'translations',
+
+            'attributes' => function ($query) {
+                $query->with([
+                    'translations',
+                    'group.translations',
+                    'unit.translations',
+                    'options.translations',
+                ])
+                ->withPivot([
+                    'is_required',
+                    'sort_order',
+                ]);
+            },
+
+            'children',
+        ])
+        ->orderBy('sort_order')
+        ->get();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT CATEGORY
+    |--------------------------------------------------------------------------
+    */
+
+    $sortCategory = function ($category) use (&$sortCategory) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | GROUP ATTRIBUTES
+        |--------------------------------------------------------------------------
+        */
+
+        $grouped = $category->attributes
+            ->groupBy(function ($attribute) {
+
+                return $attribute->group_id ?? 0;
+
+            });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SORT GROUPS BY ATTRIBUTE GROUP ID
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        | group_id = attribute_groups.id
+        |
+        */
+
+        $sortedGroups = $grouped
+            ->sortKeysUsing(function ($a, $b) {
+
+                return (int) $a <=> (int) $b;
+
+            });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | FLATTEN ATTRIBUTES
+        |--------------------------------------------------------------------------
+        |
+        | Сначала группа с меньшим ID,
+        | затем атрибуты этой группы по category_attributes.sort_order.
+        |
+        */
+
+        $sortedAttributes = collect();
+
+
+        foreach ($sortedGroups as $groupId => $attributes) {
+
+            $attributes = $attributes
+                ->sortBy(function ($attribute) {
+
+                    return [
+                        (int) ($attribute->pivot->sort_order ?? 0),
+                        (int) $attribute->id,
+                    ];
+
+                })
+                ->values();
+
+
+            foreach ($attributes as $attribute) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | OPTIONS
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    in_array(
+                        $attribute->type,
+                        ['select', 'multiselect'],
+                        true
+                    )
+                ) {
+
+                    $attribute->setRelation(
+                        'options',
+                        $attribute->options
+                            ->sortBy([
+                                ['sort_order', 'asc'],
+                                ['id', 'asc'],
+                            ])
+                            ->values()
+                    );
+                }
+
+
+                $sortedAttributes->push($attribute);
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SET SORTED ATTRIBUTES
+        |--------------------------------------------------------------------------
+        */
+
+        $category->setRelation(
+            'attributes',
+            $sortedAttributes
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHILDREN
+        |--------------------------------------------------------------------------
+        */
+
+        $children = $category->children
+            ->sortBy([
+                ['sort_order', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->values();
+
+
+        $category->setRelation(
+            'children',
+            $children
+        );
+
+
+        foreach ($category->children as $child) {
+
+            $sortCategory($child);
+
+        }
+
+
+        return $category;
+    };
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROOT CATEGORIES
+    |--------------------------------------------------------------------------
+    */
+
+    $categoryTree = $categories
+        ->whereNull('parent_id')
+        ->sortBy([
+            ['sort_order', 'asc'],
+            ['id', 'asc'],
+        ])
+        ->values();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SORT EVERYTHING
+    |--------------------------------------------------------------------------
+    */
+
+    foreach ($categoryTree as $category) {
+
+        $sortCategory($category);
+
+    }
+
+
+    return view(
+        'dashboard.admin.settings.categories.category_map',
+        compact('categoryTree')
+    );
+}
+
+
 
 }

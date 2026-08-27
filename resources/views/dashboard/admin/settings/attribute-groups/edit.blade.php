@@ -111,6 +111,57 @@
 
 
             {{-- ====================================================
+    SORT ORDER
+===================================================== --}}
+
+<div>
+
+    <label
+        for="sort_order"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        Sort Order
+    </label>
+
+    <p class="mt-1 text-[11px] text-gray-400">
+        Defines the order in which groups are displayed.
+    </p>
+
+    <input
+        type="number"
+        name="sort_order"
+        id="sort_order"
+        value="{{ old('sort_order', $group->sort_order ?? 0) }}"
+        min="0"
+        class="
+            mt-2
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            text-gray-900
+            outline-none
+            transition
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+    >
+
+    @error('sort_order')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
+
+</div>
+
+
+            {{-- ====================================================
                 STATUS
             ==================================================== --}}
 

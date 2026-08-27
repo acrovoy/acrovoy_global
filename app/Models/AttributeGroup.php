@@ -10,11 +10,18 @@ class AttributeGroup extends Model
 {
     protected $fillable = [
         'name',
+        'code',
+        'sort_order',
         'is_active',
         'owner_type',
         'owner_id',
         'created_by',
     ];
+
+    protected $casts = [
+    'sort_order' => 'integer',
+    'is_active' => 'boolean',
+];
 
     public function attributes(): HasMany
     {

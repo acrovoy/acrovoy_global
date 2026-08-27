@@ -436,7 +436,7 @@
         <div class="divide-y divide-gray-100">
 
             <template
-                x-for="attribute in selectedAttributes"
+                x-for="attribute in sortAttributes(selectedAttributes)"
                 :key="'selected-' + attribute.id"
             >
 
@@ -470,12 +470,21 @@
                                 class="text-sm font-medium text-gray-800 cursor-pointer"
                                 x-text="attribute.name"
                             ></label>
+                            <span
+                                    class="text-[10px] text-blue-400 uppercase"
+                                    x-text="attribute.group"
+                                ></span>
+
+                                <span
+                                    class="text-[10px] text-gray-400"
+                                    x-text="attribute.type"
+                                ></span>
 
                             <div class="flex items-center gap-2 mt-0.5">
 
                                 <span
-                                    class="text-[10px] text-gray-400 uppercase"
-                                    x-text="attribute.type"
+                                    class="text-[10px] text-gray-400"
+                                    x-text="attribute.code"
                                 ></span>
 
                                 <template x-if="attribute.unit">
@@ -609,7 +618,7 @@
         <div class="divide-y divide-gray-100">
 
             <template
-                x-for="attribute in filteredAttributes"
+                x-for="attribute in sortAttributes(filteredAttributes)"
                 :key="'available-' + attribute.id"
             >
 
@@ -639,13 +648,24 @@
                                 :for="`available-attr-${attribute.id}`"
                                 class="text-sm font-medium text-gray-800 cursor-pointer"
                                 x-text="attribute.name"
-                            ></label>
+                            >
+                        
+                            </label>
+                            <span
+                                    class="text-[10px] text-blue-400 uppercase"
+                                    x-text="attribute.group"
+                                ></span>
+                            <span
+                                    class="text-[10px] text-gray-400"
+                                    x-text="attribute.type"
+                                ></span>
 
                             <div class="flex items-center gap-2 mt-0.5">
 
+                                
                                 <span
-                                    class="text-[10px] text-gray-400 uppercase"
-                                    x-text="attribute.type"
+                                    class="text-[10px] text-gray-400"
+                                    x-text="attribute.code"
                                 ></span>
 
                                 <template x-if="attribute.unit">
@@ -1152,6 +1172,9 @@ function categoryAttributesManager() {
                 return [
                     'id' => $attribute->id,
                     'name' => $attribute->name,
+                    'code' => $attribute->code,
+                    'group' => $attribute->attributeGroup?->translation()?->name ?? $attribute->attributeGroup?->name,
+                    'group_sort_order' => $attribute->attributeGroup?->sort_order ?? PHP_INT_MAX,
                     'type' => $attribute->type,
                     'unit' => $attribute->unit,
 
@@ -1207,6 +1230,31 @@ function categoryAttributesManager() {
             return this.filteredAttributes.length;
 
         },
+
+        sortAttributes(attributes) {
+
+    return [...attributes].sort((a, b) => {
+
+        const groupA = Number(a.group_sort_order ?? 999999);
+        const groupB = Number(b.group_sort_order ?? 999999);
+
+        if (groupA !== groupB) {
+            return groupA - groupB;
+        }
+
+        const orderA = Number(a.sort_order ?? 0);
+        const orderB = Number(b.sort_order ?? 0);
+
+        if (orderA !== orderB) {
+            return orderA - orderB;
+        }
+
+        return Number(a.id) - Number(b.id);
+
+    });
+
+},
+
 
 
         matches(attribute) {

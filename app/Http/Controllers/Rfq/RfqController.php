@@ -18,6 +18,7 @@ use App\Models\Supplier;
 use App\Models\Attribute;
 use App\Models\AttributeGroup;
 use App\Models\Location;
+use App\Models\Unit;
 use App\Domain\RFQ\Models\RfqAttributeValue;
 use App\Domain\Negotiation\Models\RfqOffer;
 use App\Domain\Negotiation\Resolvers\OfferVersionResolver;
@@ -121,6 +122,12 @@ class RfqController extends Controller
         $currentSavedAddress = null;
         $currentAddressId = null;
 
+        $units = Unit::query()
+            ->active()
+            ->ordered()
+            ->with('translations')
+            ->get();
+
 
         //////////////////////////////////////////////////////////////////////////////////////
         // BUYER REQUIREMENTS
@@ -161,7 +168,8 @@ class RfqController extends Controller
                         'attributes' => function ($query) {
                             $query->with([
                                 'translations',
-                                'options.translations'
+                                'options.translations',
+                                'unit.translations',
                             ]);
                         }
                     ])
@@ -186,11 +194,16 @@ class RfqController extends Controller
                                 'select' => $value?->attribute_option_id,
                                 'number',
                                 'decimal' => $value?->value_number,
+                                'measurement' => $value?->value_number,
                                 'boolean' => $value?->value_boolean,
                                 'date' => $value?->value_date,
                                 default => $value?->value_text,
                             };
                             $attribute->saved_options = $value?->options?->pluck('id')->toArray() ?? [];
+                            
+                             $attribute->saved_unit_id =
+            $value?->unit_id ?? $attribute->unit_id;
+
                             return $attribute;
                         });
                 }
@@ -745,7 +758,7 @@ class RfqController extends Controller
             'attachedAttributes' => $attachedAttributes,
 
             'groups' => $groups,
-
+            'units' => $units,
 
             'context_mode' => $this->context->mode(),
             'context_role' => $this->context->role(),

@@ -9,13 +9,21 @@
             Manage product categories and hierarchy
         </p>
     </div>
+<div>
+    <a
+    href="{{ route('admin.settings.categories.category.map') }}"
+    class="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+>
+    Category Map
+</a>
 
     <a href="{{ route('admin.settings.categories.create') }}"
-       class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md
+       class="inline-flex ml-2 items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-md
               hover:bg-gray-800 text-sm shadow-sm">
         <span class="text-lg leading-none">+</span>
         Add Category
     </a>
+    </div>
 </div>
 
 <x-alerts />
@@ -156,30 +164,90 @@
 </form>
 
 
-{{-- Category Tree --}}
-<div x-data="{ openMap: false }" class="mb-6">
+{{-- ============================================================
+    CATEGORY TREE
+============================================================= --}}
 
-    {{-- Заголовок --}}
-    <div @click="openMap = !openMap"
-         class="flex justify-between items-center bg-gray-100 p-2 rounded cursor-pointer">
-        <h2 class="text-sm font-semibold text-gray-900">Category Tree</h2>
-        <svg :class="{'rotate-90': openMap}" class="w-4 h-4 text-gray-500 transition-transform duration-200"
-             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 5l7 7-7 7"></path>
+<div
+    x-data="{ openCategories: false }"
+    class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-4"
+>
+
+    {{-- HEADER --}}
+
+    <button
+        type="button"
+        @click="openCategories = !openCategories"
+        class="w-full flex items-center justify-between px-5 py-4 text-left bg-gray-50 hover:bg-gray-100 transition"
+    >
+
+        <div>
+
+            <div class="flex items-center gap-3">
+
+                <h3 class="font-semibold text-gray-800 text-sm">
+                    Category Tree
+                </h3>
+
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-200 text-gray-600 text-xs">
+                    {{ $categories->count() }}
+                </span>
+
+            </div>
+
+            <p class="text-xs text-gray-500 mt-1">
+                Browse the category hierarchy and navigate through parent and child categories.
+            </p>
+
+        </div>
+
+
+        {{-- ARROW --}}
+
+        <svg
+            :class="{ 'rotate-180': openCategories }"
+            class="w-5 h-5 text-gray-500 transition-transform duration-200"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M19 9l-7 7-7-7"
+            />
         </svg>
+
+    </button>
+
+
+    {{-- CONTENT --}}
+
+    <div
+        x-show="openCategories"
+        x-transition
+        class="border-t border-gray-200"
+    >
+
+        <div class="h-[85vh] overflow-auto p-4 text-xs bg-white">
+
+            {{-- ROOT CATEGORIES --}}
+
+            @foreach($categories->where('level', 0) as $rootCategory)
+
+                @include(
+                    'dashboard.admin.settings.categories.partials.category-tree',
+                    ['category' => $rootCategory]
+                )
+
+            @endforeach
+
+        </div>
+
     </div>
 
-    {{-- Древо категорий --}}
-    <div x-show="openMap" x-transition
-         class="mt-2 h-[85vh] overflow-auto text-xs p-2 bg-white border border-gray-200 rounded shadow-sm">
-
-        {{-- Цикл по корневым категориям --}}
-        @foreach($categories->where('level', 0) as $rootCategory)
-            @include('dashboard.admin.settings.categories.partials.category-tree', ['category' => $rootCategory])
-        @endforeach
-
-    </div>
 </div>
 
 

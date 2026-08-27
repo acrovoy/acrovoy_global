@@ -130,13 +130,14 @@ class RfqRequirementController extends Controller
     public function show(Rfq $rfq)
     {
         $requirements = RfqAttributeValue::query()
-            ->where('rfq_id', $rfq->id)
-            ->with([
-                'attribute.translations',
-                'option.translations',
-                'options.translations',
-            ])
-            ->get();
+    ->where('rfq_id', $rfq->id)
+    ->with([
+        'attribute.translations',
+        'option.translations',
+        'options.translations',
+        'unit.translations',
+    ])
+    ->get();
 
         return view('rfq.workspace.requirements.show', [
             'rfq' => $rfq,

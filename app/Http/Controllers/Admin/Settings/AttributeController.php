@@ -16,7 +16,10 @@ class AttributeController extends Controller
     public function index(Request $request)
 {
     $query = Attribute::query()
-        ->with('translations');
+        ->with([
+            'translations',
+            'attributeGroup.translations',
+        ]);
 
     /*
     |--------------------------------------------------------------------------
@@ -31,9 +34,24 @@ class AttributeController extends Controller
         $query->where(function ($q) use ($search) {
 
             $q->where('code', 'like', "%{$search}%")
+
                 ->orWhereHas('translations', function ($translationQuery) use ($search) {
 
-                    $translationQuery->where('name', 'like', "%{$search}%");
+                    $translationQuery->where(
+                        'name',
+                        'like',
+                        "%{$search}%"
+                    );
+
+                })
+
+                ->orWhereHas('attributeGroup.translations', function ($groupQuery) use ($search) {
+
+                    $groupQuery->where(
+                        'name',
+                        'like',
+                        "%{$search}%"
+                    );
 
                 });
 
@@ -70,6 +88,7 @@ class AttributeController extends Controller
         );
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | NEW
@@ -77,7 +96,12 @@ class AttributeController extends Controller
     */
 
     if ($request->boolean('new')) {
-        $query->where('created_at', '>=', now()->subDays(7));
+
+        $query->where(
+            'created_at',
+            '>=',
+            now()->subDays(7)
+        );
     }
 
 
@@ -112,9 +136,6 @@ class AttributeController extends Controller
     |--------------------------------------------------------------------------
     | SORT BY TRANSLATED NAME
     |--------------------------------------------------------------------------
-    |
-    | Name находится в translations, поэтому сортируем через subquery.
-    |
     */
 
     if ($sort === 'name') {
@@ -125,15 +146,20 @@ class AttributeController extends Controller
                     'attribute_translations.attribute_id',
                     'attributes.id'
                 )
-                ->where('locale', app()->getLocale())
+                ->where(
+                    'locale',
+                    app()->getLocale()
+                )
                 ->limit(1),
             $direction
         );
 
     } else {
 
-        $query->orderBy($sort, $direction);
-
+        $query->orderBy(
+            'attributes.' . $sort,
+            $direction
+        );
     }
 
 
@@ -143,7 +169,10 @@ class AttributeController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    $query->orderBy('id', 'asc');
+    $query->orderBy(
+        'attributes.id',
+        'asc'
+    );
 
 
     /*
@@ -169,15 +198,11 @@ class AttributeController extends Controller
         ->where('is_custom', true)
         ->values();
 
-        
 
-          /*
+    /*
     |--------------------------------------------------------------------------
     | NEW CUSTOM ATTRIBUTES
     |--------------------------------------------------------------------------
-    |
-    | Custom attributes created during the last 7 days.
-    |
     */
 
     $newCustomSince = now()->subDays(7);
@@ -198,7 +223,40 @@ class AttributeController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    $newCustomAttributesCount = $newCustomAttributes->count();
+    $newCustomAttributesCount =
+        $newCustomAttributes->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GROUP SYSTEM ATTRIBUTES
+    |--------------------------------------------------------------------------
+    |
+    | Группы сортируем по AttributeGroup.sort_order.
+    | Атрибуты внутри группы уже отсортированы
+    | по Attribute.sort_order.
+    |
+    */
+
+    $systemAttributeGroups = $systemAttributes
+    ->groupBy('group_id')
+    ->sortBy(function ($attributes, $groupId) {
+
+        return $attributes
+            ->first()
+            ?->attributeGroup
+            ?->sort_order
+            ?? PHP_INT_MAX;
+
+    })
+    ->map(function ($attributes) {
+
+        return $attributes
+            ->sortBy('sort_order')
+            ->values();
+
+    })
+    ->values();
 
 
     return view(
@@ -207,7 +265,8 @@ class AttributeController extends Controller
             'systemAttributes',
             'customAttributes',
             'newCustomAttributes',
-            'newCustomAttributesCount'
+            'newCustomAttributesCount',
+            'systemAttributeGroups'
         )
     );
 }

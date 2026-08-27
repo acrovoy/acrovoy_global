@@ -21,7 +21,7 @@ class AttributeGroupController extends Controller
             ->whereNull('owner_id')
             ->with('translations')
             ->withCount('attributes')
-            ->orderBy('name')
+            ->orderBy('sort_order')
             ->get();
 
         return view(
@@ -78,7 +78,7 @@ class AttributeGroupController extends Controller
 
             $group = AttributeGroup::create([
                 'name' => $request->input('name'),
-
+                'sort_order' => $request->input('sort_order', 0),
                 'is_active' => true,
 
                 // System group
@@ -169,6 +169,7 @@ class AttributeGroupController extends Controller
 
         $group->update([
             'name' => $request->input('name'),
+            'sort_order' => $request->input('sort_order', 0),
             'is_active' => $request->boolean('is_active'),
         ]);
 
