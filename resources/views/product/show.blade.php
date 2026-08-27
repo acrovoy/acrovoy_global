@@ -414,6 +414,9 @@
                 @endif
 
 
+
+
+
            {{-- Product Attributes --}}
 @if($product1->attributeValues->count())
 
@@ -446,6 +449,8 @@
             if (!$attribute) {
                 return false;
             }
+
+            
 
 
  /*
@@ -498,192 +503,279 @@
         })
         ->values();
 
+         $groupedAttributes = $attributeValues
+        ->groupBy(function ($attrValue) {
+            return $attrValue->attribute?->group_id ?? 0;
+        })
+        ->sortBy(function ($items, $groupId) {
+
+            if ($groupId == 0) {
+                return 999999;
+            }
+
+            return $items->first()->attribute?->group?->sort_order ?? 999999;
+        });
+
     $visibleAttributes = $attributeValues->take(8);
     $hiddenAttributes = $attributeValues->slice(8);
 @endphp
 
     @if($attributeValues->count())
 
-        <div class="relative mt-2">
+    <div class="relative mt-2">
 
-            <ul
-                id="product-attributes-list"
-                class="divide-y divide-gray-200 text-gray-700"
-            >
+        @php
+            $visibleGroupedAttributes = $visibleAttributes
+                ->groupBy(fn ($attrValue) => $attrValue->attribute?->group_id);
 
-                {{-- FIRST 8 --}}
-                @foreach($visibleAttributes as $attrValue)
+            $hiddenGroupedAttributes = $hiddenAttributes
+                ->groupBy(fn ($attrValue) => $attrValue->attribute?->group_id);
+        @endphp
 
-                    <li class="flex justify-between py-2">
+        <ul
+            id="product-attributes-list"
+            class="text-gray-700"
+        >
 
-                        <span class="text-gray-600">
-                            {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
-                        </span>
+            {{-- FIRST 8 --}}
+            @foreach($visibleGroupedAttributes as $groupId => $groupAttributes)
 
-                        <span class="font-medium text-gray-900">
+                @php
+                    $group = $groupAttributes->first()->attribute?->group;
+                @endphp
 
-                            @php
-                                $attribute = $attrValue->attribute;
-                                $unit = $attribute?->unit;
+             @if($group)
+    <li class="py-3 mt-3 border-0">
+        <div
+            class="
+                inline-flex
+                items-center
+                px-3
+                py-1.5
+                rounded-md
+                bg-gray-50
+                border
+                border-gray-200
+                text-sm
+                font-semibold
+                text-gray-800
+            "
+        >
+            {{ $group->name ?? $group->code }}
+        </div>
+    </li>
+@endif
 
-                                $displayValue = $attrValue->display_value;
+                @foreach($groupAttributes as $index => $attrValue)
 
-                                $unitName = $unit?->translations
-                                    ?->firstWhere('locale', app()->getLocale())
-                                    ?->name;
+    <li class="
+        flex
+        justify-between
+        py-2
+        {{ $index < $groupAttributes->count() - 1 ? 'border-b border-gray-200' : 'border-b border-gray-200' }}
+    ">
 
-                                // Fallback на английский
-                                if (!$unitName) {
-                                    $unitName = $unit?->translations
-                                        ?->firstWhere('locale', 'en')
-                                        ?->name;
-                                }
+        <span class="text-gray-600">
+            {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
+        </span>
 
-                                // Последний fallback
-                                $unitName = $unitName
-                                    ?: $unit?->name
-                                    ?: $unit?->code;
-                            @endphp
+        <span class="font-medium text-gray-900">
 
-                            {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
+            @php
+                $attribute = $attrValue->attribute;
+                $unit = $attribute?->unit;
 
-                        </span>
+                $displayValue = $attrValue->display_value;
 
-                    </li>
+                $unitName = $unit?->translations
+                    ?->firstWhere('locale', app()->getLocale())
+                    ?->name;
 
-                @endforeach
+                if (!$unitName) {
+                    $unitName = $unit?->translations
+                        ?->firstWhere('locale', 'en')
+                        ?->name;
+                }
 
+                $unitName = $unitName
+                    ?: $unit?->name
+                    ?: $unit?->code;
+            @endphp
 
-                {{-- HIDDEN ATTRIBUTES --}}
-                @if($hiddenAttributes->count())
+            {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
 
-                    <div
-                        id="hidden-product-attributes"
-                        class="hidden"
-                    >
+        </span>
 
-                        @foreach($hiddenAttributes as $attrValue)
+    </li>
 
-                            <li class="flex justify-between py-2">
+@endforeach
 
-                                <span class="text-gray-600">
-                                    {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
-                                </span>
-
-                                <span class="font-medium text-gray-900">
-
-                                    @php
-                                        $attribute = $attrValue->attribute;
-                                        $unit = $attribute?->unit;
-
-                                        $displayValue = $attrValue->display_value;
-
-                                        $unitName = $unit?->translations
-                                            ?->firstWhere('locale', app()->getLocale())
-                                            ?->name;
-
-                                        // Fallback на английский
-                                        if (!$unitName) {
-                                            $unitName = $unit?->translations
-                                                ?->firstWhere('locale', 'en')
-                                                ?->name;
-                                        }
-
-                                        // Последний fallback
-                                        $unitName = $unitName
-                                            ?: $unit?->name
-                                            ?: $unit?->code;
-                                    @endphp
-
-                                    {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
-
-                                </span>
-
-                            </li>
-
-                        @endforeach
-
-                    </div>
-
-                @endif
-
-            </ul>
+            @endforeach
 
 
-            {{-- BLUR + SHOW ALL BUTTON --}}
+            {{-- HIDDEN ATTRIBUTES --}}
             @if($hiddenAttributes->count())
 
-                <button
-                    type="button"
-                    id="product-attributes-toggle"
-                    class="relative w-full mt-0 h-12 flex items-end justify-center group"
-                    aria-expanded="false"
+                <div
+                    id="hidden-product-attributes"
+                    class="hidden divide-y divide-gray-200"
                 >
 
-                    {{-- Blur --}}
-                    <div
-                        id="product-attributes-blur"
-                        class="absolute inset-x-0 bottom-0 h-14
-                               bg-gradient-to-t
-                               from-white
-                               via-white/90
-                               to-transparent
-                               pointer-events-none"
-                    ></div>
+                    @foreach($hiddenGroupedAttributes as $groupId => $groupAttributes)
 
+                        @php
+                            $group = $groupAttributes->first()->attribute?->group;
+                        @endphp
 
-                    {{-- Button Content --}}
-                    <span
-                        class="relative z-10
-                               inline-flex items-center gap-2
-                               px-4 py-2
-                               rounded-lg
-                               bg-white
-                               border border-gray-200
-                               shadow-sm
-                               text-sm font-medium
-                               text-gray-700
-                               transition
-                               group-hover:text-gray-900
-                               group-hover:border-gray-300"
-                    >
+                       @if($group)
+    <li class="py-3 mt-3 border-0">
+        <div
+            class="
+                inline-flex
+                items-center
+                px-3
+                py-1.5
+                rounded-md
+                bg-gray-50
+                border
+                border-gray-200
+                text-sm
+                font-semibold
+                text-gray-800
+            "
+        >
+            {{ $group->name ?? $group->code }}
+        </div>
+    </li>
+@endif
 
-                        <span id="product-attributes-toggle-text">
-                            Show all specifications
-                        </span>
+                        @foreach($groupAttributes as $index => $attrValue)
 
-                        <span
-                            class="flex items-center justify-center
-                                   w-5 h-5"
-                        >
+    <li class="
+        flex
+        justify-between
+        py-2
+        border-b border-gray-200
+    ">
 
-                            <svg
-                                id="product-attributes-arrow"
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="w-4 h-4 transition-transform duration-200"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M19 9l-7 7-7-7"
-                                />
-                            </svg>
+        <span class="text-gray-600">
+            {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
+        </span>
 
-                        </span>
+        <span class="font-medium text-gray-900">
 
-                    </span>
+            @php
+                $attribute = $attrValue->attribute;
+                $unit = $attribute?->unit;
 
-                </button>
+                $displayValue = $attrValue->display_value;
+
+                $unitName = $unit?->translations
+                    ?->firstWhere('locale', app()->getLocale())
+                    ?->name;
+
+                if (!$unitName) {
+                    $unitName = $unit?->translations
+                        ?->firstWhere('locale', 'en')
+                        ?->name;
+                }
+
+                $unitName = $unitName
+                    ?: $unit?->name
+                    ?: $unit?->code;
+            @endphp
+
+            {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
+
+        </span>
+
+    </li>
+
+@endforeach
+
+                    @endforeach
+
+                </div>
 
             @endif
 
-        </div>
+        </ul>
 
-    @endif
+
+        {{-- BLUR + SHOW ALL BUTTON --}}
+        @if($hiddenAttributes->count())
+
+            <button
+                type="button"
+                id="product-attributes-toggle"
+                class="relative w-full mt-0 h-12 flex items-end justify-center group"
+                aria-expanded="false"
+            >
+
+                {{-- Blur --}}
+                <div
+                    id="product-attributes-blur"
+                    class="absolute inset-x-0 bottom-0 h-14
+                           bg-gradient-to-t
+                           from-white
+                           via-white/90
+                           to-transparent
+                           pointer-events-none"
+                ></div>
+
+
+                {{-- Button Content --}}
+                <span
+                    class="relative z-10
+                           inline-flex items-center gap-2
+                           px-4 py-2
+                           rounded-lg
+                           bg-white
+                           border border-gray-200
+                           shadow-sm
+                           text-sm font-medium
+                           text-gray-700
+                           transition
+                           group-hover:text-gray-900
+                           group-hover:border-gray-300"
+                >
+
+                    <span id="product-attributes-toggle-text">
+                        Show all specifications
+                    </span>
+
+                    <span
+                        class="flex items-center justify-center
+                               w-5 h-5"
+                    >
+
+                        <svg
+                            id="product-attributes-arrow"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="w-4 h-4 transition-transform duration-200"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M19 9l-7 7-7-7"
+                            />
+                        </svg>
+
+                    </span>
+
+                </span>
+
+            </button>
+
+        @endif
+
+    </div>
+
+@endif
 
 </div>
 

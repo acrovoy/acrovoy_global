@@ -290,6 +290,10 @@ class ProductController extends Controller
                 ]);
         } elseif ($step == 2) {
 
+
+
+
+
             /*
     |--------------------------------------------------------------------------
     | VALIDATE REQUIRED CATEGORY ATTRIBUTES
@@ -298,7 +302,20 @@ class ProductController extends Controller
 
             $attributes = $request->input('attributes', []);
 
-            $requiredAttributes = $product->category
+            $category = \App\Models\Category::find(
+                $request->input('category')
+            );
+
+            if (!$category) {
+                return redirect()
+                    ->back()
+                    ->withErrors([
+                        'category' => 'Please select a valid category.',
+                    ])
+                    ->withInput();
+            }
+
+            $requiredAttributes = $category
                 ->attributes()
                 ->wherePivot('is_required', true)
                 ->get();
@@ -367,9 +384,9 @@ class ProductController extends Controller
 
                     if ($value === null || $value === '' || !is_numeric($value) || (float) $value <= 0) {
 
-    $errors["attributes.$attributeId.value"] =
-        "{$attribute->name} must be greater than 0.";
-}
+                        $errors["attributes.$attributeId.value"] =
+                            "{$attribute->name} must be greater than 0.";
+                    }
 
                     if (!$unitId) {
 
@@ -404,7 +421,7 @@ class ProductController extends Controller
 
 
             $attributeUnits = $request->input('attribute_units', []);
-            
+
 
             /*
     |--------------------------------------------------------------------------

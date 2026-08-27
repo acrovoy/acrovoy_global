@@ -263,7 +263,7 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
             // Load attributes
             // ------------------------------------------------------------
 
-            await this.loadAttributes(categoryId);
+            await this.loadAttributes(categoryId, false);
 
             const submitButton =
                 document.getElementById('step-2-submit');
@@ -338,7 +338,7 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
 
             this.selectedCategory = categoryId;
 
-            await this.loadAttributes(categoryId);
+            await this.loadAttributes(categoryId, true);
         },
 
 
@@ -346,14 +346,11 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
         // LOAD ATTRIBUTES
         // ================================================================
 
-        async loadAttributes(categoryId) {
+        async loadAttributes(categoryId, loadSavedValues = false) {
 
-            console.log(
-                'Load attributes for category:',
-                categoryId
-            );
-
-            const query = this.initialProductId
+            
+            const query = 
+            loadSavedValues && this.initialProductId
                 ? `?product_id=${this.initialProductId}`
                 : '';
 
@@ -363,10 +360,7 @@ function categorySelector({ initialCategory = null, initialProductId = null } = 
 
             const attributes = await res.json();
 
-            console.log(
-                'ATTRIBUTES:',
-                attributes
-            );
+           
 
             const container =
                 document.getElementById('category-attributes');

@@ -12,8 +12,7 @@ class ProductViewQueryService
 {
     public function __construct(
         private readonly ActiveContextService $context
-    ) {
-    }
+    ) {}
 
     public function getProductViewData(string $slug): array
     {
@@ -55,7 +54,9 @@ class ProductViewQueryService
             /*
              * Product attribute values
              */
-            'attributeValues.attribute',
+            'attributeValues.attribute.translations',
+            'attributeValues.attribute.group.translations',
+            'attributeValues.attribute.unit.translations',
             'attributeValues.translations',
             'attributeValues.options.option.translations',
 
@@ -107,7 +108,7 @@ class ProductViewQueryService
         */
 
         $unitIds = $product1->attributeValues
-            ->map(fn ($attributeValue) => $attributeValue->attribute?->unit_id)
+            ->map(fn($attributeValue) => $attributeValue->attribute?->unit_id)
             ->filter()
             ->unique()
             ->values();
@@ -169,26 +170,40 @@ class ProductViewQueryService
 
         $attributeOrder = $product1->category
             ? $product1->category->attributes
-                ->pluck('pivot.sort_order', 'id')
+            ->pluck('pivot.sort_order', 'id')
             : collect();
 
 
         /*
-        |--------------------------------------------------------------------------
-        | SORT PRODUCT ATTRIBUTES
-        |--------------------------------------------------------------------------
-        */
+|--------------------------------------------------------------------------
+| SORT PRODUCT ATTRIBUTES
+|--------------------------------------------------------------------------
+|
+| Order:
+|
+| 1. Attribute Group sort_order
+| 2. Attribute sort_order inside category
+|
+|--------------------------------------------------------------------------
+*/
 
         $product1->setRelation(
             'attributeValues',
             $product1->attributeValues
                 ->sortBy(function ($attrValue) use ($attributeOrder) {
 
-                    return $attributeOrder->get(
-                        $attrValue->attribute_id,
-                        PHP_INT_MAX
-                    );
+                    $attribute = $attrValue->attribute;
 
+                    return [
+                        // GROUP ORDER
+                        $attribute?->group?->sort_order ?? PHP_INT_MAX,
+
+                        // ATTRIBUTE ORDER
+                        $attributeOrder->get(
+                            $attrValue->attribute_id,
+                            PHP_INT_MAX
+                        ),
+                    ];
                 })
                 ->values()
         );
@@ -240,7 +255,6 @@ class ProductViewQueryService
             ])) {
 
                 $type = 'image';
-
             } elseif (in_array($ext, [
                 'mp4',
                 'webm',
@@ -249,11 +263,9 @@ class ProductViewQueryService
             ])) {
 
                 $type = 'video';
-
             } elseif ($ext === 'pdf') {
 
                 $type = 'pdf';
-
             } else {
 
                 $type = 'file';
