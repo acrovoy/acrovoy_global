@@ -85,26 +85,42 @@ class CompanyController extends Controller
 {
     $type = $request->get('type');
 
-    abort_unless(isset($this->map[$type]), 404);
+    
 
     $table = $this->map[$type];
 
     $data = $this->validateBase($request, $type);
 
     $data['slug'] = Str::slug($data['name']);
+    $data['user_id'] = auth()->id();
     $data['created_at'] = now();
     $data['updated_at'] = now();
-    
+
+   
+    if ($type === 'supplier') {
+    $data['supplierable_type'] = \App\Models\Supplier::class;
+    $data['supplierable_id'] = auth()->id();
+}
 
     DB::beginTransaction();
 
     try {
 
-        // create company
+        // Create company
         $companyId = DB::table($table)->insertGetId($data);
+
+        // Supplier self-reference
+        if ($type === 'supplier') {
+            DB::table('suppliers')
+                ->where('id', $companyId)
+                ->update([
+                    'supplierable_id' => $companyId,
+                ]);
+        }
 
         $modelClass = $this->getModelClass($type);
 
+        // Create company owner membership
         DB::table('company_users')->insert([
             'user_id' => auth()->id(),
             'company_type' => $modelClass,
@@ -126,6 +142,8 @@ class CompanyController extends Controller
         throw $e;
     }
 }
+
+
 
     /**
      * EDIT

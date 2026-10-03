@@ -272,16 +272,22 @@
                     class="relative mr-6 text-gray-700 hover:text-black">
 
                     {{-- Icon --}}
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h13L17 13M7 13H5.4" />
-                    </svg>
+                    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-6 h-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="1.8"
+    >
+        <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3 4h2l1.5 10a2 2 0 0 0 2 2h8.5a2 2 0 0 0 1.9-1.4L21 7H6"
+        />
+        <circle cx="9" cy="20" r="1.2" />
+        <circle cx="18" cy="20" r="1.2" />
+    </svg>
 
 
                     @if($cartCount > 0)

@@ -1,5 +1,5 @@
  {{-- Price / Quantity Table --}}
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <div class="bg-white rounded-xl shadow p-6 mb-2">
                     <h3 class="font-semibold text-lg leading-none">
                         {{ __('product/product_show.price_per_quantity') }}
                     </h3>

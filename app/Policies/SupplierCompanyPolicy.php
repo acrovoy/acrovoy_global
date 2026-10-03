@@ -70,6 +70,16 @@ class SupplierCompanyPolicy extends BasePolicy
         return $this->canManage($supplier);
     }
 
+
+        /**
+     * Upload/update catalog image.
+     */
+    public function uploadCatalogImage(User $user, Supplier $supplier): bool
+    {
+        return $this->canManage($supplier);
+    }
+
+    
     /**
      * Upload certificate.
      */

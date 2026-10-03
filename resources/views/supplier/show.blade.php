@@ -74,7 +74,7 @@ default => '#d1d5db',
                             </div>
 
                             <h3 class="mt-4 font-semibold text-lg text-gray-900">
-                                {{ $company->name }}
+                                {{ $company->name }}111
                             </h3>
 
                             <div class="mt-2">

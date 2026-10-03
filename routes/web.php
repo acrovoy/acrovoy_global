@@ -834,6 +834,11 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
     [CategoryController::class, 'categoryMap']
 )->name('categories.category.map');
 
+Route::get(
+    'categories/category-map/{category}/node',
+    [CategoryController::class, 'categoryMapNode']
+)->name('categories.category-map.node');
+
         Route::resource('categories', CategoryController::class);
         
 

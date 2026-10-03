@@ -295,6 +295,34 @@ class ProductViewQueryService
             });
 
 
+        $reviewsCount = $product1->reviews->count();
+        $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
+        $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
+        $inWishlist = in_array($product1->id, $wishlistIds);
+
+        $measurementAttributes = $product1->attributeValues
+            ->filter(function ($attrValue) {
+
+                $value = $attrValue->display_value;
+
+                return $attrValue->attribute?->type === 'measurement'
+                    && filled($value)
+                    && (float) $value > 0;
+            })
+            ->values();
+
+
+         $customAbilityAttributes = $product1->attributeValues
+        ->load([
+            'attribute',
+            'options.option.translations',
+        ])
+        ->filter(function ($attrValue) {
+            return $attrValue->attribute?->group_id === 29;
+        })
+        ->values();
+
+
         /*
         |--------------------------------------------------------------------------
         | RETURN
@@ -306,7 +334,13 @@ class ProductViewQueryService
             'projects',
             'gallery',
             'shippingTemplates',
-            'wishlistIds'
+            'wishlistIds',
+            'rating',
+            'soldCount',
+            'inWishlist',
+            'reviewsCount',
+            'measurementAttributes',
+            'customAbilityAttributes'
         );
     }
 }
