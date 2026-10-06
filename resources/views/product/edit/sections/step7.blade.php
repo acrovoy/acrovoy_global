@@ -25,7 +25,7 @@
     <div class="mt-6">
 
     <h3 class="text-xl font-semibold mb-4">
-        Customization & Lead Time
+        Lead Time
     </h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -57,33 +57,7 @@
 
         </div>
 
-        {{-- CUSTOMIZATION --}}
-        <div>
-
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-                Customization
-            </label>
-
-            <select
-                name="customization"
-                class="w-full rounded-xl border border-gray-300
-                       px-4 py-3 text-sm bg-white
-                       focus:ring-2 focus:ring-black/10
-                       focus:border-black transition">
-
-                <option value="1"
-                    {{ old('customization', $product->customization) == 1 ? 'selected' : '' }}>
-                    Customization Available
-                </option>
-
-                <option value="0"
-                    {{ old('customization', $product->customization) == 0 ? 'selected' : '' }}>
-                    No Customization
-                </option>
-
-            </select>
-
-        </div>
+        
 
     </div>
 
@@ -100,12 +74,10 @@
 
 
         <div>
-            <button type="submit" class="mt-4 bg-gray-50 border border-gray-400 text-gray-400 px-6 py-2 rounded hover:bg-gray-200 hover:text-gray-600 mr-2">
-                Save as Draft
-            </button>
+           
 
             <button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-500">
-                Publish
+                Next
             </button>
 
         </div>

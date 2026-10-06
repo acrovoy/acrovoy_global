@@ -40,6 +40,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\PublicCollectionController;
+use App\Http\Controllers\MaterialController;
 
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
@@ -149,6 +150,15 @@ Route::post('/conversations/open', [ConversationController::class, 'open'])->nam
 Route::post('/conversations/message', [ConversationController::class, 'message'])->name('conversations.message');
 Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'messages'])->name('conversations.messages');
 
+
+//MATERIALS
+Route::post('/dashboard/admin/settings/materials/groups', [MaterialsController::class, 'storeGroup'])->name('admin.settings.material-groups.store');
+Route::put('/dashboard/admin/settings/materials/groups/{group}', [MaterialsController::class, 'updateGroup'])->name('admin.settings.material-groups.update');
+Route::delete('/dashboard/admin/settings/materials/groups/{group}', [MaterialsController::class, 'destroyGroup'])->name('admin.settings.material-groups.destroy');
+
+
+
+
 Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
     Route::get('/messenger', [SupplierMessengerController::class, 'index'])->name('messenger.index');
@@ -161,6 +171,20 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
 //main supplier
 Route::middleware('auth')->prefix('supplier')->group(function () {
+
+    // MATERIALS
+    Route::get('materials', [MaterialController::class, 'index'])->name('supplier.materials.index');
+    Route::get('materials/create', [MaterialController::class, 'create'])->name('supplier.materials.create');
+    Route::post('materials', [MaterialController::class, 'store'])->name('supplier.materials.store');
+    Route::get('materials/{material}/edit', [MaterialController::class, 'edit'])->name('supplier.materials.edit');
+    Route::put('materials/{material}', [MaterialController::class, 'update'])->name('supplier.materials.update');
+    Route::delete('materials/{material}', [MaterialController::class, 'destroy'])->name('supplier.materials.destroy');
+
+    Route::post('materials/groups', [MaterialController::class, 'storeGroup'])->name('supplier.material-groups.store');
+    Route::put('materials/groups/{group}', [MaterialController::class, 'updateGroup'])->name('supplier.material-groups.update');
+    Route::delete('materials/groups/{group}', [MaterialController::class, 'destroyGroup'])->name('supplier.material-groups.destroy');
+
+
 
     Route::get('orders', [ManufacturerOrderController::class, 'index'])->name('supplier.orders');
     Route::get('orders/{id}', [ManufacturerOrderController::class, 'show'])->name('supplier.orders.show');

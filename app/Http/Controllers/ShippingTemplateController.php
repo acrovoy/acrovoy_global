@@ -88,64 +88,64 @@ class ShippingTemplateController extends Controller
      * Store new shipping template
      */
     public function store(Request $request)
-    {
+{
+    $this->authorize('create', ShippingTemplate::class);
 
-     $this->authorize('create', ShippingTemplate::class);
+    $data = $request->validate([
+        'title' => 'required|array',
+        'description' => 'nullable|array',
+        'price' => 'required|numeric|min:0',
+        'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
+        'delivery_type' => 'required|in:self_pickup,curbside_delivery,door_to_door,white_glove,delivery_assembly,delivery_installation,custom',
+        'delivery_time' => 'nullable|string|max:255',
+        'locations' => 'nullable|array',
+        'locations.*' => 'exists:locations,id',
+    ]);
 
-        $data = $request->validate([
-            'title' => 'required|array',
-            'description' => 'nullable|array',
-            'price' => 'required|numeric|min:0',
-            'delivery_time' => 'nullable|string|max:255',
-            'locations' => 'nullable|array',
-            'locations.*' => 'exists:locations,id',
-            'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
+    DB::transaction(function () use ($data) {
+
+        $entity = $this->context->entity();
+
+        abort_unless($entity, 404);
+
+        // 1️⃣ Создаем базовую запись шаблона
+        $template = ShippingTemplate::create([
+            'provider_type' => $entity::class,
+            'provider_id'   => $entity->getKey(),
+            'price' => $data['price'],
+            'price_unit' => $data['price_unit'],
+            'delivery_type' => $data['delivery_type'],
+            'delivery_time' => $data['delivery_time'] ?? null,
+            'created_by' => auth()->id(),
         ]);
 
-        DB::transaction(function () use ($data) {
+        // 2️⃣ Создаем мультиязычные переводы
+        foreach ($data['title'] as $locale => $title) {
 
-           
-
-
-
-            $entity = $this->context->entity();
-
-abort_unless($entity, 404);
-
-
-            // 1️⃣ Создаем базовую запись шаблона
-           $template = ShippingTemplate::create([
-    'provider_type' => $entity::class,
-    'provider_id'   => $entity->getKey(),
-                'price' => $data['price'],
-                'price_unit' => $data['price_unit'],
-                'delivery_time' => $data['delivery_time'] ?? null,
-                'created_by' => auth()->id(),
-            ]);
-
-            // 2️⃣ Создаем мультиязычные переводы
-            foreach ($data['title'] as $locale => $title) {
-
-                // ❗ если title пустой — пропускаем язык
-                if (empty($title)) {
-                    continue;
-                }
-
-                ShippingTemplateTranslation::create([
-                    'shipping_template_id' => $template->id,
-                    'locale' => $locale,
-                    'title' => $title,
-                    'description' => $data['description'][$locale] ?? null,
-                ]);
+            // ❗ если title пустой — пропускаем язык
+            if (empty($title)) {
+                continue;
             }
 
-            // 3️⃣ Привязка стран
-            $template->locations()->sync($data['locations'] ?? []);
-        });
+            ShippingTemplateTranslation::create([
+                'shipping_template_id' => $template->id,
+                'locale' => $locale,
+                'title' => $title,
+                'description' => $data['description'][$locale] ?? null,
+            ]);
+        }
 
-        return redirect()->route('supplier.shipping-templates.index')
-            ->with('success', 'Shipping template created successfully');
-    }
+        // 3️⃣ Привязка стран / регионов / городов
+        $template->locations()->sync($data['locations'] ?? []);
+    });
+
+    return redirect()->route('supplier.shipping-templates.index')
+        ->with('success', 'Shipping template created successfully');
+}
+
+
+
+
 
     /**
      * Show edit form
@@ -197,73 +197,68 @@ $this->authorize('update', $shippingTemplate);
      * Update existing template
      */
     public function update(Request $request, ShippingTemplate $shippingTemplate)
-    {
+{
+    $this->authorize('update', $shippingTemplate);
 
-        
+    // Валидация
+    $data = $request->validate([
+        'title' => 'required|array',
+        'description' => 'nullable|array',
+        'price' => 'required|numeric|min:0',
+        'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
+        'delivery_type' => 'required|in:self_pickup,curbside_delivery,door_to_door,white_glove,delivery_assembly,delivery_installation,custom',
+        'delivery_time' => 'nullable|string|max:255',
+        'locations' => 'nullable|array',
+        'locations.*' => 'exists:locations,id',
+    ]);
 
- $this->authorize('update', $shippingTemplate);
+    DB::transaction(function () use ($shippingTemplate, $data) {
 
-
-
-
-
-        // Валидация
-        $data = $request->validate([
-            'title' => 'required|array',
-            'description' => 'nullable|array',
-            'price' => 'required|numeric|min:0',
-            'delivery_time' => 'nullable|string|max:255',
-            'locations' => 'nullable|array',
-            'locations.*' => 'exists:locations,id',
-            'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
-
+        // 1️⃣ Обновляем базовые поля шаблона
+        $shippingTemplate->update([
+            'price' => $data['price'],
+            'price_unit' => $data['price_unit'],
+            'delivery_type' => $data['delivery_type'],
+            'delivery_time' => $data['delivery_time'] ?? null,
+            'updated_by' => auth()->id(),
         ]);
 
-        DB::transaction(function () use ($shippingTemplate, $data) {
+        // 2️⃣ Обновляем мультиязычные переводы
+        foreach ($data['title'] as $locale => $title) {
 
-            // 1️⃣ Обновляем базовые поля шаблона
-            $shippingTemplate->update([
-                'price' => $data['price'],
-                'price_unit' => $data['price_unit'],
-                'delivery_time' => $data['delivery_time'] ?? null,
-                'updated_by' => auth()->id(),
-            ]);
-
-            // 2️⃣ Обновляем мультиязычные переводы
-            foreach ($data['title'] as $locale => $title) {
-
-
-                // ❗ если title пустой — пропускаем язык
-                if (empty($title)) {
-                    continue;
-                }
-
-                // Если перевод уже существует, обновляем
-                $translation = $shippingTemplate->translations()->where('locale', $locale)->first();
-                if ($translation) {
-                    $translation->update([
-                        'title' => $title,
-                        'description' => $data['description'][$locale] ?? null,
-                    ]);
-                } else {
-                    // Если перевода нет, создаем
-                    ShippingTemplateTranslation::create([
-                        'shipping_template_id' => $shippingTemplate->id,
-                        'locale' => $locale,
-                        'title' => $title,
-                        'description' => $data['description'][$locale] ?? null,
-                    ]);
-                }
+            // ❗ если title пустой — пропускаем язык
+            if (empty($title)) {
+                continue;
             }
 
-            // 3️⃣ Обновляем привязку стран
-            $shippingTemplate->locations()->sync($data['locations'] ?? []);
-        });
+            // Если перевод уже существует, обновляем
+            $translation = $shippingTemplate->translations()
+                ->where('locale', $locale)
+                ->first();
 
-        return redirect()->route('supplier.shipping-templates.index')
-            ->with('success', 'Shipping template updated successfully');
-    }
+            if ($translation) {
+                $translation->update([
+                    'title' => $title,
+                    'description' => $data['description'][$locale] ?? null,
+                ]);
+            } else {
+                // Если перевода нет, создаем
+                ShippingTemplateTranslation::create([
+                    'shipping_template_id' => $shippingTemplate->id,
+                    'locale' => $locale,
+                    'title' => $title,
+                    'description' => $data['description'][$locale] ?? null,
+                ]);
+            }
+        }
 
+        // 3️⃣ Обновляем привязку стран
+        $shippingTemplate->locations()->sync($data['locations'] ?? []);
+    });
+
+    return redirect()->route('supplier.shipping-templates.index')
+        ->with('success', 'Shipping template updated successfully');
+}
     /**
      * Delete template
      */

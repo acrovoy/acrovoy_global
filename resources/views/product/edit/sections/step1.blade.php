@@ -270,10 +270,14 @@
 
 
 {{-- ================= Full Product Description ================= --}}
-<div x-data="{ open: false }" class="border rounded p-4 mb-4 bg-white shadow-sm">
-    <h4 class="font-semibold mb-3">Full Product Description
+<div
+    x-data="productDescriptionEditor()"
+    class="border rounded p-4 mb-4 bg-white shadow-sm"
+>
+    <h4 class="font-semibold mb-3">
+        Full Product Description
 
-    <x-help-tooltip width="w-80">
+        <x-help-tooltip width="w-80">
             <div class="space-y-2 leading-relaxed">
 
                 <div class="font-semibold text-white">
@@ -310,116 +314,351 @@
 
             </div>
         </x-help-tooltip>
-        
     </h4>
 
     <div class="flex-col md:flex-row gap-2">
+
         @foreach($languages as $index => $language)
+
             @php
                 $flagPath = asset('images/flags/svg/' . strtolower($language->code) . '.svg');
+
+                $description = old(
+                    'description.' . $language->code,
+                    $translations[$language->code]['description'] ?? ''
+                );
             @endphp
 
             @if($index == 0)
-                <div class="flex-1 flex items-center gap-2">
-                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <x-char-counter :max="2000">
+                {{-- =====================================================
+                    DEFAULT LANGUAGE
+                ====================================================== --}}
+                <div class="flex-1 flex items-start gap-2">
 
-                        <div x-data="charCounter(2000)"
-                             class="relative w-full">
+                    <img
+                        src="{{ $flagPath }}"
+                        alt="{{ $language->code }}"
+                        class="w-5 h-5 rounded mt-3"
+                    >
 
-                            <textarea
-                                name="description[{{ $language->code }}]"
-                                rows="5"
-                                maxlength="2000"
-                                class="input mb-2 w-full"
-                                placeholder="Full Description ({{ $language->code }})"
-                                @input="update($event.target)"
-                                x-init="update($el)"
-                                style="padding-right:4rem;"
-                            >{{ old('description.' . $language->code, $translations[$language->code]['description'] ?? '') }}</textarea>
+                    <div class="flex-1">
 
+                        {{-- Toolbar --}}
+                        <div class="flex items-center gap-1 border border-gray-300 border-b-0 rounded-t-lg bg-gray-50 px-2 py-1">
 
-                            <div class="absolute bottom-2 right-3 text-xs pointer-events-none"
-                                 :class="color">
+                            {{-- Bold --}}
+                            <button
+                                type="button"
+                                @click="format('bold', '{{ $language->code }}')"
+                                class="w-8 h-8 flex items-center justify-center rounded text-sm font-bold text-gray-700 hover:bg-gray-200"
+                                title="Bold"
+                            >
+                                B
+                            </button>
 
-                                <span x-text="count"></span>/<span x-text="max"></span>
-
-                            </div>
+                            {{-- Bullet list --}}
+                            <button
+                                type="button"
+                                @click="format('insertUnorderedList', '{{ $language->code }}')"
+                                class="w-8 h-8 flex items-center justify-center rounded text-gray-700 hover:bg-gray-200"
+                                title="Bullet list"
+                            >
+                                <svg
+                                    class="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                                    />
+                                </svg>
+                            </button>
 
                         </div>
 
-                    </x-char-counter>
+                        {{-- Editor --}}
+                        <div
+                            id="description-editor-{{ $language->code }}"
+                            contenteditable="true"
+                            data-language="{{ $language->code }}"
+                            class="description-editor w-full min-h-[130px] border border-gray-300 rounded-b-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                            style="padding-right:4rem;"
+                            @input="sync('{{ $language->code }}')"
+                        >{!! $description !!}</div>
 
-                    
+                        {{-- Hidden textarea submitted to Laravel --}}
+                        <textarea
+                            name="description[{{ $language->code }}]"
+                            id="description-input-{{ $language->code }}"
+                            class="hidden"
+                            maxlength="2000"
+                        >{{ $description }}</textarea>
+
+                        {{-- Counter --}}
+                        <div class="flex justify-end mt-1">
+                            <div
+                                class="text-xs"
+                                id="description-counter-{{ $language->code }}"
+                            >
+                                <span>0</span>/2000
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
+
             @else
-                <div x-show="open"
-                     x-collapse
-                     class="flex-1 flex items-center gap-2 mb-2">
-                    <img src="{{ $flagPath }}" alt="{{ $language->code }}" class="w-5 h-5 rounded">
 
-                    <x-char-counter :max="2000">
+                {{-- =====================================================
+                    OTHER LANGUAGES
+                ====================================================== --}}
+                <div
+                    x-show="open"
+                    x-collapse
+                    class="flex-1 flex items-start gap-2 mb-2"
+                >
 
-                        <div x-data="charCounter(2000)"
-                             class="relative w-full">
+                    <img
+                        src="{{ $flagPath }}"
+                        alt="{{ $language->code }}"
+                        class="w-5 h-5 rounded mt-3"
+                    >
 
-                            <textarea
-                                name="description[{{ $language->code }}]"
-                                rows="5"
-                                maxlength="2000"
-                                class="input w-full"
-                                placeholder="Full Description (optional)"
-                                @input="update($event.target)"
-                                x-init="update($el)"
-                                style="padding-right:4rem;"
-                            >{{ old('description.' . $language->code, $translations[$language->code]['description'] ?? '') }}</textarea>
+                    <div class="flex-1">
 
+                        {{-- Toolbar --}}
+                        <div class="flex items-center gap-1 border border-gray-300 border-b-0 rounded-t-lg bg-gray-50 px-2 py-1">
 
-                            <div class="absolute bottom-2 right-3 text-xs pointer-events-none"
-                                 :class="color">
+                            {{-- Bold --}}
+                            <button
+                                type="button"
+                                @click="format('bold', '{{ $language->code }}')"
+                                class="w-8 h-8 flex items-center justify-center rounded text-sm font-bold text-gray-700 hover:bg-gray-200"
+                                title="Bold"
+                            >
+                                B
+                            </button>
 
-                                <span x-text="count"></span>/<span x-text="max"></span>
-
-                            </div>
+                            {{-- Bullet list --}}
+                            <button
+                                type="button"
+                                @click="format('insertUnorderedList', '{{ $language->code }}')"
+                                class="w-8 h-8 flex items-center justify-center rounded text-gray-700 hover:bg-gray-200"
+                                title="Bullet list"
+                            >
+                                <svg
+                                    class="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                                    />
+                                </svg>
+                            </button>
 
                         </div>
 
-                    </x-char-counter>
+                        {{-- Editor --}}
+                        <div
+                            id="description-editor-{{ $language->code }}"
+                            contenteditable="true"
+                            data-language="{{ $language->code }}"
+                            class="description-editor w-full min-h-[130px] border border-gray-300 rounded-b-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                            @input="sync('{{ $language->code }}')"
+                        >{!! $description !!}</div>
 
-                    
+                        {{-- Hidden textarea --}}
+                        <textarea
+                            name="description[{{ $language->code }}]"
+                            id="description-input-{{ $language->code }}"
+                            class="hidden"
+                            maxlength="2000"
+                        >{{ $description }}</textarea>
+
+                        {{-- Counter --}}
+                        <div class="flex justify-end mt-1">
+                            <div
+                                class="text-xs"
+                                id="description-counter-{{ $language->code }}"
+                            >
+                                <span>0</span>/2000
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
+
             @endif
+
         @endforeach
+
     </div>
 
     @if(count($languages) > 1)
 
-    <div class="flex justify-between mt-1">
+        <div class="flex justify-between mt-1">
 
-        <div class="text-xs text-red-500 italic">
-            * English version required
-        </div>
+            <div class="text-xs text-red-500 italic">
+                * English version required
+            </div>
 
-
-        <button type="button"
+            <button
+                type="button"
                 @click="open = !open"
-                class="mt-2 text-xs text-blue-600 hover:underline flex items-center gap-1">
-            Other Languages
-            <svg :class="{ 'rotate-180': open }"
-                 class="w-4 h-4 transition-transform"
-                 fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7" />
-            </svg>
-        </button>
+                class="mt-2 text-xs text-blue-600 hover:underline flex items-center gap-1"
+            >
+                Other Languages
+
+                <svg
+                    :class="{ 'rotate-180': open }"
+                    class="w-4 h-4 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                    />
+                </svg>
+            </button>
+
         </div>
+
     @endif
 </div>
+
+
+{{-- =========================================================
+    DESCRIPTION EDITOR
+========================================================= --}}
+<script>
+function productDescriptionEditor() {
+    return {
+        open: false,
+
+        init() {
+            document.querySelectorAll('.description-editor').forEach(editor => {
+                const language = editor.dataset.language;
+
+                this.sync(language);
+            });
+        },
+
+        format(command, language) {
+            const editor = document.getElementById(
+                'description-editor-' + language
+            );
+
+            if (!editor) {
+                return;
+            }
+
+            editor.focus();
+
+            document.execCommand(command, false, null);
+
+            this.sync(language);
+        },
+
+        sync(language) {
+            const editor = document.getElementById(
+                'description-editor-' + language
+            );
+
+            const input = document.getElementById(
+                'description-input-' + language
+            );
+
+            const counter = document.getElementById(
+                'description-counter-' + language
+            );
+
+            if (!editor || !input) {
+                return;
+            }
+
+            input.value = editor.innerHTML;
+
+            const text = editor.innerText
+                .replace(/\u00a0/g, ' ')
+                .trim();
+
+            const count = text.length;
+
+            if (counter) {
+                const countElement = counter.querySelector('span');
+
+                if (countElement) {
+                    countElement.textContent = count;
+                }
+
+                counter.classList.toggle(
+                    'text-red-500',
+                    count > 2000
+                );
+
+                counter.classList.toggle(
+                    'text-gray-400',
+                    count <= 2000
+                );
+            }
+        }
+    }
+}
+</script>
+
+
+<style>
+.description-editor ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+}
+
+.description-editor ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+}
+
+.description-editor li {
+    margin: 0.15rem 0;
+}
+
+.description-editor strong,
+.description-editor b {
+    font-weight: 700;
+}
+
+.description-editor:empty:before {
+    content: "Full Description...";
+    color: #9ca3af;
+    pointer-events: none;
+}
+</style>
+
+
+
+
+
+
+
+
 
 
 {{-- SKU --}}

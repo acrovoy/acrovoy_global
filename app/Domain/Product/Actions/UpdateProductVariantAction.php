@@ -30,7 +30,7 @@ class UpdateProductVariantAction
 
             $product->update([
                 'lead_time' => $data->leadTime,
-                'customization' => $data->customization,
+                
                 
             ]);
 

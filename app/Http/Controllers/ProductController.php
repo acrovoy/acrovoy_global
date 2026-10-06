@@ -456,13 +456,7 @@ class ProductController extends Controller
                 );
             }
 
-
-
-            $updateProductMaterialsAction->execute(
-                product: $product,
-                materialsSelected: $request->materials_selected ?? '',
-
-            );
+           
 
             return redirect()
                 ->route('supplier.products.edit-step', [
@@ -510,33 +504,15 @@ class ProductController extends Controller
         } elseif ($step == 6) {
 
 
-            // 🔹 Сохраняем/обновляем Shipping Dimensions (габариты и вес упаковки)
-            $shippingData = $request->input('shipping', []);
+        $product->update([
+    'customization' => $request->boolean('customization'),
+]);
 
-            if (!empty($shippingData)) {
-                $product->shippingDimensions()->updateOrCreate(
-                    [
-                        'dimensionable_type' => Product::class,
-                        'dimensionable_id'   => $product->id,
-                    ], // Laravel автоматически подставит product_id
-                    [
-                        'length'       => $shippingData['length'] ?? 0,
-                        'width'        => $shippingData['width'] ?? 0,
-                        'height'       => $shippingData['height'] ?? 0,
-                        'weight'       => $shippingData['weight'] ?? 0,
-                        'package_type' => $shippingData['package_type'] ?? 'box',
-                    ]
-                );
-            }
-            $dto = $dtoFactory->fromUpdateCountryRequest($request);
-
-            $updateCountryShippingaction->execute(
+             $updateProductMaterialsAction->execute(
                 product: $product,
-                data: $dto,
-                shippingTemplates: $request->shipping_templates ?? [],
+                materialsSelected: $request->materials_selected ?? '',
 
             );
-
 
             return redirect()
                 ->route('supplier.products.edit-step', [
@@ -671,6 +647,46 @@ class ProductController extends Controller
                 data: $dto,
 
             );
+
+            return redirect()
+                ->route('supplier.products.edit-step', [
+                    'product' => $product->id,
+                    'step' => $nextstep,
+                ]);
+
+
+        } elseif ($step == 8) {
+
+
+            // 🔹 Сохраняем/обновляем Shipping Dimensions (габариты и вес упаковки)
+            $shippingData = $request->input('shipping', []);
+
+            if (!empty($shippingData)) {
+                $product->shippingDimensions()->updateOrCreate(
+                    [
+                        'dimensionable_type' => Product::class,
+                        'dimensionable_id'   => $product->id,
+                    ], // Laravel автоматически подставит product_id
+                    [
+                        'length'       => $shippingData['length'] ?? 0,
+                        'width'        => $shippingData['width'] ?? 0,
+                        'height'       => $shippingData['height'] ?? 0,
+                        'weight'       => $shippingData['weight'] ?? 0,
+                        'package_type' => $shippingData['package_type'] ?? 'box',
+                    ]
+                );
+            }
+            $dto = $dtoFactory->fromUpdateCountryRequest($request);
+
+            $updateCountryShippingaction->execute(
+                product: $product,
+                data: $dto,
+                shippingTemplates: $request->shipping_templates ?? [],
+
+            );
+
+
+            
         }
 
         return redirect()

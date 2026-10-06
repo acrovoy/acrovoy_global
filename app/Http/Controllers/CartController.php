@@ -272,14 +272,13 @@ public function __construct(
         Request $request,
         Product $product
     ) {
-        abort_unless(
-            auth()->check() && $this->context->isBuyer(),
-            403
-        );
+
+    
+     
 
         $buyer = $this->context->buyer();
 
-        abort_unless($buyer, 403);
+        
 
 
         /**

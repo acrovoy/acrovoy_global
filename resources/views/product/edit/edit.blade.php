@@ -76,6 +76,14 @@
         </div>
         @endif
 
+        @if($steps == 8)
+        <div>
+
+            @include('product.edit.sections.step8')
+
+        </div>
+        @endif
+
 
 
 

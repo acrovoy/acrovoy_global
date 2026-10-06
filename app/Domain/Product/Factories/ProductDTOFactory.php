@@ -101,7 +101,7 @@ class ProductDTOFactory
 
      return new ProductVariantDTO(
     leadTime: $request->lead_time,
-    customization: $request->customization,
+    
 );
 
     }

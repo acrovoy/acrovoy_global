@@ -10,8 +10,15 @@ const selectedMaterialsContainer = document.getElementById('selected-materials')
 const materialsOptions = document.querySelectorAll('.material-option');
 const selectedMaterialsInput = document.getElementById('materialsSelectedInput');
 const materialSearch = document.getElementById('materialSearch');
+const materialsPagination = document.getElementById('materials-pagination');
 
 let selectedMaterials = [];
+
+/**
+ * 🔹 PAGINATION
+ */
+const MATERIALS_PER_PAGE = 30;
+let currentMaterialsPage = 1;
 
 /**
  * 🔹 INIT FROM HIDDEN INPUT (EDIT MODE)
@@ -86,22 +93,251 @@ materialsOptions.forEach(btn => {
 });
 
 /**
+ * 🔹 Get filtered materials
+ *
+ * Search works across ALL materials,
+ * not only the current page.
+ */
+function getFilteredMaterials() {
+    const q = materialSearch
+        ? materialSearch.value.trim().toLowerCase()
+        : '';
+
+    return Array.from(materialsOptions).filter(btn => {
+        const name = (btn.dataset.name || '').toLowerCase();
+
+        return !q || name.includes(q);
+    });
+}
+
+/**
+ * 🔹 Render pagination
+ */
+function renderMaterialsPagination(totalItems) {
+
+    if (!materialsPagination) return;
+
+    materialsPagination.innerHTML = '';
+
+    const totalPages = Math.ceil(totalItems / MATERIALS_PER_PAGE);
+
+    /*
+     * No pagination when all materials
+     * fit on one page.
+     */
+    if (totalPages <= 1) {
+        materialsPagination.classList.add('hidden');
+        return;
+    }
+
+    materialsPagination.classList.remove('hidden');
+
+    /**
+     * Previous
+     */
+    const previousButton = document.createElement('button');
+
+    previousButton.type = 'button';
+    previousButton.className = `
+        inline-flex h-9 min-w-9 items-center justify-center
+        rounded-lg border border-gray-200 bg-white
+        px-3 text-xs font-medium text-gray-600
+        transition hover:border-gray-300 hover:bg-gray-50
+        disabled:cursor-not-allowed disabled:opacity-40
+    `;
+
+    previousButton.textContent = 'Previous';
+    previousButton.disabled = currentMaterialsPage === 1;
+
+    previousButton.addEventListener('click', () => {
+        if (currentMaterialsPage > 1) {
+            currentMaterialsPage--;
+            renderMaterials();
+        }
+    });
+
+    materialsPagination.appendChild(previousButton);
+
+    /**
+     * Page numbers
+     */
+    for (let page = 1; page <= totalPages; page++) {
+
+        const pageButton = document.createElement('button');
+
+        pageButton.type = 'button';
+
+        pageButton.className = `
+            inline-flex h-9 min-w-9 items-center justify-center
+            rounded-lg border px-3 text-xs font-medium
+            transition
+            ${page === currentMaterialsPage
+                ? 'border-gray-900 bg-gray-900 text-white'
+                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+            }
+        `;
+
+        pageButton.textContent = page;
+
+        pageButton.addEventListener('click', () => {
+            currentMaterialsPage = page;
+            renderMaterials();
+        });
+
+        materialsPagination.appendChild(pageButton);
+    }
+
+    /**
+     * Next
+     */
+    const nextButton = document.createElement('button');
+
+    nextButton.type = 'button';
+    nextButton.className = `
+        inline-flex h-9 min-w-9 items-center justify-center
+        rounded-lg border border-gray-200 bg-white
+        px-3 text-xs font-medium text-gray-600
+        transition hover:border-gray-300 hover:bg-gray-50
+        disabled:cursor-not-allowed disabled:opacity-40
+    `;
+
+    nextButton.textContent = 'Next';
+    nextButton.disabled = currentMaterialsPage === totalPages;
+
+    nextButton.addEventListener('click', () => {
+        if (currentMaterialsPage < totalPages) {
+            currentMaterialsPage++;
+            renderMaterials();
+        }
+    });
+
+    materialsPagination.appendChild(nextButton);
+}
+
+/**
+ * 🔹 Render materials
+ *
+ * Handles:
+ * - pagination
+ * - search
+ * - material groups
+ * - material sections
+ * - divider
+ */
+function renderMaterials() {
+
+    const filteredMaterials = getFilteredMaterials();
+
+    const totalItems = filteredMaterials.length;
+    const totalPages = Math.ceil(totalItems / MATERIALS_PER_PAGE);
+
+    /*
+     * Keep current page inside valid range.
+     */
+    if (totalPages === 0) {
+        currentMaterialsPage = 1;
+    } else if (currentMaterialsPage > totalPages) {
+        currentMaterialsPage = totalPages;
+    }
+
+    /*
+     * Materials visible on current page.
+     */
+    const start = (currentMaterialsPage - 1) * MATERIALS_PER_PAGE;
+    const end = start + MATERIALS_PER_PAGE;
+
+    const visibleMaterials = new Set(
+        filteredMaterials
+            .slice(start, end)
+            .map(btn => btn.dataset.id)
+    );
+
+    /**
+     * Show / hide individual materials.
+     */
+    materialsOptions.forEach(btn => {
+
+        const id = btn.dataset.id;
+
+        /*
+         * Native hidden property is used here.
+         * It does not modify the original flex/grid
+         * display behaviour of the material button.
+         */
+        btn.hidden = !visibleMaterials.has(id);
+    });
+
+    /**
+     * Show / hide material groups.
+     */
+    document.querySelectorAll('.material-group').forEach(group => {
+
+        const materials = group.querySelectorAll('.material-option');
+
+        let visibleCount = 0;
+
+        materials.forEach(btn => {
+            if (!btn.hidden) {
+                visibleCount++;
+            }
+        });
+
+        group.hidden = visibleCount === 0;
+    });
+
+    /**
+     * Show / hide entire sections.
+     */
+    document.querySelectorAll('[data-material-section]').forEach(section => {
+
+        const visibleGroups = Array.from(
+            section.querySelectorAll('.material-group')
+        ).filter(group => !group.hidden);
+
+        section.hidden = visibleGroups.length === 0;
+    });
+
+    /**
+     * Hide divider when only one section remains visible.
+     */
+    const divider = document.querySelector(
+        '#materials-options > .relative.my-10'
+    );
+
+    if (divider) {
+
+        const visibleSections = Array.from(
+            document.querySelectorAll('[data-material-section]')
+        ).filter(section => !section.hidden);
+
+        divider.hidden = visibleSections.length < 2;
+    }
+
+    /**
+     * Render pagination buttons.
+     */
+    renderMaterialsPagination(totalItems);
+}
+
+/**
  * 🔹 Search
  */
 materialSearch?.addEventListener('input', () => {
-    const q = materialSearch.value.toLowerCase();
 
-    materialsOptions.forEach(btn => {
-        btn.style.display = btn.dataset.name.toLowerCase().includes(q)
-            ? 'inline-flex'
-            : 'none';
-    });
+    /*
+     * Always return to first page
+     * when search query changes.
+     */
+    currentMaterialsPage = 1;
+
+    renderMaterials();
 });
 
 /**
  * 🔹 BOOTSTRAP
  */
 initSelectedMaterials();
+renderMaterials();
 
 
 

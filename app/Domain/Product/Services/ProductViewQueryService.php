@@ -295,6 +295,58 @@ class ProductViewQueryService
             });
 
 
+        /*
+|--------------------------------------------------------------------------
+| SHIPPING OPTIONS FOR PRODUCT CARD
+|--------------------------------------------------------------------------
+*/
+
+$deliveryTypeLabels = [
+    'self_pickup' => 'Self Pickup',
+    'curbside_delivery' => 'Curbside Delivery',
+    'door_to_door' => 'Door-to-Door Delivery',
+    'white_glove' => 'White Glove Delivery',
+    'delivery_assembly' => 'Delivery & Assembly',
+    'delivery_installation' => 'Delivery & Installation',
+    'custom' => 'Custom Delivery',
+];
+
+$deliveryOptions = $shippingTemplates
+    ->values()
+    ->map(function ($template, $index) use ($deliveryTypeLabels) {
+
+        $price = null;
+
+        if ($template->computed_price !== null && $template->computed_price > 0) {
+            $price = '$' . number_format($template->computed_price, 2);
+        }
+
+        $deliveryType = $deliveryTypeLabels[$template->delivery_type]
+            ?? $template->delivery_type;
+
+        $title = $template->title;
+
+        if ($deliveryType) {
+            $title .= ' · ' . $deliveryType;
+        }
+
+        return [
+            'title' => $title,
+            'price' => $price,
+            'description' => $template->description,
+            'badge' => $template->delivery_time
+                ? $template->delivery_time . ' days'
+                : null,
+            'expanded' => $index < 2,
+            'template' => $template,
+        ];
+    });
+
+$hasHiddenDelivery = $deliveryOptions->count() > 2;
+
+
+
+
         $reviewsCount = $product1->reviews->count();
         $rating = $reviewsCount > 0 ? round($product1->reviews->avg('rating'), 1) : 0;
         $soldCount = $product1->orders->where('status', 'completed')->sum('quantity');
@@ -340,7 +392,10 @@ class ProductViewQueryService
             'inWishlist',
             'reviewsCount',
             'measurementAttributes',
-            'customAbilityAttributes'
+            'customAbilityAttributes',
+            'deliveryOptions',
+            'hasHiddenDelivery',
+            
         );
     }
 }

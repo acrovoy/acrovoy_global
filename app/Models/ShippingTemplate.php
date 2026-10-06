@@ -23,6 +23,7 @@ class ShippingTemplate extends Model
         'description',
         'price',
         'price_unit',
+        'delivery_type',
         'delivery_time',
         'is_active',
     ];

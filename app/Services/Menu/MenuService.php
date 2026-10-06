@@ -120,6 +120,13 @@ class MenuService
                 'can' => ['salesAccess', User::class],
             ],
 
+            [
+                'type' => 'link',
+                'label' => 'Materials & Colors',
+                'route' => 'supplier.materials.index',
+                'can' => ['salesAccess', User::class],
+            ],
+
             ['type' => 'header', 'label' => 'Fulfillment'],
 
             [
@@ -234,6 +241,13 @@ class MenuService
             'label' => 'Product List',
             'route' => 'supplier.products.index',
         ],
+
+        [
+                'type' => 'link',
+                'label' => 'Materials & Colors',
+                'route' => 'supplier.materials.index',
+                
+            ],
 
         ['type' => 'header', 'label' => 'Fulfillment'],
 

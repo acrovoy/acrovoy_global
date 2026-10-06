@@ -17,8 +17,10 @@ use Illuminate\Support\Facades\DB;
 use App\Services\OrderStatusService;
 use App\Models\UserAddress;
 use App\Models\Country;
+use App\Models\Buyer;
 use App\Models\Location;
 use App\Facades\ActiveContext;
+use App\Services\Company\ActiveContextService;
 
 
 
@@ -26,6 +28,10 @@ use App\Facades\ActiveContext;
 
 class OrderController extends Controller
 {
+
+public function __construct(
+    private ActiveContextService $context,
+) {}
 
 
     public function index(Request $request)
@@ -62,9 +68,11 @@ class OrderController extends Controller
     public function checkout()
     {
 
+    $buyer = $this->context->buyer();
 
-        $cartItems = CartItem::where('buyer_type', ActiveContext::type())
-            ->where('buyer_id', ActiveContext::id())
+
+        $cartItems = CartItem::where('buyer_type', Buyer::class)
+            ->where('buyer_id', $buyer->id)
             ->with(['product.shippingTemplates.translations'])
             ->get();
 
@@ -92,8 +100,8 @@ class OrderController extends Controller
         // Получаем все адресные шаблоны пользователя (по убыванию даты)
 
         $savedAddresses = UserAddress::query()
-            ->where('user_id', ActiveContext::id())
-            ->where('user_type', ActiveContext::type())
+            ->where('user_id', Buyer::class)
+            ->where('user_type', $buyer->id)
             ->orderByDesc('updated_at')->get();
 
         // Берём последний сохранённый шаблон
@@ -129,6 +137,9 @@ class OrderController extends Controller
 
     public function rfqCheckout(Request $request, RfqOfferVersion $offerVersion)
     {
+
+    $buyer = $this->context->buyer();
+
 
         $offerVersion->load([
             'offer.participant.shippingTemplates.locations',
@@ -185,8 +196,8 @@ class OrderController extends Controller
             'product_id' => $rfq->id, // или отдельное поле rfq_id, если оно есть
             'price'      => $offerVersion->total_price,
             'quantity'   => $request->quantity,
-            'buyer_type' => ActiveContext::type(),
-            'buyer_id'   => ActiveContext::id(),
+            'buyer_type' => Buyer::class,
+            'buyer_id'   => $buyer->id,
             'created_by' => auth()->id(),
         ]);
 
@@ -195,8 +206,8 @@ class OrderController extends Controller
         $total = $offerVersion->total_price * (int) $request->quantity;
 
         $savedAddresses = UserAddress::query()
-            ->where('user_id', ActiveContext::id())
-            ->where('user_type', ActiveContext::type())
+            ->where('user_id', $buyer->id)
+            ->where('user_type', Buyer::class)
             ->orderByDesc('updated_at')->get();
 
         $lastAddress = $deliveryAddress;

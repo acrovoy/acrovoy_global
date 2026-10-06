@@ -1,19 +1,29 @@
-@extends('dashboard.admin.settings.layout')
+@extends('dashboard.layout')
 
-@section('settings-content')
+@section('dashboard-content')
 
-<div class="relative">
+<div class="flex flex-col gap-6">
 
-    {{-- PAGE HEADER --}}
-    <div class="flex justify-between items-center mb-6">
+    {{-- =========================================================
+        PAGE HEADER
+    ========================================================== --}}
+
+    <div class="flex justify-between items-center">
+
         <div>
-            <h1 class="text-xl font-semibold text-gray-900">
-                Materials
-            </h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Manage materials, groups and translations
+            <h2 class="text-2xl font-semibold text-gray-900">
+                Materials & Colors
+            </h2>
+
+            <p class="text-sm text-gray-500">
+                Browse materials organized by material groups
             </p>
         </div>
+
+
+        {{-- =====================================================
+            HEADER ACTIONS
+        ====================================================== --}}
 
         <div class="flex items-center gap-3">
             {{-- Group Management --}}
@@ -27,24 +37,28 @@
 
             {{-- Add Material --}}
             <a
-                href="{{ route('admin.settings.materials.create') }}"
+                href="{{ route('supplier.materials.create') }}"
                 class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 active:scale-[0.98] transition-all duration-150 shadow-sm"
             >
                 <span class="text-lg leading-none">+</span>
                 <span>Add Material</span>
             </a>
         </div>
+
     </div>
+
 
     <x-alerts />
 
-   {{-- =========================================================
-    MATERIAL GROUPS
-========================================================= --}}
+    
 
-<div class="flex flex-col gap-6">
+    {{-- =========================================================
+        GROUP BLOCKS
+    ========================================================== --}}
 
-    @forelse($groups as $group)
+    <div class="flex flex-col gap-6">
+
+        @foreach($groups as $group)
 
     {{-- =================================================
         GROUP BLOCK
@@ -62,23 +76,19 @@
 
                 <div class="min-w-0">
 
-                    <div class="flex items-center gap-3">
-
-                        <h3 class="text-lg font-semibold text-gray-900">
-                            {{ $group->translatedName() ?? $group->slug }}
-                        </h3>
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        {{ $group->translatedName() ?? $group->slug }}
 
                         {{-- MATERIAL COUNT --}}
                         <span
                             class="shrink-0 inline-flex items-center
                                    px-2.5 py-1 rounded-md
-                                   bg-gray-100 text-gray-600 text-xs"
+                                   bg-gray-100 text-gray-600 text-xs ml-2"
                         >
                             {{ $group->materials->count() }}
                             {{ $group->materials->count() === 1 ? 'material' : 'materials' }}
                         </span>
-
-                    </div>
+                    </h3>
 
                     @if($group->translatedDescription())
 
@@ -93,46 +103,13 @@
                 <div>
 
                     {{-- BRAND --}}
-@if($group->brand)
+                    @if($group->brand)
 
-   <div class="text-sm text-gray-500">
+                        <div class="text-sm text-gray-500 mt-3">
+                            Brand: {{ $group->brand }}
+                        </div>
 
-    <div>
-        @if($group->brand_url)
-
-            <a
-                href="{{ $group->brand_url }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-gray-700 hover:text-gray-900 hover:underline transition"
-            >
-                {{ $group->brand }}
-            </a>
-
-        @else
-
-            <span class="text-gray-700">
-                {{ $group->brand }}
-            </span>
-
-        @endif
-    </div>
-
-    @if($group->logo?->cdn_url)
-
-        <div class="mt-2 flex justify-center">
-            <img
-                src="{{ $group->logo->cdn_url }}"
-                alt="{{ $group->brand }}"
-                class="w-12 h-12 object-contain"
-            >
-        </div>
-
-    @endif
-
-</div>
-
-@endif
+                    @endif
 
                 </div>
 
@@ -167,7 +144,7 @@
                         ====================================== --}}
 
                         <a
-                            href="{{ route('admin.settings.materials.edit', $material) }}"
+                            href="{{ route('supplier.materials.edit', $material) }}"
                             class="group block"
                         >
 
@@ -188,16 +165,34 @@
                                        group-hover:shadow-sm"
                             >
 
-                                <img
-                                    src="{{ $material->photo?->cdn_url ?? asset('images/no-image.png') }}"
-                                    alt="{{ $material->name ?: $material->slug }}"
-                                    class="w-full
-                                           h-full
-                                           object-cover
-                                           transition-transform
-                                           duration-300
-                                           group-hover:scale-[1.03]"
-                                >
+                                @if($material->photo?->cdn_url)
+
+                                    <img
+                                        src="{{ $material->photo->cdn_url }}"
+                                        alt="{{ $material->name ?: $material->slug }}"
+                                        class="w-full
+                                               h-full
+                                               object-cover
+                                               transition-transform
+                                               duration-300
+                                               group-hover:scale-[1.03]"
+                                    >
+
+                                @else
+
+                                    <div
+                                        class="w-full
+                                               h-full
+                                               flex
+                                               items-center
+                                               justify-center
+                                               text-gray-400
+                                               text-sm"
+                                    >
+                                        No photo
+                                    </div>
+
+                                @endif
 
                             </div>
 
@@ -209,16 +204,16 @@
                             <div class="mt-1">
 
                                 <div
-    class="text-xs
-           font-medium
-           text-gray-900
-           text-center
-           transition-colors
-           duration-150
-           group-hover:text-gray-600"
->
-    {{ $material->name ?: $material->slug }}
-</div>
+                                    class="text-xs
+                                           font-medium
+                                           text-gray-900
+                                           text-center
+                                           transition-colors
+                                           duration-150
+                                           group-hover:text-gray-600"
+                                >
+                                    {{ $material->name ?: $material->slug }}
+                                </div>
 
                             </div>
 
@@ -246,33 +241,15 @@
 
     </div>
 
-@empty
-
-    {{-- =================================================
-        NO GROUPS
-    ================================================== --}}
-
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-
-        <div class="px-6 py-12 text-center">
-
-            <h3 class="text-sm font-medium text-gray-900">
-                No material groups
-            </h3>
-
-            <p class="mt-1 text-sm text-gray-500">
-                Create a material group to start organizing materials.
-            </p>
-
-        </div>
+@endforeach
 
     </div>
 
-@endforelse
-
 </div>
 
-   {{-- MATERIAL GROUP DRAWER --}}
+
+
+ {{-- MATERIAL GROUP DRAWER --}}
 <div id="materialGroupDrawer" class="fixed inset-0 z-50 hidden">
 
     {{-- BACKDROP --}}
@@ -345,46 +322,11 @@
 
                                     @if($group->brand)
 
-    <div class="flex items-center gap-2 mt-1">
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            Brand: {{ $group->brand }}
+                                        </p>
 
-        @if($group->logo?->cdn_url)
-
-            <img
-                src="{{ $group->logo->cdn_url }}"
-                alt="{{ $group->brand }}"
-                class="w-6 h-6 object-contain"
-            >
-
-        @endif
-
-        <p class="text-xs text-gray-500">
-
-            
-
-            @if($group->brand_url)
-
-                <a
-                    href="{{ $group->brand_url }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-gray-700 hover:text-gray-900 hover:underline transition"
-                >
-                    {{ $group->brand }}
-                </a>
-
-            @else
-
-                <span>
-                    {{ $group->brand }}
-                </span>
-
-            @endif
-
-        </p>
-
-    </div>
-
-@endif
+                                    @endif
 
                                 </div>
 
@@ -419,9 +361,8 @@
             'id' => $group->id,
             'slug' => $group->slug,
             'brand' => $group->brand,
-            'brand_url' => $group->brand_url,
             'update_url' => route(
-                'admin.settings.material-groups.update',
+                'supplier.material-groups.update',
                 $group
             ),
             'translations' => $group->translations
@@ -453,7 +394,7 @@
     <form
         id="deleteMaterialGroupForm{{ $group->id }}"
         method="POST"
-        action="{{ route('admin.settings.material-groups.destroy', $group) }}"
+        action="{{ route('supplier.material-groups.destroy', $group) }}"
     >
         @csrf
         @method('DELETE')
@@ -608,7 +549,6 @@
 
         {{-- HEADER --}}
         <div class="shrink-0 px-6 py-5 border-b bg-gray-50">
-
             <div class="flex items-start justify-between gap-4">
 
                 <div>
@@ -630,30 +570,24 @@
                 </button>
 
             </div>
-
         </div>
-
 
         {{-- FORM --}}
         <form
             method="POST"
-            action="{{ route('admin.settings.material-groups.store') }}"
-            enctype="multipart/form-data"
+            action="{{ route('supplier.material-groups.store') }}"
             class="flex flex-col flex-1 min-h-0"
         >
 
             @csrf
-
 
             {{-- BODY --}}
             <div class="flex-1 min-h-0 overflow-y-auto px-6 py-5">
 
                 <div class="space-y-5">
 
-
                     {{-- SLUG --}}
                     <div>
-
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Slug
                         </label>
@@ -671,90 +605,24 @@
                         <p class="mt-1 text-xs text-gray-400">
                             Unique identifier used internally.
                         </p>
-
                     </div>
 
 
                     {{-- BRAND --}}
-                    <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Brand
+                        </label>
 
-
-                        {{-- BRAND NAME --}}
-                        <div>
-
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Brand
-                            </label>
-
-                            <input
-                                type="text"
-                                name="brand"
-                                value="{{ old('brand') }}"
-                                placeholder="Optional"
-                                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                       focus:outline-none focus:ring-1 focus:ring-gray-400
-                                       focus:border-gray-400"
-                            >
-
-                        </div>
-
-
-                        {{-- BRAND URL --}}
-                        <div>
-
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Brand Website
-                            </label>
-
-                            <input
-                                type="url"
-                                name="brand_url"
-                                value="{{ old('brand_url') }}"
-                                placeholder="https://example.com"
-                                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                       focus:outline-none focus:ring-1 focus:ring-gray-400
-                                       focus:border-gray-400"
-                            >
-
-                            <p class="mt-1 text-xs text-gray-400">
-                                Optional. Enter the official brand website.
-                            </p>
-
-                        </div>
-
-
-                        {{-- BRAND LOGO --}}
-                        <div>
-
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Brand Logo
-                            </label>
-
-                            <input
-                                type="file"
-                                name="brand_logo"
-                                accept="image/jpeg,image/png,image/webp,image/svg+xml"
-                                class="block w-full text-sm text-gray-600
-                                       file:mr-3
-                                       file:py-2
-                                       file:px-3
-                                       file:rounded-lg
-                                       file:border-0
-                                       file:text-sm
-                                       file:font-medium
-                                       file:bg-gray-100
-                                       file:text-gray-700
-                                       hover:file:bg-gray-200
-                                       cursor-pointer"
-                            >
-
-                            <p class="mt-1 text-xs text-gray-400">
-                                Optional. JPG, PNG, WEBP or SVG. One logo only.
-                            </p>
-
-                        </div>
-
-
+                        <input
+                            type="text"
+                            name="brand"
+                            value="{{ old('brand') }}"
+                            placeholder="Optional"
+                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                                   focus:outline-none focus:ring-1 focus:ring-gray-400
+                                   focus:border-gray-400"
+                        >
                     </div>
 
 
@@ -762,7 +630,6 @@
                     <div>
 
                         <div class="mb-3">
-
                             <h4 class="text-sm font-semibold text-gray-900">
                                 Translations
                             </h4>
@@ -770,75 +637,70 @@
                             <p class="text-xs text-gray-500 mt-1">
                                 Enter the group name and description for each language.
                             </p>
-
                         </div>
-
 
                         <div class="space-y-4">
 
-                            @foreach($languages as $language)
+    @foreach($languages as $language)
 
-                                <div class="border border-gray-200 rounded-xl p-4">
+        <div class="border border-gray-200 rounded-xl p-4">
 
-                                    <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center justify-between mb-3">
 
-                                        <h5 class="text-sm font-medium text-gray-800">
-                                            {{ $language->name }}
-                                        </h5>
+                <h5 class="text-sm font-medium text-gray-800">
+                    {{ $language->name }}
+                </h5>
 
-                                        <span class="text-xs uppercase text-gray-400">
-                                            {{ $language->code }}
-                                        </span>
+                <span class="text-xs uppercase text-gray-400">
+                    {{ $language->code }}
+                </span>
 
-                                    </div>
+            </div>
 
+            {{-- NAME --}}
+            <div class="mb-3">
 
-                                    {{-- NAME --}}
-                                    <div class="mb-3">
+                <label class="block text-xs font-medium text-gray-600 mb-1">
+                    Name
+                </label>
 
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">
-                                            Name
-                                        </label>
+                <input
+                    type="text"
+                    name="translations[{{ $language->code }}][name]"
+                    value="{{ old("translations.{$language->code}.name") }}"
+                    placeholder="Group name"
+                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-1 focus:ring-gray-400
+                           focus:border-gray-400"
+                >
 
-                                        <input
-                                            type="text"
-                                            name="translations[{{ $language->code }}][name]"
-                                            value="{{ old("translations.{$language->code}.name") }}"
-                                            placeholder="Group name"
-                                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                                   focus:outline-none focus:ring-1 focus:ring-gray-400
-                                                   focus:border-gray-400"
-                                        >
+            </div>
 
-                                    </div>
+            {{-- DESCRIPTION --}}
+            <div>
 
+                <label class="block text-xs font-medium text-gray-600 mb-1">
+                    Description
+                </label>
 
-                                    {{-- DESCRIPTION --}}
-                                    <div>
+                <textarea
+                    name="translations[{{ $language->code }}][description]"
+                    rows="3"
+                    placeholder="Group description"
+                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-1 focus:ring-gray-400
+                           focus:border-gray-400 resize-none"
+                >{{ old("translations.{$language->code}.description") }}</textarea>
 
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">
-                                            Description
-                                        </label>
+            </div>
 
-                                        <textarea
-                                            name="translations[{{ $language->code }}][description]"
-                                            rows="3"
-                                            placeholder="Group description"
-                                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                                   focus:outline-none focus:ring-1 focus:ring-gray-400
-                                                   focus:border-gray-400 resize-none"
-                                        >{{ old("translations.{$language->code}.description") }}</textarea>
+        </div>
 
-                                    </div>
+    @endforeach
 
-                                </div>
-
-                            @endforeach
-
-                        </div>
+</div>
 
                     </div>
-
 
                 </div>
 
@@ -872,7 +734,6 @@
         </form>
 
     </div>
-
 </div>
 
 
@@ -957,7 +818,6 @@
         <form
             id="editMaterialGroupForm"
             method="POST"
-            enctype="multipart/form-data"
             class="flex flex-col flex-1 min-h-0"
         >
 
@@ -995,116 +855,22 @@
 
 
                     {{-- BRAND --}}
-                    <div class="space-y-3">
+                    <div>
 
-                        {{-- BRAND NAME --}}
-                        <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Brand
+                        </label>
 
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Brand
-                            </label>
-
-                            <input
-                                type="text"
-                                id="editMaterialGroupBrand"
-                                name="brand"
-                                value=""
-                                placeholder="Optional"
-                                class="w-full px-3 py-2 text-sm border border-gray-200
-                                       rounded-lg focus:outline-none focus:ring-1
-                                       focus:ring-gray-400 focus:border-gray-400"
-                            >
-
-                        </div>
-
-
-                        {{-- BRAND URL --}}
-                        <div>
-
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Brand Url
-                            </label>
-
-                            <input
-                                type="url"
-                                id="editMaterialGroupBrandUrl"
-                                name="brand_url"
-                                value=""
-                                placeholder="https://example.com"
-                                class="w-full px-3 py-2 text-sm border border-gray-200
-                                       rounded-lg focus:outline-none focus:ring-1
-                                       focus:ring-gray-400 focus:border-gray-400"
-                            >
-
-                            <p class="mt-1 text-xs text-gray-400">
-                                Optional. Enter the official brand website.
-                            </p>
-
-                        </div>
-
-
-                        {{-- BRAND LOGO --}}
-                        <div>
-
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Brand Logo
-                            </label>
-
-
-                            {{-- CURRENT LOGO --}}
-                            <div
-                                id="editMaterialGroupLogoPreview"
-                                class="hidden mb-3"
-                            >
-
-                                <div
-                                    class="relative flex items-center justify-center
-                                           w-full h-32 rounded-xl
-                                           border border-gray-200
-                                           bg-gray-50 overflow-hidden"
-                                >
-
-                                    <img
-                                        id="editMaterialGroupLogoImage"
-                                        src=""
-                                        alt="Brand Logo"
-                                        class="max-w-full max-h-full object-contain p-4"
-                                    >
-
-                                </div>
-
-                                <p class="mt-1 text-xs text-gray-400">
-                                    Current logo
-                                </p>
-
-                            </div>
-
-
-                            {{-- NEW LOGO --}}
-                            <input
-                                type="file"
-                                name="brand_logo"
-                                accept="image/jpeg,image/png,image/webp,image/svg+xml"
-                                class="block w-full text-sm text-gray-600
-                                       file:mr-3
-                                       file:py-2
-                                       file:px-3
-                                       file:rounded-lg
-                                       file:border-0
-                                       file:text-sm
-                                       file:font-medium
-                                       file:bg-gray-100
-                                       file:text-gray-700
-                                       hover:file:bg-gray-200
-                                       cursor-pointer"
-                            >
-
-                            <p class="mt-1 text-xs text-gray-400">
-                                Optional. Select a new logo to replace the current one.
-                                JPG, PNG, WEBP or SVG.
-                            </p>
-
-                        </div>
+                        <input
+                            type="text"
+                            id="editMaterialGroupBrand"
+                            name="brand"
+                            value=""
+                            placeholder="Optional"
+                            class="w-full px-3 py-2 text-sm border border-gray-200
+                                   rounded-lg focus:outline-none focus:ring-1
+                                   focus:ring-gray-400 focus:border-gray-400"
+                        >
 
                     </div>
 
@@ -1125,70 +891,70 @@
                         </div>
 
 
-                        <div class="space-y-4">
+                       <div class="space-y-4">
 
-                            @foreach($languages as $language)
+    @foreach($languages as $language)
 
-                                <div class="border border-gray-200 rounded-xl p-4">
+        <div class="border border-gray-200 rounded-xl p-4">
 
-                                    <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center justify-between mb-3">
 
-                                        <h5 class="text-sm font-medium text-gray-800">
-                                            {{ $language->name }}
-                                        </h5>
+                <h5 class="text-sm font-medium text-gray-800">
+                    {{ $language->name }}
+                </h5>
 
-                                        <span class="text-xs uppercase text-gray-400">
-                                            {{ $language->code }}
-                                        </span>
+                <span class="text-xs uppercase text-gray-400">
+                    {{ $language->code }}
+                </span>
 
-                                    </div>
-
-
-                                    {{-- NAME --}}
-                                    <div class="mb-3">
-
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">
-                                            Name
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="editMaterialGroupTranslationName{{ $language->code }}"
-                                            name="translations[{{ $language->code }}][name]"
-                                            value="{{ old("translations.{$language->code}.name") }}"
-                                            placeholder="Group name"
-                                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                                   focus:outline-none focus:ring-1 focus:ring-gray-400
-                                                   focus:border-gray-400"
-                                        >
-
-                                    </div>
+            </div>
 
 
-                                    {{-- DESCRIPTION --}}
-                                    <div>
+            {{-- NAME --}}
+            <div class="mb-3">
 
-                                        <label class="block text-xs font-medium text-gray-600 mb-1">
-                                            Description
-                                        </label>
+                <label class="block text-xs font-medium text-gray-600 mb-1">
+                    Name
+                </label>
 
-                                        <textarea
-                                            id="editMaterialGroupTranslationDescription{{ $language->code }}"
-                                            name="translations[{{ $language->code }}][description]"
-                                            rows="3"
-                                            placeholder="Group description"
-                                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
-                                                   focus:outline-none focus:ring-1 focus:ring-gray-400
-                                                   focus:border-gray-400 resize-none"
-                                        >{{ old("translations.{$language->code}.description") }}</textarea>
+                <input
+                    type="text"
+                    id="editMaterialGroupTranslationName{{ $language->code }}"
+                    name="translations[{{ $language->code }}][name]"
+                    value="{{ old("translations.{$language->code}.name") }}"
+                    placeholder="Group name"
+                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-1 focus:ring-gray-400
+                           focus:border-gray-400"
+                >
 
-                                    </div>
+            </div>
 
-                                </div>
 
-                            @endforeach
+            {{-- DESCRIPTION --}}
+            <div>
 
-                        </div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">
+                    Description
+                </label>
+
+                <textarea
+                    id="editMaterialGroupTranslationDescription{{ $language->code }}"
+                    name="translations[{{ $language->code }}][description]"
+                    rows="3"
+                    placeholder="Group description"
+                    class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg
+                           focus:outline-none focus:ring-1 focus:ring-gray-400
+                           focus:border-gray-400 resize-none"
+                >{{ old("translations.{$language->code}.description") }}</textarea>
+
+            </div>
+
+        </div>
+
+    @endforeach
+
+</div>
 
                     </div>
 
@@ -1263,9 +1029,6 @@
 
         document.getElementById('editMaterialGroupBrand').value =
             group.brand ?? '';
-
-        document.getElementById('editMaterialGroupBrandUrl').value =
-            group.brand_url ?? '';
 
 
         /*
@@ -1357,5 +1120,7 @@
     }
 
 </script>
+
+
 
 @endsection

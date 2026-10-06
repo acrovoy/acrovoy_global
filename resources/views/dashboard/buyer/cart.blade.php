@@ -1,6 +1,10 @@
 @extends('dashboard.layout')
 
 @section('dashboard-content')
+
+<x-alerts />
+
+
 <div class="mb-6">
 
     {{-- Header --}}
@@ -53,7 +57,10 @@
     </div>
 @else
     <div class="space-y-4">
+
+    
         @foreach($cartItems as $item)
+    
             <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col md:flex-row justify-between items-start md:items-center hover:shadow-md transition">
 
                 {{-- Left --}}

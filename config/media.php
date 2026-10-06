@@ -143,6 +143,16 @@ return [
                 'thumb' => 240,
             ],
         ],
+        
+        'material_photos' => [
+    'ratio' => '1:1',
+    'variants' => [
+        'large' => 800,
+        'medium' => 500,
+        'small' => 300,
+        'thumb' => 150,
+    ],
+],
 
     ],
 

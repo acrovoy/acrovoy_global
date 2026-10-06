@@ -4,23 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Domain\Material\Models\MaterialGroup;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Material extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['slug'];
+    protected $fillable = ['slug',
+    'material_group_id',];
 
-    public function products()
-{
-    return $this->belongsToMany(
-        Product::class,
-        'product_materials', // имя таблицы
-        'material_id',       // FK для этой модели
-        'product_id'         // FK для связанной модели
-    );
-}
-
+    
 public function translations()
 {
     return $this->hasMany(MaterialTranslation::class, 'material_id');
@@ -47,5 +41,26 @@ public function getNameAttribute()
         ?? $this->translations->first()->name
         ?? '';
 }
+
+public function materialGroup(): BelongsTo
+{
+    return $this->belongsTo(
+        MaterialGroup::class,
+        'material_group_id'
+    );
+}
+
+
+public function photo()
+{
+    return $this->morphOne(
+        \App\Domain\Media\Models\Media::class,
+        'model'
+    )
+    ->where('collection', 'material_photos')
+    ->where('media_role', 'material_photo')
+    ->where('is_main', true);
+}
+
    
 }

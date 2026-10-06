@@ -5,8 +5,9 @@
         3 => ['title' => 'Specs'],
         4 => ['title' => 'Gallery'],
         5 => ['title' => 'Pricing'],
-        6 => ['title' => 'Shipping'],
+        6 => ['title' => 'Customization'],
         7 => ['title' => 'Variants'],
+        8 => ['title' => 'Shipping'],
     ];
 
     $currentStep = (int) $steps;

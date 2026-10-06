@@ -13,7 +13,7 @@ return [
     'specification' => 'Specifications',
     'shipping_templates_selected_text' => 'The shipping templates selected for this product.',
     'materials_used' => 'Materials used:',
-    'MOQ' => 'MOQ',
+    'MOQ' => 'Minimum Order Quantity (MOQ)',
     'pcs' => 'pcs',
     'days' => 'days',
     'customization' => 'Customization',
@@ -33,5 +33,6 @@ return [
     'type_your_message' => 'Type your message...',   
     'yes' => 'Yes',
 'no' => 'No', 
+'key_attributes' => 'Key Attributes'
     
 ];

@@ -1,234 +1,252 @@
 
-
 @include('product.edit.partials.progress-bar', [$mode = 'edit'])
 
-<form method="POST"
-    action="{{ route('supplier.products.update', [
-          'product' => $product->id,
-          'step' => 6
-      ]) }}"
-    enctype="multipart/form-data"
-    class="" id="productForm">
+<form method="POST" action="{{ route('supplier.products.update', ['product' => $product->id, 'step' => 6]) }}" enctype="multipart/form-data" id="productForm">
     @csrf
     @method('PUT')
 
     <input type="hidden" name="user_id" value="{{ auth()->id() }}">
-    
-    
-    {{-- Country of origin --}}
-<div>
-    <h3 class="text-xl font-semibold mb-4">Country of Origin</h3>
-    <select name="country_id" class="input w-full">
-        <option value="">Select a country</option>
-        @foreach($countries as $country)
-            <option value="{{ $country->id }}" {{ $product->country_id == $country->id ? 'selected' : '' }}>
-                {{ $country->name }}
-            </option>
-        @endforeach
-    </select>
-    <p class="text-sm text-gray-500 mt-1">Выберите страну, из которой поставляется товар.</p>
-</div>
 
+    <div x-data="{ customization: '{{ old('customization', $product->customization ? 1 : 0) }}' }">
 
+        {{-- CUSTOMIZATION --}}
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Customization</label>
 
-{{-- Shipping Dimensions --}}
-<div class="mt-6 bg-white border rounded-xl p-6">
-    <h3 class="text-xl font-semibold mb-4">Shipping Dimensions
-
-    <x-help-tooltip width="w-80">
-    <div class="space-y-2 leading-relaxed">
-        <div class="font-semibold text-white">Shipping Dimensions</div>
-        <div class="text-gray-200 text-sm">
-            Укажите габариты и вес упаковки для расчёта доставки и логистики.
-            Размеры упаковки могут отличаться от реальных размеров самого товара.
-        </div>
-        <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
-            <li>Length — длина упаковки в сантиметрах</li>
-            <li>Width — ширина упаковки в сантиметрах</li>
-            <li>Height — высота упаковки в сантиметрах</li>
-            <li>Weight — вес упаковки в килограммах</li>
-            <li>Package Type — тип упаковки: коробка, паллет, комплект и т.д.</li>
-        </ul>
-        <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
-            Note: <span class="text-white/80">транспортировочные габариты могут включать упаковку и защитные материалы,
-            поэтому могут быть больше реальных размеров товара.</span>
-        </div>
-    </div>
-</x-help-tooltip>
-
-
-    </h3>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {{-- Length --}}
-        <div>
-            <label class="block mb-1 font-medium">Length (cm)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[length]" 
-                value="{{ old('shipping.length', isset($product->shippingDimensions->length) ? number_format($product->shippingDimensions->length, 1, '.', '') : '') }}"
-                class="input w-full"
+            <select
+                name="customization"
+                x-model="customization"
+                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-black focus:ring-2 focus:ring-black/10 transition"
             >
-        </div>
-
-        {{-- Width --}}
-        <div>
-            <label class="block mb-1 font-medium">Width (cm)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[width]" 
-                value="{{ old('shipping.width', $product->shippingDimensions->width ?? '') }}"
-                class="input w-full"
-            >
-        </div>
-
-        {{-- Height --}}
-        <div>
-            <label class="block mb-1 font-medium">Height (cm)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[height]" 
-                value="{{ old('shipping.height', $product->shippingDimensions->height ?? '') }}"
-                class="input w-full"
-            >
-        </div>
-
-        {{-- Weight --}}
-        <div>
-            <label class="block mb-1 font-medium">Weight (kg)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[weight]" 
-                value="{{ old('shipping.weight', $product->shippingDimensions->weight ?? '') }}"
-                class="input w-full"
-            >
-        </div>
-
-        {{-- Package Type --}}
-        <div>
-            <label class="block mb-1 font-medium">Package Type</label>
-            <select name="shipping[package_type]" class="input w-full">
-                <option value="box" {{ (old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'box') ? 'selected' : '' }}>Box</option>
-                <option value="pallet" {{ (old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'pallet') ? 'selected' : '' }}>Pallet</option>
-                <option value="set" {{ (old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'set') ? 'selected' : '' }}>Set</option>
+                <option value="1">Customization Available</option>
+                <option value="0">No Customization</option>
             </select>
         </div>
 
-    </div>
+        {{-- MATERIALS --}}
+        <div x-show="customization === '1'" x-collapse>
 
-    <p class="text-sm text-gray-500 mt-2">
-        Укажите габариты и вес упаковки для расчёта доставки и логистики.
-    </p>
-</div>
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Materials available for this product</h3>
+                <p class="mt-1 text-sm text-gray-500">Select the materials and finishes available for this product.</p>
+            </div>
 
+            {{-- SELECTED --}}
+            <div id="selected-materials" class="flex flex-wrap gap-2 mb-4"></div>
 
-
-
-{{-- Shipping Templates --}}
-<div class="mt-6">
-    <h3 class="text-xl font-semibold mb-4">Shipping Templates</h3>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {{-- Platform / Default Shipping --}}
-        @if($defaultShippingTemplate)
-            <label
-                class="border-2 border-dashed border-gray-400 rounded-xl p-4 cursor-pointer transition
-                    hover:border-gray-700 hover:bg-gray-100
-                    flex gap-3 items-start bg-gray-50 shadow-sm">
-
-                {{-- Скрытый input, чтобы значение отправлялось --}}
-                <input type="hidden" name="shipping_templates[]" value="{{ $defaultShippingTemplate->id }}">
-
-                {{-- Видимый чекбокс только для UI --}}
+            {{-- SEARCH --}}
+            <div class="relative mb-8">
                 <input
-                    type="checkbox"
-                    value="{{ $defaultShippingTemplate->id }}"
-                    class="mt-1"
-                    checked
-                    disabled
+                    type="text"
+                    id="materialSearch"
+                    placeholder="Search materials..."
+                    class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 pr-10 text-sm text-gray-700 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 transition"
                 >
 
-                <div>
-                    <div class="font-semibold text-gray-900 flex items-center gap-2">
-                        {{ $defaultShippingTemplate->title }}
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">
-                            Platform delivery
-                        </span>
-                    </div>
-
-                    <div class="text-sm text-gray-600 mt-1">
-                        {{ $defaultShippingTemplate->description }}
-                    </div>
-
-                    <div class="text-xs text-gray-500 mt-2">
-                        Price and delivery time will be calculated after order placement
-                    </div>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="11" cy="11" r="7"/>
+                        <path stroke-linecap="round" d="m20 20-4-4"/>
+                    </svg>
                 </div>
-            </label>
-        @endif
+            </div>
 
-        {{-- Seller Shipping Templates --}}
-        @foreach($shippingTemplates as $template)
-            <label
-                    class="border rounded-xl p-4 cursor-pointer transition
-                        hover:border-blue-600 hover:bg-blue-50
-                        flex gap-3 items-start bg-white shadow-sm">
+            @php
+                $groupedMaterials = collect($materialsPrepared)->groupBy(fn ($material) => $material['group']['id'] ?? 0);
 
-                    <input
-                        type="checkbox"
-                        name="shipping_templates[]"
-                        value="{{ $template->id }}"
-                        class="mt-1"
-                        {{ in_array($template->id, old('shipping_templates', $productShippingIds ?? [])) ? 'checked' : '' }}
-                    >
+                $supplierMaterialGroups = $groupedMaterials->filter(
+                    fn ($materials) => (int) ($materials->first()['group']['is_custom'] ?? 0) === 1
+                );
 
-                    <div>
-                        <div class="font-semibold text-gray-900">
-                            {{ $template->title }}
+                $platformMaterialGroups = $groupedMaterials->filter(
+                    fn ($materials) => (int) ($materials->first()['group']['is_custom'] ?? 0) === 0
+                );
+            @endphp
+
+            <div id="materials-options">
+
+                {{-- YOUR MATERIALS --}}
+                @if($supplierMaterialGroups->isNotEmpty())
+                    <section data-material-section="supplier" class="mb-10">
+
+                        <div class="mb-5 flex items-start gap-4">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-900 text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7.5v9a2 2 0 0 1-1 1.732l-7 4.041a2 2 0 0 1-2 0l-7-4.041A2 2 0 0 1 2 16.5v-9a2 2 0 0 1 1-1.732l7-4.041a2 2 0 0 1 2 0l7 4.041A2 2 0 0 1 20 7.5Z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.5 6.5 9.5 5.5 9.5-5.5M12 22V12"/>
+                                </svg>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-base font-semibold text-gray-900">Your Materials</h3>
+                                    <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">Supplier</span>
+                                </div>
+                                <p class="mt-1 text-xs leading-relaxed text-gray-500">Materials and finishes provided by your company.</p>
+                            </div>
                         </div>
 
-                        <div class="text-sm text-gray-600 mt-1">
-                            {{ $template->description }}
+                        @foreach($supplierMaterialGroups as $groupId => $groupMaterials)
+                            @php $materialGroup = $groupMaterials->first()['group'] ?? null; @endphp
+
+                            <div class="mb-8 material-group" data-group-id="{{ $groupId }}">
+                                @if($materialGroup)
+                                    <h4 class="mb-1 text-sm font-semibold text-gray-900">{{ $materialGroup['name'] }}</h4>
+
+                                    @if(!empty($materialGroup['description']))
+                                        <div class="mb-3 max-w-3xl text-xs leading-relaxed text-gray-500">{{ $materialGroup['description'] }}</div>
+                                    @else
+                                        <div class="mb-2"></div>
+                                    @endif
+                                @endif
+
+                                <div class="grid grid-cols-[repeat(auto-fill,80px)] gap-x-3 gap-y-4">
+                                    @foreach($groupMaterials as $material)
+                                        @php
+                                            $materialName = $material['translations'][app()->getLocale()]['name']
+                                                ?? $material['translations']['en']['name']
+                                                ?? '';
+                                            $materialPhoto = $material['photo']['cdn_url'] ?? null;
+                                        @endphp
+
+                                        <button type="button" class="material-option group w-20 text-left" data-id="{{ $material['id'] }}" data-name="{{ $materialName }}">
+                                            <div class="h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 transition-all duration-200 group-hover:border-gray-400 group-hover:shadow-sm">
+                                                <img
+                                                    src="{{ $materialPhoto ?? asset('images/no-image.png') }}"
+                                                    alt="{{ $materialName }}"
+                                                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                                >
+                                            </div>
+
+                                            <div class="mt-1 w-20 text-center text-[10px] font-medium leading-tight text-gray-900">
+                                                {{ $materialName }}
+                                            </div>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </section>
+                @endif
+
+                {{-- DIVIDER --}}
+                @if($supplierMaterialGroups->isNotEmpty() && $platformMaterialGroups->isNotEmpty())
+                    <div class="relative my-10">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-200"></div>
                         </div>
 
-                        <div class="text-xs text-gray-500 mt-2">
-                            Seller-defined delivery
+                        <div class="relative flex justify-center">
+                            <span class="bg-white px-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+                                Acrovoy Platform
+                            </span>
                         </div>
                     </div>
-            </label>
-        @endforeach
+                @endif
+
+                {{-- ACROVOY MATERIALS --}}
+                @if($platformMaterialGroups->isNotEmpty())
+                    <section data-material-section="platform" class="mb-8">
+
+                        <div class="mb-5 flex items-start gap-4">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <circle cx="12" cy="12" r="8.5"/>
+                                    <path stroke-linecap="round" d="M12 8v8M8 12h8"/>
+                                </svg>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-base font-semibold text-gray-900">Acrovoy Catalog</h3>
+                                    <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">Platform</span>
+                                </div>
+
+                                <p class="mt-1 text-xs leading-relaxed text-gray-500">Standard materials available across the Acrovoy platform.</p>
+                            </div>
+                        </div>
+
+                        @foreach($platformMaterialGroups as $groupId => $groupMaterials)
+                            @php $materialGroup = $groupMaterials->first()['group'] ?? null; @endphp
+
+                            <div class="mb-8 material-group" data-group-id="{{ $groupId }}">
+                                @if($materialGroup)
+                                    <h4 class="mb-1 text-sm font-semibold text-gray-900">{{ $materialGroup['name'] }}</h4>
+
+                                    @if(!empty($materialGroup['description']))
+                                        <div class="mb-3 max-w-3xl text-xs leading-relaxed text-gray-500">{{ $materialGroup['description'] }}</div>
+                                    @else
+                                        <div class="mb-2"></div>
+                                    @endif
+                                @endif
+
+                                <div class="grid grid-cols-[repeat(auto-fill,80px)] gap-x-3 gap-y-4">
+                                    @foreach($groupMaterials as $material)
+                                        @php
+                                            $materialName = $material['translations'][app()->getLocale()]['name']
+                                                ?? $material['translations']['en']['name']
+                                                ?? '';
+                                            $materialPhoto = $material['photo']['cdn_url'] ?? null;
+                                        @endphp
+
+                                        <button type="button" class="material-option group w-20 text-left" data-id="{{ $material['id'] }}" data-name="{{ $materialName }}">
+                                            <div class="h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 transition-all duration-200 group-hover:border-gray-400 group-hover:shadow-sm">
+                                                <img
+                                                    src="{{ $materialPhoto ?? asset('images/no-image.png') }}"
+                                                    alt="{{ $materialName }}"
+                                                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                                >
+                                            </div>
+
+                                            <div class="mt-1 w-20 text-center text-[10px] font-medium leading-tight text-gray-900">
+                                                {{ $materialName }}
+                                            </div>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </section>
+                @endif
+
+
+                {{-- PAGINATION --}}
+                <div
+                    id="materials-pagination"
+                    class="mt-8 flex items-center justify-center gap-2"
+                ></div>
+
+
+
+
+            </div>
+
+            {{-- SELECTED MATERIALS INPUT --}}
+            <input
+                type="hidden"
+                name="materials_selected"
+                id="materialsSelectedInput"
+                value="{{ implode(',', $product->materials->pluck('id')->toArray()) }}"
+            >
+        </div>
+
+        {{-- NAVIGATION --}}
+        <div class="flex justify-between">
+            <a
+                href="{{ route('supplier.products.edit-step', [$product->id, 2]) }}"
+                class="mt-4 rounded border border-gray-400 bg-gray-50 px-6 py-2 text-gray-400 hover:bg-gray-100"
+            >
+                Previous
+            </a>
+
+            <button
+                type="submit"
+                class="mt-4 rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-500"
+            >
+                Next
+            </button>
+        </div>
 
     </div>
-
-    <p class="text-sm text-gray-500 mt-2">
-            Выберите один или несколько шаблонов доставки.
-            Если выбран только платформенный вариант — заказ будет ожидать расчёта доставки.
-    </p>
-</div>
-
-
-
-<div class="flex justify-between mt-6">
-
-        <a href="{{ route('supplier.products.edit-step', [$product->id, 5]) }}"
-            class="mt-4 bg-gray-50 border border-gray-400 hover:bg-gray-100 text-gray-400 px-6 py-2 rounded">
-            Previous
-        </a>
-
-
-
-        <button type="submit" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded">
-            Next
-        </button>
-
-    </div>
-
-
-
 </form>
+

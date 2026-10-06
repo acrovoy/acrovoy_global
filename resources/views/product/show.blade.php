@@ -19,57 +19,8 @@
             
 
 
-{{-- PRODUCT CUSTOMIZATION ABILITY --}}
 
-@php
-    /*
-    |--------------------------------------------------------------------------
-    | TEMPORARY STUBS — replace with real product data
-    |--------------------------------------------------------------------------
-    */
 
-    
-    
-
-    // TODO: $product1->customization_description
-    $customizationDescription = 'Велюр — на дотик оксамитова тканина з невеликим ворсом. '
-        .'Велюр відрізняється благородним зовнішнім виглядом. '
-        .'Прекрасно підходить для створення вишуканого інтер\'єру.';
-
-    // TODO: $product1->variations — flat list, 3 rows × 7 columns = 21 swatches.
-    // Add a real `image` per item later; without it the placeholder is used.
-    $variations = [
-        // Row 1 — named colours
-        ['code' => '01', 'name' => 'Beige'],
-        ['code' => '02', 'name' => 'Cream'],
-        ['code' => '03', 'name' => 'Caramel'],
-        ['code' => '04', 'name' => 'Coffee'],
-        ['code' => '02', 'name' => 'Cream'],
-        ['code' => '03', 'name' => 'Caramel'],
-        ['code' => '04', 'name' => 'Coffee'],
-        // Row 2 — code only
-        ['code' => '00', 'name' => null],
-        ['code' => '01', 'name' => null],
-        ['code' => '02', 'name' => null],
-        ['code' => '03', 'name' => null],
-        ['code' => '04', 'name' => null],
-        ['code' => '05', 'name' => null],
-        ['code' => '06', 'name' => null],
-        // Row 3 — code only
-        ['code' => '00', 'name' => null],
-        ['code' => '01', 'name' => null],
-        ['code' => '02', 'name' => null],
-        ['code' => '03', 'name' => null],
-        ['code' => '04', 'name' => null],
-        ['code' => '05', 'name' => null],
-        ['code' => '06', 'name' => null],
-    ];
-
-    $swatchPlaceholder = 'images/gallery/sample.png';
-
-    // TODO: $product1->customization_available
-    $customizationAvailable = true;
-@endphp
 
 <div class="p-6"
      x-data="{ selected: {}, showProjectBox: false, showCustomizationBox: false }">
@@ -82,55 +33,55 @@
 @if($product1->customization)
             <h3 class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[18px] font-semibold text-gray-900">
 
-                <span>Supplier's Сustomization</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="58" height="15" viewBox="0 0 58 15" fill="none">
+                <span>Customization & Materials</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="72" height="15" viewBox="0 0 72 15" fill="none">
 
-    <!-- A -->
+    <!-- O -->
     <path
-        d="M1133 0 1008 360H471L346 0H51L565 1409H913L1425 0ZM942 582 803 987 739 1192Q723 1134 709 1088Q695 1042 537 582Z"
+        d="M1507 711Q1507 491 1420 324Q1333 157 1171 68.5Q1009 -20 793 -20Q461 -20 272.5 175.5Q84 371 84 711Q84 1050 272 1240Q460 1430 795 1430Q1130 1430 1318.5 1238Q1507 1046 1507 711ZM1206 711Q1206 939 1098 1068.5Q990 1198 795 1198Q597 1198 489 1069.5Q381 941 381 711Q381 479 491.5 345.5Q602 212 793 212Q991 212 1098.5 342Q1206 472 1206 711Z"
         transform="translate(0 11.55) scale(0.0092 -0.0075)"
         fill="#008EFF"
     />
 
-    <!-- b -->
+    <!-- p -->
     <path
-        d="M1167 545Q1167 277 1059.5 128.5Q952 -20 752 -20Q637 -20 553 30Q469 80 424 174H422Q422 139 417.5 78Q413 17 408 0H135Q143 93 143 247V1484H424V1070L420 894H424Q519 1102 770 1102Q962 1102 1064.5 956.5Q1167 811 1167 545ZM874 545Q874 729 820 818Q766 907 653 907Q539 907 479.5 811.5Q420 716 420 536Q420 364 478.5 268Q537 172 651 172Q874 172 874 545Z"
-        transform="translate(13.6068 11.55) scale(0.0092 -0.0075)"
-        fill="#00346D"
-    />
-
-    <!-- i -->
-    <path
-        d="M143 0V1082H424V0ZM143 1277V1484H424V1277Z"
-        transform="translate(25.115 11.55) scale(0.0092 -0.0075)"
-        fill="#00346D"
-    />
-
-    <!-- l -->
-    <path
-        d="M143 0V1484H424V0Z"
-        transform="translate(30.350 11.55) scale(0.0092 -0.0075)"
-        fill="#00346D"
-    />
-
-    <!-- i -->
-    <path
-        d="M143 0V1082H424V0ZM143 1277V1484H424V1277Z"
-        transform="translate(35.585 11.55) scale(0.0092 -0.0075)"
+        d="M1167 546Q1167 275 1058.5 127.5Q950 -20 752 -20Q638 -20 553.5 29.5Q469 79 424 172H418Q424 142 424 -10V-425H143V833Q143 986 135 1082H408Q413 1064 416.5 1011Q420 958 420 906H424Q519 1105 770 1105Q959 1105 1063 959.5Q1167 814 1167 546ZM874 546Q874 910 651 910Q539 910 479.5 812Q420 714 420 538Q420 363 479.5 267.5Q539 172 649 172Q874 172 874 546Z"
+        transform="translate(14.6556 11.55) scale(0.0092 -0.0075)"
         fill="#00346D"
     />
 
     <!-- t -->
     <path
         d="M420 -18Q296 -18 229 49.5Q162 117 162 254V892H25V1082H176L264 1336H440V1082H645V892H440V330Q440 251 470 213.5Q500 176 563 176Q596 176 657 190V16Q553 -18 420 -18Z"
-        transform="translate(40.820 11.55) scale(0.0092 -0.0075)"
+        transform="translate(26.1648 11.55) scale(0.0092 -0.0075)"
         fill="#00346D"
     />
 
-    <!-- y -->
+    <!-- i -->
     <path
-        d="M283 -425Q182 -425 106 -412V-212Q159 -220 203 -220Q263 -220 302.5 -201Q342 -182 373.5 -138Q405 -94 444 11L16 1082H313L483 575Q523 466 584 241L609 336L674 571L834 1082H1128L700 -57Q614 -265 521.5 -345Q429 -425 283 -425Z"
-        transform="translate(47.094 11.55) scale(0.0092 -0.0075)"
+        d="M143 1277V1484H424V1277ZM143 0V1082H424V0Z"
+        transform="translate(32.4392 11.55) scale(0.0092 -0.0075)"
+        fill="#00346D"
+    />
+
+    <!-- o -->
+    <path
+        d="M1171 542Q1171 279 1025 129.5Q879 -20 621 -20Q368 -20 224 130Q80 280 80 542Q80 803 224 952.5Q368 1102 627 1102Q892 1102 1031.5 957.5Q1171 813 1171 542ZM877 542Q877 735 814 822Q751 909 631 909Q375 909 375 542Q375 361 437.5 266.5Q500 172 618 172Q877 172 877 542Z"
+        transform="translate(37.674 11.55) scale(0.0092 -0.0075)"
+        fill="#00346D"
+    />
+
+    <!-- n -->
+    <path
+        d="M844 0V607Q844 892 651 892Q549 892 486.5 804.5Q424 717 424 580V0H143V840Q143 927 140.5 982.5Q138 1038 135 1082H403Q406 1063 411 980.5Q416 898 416 867H420Q477 991 563 1047Q649 1103 768 1103Q940 1103 1032 997Q1124 891 1124 687V0Z"
+        transform="translate(49.1832 11.55) scale(0.0092 -0.0075)"
+        fill="#00346D"
+    />
+
+    <!-- s -->
+    <path
+        d="M1055 316Q1055 159 926.5 69.5Q798 -20 571 -20Q348 -20 229.5 50.5Q111 121 72 270L319 307Q340 230 391.5 198Q443 166 571 166Q689 166 743 196Q797 226 797 290Q797 342 753.5 372.5Q710 403 606 424Q368 471 285 511.5Q202 552 158.5 616.5Q115 681 115 775Q115 930 234.5 1016.5Q354 1103 573 1103Q766 1103 883.5 1028Q1001 953 1030 811L781 785Q769 851 722 883.5Q675 916 573 916Q473 916 423 890.5Q373 865 373 805Q373 758 411.5 730.5Q450 703 541 685Q668 659 766.5 631.5Q865 604 924.5 566Q984 528 1019.5 468.5Q1055 409 1055 316Z"
+        transform="translate(60.6924 11.55) scale(0.0092 -0.0075)"
         fill="#00346D"
     />
 
@@ -141,31 +92,36 @@
                 
             </h3>
 @endif
+
+        @if($product1->customization)
            @if($customAbilityAttributes->isNotEmpty())
 
-    <ul class="mt-4 space-y-1.5 pl-5 list-disc text-sm text-gray-700">
+                <ul class="mt-4 space-y-1.5 pl-5 list-disc text-sm text-gray-700">
 
-        @foreach($customAbilityAttributes as $attrValue)
+                    @foreach($customAbilityAttributes as $attrValue)
 
-            @foreach($attrValue->options as $valueOption)
+                        @foreach($attrValue->options as $valueOption)
 
-                @php
-                    $option = $valueOption->option;
-                @endphp
+                            @php
+                                $option = $valueOption->option;
+                            @endphp
 
-                @if($option)
-                    <li class="leading-snug">
-                        {{ $option->translatedValue() }}
-                    </li>
-                @endif
+                            @if($option)
+                                <li class="leading-snug">
+                                    {{ $option->translatedValue() }}
+                                </li>
+                            @endif
 
-            @endforeach
+                        @endforeach
 
-        @endforeach
+                    @endforeach
 
-    </ul>
+                </ul>
 
-@endif
+            @endif
+
+
+        @endif
 
         </div>
 
@@ -314,33 +270,27 @@
                 'Please register or log in to request product customization.'
             )"
             title="Need Customization"
-            class="w-full flex items-center justify-center gap-2
-                   px-4 py-2
-                   rounded-lg
-                   bg-gray-500 text-white
-                   text-sm font-semibold
-                   shadow-sm
-                   hover:bg-gray-700 hover:shadow
-                   transition">
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2
+                               px-4 py-2
+                               rounded-lg
+                               bg-gray-700 text-white
+                               text-sm font-semibold
+                               shadow-sm
+                               hover:bg-gray-900 hover:shadow
+                               transition">
 
-            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-700/50 shrink-0">
+                        <span class="flex items-center justify-center w-6 h-6 rounded-full bg-white/20">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor">
 
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
 
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 4v16m8-8H4"/>
-
-                </svg>
-
-            </span>
+                            </svg>
+                        </span>
 
             <span class="truncate">Customization</span>
 
@@ -374,10 +324,10 @@
 
     </div>
 
-
+@if($product1->customization)
     {{-- Commercial Terms --}}
-                
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">
+    
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-gray-700">
                         <div>
                             <span class="text-amber-800">{{ __('product/product_show.MOQ') }}:</span>
                             <span class="font-semibold text-gray-600">
@@ -393,80 +343,204 @@
                         
                     </div>
                 
+    @if($product1->materials->isNotEmpty())
 
-    {{-- DESCRIPTION --}}
-    @if($customizationDescription)
-        <p class="mt-5 max-w-2xl text-sm leading-relaxed text-gray-600">
-            {{ $customizationDescription }}
-        </p>
-    @endif
+    @php
+        $materialGroups = $product1->materials
+            ->groupBy('material_group_id')
+            ->values();
 
-    {{-- VARIATION SWATCHES : 3 rows × 7 columns --}}
-    @if(!empty($variations))
-        <div class="mt-5 grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-x-3 gap-y-4">
+        $firstGroup = $materialGroups->first();
+    @endphp
 
-            @foreach($variations as $item)
+    @if($firstGroup)
 
-                @php
-                    $key   = 'v'.$loop->index.'-'.($item['code'] ?? '');
-                    $label = trim(($item['code'] ?? '').' '.($item['name'] ?? ''));
-                    $src   = $item['image'] ?? $swatchPlaceholder;
-                @endphp
+        @php
+            $materialGroup = $firstGroup->first()?->materialGroup;
+        @endphp
 
-                <button
-                    type="button"
-                    @click="selected['{{ $key }}'] = !selected['{{ $key }}']"
-                    title="{{ $label ?: 'Variation' }}"
-                    class="group block w-full text-left focus:outline-none">
+        <div class="mb-4 mt-4">
 
-                    <div
-                        class="w-full aspect-square overflow-hidden rounded-md border border-gray-200 bg-gray-50 transition"
-                        :class="selected['{{ $key }}']
-                            ? 'ring-2 ring-gray-900 ring-offset-2'
-                            : 'group-hover:border-gray-400'">
+            @if($materialGroup)
 
-                        <img
-                            src="{{ asset($src) }}"
-                            alt="{{ $label ?: 'Variation' }}"
-                            loading="lazy"
-                            class="w-full h-full object-cover">
+                <div class="mb-5">
+
+                    {{-- GROUP HEADER --}}
+                    <div class="flex items-start justify-between gap-6">
+
+                        {{-- GROUP NAME + DESCRIPTION --}}
+                        <div class="min-w-0 flex-1">
+
+                            <h4 class="text-sm font-semibold text-gray-900">
+                                {{ $materialGroup->translatedName() ?? $materialGroup->name ?? $materialGroup->slug }}
+                            </h4>
+
+                            @if($materialGroup->translatedDescription())
+
+                                <div class="mt-1 text-xs text-gray-500 leading-relaxed">
+                                    {{ $materialGroup->translatedDescription() }}
+                                </div>
+
+                            @endif
+
+                        </div>
+
+                        {{-- BRAND + LOGO --}}
+                        @if($materialGroup->brand)
+
+                            <div class="shrink-0 flex flex-col items-center w-[80px]">
+
+                                {{-- BRAND LOGO --}}
+                                @if($materialGroup->logo?->cdn_url)
+
+                                    <div
+                                        class="w-[80px] h-[80px]
+                                               flex items-center justify-center
+                                               overflow-hidden"
+                                    >
+
+                                        @if($materialGroup->brand_url)
+
+                                            <a
+                                                href="{{ $materialGroup->brand_url }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="w-full h-full flex items-center justify-center"
+                                            >
+
+                                                <img
+                                                    src="{{ $materialGroup->logo->cdn_url }}"
+                                                    alt="{{ $materialGroup->brand }}"
+                                                    class="w-full h-full object-contain"
+                                                >
+
+                                            </a>
+
+                                        @else
+
+                                            <img
+                                                src="{{ $materialGroup->logo->cdn_url }}"
+                                                alt="{{ $materialGroup->brand }}"
+                                                class="w-full h-full object-contain"
+                                            >
+
+                                        @endif
+
+                                    </div>
+
+                                @endif
+
+                            </div>
+
+                        @endif
 
                     </div>
 
-                    @if($label)
-                        <div class="mt-1.5 text-center text-[11px] leading-tight text-gray-600">
 
-                            {{ $label }}
+                    {{-- MATERIALS --}}
+                    <div class="mt-3 flex flex-wrap gap-x-1 gap-y-2">
 
-                        </div>
-                    @endif
+                        @foreach($firstGroup as $material)
 
-                </button>
+                            <div class="w-20 text-center">
 
-            @endforeach
+                                {{-- MATERIAL IMAGE --}}
+                                <div
+                                    class="w-20 h-20
+                                           overflow-hidden
+                                           rounded
+                                           border
+                                           border-gray-200
+                                           bg-gray-50"
+                                >
+
+                                    @if($material->photo?->cdn_url)
+
+                                        <img
+                                            src="{{ $material->photo->cdn_url }}"
+                                            alt="{{ $material->name }}"
+                                            class="w-full h-full object-cover"
+                                        >
+
+                                    @else
+
+                                        <img
+                                            src="{{ asset('images/no-image.png') }}"
+                                            alt="{{ $material->name }}"
+                                            class="w-full h-full object-cover"
+                                        >
+
+                                    @endif
+
+                                </div>
+
+                                {{-- MATERIAL NAME --}}
+                                <div
+                                    class="mt-1
+                                           text-[10px]
+                                           font-medium
+                                           leading-tight
+                                           text-gray-800
+                                           text-center"
+                                >
+                                    {{ $material->name }}
+                                </div>
+
+                            </div>
+
+                        @endforeach
+
+                    </div>
+
+                </div>
+
+            @endif
 
         </div>
+
     @endif
 
-    
+@endif
 
-    {{-- SELECT VARIATIONS --}}
-    <div class="mt-6 flex justify-center">
+@if(isset($materialGroups) && $materialGroups->count() > 1)
+{{-- SELECT VARIATIONS --}}
+<div class="mt-4 flex justify-center">
 
-        <button
-            type="button"
-            @click="$dispatch('open-variations-modal')"
-            title="More materials and color"
-            class="inline-flex items-center justify-center rounded-full border-2 border-gray-800 bg-white
-                   px-2 py-0.5 text-sm font-medium text-gray-900
-                   transition hover:bg-gray-100 hover:border-gray-900
-                   focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
+    <button
+        type="button"
+        @click="$dispatch('open-variations-modal')"
+        title="More materials and color"
+        class="inline-flex items-center justify-center
+               rounded-full
+               border-2 border-gray-200
+               bg-white
+               px-2 py-0.5
+               text-xs font-medium text-gray-900
+               transition
+               hover:bg-gray-100
+               hover:border-gray-300
+               focus:outline-none
+               focus:ring-2
+               focus:ring-gray-900
+               focus:ring-offset-2"
+    >
+        See more materials and colors available for this product
+    </button>
 
-            See more supplier's materials and color variations
+</div>
 
-        </button>
 
-    </div>
+
+@include('product.partials.variations-modal', [
+    'product' => $product1
+])
+
+@endif
+
+@endif
+
+
+
 
 </div>
 </div>
@@ -475,7 +549,7 @@
 
 
             {{-- Info --}}
-            <div class="rounded-xl shadow p-6" x-data="{ showCustomizationBox: false }">
+            <div class="rounded-xl shadow p-6">
 
                 <div class="flex flex-col lg:flex-row lg:items-start gap-4">
 
@@ -975,7 +1049,7 @@
         $onTimeRate   = 85.7;               // TODO: $supplier->on_time_dispatch_rate
     @endphp
 
-    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden p-8">
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden p-6">
 
         {{-- TOP ROW : LOGO + IDENTITY --}}
         <div class="flex items-start gap-4">
@@ -1048,13 +1122,63 @@
 
         @if($hasCapabilities || $responseTime || $onTimeRate)
 
-            {{-- BOTTOM ROW : CAPABILITIES + PERFORMANCE --}}
-            <div class="mt-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+    {{-- BOTTOM ROW : CAPABILITIES + PERFORMANCE --}}
+    <div class="mt-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
 
-                @if($hasCapabilities)
-                    <div class="space-y-2">
+        @if($hasCapabilities)
 
-                        @foreach($profile->manufacturingCapabilities as $capability)
+            @php
+                $capabilities = $profile->manufacturingCapabilities;
+                $visibleCapabilities = $capabilities->take(5);
+                $hiddenCapabilities = $capabilities->skip(5);
+            @endphp
+
+            <div
+                x-data="{ expanded: false }"
+                class="space-y-2"
+            >
+
+                {{-- VISIBLE CAPABILITIES --}}
+                @foreach($visibleCapabilities as $capability)
+
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            class="shrink-0"
+                            fill="none"
+                            stroke="#7a8291"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true">
+
+                            <path d="M15.12 4.47 Q19.39 4.61 19.53 8.88 Q22.45 12 19.53 15.12 Q19.39 19.39 15.12 19.53 Q12 22.45 8.88 19.53 Q4.61 19.39 4.47 15.12 Q1.55 12 4.47 8.88 Q4.61 4.61 8.88 4.47 Q12 1.55 15.12 4.47 Z"/>
+                            <path d="M8.55 12.15 L11.05 14.55 L15.6 9.35"/>
+
+                        </svg>
+
+                        <span>{{ $capability->name }}</span>
+
+                    </div>
+
+                @endforeach
+
+
+                {{-- HIDDEN CAPABILITIES --}}
+                @if($hiddenCapabilities->isNotEmpty())
+
+                    <div
+                        x-show="expanded"
+                        x-collapse
+                        x-cloak
+                        class="space-y-2"
+                    >
+
+                        @foreach($hiddenCapabilities as $capability)
+
                             <div class="flex items-center gap-2 text-sm text-gray-600">
 
                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -1077,56 +1201,105 @@
                                 <span>{{ $capability->name }}</span>
 
                             </div>
+
                         @endforeach
 
                     </div>
-                @endif
 
-                @if($responseTime || $onTimeRate)
-                    <div class="flex items-start gap-8">
 
-                        @if($responseTime)
-                            <div>
+                    {{-- EXPAND BUTTON --}}
+<div class="flex justify-center">
+    <button
+        type="button"
+        @click="expanded = !expanded"
+        class="mt-1
+               inline-flex
+               items-center
+               justify-center
+               gap-1.5
+               text-xs
+               font-medium
+               text-gray-500
+               transition
+               hover:text-gray-900
+               focus:outline-none"
+    >
+        <span
+            x-text="expanded ? 'Show less' : 'Show more'"
+        ></span>
 
-                                <div class="text-base font-bold text-gray-900 leading-tight">
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="transition-transform duration-200"
+            :class="{ 'rotate-180': expanded }"
+        >
+            <path d="m6 9 6 6 6-6"/>
+        </svg>
+    </button>
+</div>
 
-                                    {{ $responseTime }}
-
-                                </div>
-
-                                <div class="mt-0.5 text-xs text-gray-500 leading-snug">
-
-                                    Response time
-
-                                </div>
-
-                            </div>
-                        @endif
-
-                        @if($onTimeRate)
-                            <div>
-
-                                <div class="text-base font-bold text-gray-900 leading-tight">
-
-                                    {{ $onTimeRate }}%
-
-                                </div>
-
-                                <div class="mt-0.5 text-xs text-gray-500 leading-snug">
-
-                                    On-time dispatch rate
-
-                                </div>
-
-                            </div>
-                        @endif
-
-                    </div>
                 @endif
 
             </div>
 
         @endif
+
+
+        @if($responseTime || $onTimeRate)
+
+            <div class="flex items-start gap-8">
+
+                @if($responseTime)
+
+                    <div>
+
+                        <div class="text-base font-bold text-gray-900 leading-tight">
+                            {{ $responseTime }}
+                        </div>
+
+                        <div class="mt-0.5 text-xs text-gray-500 leading-snug">
+                            Response time
+                        </div>
+
+                    </div>
+
+                @endif
+
+
+                @if($onTimeRate)
+
+                    <div>
+
+                        <div class="text-base font-bold text-gray-900 leading-tight">
+                            {{ $onTimeRate }}%
+                        </div>
+
+                        <div class="mt-0.5 text-xs text-gray-500 leading-snug">
+                            On-time dispatch rate
+                        </div>
+
+                    </div>
+
+                @endif
+
+            </div>
+
+        @endif
+
+    </div>
+
+@endif
+
+
+
 
     </div>
 
@@ -1153,520 +1326,23 @@
 
 
 
-                @include('product.partials.shippingtemplates-table', ['product1' => $product1])
+               
 
-
-
-
-
-@auth
-
-@can('addToProject', $product1)
-                {{-- CTA Panel --}}
-                <div class="mt-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
-
-                    <form method="POST" action="{{ route('buyer.cart.add.redirect', $product1->id) }}">
-                        @csrf
-
-                        <button
-                            type="submit"
-                            class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
-                                    text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
-                            {{ __('product/product_show.checkout') }}
-                        </button>
-                    </form>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <button class="open-conversation w-full border border-gray-300 py-3 rounded-xl
-                                   text-gray-800 font-medium shadow-sm
-                                   hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105" data-subject-type="App\Models\Product"
-                                    data-subject-id="{{ $product1->id }}">
-                            {{ __('product/product_show.contact_supllire') }}
-                        </button>
-
-                        
-
-                            <x-conversation.drawer
-                                subjectType="App\Models\Product"
-                                :subjectId="$product1->id"
-                                :messagesUrl="url('/dashboard/buyer/messenger/conversations')"
-                            />
-
-
-                        <form method="POST" action="{{ route('buyer.cart.add', $product1->id) }}">
-                            @csrf
-                            <button
-                                type="submit"
-                                class="w-full border border-gray-300 py-3 rounded-xl
-                                        text-gray-800 font-medium shadow-sm
-                                        hover:border-black hover:text-black hover:shadow-md
-                                        transition-all transform hover:scale-105">
-                                {{ __('product/product_show.add_to_cart') }}
-                            </button>
-                        </form>
-
-
-
-
-                    </div>
-
-
-
-                </div>
-
-@endcan
-
-@else
-<div class="mt-4 bg-white border border-gray-200 rounded-2xl p-6 shadow-lg mb-6">
-
-                    
-
-                        <button
-                            type="button"
-                            onclick="dispatchAlert(
-            'guest',
-            'Please register or log in to proceed to checkout.'
-        )"
-                            class="w-full bg-blue-950 hover:bg-blue-900 text-white py-4 rounded-xl
-                                    text-lg font-semibold tracking-wide shadow-md transition-all transform hover:scale-105 mb-4">
-                            {{ __('product/product_show.checkout') }}
-                        </button>
-                 
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <button 
-                        type="button"
-                        onclick="dispatchAlert(
-                'guest',
-                'Please register or log in to contact the supplier.'
-            )"
-                        class="w-full border border-gray-300 py-3 rounded-xl
-                                   text-gray-800 font-medium shadow-sm
-                                   hover:border-black hover:text-black hover:shadow-md transition-all transform hover:scale-105" data-subject-type="App\Models\Product"
-                                    data-subject-id="{{ $product1->id }}">
-                            {{ __('product/product_show.contact_supllire') }}
-                        </button>
-
-                        
-
-                            <x-conversation.drawer
-                                subjectType="App\Models\Product"
-                                :subjectId="$product1->id"
-                                :messagesUrl="url('/dashboard/buyer/messenger/conversations')"
-                            />
-
-
-                        
-                            @csrf
-                            <button
-                                type="button"
-                                onclick="dispatchAlert(
-                'guest',
-                'Please register or log in to add products to your cart.'
-            )"
-                                class="w-full border border-gray-300 py-3 rounded-xl
-                                        text-gray-800 font-medium shadow-sm
-                                        hover:border-black hover:text-black hover:shadow-md
-                                        transition-all transform hover:scale-105">
-                                {{ __('product/product_show.add_to_cart') }}
-                            </button>
-                     
-
-
-
-
-                    </div>
-
-
-
-                </div>
-
-
-@endif
-
-                <p class="text-gray-700 mb-2 leading-relaxed">{{ __('product/product_show.place_of_origin') }} <strong>{{ $product1->country?->name ?? 'Country not specified' }}</strong>
-                </p>
-
+              
                 
 
 
 
 
-                 {{-- Description --}}
-                @if(!empty($product1->description))
-                <p class="text-gray-700 mb-6 leading-relaxed">{{ $product1->description }}</p>
-                @endif
+               
 
 
 
 
 
-           {{-- Product Attributes --}}
-@if($product1->attributeValues->count())
 
-<div class="bg-white rounded-xl shadow p-6 mb-6">
 
-    <h3 class="font-semibold text-lg mb-2 leading-none">
-        {{ __('product/product_show.specification') }}
-    </h3>
-
-    <p class="text-sm text-gray-500 leading-tight">
-        {{ __('product/product_show.shipping_cost_not_included') }}
-    </p>
-
-    @php
-    /*
-    |--------------------------------------------------------------------------
-    | FILTER HIDDEN BOOLEAN ATTRIBUTES
-    |--------------------------------------------------------------------------
-    |
-    | Boolean = 0 → полностью не показываем.
-    | Boolean = 1 → показываем как Yes.
-    |
-    */
-
-    $attributeValues = $product1->attributeValues
-        ->filter(function ($attrValue) {
-
-            $attribute = $attrValue->attribute;
-
-            if (!$attribute) {
-                return false;
-            }
-
-            
-
-
- /*
-            |--------------------------------------------------------------------------
-            | MEASUREMENT ATTRIBUTES
-            |--------------------------------------------------------------------------
-            |
-            | Размеры выводятся в отдельном блоке.
-            | Поэтому здесь их исключаем из Specification.
-            |
-            */
-
-            if ($attribute->type === 'measurement') {
-                return false;
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | BOOLEAN ATTRIBUTES
-            |--------------------------------------------------------------------------
-            |
-            | Boolean = 0 → не показываем.
-            | Boolean = 1 → показываем.
-            |
-            */
-
-
-            if ($attribute->type === 'boolean') {
-
-                $value = $attrValue->translations
-                    ->firstWhere('locale', app()->getLocale())
-                    ?->value;
-
-                // Если перевода текущего языка нет —
-                // берём первый доступный
-                if ($value === null || $value === '') {
-                    $value = $attrValue->translations
-                        ->first()
-                        ?->value;
-                }
-
-                return in_array(
-                    strtolower(trim((string) $value)),
-                    ['1', 'true', 'yes', 'on', 'y'],
-                    true
-                );
-            }
-
-            return true;
-        })
-        ->values();
-
-         $groupedAttributes = $attributeValues
-        ->groupBy(function ($attrValue) {
-            return $attrValue->attribute?->group_id ?? 0;
-        })
-        ->sortBy(function ($items, $groupId) {
-
-            if ($groupId == 0) {
-                return 999999;
-            }
-
-            return $items->first()->attribute?->group?->sort_order ?? 999999;
-        });
-
-    $visibleAttributes = $attributeValues->take(8);
-    $hiddenAttributes = $attributeValues->slice(8);
-@endphp
-
-    @if($attributeValues->count())
-
-    <div class="relative mt-2">
-
-        @php
-            $visibleGroupedAttributes = $visibleAttributes
-                ->groupBy(fn ($attrValue) => $attrValue->attribute?->group_id);
-
-            $hiddenGroupedAttributes = $hiddenAttributes
-                ->groupBy(fn ($attrValue) => $attrValue->attribute?->group_id);
-        @endphp
-
-        <ul
-            id="product-attributes-list"
-            class="text-gray-700"
-        >
-
-            {{-- FIRST 8 --}}
-            @foreach($visibleGroupedAttributes as $groupId => $groupAttributes)
-
-                @php
-                    $group = $groupAttributes->first()->attribute?->group;
-                @endphp
-
-             @if($group)
-    <li class="py-3 mt-3 border-0">
-        <div
-            class="
-                inline-flex
-                items-center
-                px-3
-                py-1.5
-                rounded-md
-                bg-gray-50
-                border
-                border-gray-200
-                text-sm
-                font-semibold
-                text-gray-800
-            "
-        >
-            {{ $group->name ?? $group->code }}
-        </div>
-    </li>
-@endif
-
-                @foreach($groupAttributes as $index => $attrValue)
-
-    <li class="
-        flex
-        justify-between
-        py-2
-        {{ $index < $groupAttributes->count() - 1 ? 'border-b border-gray-200' : 'border-b border-gray-200' }}
-    ">
-
-        <span class="text-gray-600">
-            {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
-        </span>
-
-        <span class="font-medium text-gray-900">
-
-            @php
-                $attribute = $attrValue->attribute;
-                $unit = $attribute?->unit;
-
-                $displayValue = $attrValue->display_value;
-
-                $unitName = $unit?->translations
-                    ?->firstWhere('locale', app()->getLocale())
-                    ?->name;
-
-                if (!$unitName) {
-                    $unitName = $unit?->translations
-                        ?->firstWhere('locale', 'en')
-                        ?->name;
-                }
-
-                $unitName = $unitName
-                    ?: $unit?->name
-                    ?: $unit?->code;
-            @endphp
-
-            {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
-
-        </span>
-
-    </li>
-
-@endforeach
-
-            @endforeach
-
-
-            {{-- HIDDEN ATTRIBUTES --}}
-            @if($hiddenAttributes->count())
-
-                <div
-                    id="hidden-product-attributes"
-                    class="hidden divide-y divide-gray-200"
-                >
-
-                    @foreach($hiddenGroupedAttributes as $groupId => $groupAttributes)
-
-                        @php
-                            $group = $groupAttributes->first()->attribute?->group;
-                        @endphp
-
-                       @if($group)
-    <li class="py-3 mt-3 border-0">
-        <div
-            class="
-                inline-flex
-                items-center
-                px-3
-                py-1.5
-                rounded-md
-                bg-gray-50
-                border
-                border-gray-200
-                text-sm
-                font-semibold
-                text-gray-800
-            "
-        >
-            {{ $group->name ?? $group->code }}
-        </div>
-    </li>
-@endif
-
-                        @foreach($groupAttributes as $index => $attrValue)
-
-    <li class="
-        flex
-        justify-between
-        py-2
-        border-b border-gray-200
-    ">
-
-        <span class="text-gray-600">
-            {{ $attrValue->attribute->name ?? $attrValue->attribute->code }}
-        </span>
-
-        <span class="font-medium text-gray-900">
-
-            @php
-                $attribute = $attrValue->attribute;
-                $unit = $attribute?->unit;
-
-                $displayValue = $attrValue->display_value;
-
-                $unitName = $unit?->translations
-                    ?->firstWhere('locale', app()->getLocale())
-                    ?->name;
-
-                if (!$unitName) {
-                    $unitName = $unit?->translations
-                        ?->firstWhere('locale', 'en')
-                        ?->name;
-                }
-
-                $unitName = $unitName
-                    ?: $unit?->name
-                    ?: $unit?->code;
-            @endphp
-
-            {{ $displayValue }}{{ $unitName ? ' ' . $unitName : '' }}
-
-        </span>
-
-    </li>
-
-@endforeach
-
-                    @endforeach
-
-                </div>
-
-            @endif
-
-        </ul>
-
-
-        {{-- BLUR + SHOW ALL BUTTON --}}
-        @if($hiddenAttributes->count())
-
-            <button
-                type="button"
-                id="product-attributes-toggle"
-                class="relative w-full mt-0 h-12 flex items-end justify-center group"
-                aria-expanded="false"
-            >
-
-                {{-- Blur --}}
-                <div
-                    id="product-attributes-blur"
-                    class="absolute inset-x-0 bottom-0 h-14
-                           bg-gradient-to-t
-                           from-white
-                           via-white/90
-                           to-transparent
-                           pointer-events-none"
-                ></div>
-
-
-                {{-- Button Content --}}
-                <span
-                    class="relative z-10
-                           inline-flex items-center gap-2
-                           px-4 py-2
-                           rounded-lg
-                           bg-white
-                           border border-gray-200
-                           shadow-sm
-                           text-sm font-medium
-                           text-gray-700
-                           transition
-                           group-hover:text-gray-900
-                           group-hover:border-gray-300"
-                >
-
-                    <span id="product-attributes-toggle-text">
-                        Show all specifications
-                    </span>
-
-                    <span
-                        class="flex items-center justify-center
-                               w-5 h-5"
-                    >
-
-                        <svg
-                            id="product-attributes-arrow"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4 transition-transform duration-200"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
-
-                    </span>
-
-                </span>
-
-            </button>
-
-        @endif
-
-    </div>
-
-@endif
-
-</div>
-
-@endif
-
-
-                @include('product.partials.materials-table', ['product1' => $product1])
+               
 
 
 
@@ -1675,6 +1351,677 @@
 
             </div>
         </div>
+
+
+
+
+{{-- COMMON BLOCK --}}
+<div class="">
+    
+
+{{-- Product Attributes : Key attributes --}}
+
+@if($product1->attributeValues->count())
+
+    @php
+        /*
+        |--------------------------------------------------------------------------
+        | FILTER HIDDEN BOOLEAN ATTRIBUTES
+        |--------------------------------------------------------------------------
+        |
+        | Boolean = 0 → полностью не показываем.
+        | Boolean = 1 → показываем как Yes.
+        | Measurement → размеры выводятся отдельным блоком.
+        |
+        | Показываются ВСЕ атрибуты — без лимита и без скрытия.
+        |
+        */
+
+        $attributeValues = $product1->attributeValues
+            ->filter(function ($attrValue) {
+
+                $attribute = $attrValue->attribute;
+
+                if (!$attribute) {
+                    return false;
+                }
+
+                if ($attribute->type === 'measurement') {
+                    return false;
+                }
+
+                if ($attribute->type === 'boolean') {
+
+                    $value = $attrValue->translations
+                        ->firstWhere('locale', app()->getLocale())
+                        ?->value;
+
+                    if ($value === null || $value === '') {
+                        $value = $attrValue->translations
+                            ->first()
+                            ?->value;
+                    }
+
+                    return in_array(
+                        strtolower(trim((string) $value)),
+                        ['1', 'true', 'yes', 'on', 'y'],
+                        true
+                    );
+                }
+
+                return true;
+            })
+            ->values();
+
+        $pairCount = (int) ceil($attributeValues->count() / 2);
+    @endphp
+
+    @if($attributeValues->count())
+
+        <div class="p-2 mb-6">
+
+            <div class="leading-nonetext-[18px] font-semibold text-gray-900 pl-2">
+                {{ __('product/product_show.key_attributes') }}
+            </div>
+
+            <div class="bg-white mt-4 rounded-xl border border-gray-200 overflow-hidden">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 -mt-px">
+
+                    @foreach($attributeValues as $index => $attrValue)
+
+                        @php
+                            $attribute = $attrValue->attribute;
+                            $unit      = $attribute?->unit;
+
+                            $displayValue = $attrValue->display_value;
+
+                            $unitName = $unit?->translations
+                                ?->firstWhere('locale', app()->getLocale())
+                                ?->name;
+
+                            if (!$unitName) {
+                                $unitName = $unit?->translations
+                                    ?->firstWhere('locale', 'en')
+                                    ?->name;
+                            }
+
+                            $unitName = $unitName
+                                ?: $unit?->name
+                                ?: $unit?->code;
+
+                            $valueText = trim(
+                                $displayValue . ($unitName ? ' ' . $unitName : '')
+                            );
+
+                            $isLong = mb_strlen($valueText) > 60;
+
+                            $cellBorder = $index % 2 === 1
+                                ? 'lg:border-l lg:border-gray-200'
+                                : '';
+                        @endphp
+
+                        {{-- LABEL --}}
+                        <div
+                            class="border-t border-gray-200
+                                   bg-gray-50
+                                   px-6 py-3
+                                   text-base text-gray-600
+                                   {{ $cellBorder }}"
+                        >
+                            {{ $attribute->name ?? $attribute->code }}
+                        </div>
+
+                        {{-- VALUE --}}
+                        <div
+                            class="border-t border-gray-200
+                                   bg-white
+                                   px-6 py-3
+                                   text-base font-semibold text-gray-900"
+                        >
+
+                            @if($isLong)
+
+                                <div x-data="{ expanded: false }">
+
+                                    <div x-show="!expanded" x-cloak>
+                                        {{ Str::limit($valueText, 60) }}
+                                    </div>
+
+                                    <div x-show="expanded" x-cloak>
+                                        {{ $valueText }}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        @click="expanded = !expanded"
+                                        class="mt-1 inline-flex items-center gap-1
+                                               text-xs font-medium text-gray-500
+                                               underline underline-offset-2
+                                               hover:text-gray-700
+                                               focus:outline-none
+                                               focus:ring-2
+                                               focus:ring-gray-900
+                                               focus:ring-offset-2
+                                               rounded"
+                                    >
+                                        <span x-text="expanded ? 'Show less' : 'Show more'"></span>
+                                    </button>
+
+                                </div>
+
+                            @else
+
+                                {{ $valueText }}
+
+                            @endif
+
+                        </div>
+
+                    @endforeach
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endif
+
+@endif
+
+
+
+
+
+
+
+
+
+  {{-- Description --}}
+@if(!empty($product1->description))
+    <div class="product-description text-gray-700 mb-6 leading-relaxed px-8">
+        {!! $product1->description !!}
+    </div>
+@endif
+
+        <style>
+    .product-description p {
+        margin-bottom: 0.75rem;
+    }
+
+    .product-description ul {
+        list-style-type: disc;
+        padding-left: 1.5rem;
+        margin: 0.75rem 0;
+    }
+
+    .product-description ol {
+        list-style-type: decimal;
+        padding-left: 1.5rem;
+        margin: 0.75rem 0;
+    }
+
+    .product-description li {
+        margin: 0.25rem 0;
+    }
+
+    .product-description strong,
+    .product-description b {
+        font-weight: 700;
+    }
+</style>      
+
+
+
+
+
+
+{{-- Shipping / Payment Method / Actions --}}
+
+@php
+    
+    // TODO: $product1->paymentGuarantees
+    $paymentGuarantees = [
+        [
+            'icon'        => 'shield',
+            'title'       => 'Secure payments',
+            'logos'       => ['VISA', 'MC', 'AMEX', 'PayPal', ' Pay', 'G Pay'],
+            'description' => 'Every payment you make on Alibaba.com is secured with strict SSL encryption and PCI DSS data protection...',
+        ],
+        [
+            'icon'        => 'return',
+            'title'       => 'Easy Return',
+            'logos'       => [],
+            'description' => 'Make free local returns for defects on qualifying purchases',
+        ],
+        [
+            'icon'        => 'money',
+            'title'       => 'Money-back protection',
+            'logos'       => [],
+            'description' => 'Claim a refund if your order doesn\'t ship, is missing, or arrives with product issues',
+        ],
+    ];
+
+    
+@endphp
+
+<div class="bg-white rounded-xl shadow p-8 mb-8">
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-x-10 gap-y-8">
+
+        
+{{-- COLUMN 1 : SHIPPING --}}
+<div x-data="{ showMore: false }">
+
+    <h3 class="font-bold text-[17px] leading-tight text-gray-900">
+        Shipping
+    </h3>
+
+    <p class="mt-2 text-sm leading-relaxed text-gray-600">
+        Shipping fee and delivery date to be negotiated. Chat with supplier now for more details.
+    </p>
+
+    @if(!empty($deliveryOptions))
+
+        <hr class="mt-4 border-gray-200">
+
+        <div class="mt-4 space-y-5">
+
+            @foreach($deliveryOptions as $option)
+
+                @php $isExpanded = $option['expanded'] ?? true; @endphp
+
+                <div class="flex items-start gap-3"
+                    @if(!$isExpanded) x-show="showMore" x-cloak @endif>
+
+                    {{-- Truck icon --}}
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-6 h-6 shrink-0 text-emerald-600"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true">
+
+                        <path d="M1 3h13v13H1z"/>
+                        <path d="M14 8h4l3 3v5h-7z"/>
+                        <circle cx="5.5" cy="18.5" r="2"/>
+                        <circle cx="17.5" cy="18.5" r="2"/>
+
+                    </svg>
+
+                    <div class="min-w-0 flex-1">
+
+                        <div class="flex items-start justify-between gap-3">
+<div>
+                            <span class="text-sm font-semibold text-gray-900 leading-snug">
+                                {{ $option['title'] }}
+                            </span>
+
+                            @if($option['description'])
+                            <div class="mt-1 text-xs text-gray-500 leading-snug">
+                                {{ $option['description'] }}
+                            </div>
+                        @endif
+</div>
+
+
+                            @if($option['price'])
+                                <span class="shrink-0 text-sm font-semibold text-gray-900">
+                                    {{ $option['price'] }}
+                                </span>
+                            @endif
+
+                        </div>
+
+                        
+
+                        @if(!empty($option['badge']))
+                            <div class="mt-2 inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-900">
+                                {{ $option['badge'] }}
+                            </div>
+                        @endif
+
+                    </div>
+
+                </div>
+
+            @endforeach
+
+        </div>
+
+        {{-- SHOW MORE --}}
+        @if($hasHiddenDelivery)
+
+            <div class="mt-4 flex justify-center">
+
+                <button
+                    type="button"
+                    id="shipping-toggle"
+                    @click="showMore = !showMore"
+                    :aria-expanded="showMore.toString()"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 transition hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 rounded">
+
+                    <span x-text="showMore ? 'Show less' : 'Show more'">Show more</span>
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 transition-transform duration-200"
+                        :class="showMore ? 'rotate-180' : ''"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true">
+
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+
+                    </svg>
+
+                </button>
+
+            </div>
+
+        @endif
+
+    @endif
+
+</div>
+
+
+
+        {{-- COLUMN 2 : PAYMENT METHOD --}}
+        <div>
+
+            <h3 class="font-bold text-[17px] leading-tight text-gray-900">
+                Payment Method
+            </h3>
+
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">
+                Shipping fee and delivery date to be negotiated. Chat with supplier now for more details.
+            </p>
+
+            @if(!empty($paymentGuarantees))
+
+                <hr class="mt-4 border-gray-200">
+
+                <div class="mt-4 space-y-5">
+
+                    @foreach($paymentGuarantees as $item)
+
+                        <div class="flex items-start gap-3">
+
+                            {{-- Green guarantee icon --}}
+                            <span class="mt-0.5 flex w-5 h-5 shrink-0 items-center justify-center rounded border border-emerald-600">
+
+                                @switch($item['icon'])
+
+                                    @case('return')
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="w-3 h-3 text-emerald-600"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="3"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            aria-hidden="true">
+
+                                            <path d="M1 4v6h6"/>
+                                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+
+                                        </svg>
+                                        @break
+
+                                    @case('money')
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="w-3 h-3 text-emerald-600"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="3"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            aria-hidden="true">
+
+                                            <path d="M12 2v20"/>
+                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+
+                                        </svg>
+                                        @break
+
+                                    @default
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="w-3 h-3 text-emerald-600"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="3"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            aria-hidden="true">
+
+                                            <path d="M4 12.5l5.5 5.5L20 6.5"/>
+
+                                        </svg>
+
+                                    @endswitch
+
+                            </span>
+
+                            <div class="min-w-0 flex-1">
+
+                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+
+                                    <span class="text-sm font-semibold text-gray-900 leading-snug">
+                                        {{ $item['title'] }}
+                                    </span>
+
+                                    @if(!empty($item['logos']))
+                                        <span class="flex flex-wrap items-center gap-1">
+
+                                            @foreach($item['logos'] as $logo)
+                                                <span class="inline-flex h-4 min-w-[26px] items-center justify-center rounded-[3px] border border-gray-300 bg-white px-1 text-[8px] font-bold leading-none text-gray-700">
+                                                    {{ $logo }}
+                                                </span>
+                                            @endforeach
+
+                                        </span>
+                                    @endif
+
+                                </div>
+
+                                @if($item['description'])
+                                    <div class="mt-1 text-xs text-gray-500 leading-snug">
+                                        {{ $item['description'] }}
+                                    </div>
+                                @endif
+
+                            </div>
+
+                        </div>
+
+                    @endforeach
+
+                </div>
+
+            @endif
+
+        </div>
+
+        {{-- COLUMN 3 : ACTIONS --}}
+        <div class="flex flex-col">
+@auth
+            @can('addToProject', $product1)
+
+            <form method="POST" action="{{ route('buyer.cart.add.redirect', $product1->id) }}">
+                        @csrf
+
+                        <button
+                            type="submit"
+                            class="w-full inline-flex items-center justify-center rounded-full
+                       bg-[#1B2A5E] px-6 py-3.5
+                       text-[15px] font-semibold text-white
+                       transition hover:bg-[#16224b]
+                       focus:outline-none focus:ring-2 focus:ring-[#1B2A5E] focus:ring-offset-2">
+                            {{ __('product/product_show.checkout') }}
+                        </button>
+                    </form>
+
+
+
+            <button
+                type="button"
+                class="mt-3 w-full inline-flex items-center justify-center rounded-full
+                       bg-[#E2460B] px-6 py-3.5
+                       text-[15px] font-semibold text-white
+                       transition hover:bg-[#c93d09]
+                       focus:outline-none focus:ring-2 focus:ring-[#E2460B] focus:ring-offset-2">
+
+                Send inquiry
+
+            </button>
+
+            <button
+                class="open-conversation mt-3 w-full inline-flex items-center justify-center rounded-full
+                       border border-gray-800 bg-white px-6 py-3.5
+                       text-[15px] font-semibold text-gray-900
+                       transition hover:bg-gray-50
+                       focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"  data-subject-type="App\Models\Product"
+                                    data-subject-id="{{ $product1->id }}">
+
+                {{ __('product/product_show.contact_supllire') }}
+
+            </button>
+
+
+           
+
+            <p class="mt-4 text-sm leading-relaxed text-gray-500">
+                Only orders placed and paid through Alibaba.com can enjoy free protection by
+            </p>
+@endcan
+
+@else
+
+
+                    <button
+                            type="button"
+
+                            onclick="dispatchAlert(
+            'guest',
+            'Please register or log in to proceed to checkout.'
+        )"
+
+
+                            class="w-full inline-flex items-center justify-center rounded-full
+                       bg-[#1B2A5E] px-6 py-3.5
+                       text-[15px] font-semibold text-white
+                       transition hover:bg-[#16224b]
+                       focus:outline-none focus:ring-2 focus:ring-[#1B2A5E] focus:ring-offset-2">
+                            {{ __('product/product_show.checkout') }}
+                        </button>
+
+                       
+                        <button
+                type="button"
+
+                onclick="dispatchAlert(
+                'guest',
+                'Please register or log in to send an inquiry.'
+            )"
+
+
+                class="mt-3 w-full inline-flex items-center justify-center rounded-full
+                       bg-[#E2460B] px-6 py-3.5
+                       text-[15px] font-semibold text-white
+                       transition hover:bg-[#c93d09]
+                       focus:outline-none focus:ring-2 focus:ring-[#E2460B] focus:ring-offset-2">
+
+                Send inquiry
+
+            </button>
+
+
+
+            <button
+            type="button"
+                        onclick="dispatchAlert(
+                'guest',
+                'Please register or log in to contact the supplier.'
+            )"
+                            class="mt-3 w-full inline-flex items-center justify-center rounded-full
+                       border border-gray-800 bg-white px-6 py-3.5
+                       text-[15px] font-semibold text-gray-900
+                       transition hover:bg-gray-50
+                       focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2">
+
+                {{ __('product/product_show.contact_supllire') }}
+
+            </button>
+                        
+
+                            
+
+
+                        
+                          
+
+
+
+
+                    </div>
+
+
+
+                </div>
+
+
+@endif
+
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+           
+                
+  <!-- <p class="text-gray-700 mb-2 leading-relaxed">{{ __('product/product_show.place_of_origin') }} <strong>{{ $product1->country?->name ?? 'Country not specified' }}</strong>
+                </p>
+
+                 -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
     </div>
 </section>
 

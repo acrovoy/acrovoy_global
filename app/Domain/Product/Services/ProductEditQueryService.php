@@ -112,32 +112,145 @@ private function authorizeProduct(Product $product): void
 }
 
     private function prepareMaterials($languages)
-    {
-        $materials = Material::with('translations')->get();
+{
+    $context = app(ActiveContextService::class);
+    $supplierId = $context->supplierId();
 
-        $result = [];
+    $materials = Material::with([
+        'translations',
+        'materialGroup',
+        'photo',
+    ])->get();
 
-        foreach ($materials as $material) {
+    $result = [];
 
-            $data = [
-                'id' => $material->id,
-                'translations' => []
-            ];
+    foreach ($materials as $material) {
 
-            foreach ($languages as $language) {
-                $translation = $material->translations
-                    ->firstWhere('locale', $language->code);
+        $group = $material->materialGroup;
 
-                $data['translations'][$language->code] = [
-                    'name' => $translation->name ?? ''
-                ];
-            }
-
-            $result[] = $data;
+        if (!$group) {
+            continue;
         }
 
-        return $result;
+        /*
+         * =========================================================
+         * MATERIAL VISIBILITY
+         * =========================================================
+         *
+         * Supplier materials:
+         *   is_custom = 1
+         *   owner_type = Supplier
+         *   owner_id = current supplier
+         *
+         * System materials:
+         *   is_custom = 0
+         *   owner_type = null
+         *   owner_id = null
+         *
+         * Materials belonging to another supplier are ignored.
+         */
+
+        $isSupplierMaterial =
+            (bool) $group->is_custom
+            && $group->owner_type === Supplier::class
+            && (int) $group->owner_id === (int) $supplierId;
+
+        $isSystemMaterial =
+            !(bool) $group->is_custom
+            && empty($group->owner_type)
+            && empty($group->owner_id);
+
+        if (!$isSupplierMaterial && !$isSystemMaterial) {
+            continue;
+        }
+
+        $data = [
+            'id' => $material->id,
+
+            'translations' => [],
+
+            'group' => [
+                'id' => $group->id,
+                'name' => $group->translatedName(),
+                'description' => $group->translatedDescription(),
+                'is_custom' => (bool) $group->is_custom,
+                'owner_type' => $group->owner_type,
+                'owner_id' => $group->owner_id,
+            ],
+
+            'photo' => $material->photo
+                ? [
+                    'cdn_url' => $material->photo->cdn_url,
+                ]
+                : null,
+        ];
+
+        foreach ($languages as $language) {
+
+            $translation = $material->translations
+                ->firstWhere('locale', $language->code);
+
+            $data['translations'][$language->code] = [
+                'name' => $translation->name ?? '',
+            ];
+        }
+
+        $result[] = $data;
     }
+
+    /*
+     * =========================================================
+     * SORTING
+     * =========================================================
+     *
+     * 1. Current supplier groups
+     * 2. System groups
+     *
+     * Then:
+     *  - group name
+     *  - material name
+     */
+
+    usort($result, function ($a, $b) {
+
+        $aCustom = $a['group']['is_custom'] ? 0 : 1;
+        $bCustom = $b['group']['is_custom'] ? 0 : 1;
+
+        if ($aCustom !== $bCustom) {
+            return $aCustom <=> $bCustom;
+        }
+
+        $aGroupName = mb_strtolower(
+            $a['group']['name'] ?? ''
+        );
+
+        $bGroupName = mb_strtolower(
+            $b['group']['name'] ?? ''
+        );
+
+        $groupCompare = $aGroupName <=> $bGroupName;
+
+        if ($groupCompare !== 0) {
+            return $groupCompare;
+        }
+
+        $aName = mb_strtolower(
+            $a['translations'][app()->getLocale()]['name']
+                ?? $a['translations']['en']['name']
+                ?? ''
+        );
+
+        $bName = mb_strtolower(
+            $b['translations'][app()->getLocale()]['name']
+                ?? $b['translations']['en']['name']
+                ?? ''
+        );
+
+        return $aName <=> $bName;
+    });
+
+    return $result;
+}
 
     private function prepareTranslations($product, $languages)
     {
