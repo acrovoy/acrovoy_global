@@ -280,66 +280,85 @@ class ProductViewQueryService
 
 
         /*
-        |--------------------------------------------------------------------------
-        | SHIPPING TEMPLATES
-        |--------------------------------------------------------------------------
-        */
+|--------------------------------------------------------------------------
+| SHIPPING TEMPLATES
+|--------------------------------------------------------------------------
+*/
 
-        $shippingTemplates = $product1->shippingTemplates
-            ->map(function ($template) use ($product1) {
+$shippingTemplates = $product1->shippingTemplates
+    ->filter(fn ($template) => $template->is_active)
+    ->map(function ($template) use ($product1) {
 
-                $template->computed_price =
-                    $product1->computeShippingPrice($template);
+        $template->computed_price =
+            $product1->computeShippingPrice($template);
 
-                return $template;
-            });
+        return $template;
+    });
 
 
-        /*
+       /*
 |--------------------------------------------------------------------------
 | SHIPPING OPTIONS FOR PRODUCT CARD
 |--------------------------------------------------------------------------
 */
 
-$deliveryTypeLabels = [
-    'self_pickup' => 'Self Pickup',
-    'curbside_delivery' => 'Curbside Delivery',
-    'door_to_door' => 'Door-to-Door Delivery',
-    'white_glove' => 'White Glove Delivery',
-    'delivery_assembly' => 'Delivery & Assembly',
-    'delivery_installation' => 'Delivery & Installation',
-    'custom' => 'Custom Delivery',
-];
-
 $deliveryOptions = $shippingTemplates
-    ->values()
-    ->map(function ($template, $index) use ($deliveryTypeLabels) {
+    ->map(function ($template) use ($product1) {
 
-        $price = null;
+        $option = $template->deliveryOptions
+            ->filter(function ($option) {
+                return $option->is_active
+                    && (float) $option->price > 0;
+            })
+            ->sortBy('sort_order')
+            ->first();
 
-        if ($template->computed_price !== null && $template->computed_price > 0) {
-            $price = '$' . number_format($template->computed_price, 2);
+        if (!$option) {
+            return null;
         }
 
-        $deliveryType = $deliveryTypeLabels[$template->delivery_type]
-            ?? $template->delivery_type;
+        $computedPrice = $product1->computeShippingPrice(
+            $template,
+            $option
+        );
 
-        $title = $template->title;
-
-        if ($deliveryType) {
-            $title .= ' · ' . $deliveryType;
+        if ($computedPrice <= 0) {
+            return null;
         }
+
+        $deliveryTypeName =
+            $option->deliveryType?->name
+            ?? $option->deliveryType?->code
+            ?? '';
 
         return [
-            'title' => $title,
-            'price' => $price,
+            'title' => trim(
+                $template->title .
+                ($deliveryTypeName ? ' · ' . $deliveryTypeName : '')
+            ),
+            'price' => '$' . number_format($computedPrice, 2),
             'description' => $template->description,
             'badge' => $template->delivery_time
                 ? $template->delivery_time . ' days'
                 : null,
-            'expanded' => $index < 2,
+            'expanded' => false,
             'template' => $template,
+            'delivery_option' => $option,
         ];
+    })
+    ->filter()
+    ->values();
+
+/*
+|--------------------------------------------------------------------------
+| SHOW MORE
+|--------------------------------------------------------------------------
+*/
+
+$deliveryOptions = $deliveryOptions
+    ->map(function ($option, $index) {
+        $option['expanded'] = $index < 2;
+        return $option;
     });
 
 $hasHiddenDelivery = $deliveryOptions->count() > 2;

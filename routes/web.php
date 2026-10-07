@@ -86,6 +86,8 @@ use App\Http\Controllers\Admin\Settings\AttributeController;
 use App\Http\Controllers\Admin\Settings\AttributeGroupController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Settings\UnitController;
+use App\Http\Controllers\Admin\Settings\DeliveryTypeController;
+
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
 use App\Http\Controllers\Admin\ProductCollectionController;
@@ -847,6 +849,18 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
         Route::put('{shippingTemplate}', [AdminShippingTemplateController::class, 'update'])->name('update');
         Route::delete('{shippingTemplate}', [AdminShippingTemplateController::class, 'destroy'])->name('destroy');
     });
+
+    // Delivery-types
+    Route::prefix('settings/delivery-types')->name('settings.delivery-types.')->group(function () {
+        Route::get('/', [DeliveryTypeController::class, 'index'])->name('index');
+        Route::get('create', [DeliveryTypeController::class, 'create'])->name('create');
+        Route::post('/', [DeliveryTypeController::class, 'store'])->name('store');
+        Route::get('{deliveryType}/edit', [DeliveryTypeController::class, 'edit'])->name('edit');
+        Route::put('{deliveryType}', [DeliveryTypeController::class, 'update'])->name('update');
+        Route::patch('{deliveryType}/toggle-active', [DeliveryTypeController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('{deliveryType}', [DeliveryTypeController::class, 'destroy'])->name('destroy');
+    });
+
 
     Route::prefix('settings')->name('settings.')->group(function () {
 

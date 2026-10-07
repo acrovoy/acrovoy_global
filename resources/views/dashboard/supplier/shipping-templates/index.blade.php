@@ -64,84 +64,67 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($templates as $template)
                 <tr class="hover:bg-gray-50 transition">
-                    <td class="w-[400px] min-w-[400px] max-w-[380px] px-5 py-3 align-top">
+                    <td class="w-[400px] min-w-[400px] max-w-[400px] px-5 py-3 align-top">
     <div class="min-w-0">
 
-        {{-- Title + Price --}}
-        <div class="flex items-start justify-between gap-4">
-
+        {{-- Title + Description --}}
         <div>
             <span class="text-sm font-semibold text-gray-900 leading-snug">
                 {{ $template->title }}
             </span>
-            <div class="text-sm text-gray-500 leading-snug">
-                {{ $template->description }}
-            </div>
+
+            @if($template->description)
+                <div class="text-sm text-gray-500 leading-snug">
+                    {{ $template->description }}
+                </div>
+            @endif
         </div>
-            <span class="shrink-0 text-sm font-semibold text-gray-900">
-                ${{ number_format($template->price, 2) }}
-                {{-- Price Unit --}}
-        @if($template->price_unit_label)
-            <div class="mt-1 text-xs text-gray-400">
-                {{ $template->price_unit_label }}
+
+        {{-- Delivery Options --}}
+        @if($template->deliveryOptions->count())
+            <div class="mt-3 space-y-2">
+                @foreach($template->deliveryOptions as $option)
+                    <div class="flex items-center justify-between gap-3">
+
+                        <div class="flex flex-wrap items-center gap-2 min-w-0">
+                            <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-900">
+                                {{ $option->deliveryType?->name ?? $option->deliveryType?->code }}
+                            </span>
+
+                            @if($option->incoterm)
+                                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-700">
+                                    {{ $option->incoterm }}
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="shrink-0 text-right">
+                            @if($option->price !== null)
+                                <div class="text-sm font-semibold text-gray-900">
+                                    ${{ number_format($option->price, 2) }}
+                                </div>
+
+                                <div class="text-[11px] text-gray-400">
+                                    {{ $option->price_unit_label }}
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400">
+                                    Price on request
+                                </span>
+                            @endif
+                        </div>
+
+                    </div>
+                @endforeach
             </div>
         @endif
-            </span>
-            
-
-        </div>
-
-
-        
-
 
         {{-- Delivery Time --}}
         @if($template->delivery_time)
-            <div class="mt-1 text-xs text-gray-500 leading-snug">
+            <div class="mt-2 text-xs text-gray-500 leading-snug">
                 Delivery time: {{ $template->delivery_time }}
             </div>
         @endif
-
-        {{-- Delivery Type + Incoterm --}}
-        <div class="mt-2 flex flex-wrap items-center gap-2">
-
-            @php
-                $deliveryTypes = [
-                    'self_pickup' => 'Self Pickup',
-                    'curbside_delivery' => 'Curbside Delivery',
-                    'door_to_door' => 'Door-to-Door Delivery',
-                    'white_glove' => 'White Glove Delivery',
-                    'delivery_assembly' => 'Delivery & Assembly',
-                    'delivery_installation' => 'Delivery & Installation',
-                    'custom' => 'Custom Delivery',
-                ];
-
-                $incoterms = [
-                    'EXW' => 'EXW',
-                    'FCA' => 'FCA',
-                    'CPT' => 'CPT',
-                    'CIP' => 'CIP',
-                    'DAP' => 'DAP',
-                    'DPU' => 'DPU',
-                    'DDP' => 'DDP',
-                ];
-            @endphp
-
-            @if($template->delivery_type)
-                <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-900">
-                    {{ $deliveryTypes[$template->delivery_type] ?? $template->delivery_type }}
-                </span>
-            @endif
-
-            @if($template->incoterm)
-                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-700">
-                    {{ $incoterms[$template->incoterm] ?? $template->incoterm }}
-                </span>
-            @endif
-
-        </div>
-
-        
 
     </div>
 </td>

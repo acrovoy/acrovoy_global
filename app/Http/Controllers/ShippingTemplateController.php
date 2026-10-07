@@ -10,6 +10,7 @@ use App\Models\ShippingTemplateTranslation;
 use App\Models\Country;
 use App\Models\Location;
 use App\Models\Warehouse;
+use App\Domain\Shipping\Models\DeliveryType;
 use App\Services\Company\ActiveContextService;
 
 class ShippingTemplateController extends Controller
@@ -77,17 +78,25 @@ class ShippingTemplateController extends Controller
         $shippingTemplate = new ShippingTemplate();
         $selectedLocations = $shippingTemplate->locations->pluck('id')->toArray();
 
+        $deliveryTypes = DeliveryType::query()
+    ->with('translations')
+    ->where('is_active', true)
+    ->orderBy('sort_order')
+    ->orderBy('id')
+    ->get();
+
         return view('dashboard.supplier.shipping-templates.create', compact(
             'shippingTemplate',
             'countries',
-            'selectedLocations'
+            'selectedLocations',
+            'deliveryTypes',
         ));
     }
 
     /**
      * Store new shipping template
      */
-    public function store(Request $request)
+   public function store(Request $request)
 {
     $this->authorize('create', ShippingTemplate::class);
 
@@ -96,10 +105,12 @@ class ShippingTemplateController extends Controller
         'description' => 'nullable|array',
         'price' => 'required|numeric|min:0',
         'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
-        'delivery_type' => 'required|in:self_pickup,curbside_delivery,door_to_door,white_glove,delivery_assembly,delivery_installation,custom',
         'delivery_time' => 'nullable|string|max:255',
         'locations' => 'nullable|array',
         'locations.*' => 'exists:locations,id',
+        'delivery_options' => 'nullable|array',
+        'delivery_options.*.price' => 'nullable|numeric|min:0',
+        'delivery_options.*.price_unit' => 'nullable|in:per_item,per_kg,per_cubic_meter,flat',
     ]);
 
     DB::transaction(function () use ($data) {
@@ -108,21 +119,54 @@ class ShippingTemplateController extends Controller
 
         abort_unless($entity, 404);
 
-        // 1️⃣ Создаем базовую запись шаблона
+        $deliveryOptions = $data['delivery_options'] ?? [];
+
+        // Первый настроенный тип доставки для старой схемы.
+        // Пустая цена = опция не настроена.
+        // 0 = бесплатная доставка и считается активной.
+        $legacyDeliveryType = 'door_to_door';
+        $legacyPrice = 0;
+        $legacyPriceUnit = 'flat';
+
+        foreach ($deliveryOptions as $deliveryTypeId => $option) {
+
+            $rawPrice = $option['price'] ?? null;
+
+            // Пустое значение = тип доставки не используется
+            if ($rawPrice === null || $rawPrice === '') {
+                continue;
+            }
+
+            $deliveryType = \App\Domain\Shipping\Models\DeliveryType::find($deliveryTypeId);
+
+            if (!$deliveryType) {
+                continue;
+            }
+
+            $legacyDeliveryType = $deliveryType->code;
+            $legacyPrice = (float) $rawPrice;
+            $legacyPriceUnit = $option['price_unit'] ?? 'flat';
+
+            break;
+        }
+
+        // 1. Создаем базовую запись шаблона
         $template = ShippingTemplate::create([
             'provider_type' => $entity::class,
-            'provider_id'   => $entity->getKey(),
-            'price' => $data['price'],
-            'price_unit' => $data['price_unit'],
-            'delivery_type' => $data['delivery_type'],
+            'provider_id' => $entity->getKey(),
+
+            // Старая схема
+            'price' => $legacyPrice,
+            'price_unit' => $legacyPriceUnit,
+            'delivery_type' => $legacyDeliveryType,
+
             'delivery_time' => $data['delivery_time'] ?? null,
             'created_by' => auth()->id(),
         ]);
 
-        // 2️⃣ Создаем мультиязычные переводы
+        // 2. Создаем мультиязычные переводы
         foreach ($data['title'] as $locale => $title) {
 
-            // ❗ если title пустой — пропускаем язык
             if (empty($title)) {
                 continue;
             }
@@ -135,14 +179,41 @@ class ShippingTemplateController extends Controller
             ]);
         }
 
-        // 3️⃣ Привязка стран / регионов / городов
+        // 3. Новая схема: сохраняем каждый настроенный тип доставки отдельно
+        foreach ($deliveryOptions as $deliveryTypeId => $option) {
+
+            $rawPrice = $option['price'] ?? null;
+
+            // Пустая цена = тип доставки отключен
+            // 0 = бесплатная доставка, поэтому НЕ пропускаем
+            if ($rawPrice === null || $rawPrice === '') {
+                continue;
+            }
+
+            $deliveryType = \App\Domain\Shipping\Models\DeliveryType::find($deliveryTypeId);
+
+            if (!$deliveryType) {
+                continue;
+            }
+
+            $template->deliveryOptions()->create([
+                'delivery_type_id' => $deliveryType->id,
+                'price' => (float) $rawPrice,
+                'price_unit' => $option['price_unit'] ?? 'flat',
+                'delivery_time' => $data['delivery_time'] ?? null,
+                'is_active' => true,
+                'sort_order' => $deliveryType->sort_order,
+            ]);
+        }
+
+        // 4. Привязка стран / регионов / городов
         $template->locations()->sync($data['locations'] ?? []);
     });
 
-    return redirect()->route('supplier.shipping-templates.index')
+    return redirect()
+        ->route('supplier.shipping-templates.index')
         ->with('success', 'Shipping template created successfully');
 }
-
 
 
 
@@ -186,10 +257,24 @@ $this->authorize('update', $shippingTemplate);
         // Определяем выбранные локации
         $selectedLocations = $shippingTemplate->locations->pluck('id')->toArray();
 
+        $deliveryTypes = DeliveryType::query()
+    ->with('translations')
+    ->where('is_active', true)
+    ->orderBy('sort_order')
+    ->orderBy('id')
+    ->get();
+
+    $shippingTemplate->load([
+    'translations',
+    'locations',
+    'deliveryOptions.deliveryType.translations',
+]);
+
         return view('dashboard.supplier.shipping-templates.edit', compact(
             'shippingTemplate',
             'countries',
-            'selectedLocations'
+            'selectedLocations',
+            'deliveryTypes',
         ));
     }
 
@@ -200,65 +285,124 @@ $this->authorize('update', $shippingTemplate);
 {
     $this->authorize('update', $shippingTemplate);
 
-    // Валидация
     $data = $request->validate([
         'title' => 'required|array',
         'description' => 'nullable|array',
         'price' => 'required|numeric|min:0',
         'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
-        'delivery_type' => 'required|in:self_pickup,curbside_delivery,door_to_door,white_glove,delivery_assembly,delivery_installation,custom',
         'delivery_time' => 'nullable|string|max:255',
         'locations' => 'nullable|array',
         'locations.*' => 'exists:locations,id',
+        'delivery_options' => 'nullable|array',
+        'delivery_options.*.price' => 'nullable|numeric|min:0',
+        'delivery_options.*.price_unit' => 'nullable|in:per_item,per_kg,per_cubic_meter,flat',
     ]);
 
     DB::transaction(function () use ($shippingTemplate, $data) {
 
-        // 1️⃣ Обновляем базовые поля шаблона
+        $deliveryOptions = $data['delivery_options'] ?? [];
+
+        // Первый настроенный delivery type для старых полей.
+        // Пустая цена = опция не настроена.
+        // 0 = бесплатная доставка и считается активной.
+        $legacyDeliveryType = 'door_to_door';
+        $legacyPrice = 0;
+        $legacyPriceUnit = 'flat';
+
+        foreach ($deliveryOptions as $deliveryTypeId => $option) {
+
+            $rawPrice = $option['price'] ?? null;
+
+            // Пустая цена = тип доставки не используется
+            if ($rawPrice === null || $rawPrice === '') {
+                continue;
+            }
+
+            $deliveryType = \App\Domain\Shipping\Models\DeliveryType::find($deliveryTypeId);
+
+            if (!$deliveryType) {
+                continue;
+            }
+
+            $legacyDeliveryType = $deliveryType->code;
+            $legacyPrice = (float) $rawPrice;
+            $legacyPriceUnit = $option['price_unit'] ?? 'flat';
+
+            break;
+        }
+
+        // 1. Обновляем базовый шаблон
         $shippingTemplate->update([
-            'price' => $data['price'],
-            'price_unit' => $data['price_unit'],
-            'delivery_type' => $data['delivery_type'],
+            'price' => $legacyPrice,
+            'price_unit' => $legacyPriceUnit,
+            'delivery_type' => $legacyDeliveryType,
             'delivery_time' => $data['delivery_time'] ?? null,
             'updated_by' => auth()->id(),
         ]);
 
-        // 2️⃣ Обновляем мультиязычные переводы
+        // 2. Обновляем переводы
         foreach ($data['title'] as $locale => $title) {
 
-            // ❗ если title пустой — пропускаем язык
             if (empty($title)) {
                 continue;
             }
 
-            // Если перевод уже существует, обновляем
-            $translation = $shippingTemplate->translations()
-                ->where('locale', $locale)
-                ->first();
-
-            if ($translation) {
-                $translation->update([
+            $shippingTemplate->translations()->updateOrCreate(
+                ['locale' => $locale],
+                [
                     'title' => $title,
                     'description' => $data['description'][$locale] ?? null,
-                ]);
-            } else {
-                // Если перевода нет, создаем
-                ShippingTemplateTranslation::create([
-                    'shipping_template_id' => $shippingTemplate->id,
-                    'locale' => $locale,
-                    'title' => $title,
-                    'description' => $data['description'][$locale] ?? null,
-                ]);
-            }
+                ]
+            );
         }
 
-        // 3️⃣ Обновляем привязку стран
+        // 3. Обновляем delivery options
+        foreach ($deliveryOptions as $deliveryTypeId => $option) {
+
+            $rawPrice = $option['price'] ?? null;
+
+            // Пустая цена = удалить / отключить опцию.
+            // 0 = бесплатная доставка, поэтому сохраняем.
+            if ($rawPrice === null || $rawPrice === '') {
+
+                $shippingTemplate->deliveryOptions()
+                    ->where('delivery_type_id', $deliveryTypeId)
+                    ->delete();
+
+                continue;
+            }
+
+            $deliveryType = \App\Domain\Shipping\Models\DeliveryType::find($deliveryTypeId);
+
+            if (!$deliveryType) {
+                continue;
+            }
+
+            $shippingTemplate->deliveryOptions()->updateOrCreate(
+                [
+                    'delivery_type_id' => $deliveryType->id,
+                ],
+                [
+                    'price' => (float) $rawPrice,
+                    'price_unit' => $option['price_unit'] ?? 'flat',
+                    'delivery_time' => $data['delivery_time'] ?? null,
+                    'is_active' => true,
+                    'sort_order' => $deliveryType->sort_order,
+                ]
+            );
+        }
+
+        // 4. Обновляем страны / регионы / города
         $shippingTemplate->locations()->sync($data['locations'] ?? []);
     });
 
-    return redirect()->route('supplier.shipping-templates.index')
+    return redirect()
+        ->route('supplier.shipping-templates.index')
         ->with('success', 'Shipping template updated successfully');
 }
+
+
+
     /**
      * Delete template
      */

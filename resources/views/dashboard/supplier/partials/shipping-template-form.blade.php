@@ -23,21 +23,17 @@
             'flat' => 'Flat Rate',
         ];
 
-        $deliveryTypes = [
-            'self_pickup' => 'Self Pickup',
-            'curbside_delivery' => 'Curbside Delivery',
-            'door_to_door' => 'Door-to-Door Delivery',
-            'white_glove' => 'White Glove Delivery',
-            'delivery_assembly' => 'Delivery & Assembly',
-            'delivery_installation' => 'Delivery & Installation',
-            'custom' => 'Custom Delivery',
-        ];
+        $deliveryTypes = $deliveryTypes ?? collect();
 
-        $selectedUnit = old('price_unit', $shippingTemplate->price_unit ?? 'per_item');
-        $selectedDeliveryType = old('delivery_type', $shippingTemplate->delivery_type ?? 'door_to_door');
+        $savedDeliveryOptions = $shippingTemplate
+            ? $shippingTemplate->deliveryOptions->keyBy('delivery_type_id')
+            : collect();
+
+            $selectedUnit = old('price_unit', $shippingTemplate->price_unit ?? 'per_item');
     @endphp
 
     <div class="form-step" data-step="1">
+
         <div class="mb-6">
             <h3 class="text-2xl font-bold text-gray-900">Basic Information</h3>
             <p class="text-sm text-gray-500 mt-1">Create a shipping template with pricing, delivery service and destination.</p>
@@ -64,14 +60,18 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div>
                             <label class="block mb-1.5 text-sm font-medium text-gray-700">Template Title</label>
-                            <input type="text" name="title[{{ $language->code }}]" class="input"
+                            <input type="text"
+                                   name="title[{{ $language->code }}]"
+                                   class="input"
                                    placeholder="Title ({{ $language->code }})"
                                    value="{{ old('title.' . $language->code, $title) }}">
                         </div>
 
                         <div>
                             <label class="block mb-1.5 text-sm font-medium text-gray-700">Description</label>
-                            <input type="text" name="description[{{ $language->code }}]" class="input"
+                            <input type="text"
+                                   name="description[{{ $language->code }}]"
+                                   class="input"
                                    placeholder="Description ({{ $language->code }})"
                                    value="{{ old('description.' . $language->code, $description) }}">
                         </div>
@@ -80,58 +80,118 @@
             @endforeach
 
             @if($languages->count() > 1)
-                <button type="button" @click="open = !open"
+                <button type="button"
+                        @click="open = !open"
                         class="mt-1 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
                     Other Languages
-                    <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg :class="{ 'rotate-180': open }"
+                         class="w-4 h-4 transition-transform"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
             @endif
         </div>
 
-        {{-- DELIVERY TYPE --}}
+        {{-- DELIVERY OPTIONS --}}
         <div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-            <label class="block mb-1.5 text-sm font-medium text-gray-700">Delivery Type</label>
-            <select name="delivery_type" class="input">
-                @foreach($deliveryTypes as $key => $label)
-                    <option value="{{ $key }}" {{ $selectedDeliveryType === $key ? 'selected' : '' }}>
-                        {{ $label }}
-                    </option>
-                @endforeach
-            </select>
-            <p class="text-xs text-gray-500 mt-1.5">Select the type of delivery service provided to the customer.</p>
-        </div>
-
-        {{-- PRICE --}}
-        <div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block mb-1.5 text-sm font-medium text-gray-700">Price</label>
-                    <input type="number" min="0" step="0.01" name="price" class="input"
-                           value="{{ old('price', $shippingTemplate->price ?? '') }}"
-                           placeholder="0.00">
-                    <p class="text-xs text-gray-500 mt-1.5">Enter price in <strong>USD</strong>. It will be automatically converted to the user's selected currency.</p>
-                </div>
-
-                <div>
-                    <label class="block mb-1.5 text-sm font-medium text-gray-700">Price Unit</label>
-                    <select name="price_unit" class="input">
-                        @foreach($units as $key => $label)
-                            <option value="{{ $key }}" {{ $selectedUnit === $key ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1.5">Choose how the price should be applied.</p>
-                </div>
+            <div class="mb-5">
+                <h4 class="font-semibold text-gray-900">Delivery Options & Pricing</h4>
+                <p class="text-xs text-gray-500 mt-1">
+    Set a price for each delivery type. Leave the price empty to disable the option. A price of 0 means free delivery.
+</p>
+<p class="text-xs text-gray-500 mt-4">
+    Prices are entered in USD and automatically converted to the user's selected currency.
+    Free delivery can be set to 0.00. Leave the price empty to disable the option.
+</p>
             </div>
+
+            <div class="space-y-3">
+                @forelse($deliveryTypes as $deliveryType)
+                    @php
+                        $option = $savedDeliveryOptions->get($deliveryType->id);
+
+                        $price = old(
+                            "delivery_options.{$deliveryType->id}.price",
+                            $option?->price
+                        );
+
+                        $priceUnit = old(
+                            "delivery_options.{$deliveryType->id}.price_unit",
+                            $option?->price_unit ?? 'flat'
+                        );
+                    @endphp
+
+                    <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_150px_190px] gap-3 items-end p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition">
+
+                        <div class="min-w-0">
+                            <div class="text-sm font-medium text-gray-800">
+                                {{ $deliveryType->name }}
+                            </div>
+                            <div class="text-xs text-gray-400 mt-0.5">
+                                {{ $deliveryType->code }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1.5 text-xs font-medium text-gray-500">
+                                Price (USD)
+                            </label>
+                            <input type="number"
+                                   name="delivery_options[{{ $deliveryType->id }}][price]"
+                                   min="0"
+                                   step="0.01"
+                                   class="input"
+                                   value="{{ $price }}"
+                                   placeholder="0.00">
+                        </div>
+
+                        <div>
+                            <label class="block mb-1.5 text-xs font-medium text-gray-500">
+                                Price Unit
+                            </label>
+                            <select name="delivery_options[{{ $deliveryType->id }}][price_unit]"
+                                    class="input">
+                                @foreach($units as $key => $label)
+                                    <option value="{{ $key }}" {{ $priceUnit === $key ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                    </div>
+                @empty
+                    <div class="p-4 rounded-xl bg-gray-50 text-sm text-gray-500">
+                        No active delivery types found. Add or activate delivery types in Settings.
+                    </div>
+                @endforelse
+            </div>
+
+            <p class="text-xs text-gray-500 mt-4">
+                Prices are entered in USD and automatically converted to the user's selected currency.
+                Only delivery options with a price greater than zero will be used.
+            </p>
+
+            {{-- Compatibility with existing shipping_templates fields --}}
+            <input type="hidden" name="price" value="0">
+            <input type="hidden" name="price_unit" value="flat">
         </div>
+
+  
+
 
         {{-- DELIVERY TIME --}}
         <div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-            <label class="block mb-1.5 text-sm font-medium text-gray-700">Delivery Time</label>
-            <input type="text" name="delivery_time" class="input"
+            <label class="block mb-1.5 text-sm font-medium text-gray-700">
+                Delivery Time
+            </label>
+
+            <input type="text"
+                   name="delivery_time"
+                   class="input"
                    value="{{ old('delivery_time', $shippingTemplate->delivery_time ?? '') }}"
                    placeholder="e.g. 3-5 days">
         </div>
@@ -140,12 +200,17 @@
         <div class="bg-white border border-gray-200 rounded-xl p-5">
             <div class="mb-5">
                 <h4 class="font-semibold text-gray-900">Delivery Destination</h4>
-                <p class="text-xs text-gray-500 mt-1">Select the regions or cities where this shipping template is available.</p>
+                <p class="text-xs text-gray-500 mt-1">
+                    Select the regions or cities where this shipping template is available.
+                </p>
             </div>
 
-            <x-location-tree :locations="$countries"
-                             :selectedLocations="old('locations', $selectedLocations)" />
+            <x-location-tree
+                :locations="$countries"
+                :selectedLocations="old('locations', $selectedLocations)"
+            />
         </div>
+
     </div>
 
     {{-- ACTIONS --}}
@@ -155,11 +220,13 @@
             Cancel
         </a>
 
-        <button type="submit" id="submitBtn"
+        <button type="submit"
+                id="submitBtn"
                 class="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
             Save Template
         </button>
     </div>
+
 </form>
 
 <style>

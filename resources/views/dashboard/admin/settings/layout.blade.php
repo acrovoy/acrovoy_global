@@ -181,10 +181,35 @@
                 <span class="text-sm font-medium">Manufacturing</span>
             </a>
 
+
+            {{-- DELIVERY TYPES --}}
+<a
+    href="{{ route('admin.settings.delivery-types.index') }}"
+    class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
+    {{ request()->routeIs('admin.settings.delivery-types.*')
+        ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
+>
+    <span class="flex items-center justify-center w-8 h-8 rounded-lg
+        {{ request()->routeIs('admin.settings.delivery-types.*') ? 'bg-white/10' : 'bg-gray-100' }}">
+        <svg class="w-4 h-4 {{ request()->routeIs('admin.settings.delivery-types.*') ? 'text-white' : 'text-gray-500' }}"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M3 7h11v10H3zM14 10h4l3 3v4h-7zM6 17a2 2 0 104 0M16 17a2 2 0 104 0"/>
+        </svg>
+    </span>
+    <span class="text-sm font-medium">Delivery Types</span>
+</a>
+
            
 
         </div>
     </div>
+
+
+    
 
     {{-- CONTENT AREA --}}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-[400px] p-6">

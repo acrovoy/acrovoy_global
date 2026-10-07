@@ -298,31 +298,40 @@ public function supplierName(): ?string
     );
 }
 
-    public function computeShippingPrice(ShippingTemplate $template): float
-    {
-        $finalPrice = $template->price;
+    public function computeShippingPrice(
+    ShippingTemplate $template,
+    ?\App\Domain\Shipping\Models\ShippingTemplateDeliveryType $option = null
+): float {
+    $price = $option?->price ?? $template->price;
+    $priceUnit = $option?->price_unit ?? $template->price_unit;
 
-        if ($this->shippingDimensions) {
-            $dimensions = $this->shippingDimensions;
+    $finalPrice = (float) $price;
 
-            switch ($template->price_unit) {
-                case 'per_kg':
-                    $finalPrice = $template->price * $dimensions->weight;
-                    break;
+    if ($this->shippingDimensions) {
+        $dimensions = $this->shippingDimensions;
 
-                case 'per_cubic_meter':
-                    $volume = ($dimensions->length / 100) * ($dimensions->width / 100) * ($dimensions->height / 100);
-                    $finalPrice = $template->price * $volume;
-                    break;
+        switch ($priceUnit) {
+            case 'per_kg':
+                $finalPrice = $price * $dimensions->weight;
+                break;
 
-                case 'per_item':
-                default:
-                    $finalPrice = $template->price;
-            }
+            case 'per_cubic_meter':
+                $volume = ($dimensions->length / 100)
+                    * ($dimensions->width / 100)
+                    * ($dimensions->height / 100);
+
+                $finalPrice = $price * $volume;
+                break;
+
+            case 'per_item':
+            case 'flat':
+            default:
+                $finalPrice = $price;
         }
-
-        return round($finalPrice, 2);
     }
+
+    return round($finalPrice, 2);
+}
 
     public function wishlistedBy()
     {

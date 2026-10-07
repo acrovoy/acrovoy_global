@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Country;
+use App\Domain\Shipping\Models\DeliveryType;
+use App\Domain\Shipping\Models\ShippingTemplateDeliveryType;
 
 
 class ShippingTemplate extends Model
@@ -81,6 +83,32 @@ public function getPriceUnitLabelAttribute()
 public function provider()
 {
     return $this->morphTo();
+}
+
+public function deliveryOptions()
+{
+    return $this->hasMany(
+        ShippingTemplateDeliveryType::class,
+        'shipping_template_id'
+    )->orderBy('sort_order');
+}
+
+public function deliveryTypes()
+{
+    return $this->belongsToMany(
+        DeliveryType::class,
+        'shipping_template_delivery_types'
+    )
+        ->withPivot([
+            'price',
+            'price_unit',
+            'delivery_time',
+            'incoterm',
+            'is_active',
+            'sort_order',
+        ])
+        ->withTimestamps()
+        ->orderByPivot('sort_order');
 }
 
 }

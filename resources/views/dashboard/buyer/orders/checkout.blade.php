@@ -205,221 +205,596 @@ $cents = round(($total - $dollars) * 100);
        
     </div>
 
-    {{-- Выбор доставки --}}
+   {{-- Delivery Option --}}
 <div class="bg-white p-4 rounded-lg border border-gray-200 mb-6">
-    <h3 class="font-semibold mb-2">Select the Delivery Option</h3>
 
-    <div
-        x-data="{ selectedShipping: {{ $shippingOptions->first()->id ?? 0 }} }"
-        class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5"
-    >
+    <div class="flex items-start justify-between gap-5">
 
-    
-       @foreach($shippingOptions as $template)
-@php
-            $totalShippingPrice = 0;
-            foreach($cartItems as $item) {
-                $pricePerItem = $item->product->computeShippingPrice($template);
-                $totalShippingPrice += $pricePerItem * $item->quantity;
-            }
-        @endphp
-       
-<label
-    class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition flex flex-col gap-2"
-    :class="{
-        'bg-gray-50 border-gray-300 shadow-md': selectedShipping == {{ $template->id }}
-    }"
-    @click="
-        selectedShipping = {{ $template->id }};
-        $refs.radio{{ $template->id }}.checked = true;
-        recalcTotal();
-    "
->
-    <input
-        type="radio"
-        name="delivery_template_id"
-        value="{{ $template->id }}"
-        x-ref="radio{{ $template->id }}"
-        class="hidden"
-        data-price="{{ $totalShippingPrice }}"
-        {{ $loop->first ? 'checked' : '' }}
-    >
+        {{-- Left --}}
+        <div class="min-w-0 flex-1">
 
-    <h4 class="font-semibold text-gray-900">{{ $template->title }}</h4>
+            <h3 class="font-semibold text-gray-900">
+                Delivery Option
+            </h3>
 
-    @if($template->description)
-    <p class="text-gray-700 text-sm mt-1">{{ $template->description }}</p>
-    @endif
+            {{-- Selected delivery --}}
+            <div id="selected-delivery-summary" class="mt-2">
 
-    <div class="mt-2 text-gray-700 text-sm grid grid-cols-2 gap-2">
-        
+                {{-- Empty state --}}
+                <p
+                    id="selected-delivery-empty"
+                    class="text-sm text-gray-500"
+                >
+                    Select a delivery option
+                </p>
 
-        @if(empty($template->price) || $template->price == 0 || empty($template->delivery_time))
-        <div class="col-span-2 inline-flex items-center gap-2
-            bg-blue-50 border border-blue-100
-            px-3 py-1.5 rounded-lg text-blue-500 font-medium text-xs">
-            Delivery cost and delivery time will be calculated after order placement
+                {{-- Selected state --}}
+                <div
+                    id="selected-delivery-details"
+                    class="hidden"
+                >
+
+                    {{-- Template + Delivery type --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+
+                        {{-- Delivery template --}}
+                        <span
+                            id="selected-delivery-template-name"
+                            class="text-sm font-medium text-gray-900 truncate"
+                        ></span>
+
+                        <span
+                            class="text-gray-300 select-none"
+                            aria-hidden="true"
+                        >
+                            /
+                        </span>
+
+                        {{-- Delivery type --}}
+                        <span
+                            id="selected-delivery-label"
+                            class="text-sm text-gray-600"
+                        ></span>
+
+                    </div>
+
+                    {{-- Shipping price --}}
+                    <div class="mt-1 flex items-center gap-1.5">
+
+                        <span class="text-sm text-gray-500">
+                            Shipping:
+                        </span>
+
+                        <span
+                            id="selected-delivery-price"
+                            class="text-sm font-semibold text-gray-900"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
-        @else
-        {{-- PRICE --}}
-        <div class="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg">
-            <span class="text-sm text-blue-900 font-medium">Price:</span>
-            <span class="text-base font-semibold text-blue-900">
-                ${{ number_format($totalShippingPrice, 2) }}
-            </span>
-        </div>
 
-        {{-- DELIVERY TIME --}}
-        <div>
-            <div class="font-medium">Delivery Time:</div>
-            <div>{{ $template->delivery_time }} days</div>
-        </div>
-        @endif
+        {{-- Action --}}
+        <button
+            type="button"
+            id="delivery-option-button"
+            onclick="openDeliveryModal()"
+            class="shrink-0
+                   inline-flex items-center justify-center
+                   px-4 py-2
+                   text-sm font-medium
+                   bg-blue-900 text-white
+                   rounded-lg
+                   hover:bg-blue-800
+                   focus:outline-none
+                   focus:ring-2
+                   focus:ring-blue-900/20
+                   transition"
+            aria-controls="delivery-option-modal"
+            aria-haspopup="dialog"
+        >
+            Select
+        </button>
+
     </div>
-</label>
-@endforeach
-    </div>
+
 </div>
 
+@include('dashboard.buyer.partials.delivery-option-modal')
 
-    {{-- Селект с сохранёнными адресами --}}
-    <div class="bg-white p-4 rounded-lg mb-6 border border-gray-200">
-        <h3 class="font-semibold mb-4">Выберите сохранённый адрес</h3>
 
-        <select id="saved-addresses" name="saved_address_id" class="w-full border rounded p-2">
-            <option value="">-- Выберите адрес --</option>
+
+
+   {{-- =========================================================
+    SAVED DELIVERY ADDRESSES
+========================================================= --}}
+
+<div class="bg-white p-5 rounded-xl border border-gray-200 mb-6">
+
+    <div class="flex items-start justify-between gap-4 mb-4">
+
+        <div>
+            <h3 class="text-base font-semibold text-gray-900">
+                Saved Address
+            </h3>
+
+            <p class="mt-1 text-sm text-gray-500">
+                Select a saved address or enter a new delivery address below.
+            </p>
+        </div>
+
+    </div>
+
+    <div>
+        <label
+            for="saved-addresses"
+            class="block text-sm font-medium text-gray-700 mb-1.5"
+        >
+            Saved addresses
+        </label>
+
+        <select
+            id="saved-addresses"
+            name="saved_address_id"
+            class="w-full
+                   border border-gray-300
+                   rounded-lg
+                   px-3 py-2.5
+                   text-sm text-gray-900
+                   bg-white
+                   focus:outline-none
+                   focus:ring-2
+                   focus:ring-blue-900/20
+                   focus:border-blue-900
+                   transition"
+        >
+            <option value="">
+                Select a saved address
+            </option>
+
             @foreach($savedAddresses as $address)
-                <option value="{{ $address->id }}"
-                        data-first_name="{{ $address->first_name }}"
-                        data-last_name="{{ $address->last_name }}"
-                        data-country="{{ $address->country }}"
-                        data-city="{{ $address->city }}"
-                        data-region="{{ $address->region }}"
-                        data-street="{{ $address->street }}"
-                        data-postal_code="{{ $address->postal_code }}"
-                        data-phone="{{ $address->phone }}"
-                        {{ $lastAddress && $lastAddress->id === $address->id ? 'selected' : '' }}>
-                    {{ $address->first_name }} {{ $address->last_name ?? '' }}, {{ $address->street }}, {{ $address->city }}
+
+                <option
+                    value="{{ $address->id }}"
+                    data-first_name="{{ $address->first_name }}"
+                    data-last_name="{{ $address->last_name }}"
+                    data-country="{{ $address->country }}"
+                    data-city="{{ $address->city }}"
+                    data-region="{{ $address->region }}"
+                    data-street="{{ $address->street }}"
+                    data-postal_code="{{ $address->postal_code }}"
+                    data-phone="{{ $address->phone }}"
+                    {{ $lastAddress && $lastAddress->id === $address->id ? 'selected' : '' }}
+                >
+                    {{ $address->first_name }}
+                    {{ $address->last_name ? ' ' . $address->last_name : '' }}
+                    — {{ $address->street }}, {{ $address->city }}
                 </option>
+
             @endforeach
         </select>
     </div>
 
-
-    <input type="hidden" name="address_modified" id="address_modified" value="0">
-
-    <label class="flex items-center gap-2 mt-3 text-sm text-gray-600 mb-2">
-        <input type="checkbox" name="save_as_new" value="1">
-        Сохранить как новый адрес и контакт
-    </label>
+</div>
 
 
-    {{-- Контакты и адрес --}}
-    <div class="bg-white p-4 rounded-lg mb-6 border border-gray-200">
-        <h3 class="font-semibold mb-4">Контактные данные</h3>
+{{-- =========================================================
+    ADDRESS STATE
+========================================================= --}}
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {{-- Имя --}}
-            <div>
-                <label class="text-sm text-gray-600">Имя</label>
-                <input type="text"
-                       name="first_name"
-                       id="first_name"
-                       value="{{ $lastAddress->first_name ?? auth()->user()->first_name ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
+<input
+    type="hidden"
+    name="address_modified"
+    id="address_modified"
+    value="0"
+>
 
-            {{-- Фамилия --}}
-            <div>
-                <label class="text-sm text-gray-600">Фамилия</label>
-                <input type="text"
-                       name="last_name"
-                       id="last_name"
-                       value="{{ $lastAddress->last_name ?? old('last_name') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
 
-            {{-- Телефон --}}
-            <div class="sm:col-span-2">
-                <label class="text-sm text-gray-600">Телефон</label>
-                <input type="text"
-                       name="phone"
-                       id="phone"
-                       value="{{ $lastAddress->phone ?? old('phone') ?? '' }}"
-                       class="w-full border rounded p-2">
-            </div>
+<label
+    class="flex items-start gap-3
+           mb-6
+           text-sm text-gray-600
+           cursor-pointer"
+>
+    <input
+        type="checkbox"
+        name="save_as_new"
+        value="1"
+        class="mt-0.5
+               w-4 h-4
+               rounded
+               border-gray-300
+               text-blue-900
+               focus:ring-blue-900/20"
+    >
 
-          
-            
-        </div>
+    <span>
+        Save this address and contact as a new saved address
+    </span>
+</label>
+
+
+{{-- =========================================================
+    CONTACT INFORMATION
+========================================================= --}}
+
+<div class="bg-white p-5 rounded-xl border border-gray-200 mb-6">
+
+    <div class="mb-5">
+
+        <h3 class="text-base font-semibold text-gray-900">
+            Contact Information
+        </h3>
+
+        <p class="mt-1 text-sm text-gray-500">
+            Enter the contact details for this delivery.
+        </p>
+
     </div>
 
-
-
-    <div class="bg-white p-4 rounded-lg mb-6 border border-gray-200">
-    <h3 class="font-semibold mb-4">Адрес доставки</h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {{-- Страна --}}
+
+        {{-- First Name --}}
         <div>
-            <label class="text-sm text-gray-600">Страна</label>
-            <select name="country" id="country" class="w-full border rounded p-2">
-                <option value="">Выберите страну</option>
+
+            <label
+                for="first_name"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                First Name
+            </label>
+
+            <input
+                type="text"
+                name="first_name"
+                id="first_name"
+                value="{{ $lastAddress->first_name ?? auth()->user()->first_name ?? '' }}"
+                autocomplete="given-name"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       placeholder-gray-400
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+        </div>
+
+
+        {{-- Last Name --}}
+        <div>
+
+            <label
+                for="last_name"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                Last Name
+            </label>
+
+            <input
+                type="text"
+                name="last_name"
+                id="last_name"
+                value="{{ $lastAddress->last_name ?? old('last_name') ?? '' }}"
+                autocomplete="family-name"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       placeholder-gray-400
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+        </div>
+
+
+        {{-- Phone --}}
+        <div class="sm:col-span-2">
+
+            <label
+                for="phone"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                Phone Number
+            </label>
+
+            <input
+                type="tel"
+                name="phone"
+                id="phone"
+                value="{{ $lastAddress->phone ?? old('phone') ?? '' }}"
+                autocomplete="tel"
+                inputmode="tel"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       placeholder-gray-400
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{{-- =========================================================
+    DELIVERY ADDRESS
+========================================================= --}}
+
+<div class="bg-white p-5 rounded-xl border border-gray-200 mb-6">
+
+    <div class="mb-5">
+
+        <h3 class="text-base font-semibold text-gray-900">
+            Delivery Address
+        </h3>
+
+        <p class="mt-1 text-sm text-gray-500">
+            Enter the address where your order should be delivered.
+        </p>
+
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {{-- Country --}}
+        <div>
+
+            <label
+                for="country"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                Country
+            </label>
+
+            <select
+                name="country"
+                id="country"
+                autocomplete="country"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       bg-white
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+                <option value="">
+                    Select country
+                </option>
+
                 @foreach($countries as $country)
-                    <option value="{{ $country->id }}"
-                        {{ $lastAddress && $lastAddress->country == $country->id ? 'selected' : '' }}>
+
+                    <option
+                        value="{{ $country->id }}"
+                        {{ $lastAddress && $lastAddress->country == $country->id ? 'selected' : '' }}
+                    >
                         {{ $country->name }}
                     </option>
+
                 @endforeach
+
             </select>
+
         </div>
 
-        {{-- Регион / область --}}
-        
-<div>
-    <label class="text-sm text-gray-600">Регион / Область</label>
-    <select name="region" id="region" class="w-full border rounded p-2" disabled>
-        <option value="">Выберите регион</option>
-    </select>
-</div>
 
-        {{-- Город --}}
-<div>
-    <label class="text-sm text-gray-600">Город</label>
-    <select name="city" id="city" class="w-full border rounded p-2">
-        <option value="">Выберите город</option>
-    </select>
-    <small class="text-gray-500 block mt-1">
-        Если не нашли свой город или локацию, заполните поле ниже
-    </small>
-    <input type="text" name="city_manual" id="city_manual"
-           placeholder="Введите свой город"
-           class="w-full border rounded p-2 mt-1">
-</div>
-
-        {{-- Улица --}}
-        <div class="sm:col-span-2">
-            <label class="text-sm text-gray-600">Улица, дом, квартира</label>
-            <input type="text" name="street" id="street"
-                   value="{{ $lastAddress->street ?? '' }}"
-                   class="w-full border rounded p-2">
-        </div>
-
-        {{-- Почтовый индекс --}}
+        {{-- Region --}}
         <div>
-            <label class="text-sm text-gray-600">Почтовый индекс</label>
-            <input type="text" name="postal_code" id="postal_code"
-                   value="{{ $lastAddress->postal_code ?? '' }}"
-                   class="w-full border rounded p-2">
+
+            <label
+                for="region"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                Region / State
+            </label>
+
+            <select
+                name="region"
+                id="region"
+                autocomplete="address-level1"
+                disabled
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       bg-gray-50
+                       disabled:cursor-not-allowed
+                       disabled:text-gray-400
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+                <option value="">
+                    Select region
+                </option>
+
+            </select>
+
         </div>
+
+
+        {{-- City --}}
+        <div>
+
+            <label
+                for="city"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                City
+            </label>
+
+            <select
+                name="city"
+                id="city"
+                autocomplete="address-level2"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       bg-white
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+                <option value="">
+                    Select city
+                </option>
+
+            </select>
+
+            <p class="mt-1.5 text-xs leading-relaxed text-gray-500">
+                Can't find your city or location? Enter it manually below.
+            </p>
+
+            <input
+                type="text"
+                name="city_manual"
+                id="city_manual"
+                placeholder="Enter city manually"
+                autocomplete="address-level2"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       mt-2
+                       text-sm text-gray-900
+                       placeholder-gray-400
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+        </div>
+
+
+        {{-- Street --}}
+        <div class="sm:col-span-2">
+
+            <label
+                for="street"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                Street, Building, Apartment
+            </label>
+
+            <input
+                type="text"
+                name="street"
+                id="street"
+                value="{{ $lastAddress->street ?? old('street') ?? '' }}"
+                autocomplete="street-address"
+                placeholder="Street, building, apartment"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       placeholder-gray-400
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+        </div>
+
+
+        {{-- Postal Code --}}
+        <div>
+
+            <label
+                for="postal_code"
+                class="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+                Postal Code
+            </label>
+
+            <input
+                type="text"
+                name="postal_code"
+                id="postal_code"
+                value="{{ $lastAddress->postal_code ?? old('postal_code') ?? '' }}"
+                autocomplete="postal-code"
+                inputmode="numeric"
+                placeholder="Postal code"
+                class="w-full
+                       border border-gray-300
+                       rounded-lg
+                       px-3 py-2.5
+                       text-sm text-gray-900
+                       placeholder-gray-400
+                       focus:outline-none
+                       focus:ring-2
+                       focus:ring-blue-900/20
+                       focus:border-blue-900
+                       transition"
+            >
+
+        </div>
+
     </div>
+
 </div>
 
 
 
 
 
-    <input type="hidden" name="delivery_price" id="delivery-price-input" value="0">
-    <input type="hidden" name="total" id="total-input" value="{{ $total }}">
+    <input
+    type="hidden"
+    name="delivery_template_id"
+    id="selected-delivery-template"
+    value=""
+>
+
+    <input type="hidden"
+        name="delivery_price"
+        id="delivery-price-input"
+        value="0">
+
+    <input type="hidden"
+        name="total"
+        id="total-input"
+        value="{{ $total }}">
 
     <div class="text-right">
         <button type="submit"
@@ -696,50 +1071,95 @@ function updateQuantity(itemId, delta) {
 function recalcTotal() {
 
     let total = cartItems.reduce(
-        (sum, i) => sum + i.price * i.quantity,
+        (sum, i) => sum + Number(i.price) * Number(i.quantity),
         0
     );
 
     const selected = document.querySelector(
-        'input[name="delivery_template_id"]:checked'
+        'input[name="delivery_option_id"]:checked'
     );
 
     let shippingPrice = 0;
 
     if (selected) {
-        shippingPrice = parseFloat(selected.dataset.price || 0);
+        shippingPrice = parseFloat(
+            selected.dataset.price || 0
+        );
+
+        const templateId = selected.dataset.templateId || '';
+
+        const templateInput = document.getElementById(
+            'selected-delivery-template'
+        );
+
+        if (templateInput) {
+            templateInput.value = templateId;
+        }
     }
 
-    document.getElementById('shipping-cost').textContent =
-        shippingPrice.toFixed(2) + ' $';
+    // ================================
+    // Shipping
+    // ================================
+
+    const shippingCostElement =
+        document.getElementById('shipping-cost');
+
+    if (shippingCostElement) {
+
+        if (shippingPrice > 0) {
+            shippingCostElement.textContent =
+                shippingPrice.toFixed(2) + ' $';
+        } else {
+            shippingCostElement.textContent = 'FREE';
+        }
+    }
+
+    // ================================
+    // Grand Total
+    // ================================
 
     total += shippingPrice;
 
     document.getElementById('grand-total').textContent =
         total.toFixed(2) + ' $';
 
-    document.getElementById('total-input').value = total;
+    document.getElementById('total-input').value =
+        total.toFixed(2);
 
-    const deliveryPriceInput = document.getElementById('delivery-price-input');
+    // ================================
+    // Delivery price input
+    // ================================
+
+    const deliveryPriceInput =
+        document.getElementById('delivery-price-input');
 
     if (deliveryPriceInput) {
-        deliveryPriceInput.value = shippingPrice;
+        deliveryPriceInput.value =
+            shippingPrice.toFixed(2);
     }
 
     // ================================
-    // обновление суммы словами
+    // Сумма словами
     // ================================
 
     const dollars = Math.floor(total);
-    const cents = Math.round((total - dollars) * 100);
 
-    let words = numberToWords(dollars) + ' dollars';
+    const cents = Math.round(
+        (total - dollars) * 100
+    );
+
+    let words =
+        numberToWords(dollars) + ' dollars';
 
     if (cents > 0) {
-        words += ' and ' + numberToWords(cents) + ' cents';
+        words +=
+            ' and ' +
+            numberToWords(cents) +
+            ' cents';
     }
 
-    const wordsElement = document.getElementById('total-in-words');
+    const wordsElement =
+        document.getElementById('total-in-words');
 
     if (wordsElement) {
         wordsElement.textContent =
@@ -781,6 +1201,162 @@ function numberToWords(num) {
 
     return num;
 }
+
+
+
+function openDeliveryModal() {
+    const modal = document.getElementById(
+        'delivery-option-modal'
+    );
+
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+
+    document.body.classList.add('overflow-hidden');
+}
+
+
+function closeDeliveryModal() {
+    const modal = document.getElementById(
+        'delivery-option-modal'
+    );
+
+    if (!modal) return;
+
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+
+    document.body.classList.remove('overflow-hidden');
+}
+
+
+function confirmDeliveryOption() {
+
+    const selected = document.querySelector(
+        'input[name="delivery_option_id"]:checked'
+    );
+
+    if (!selected) {
+        return;
+    }
+
+    const templateId =
+        selected.dataset.templateId || '';
+
+    const templateName =
+        selected.dataset.templateName || '';
+
+    const deliveryLabel =
+        selected.dataset.label || '';
+
+    const price =
+        parseFloat(selected.dataset.price || 0);
+
+    // ================================
+    // Delivery template
+    // ================================
+
+    const templateInput =
+        document.getElementById('selected-delivery-template');
+
+    if (templateInput) {
+        templateInput.value = templateId;
+    }
+
+    // ================================
+    // Selected summary
+    // ================================
+
+    const emptyBlock =
+        document.getElementById('selected-delivery-empty');
+
+    const detailsBlock =
+        document.getElementById('selected-delivery-details');
+
+    const templateNameElement =
+        document.getElementById('selected-delivery-template-name');
+
+    const labelElement =
+        document.getElementById('selected-delivery-label');
+
+    const priceElement =
+        document.getElementById('selected-delivery-price');
+
+    const actionButton =
+        document.getElementById('delivery-option-button');
+
+    // Template name
+    if (templateNameElement) {
+        templateNameElement.textContent = templateName;
+    }
+
+    // Delivery type
+    if (labelElement) {
+        labelElement.textContent = deliveryLabel;
+    }
+
+    // Price
+    if (priceElement) {
+
+        if (price > 0) {
+
+            priceElement.textContent =
+                '$' + price.toFixed(2);
+
+            priceElement.classList.remove(
+                'text-emerald-600'
+            );
+
+            priceElement.classList.add(
+                'text-gray-900'
+            );
+
+        } else {
+
+            priceElement.textContent = 'FREE';
+
+            priceElement.classList.remove(
+                'text-gray-900'
+            );
+
+            priceElement.classList.add(
+                'text-emerald-600'
+            );
+        }
+    }
+
+    // ================================
+    // Toggle summary state
+    // ================================
+
+    if (emptyBlock) {
+        emptyBlock.classList.add('hidden');
+    }
+
+    if (detailsBlock) {
+        detailsBlock.classList.remove('hidden');
+    }
+
+    // ================================
+    // Update action button
+    // ================================
+
+    if (actionButton) {
+        actionButton.textContent = 'Change';
+    }
+
+    // ================================
+    // Close modal + recalculate
+    // ================================
+
+    closeDeliveryModal();
+
+    recalcTotal();
+}
+
+
 
 window.addEventListener('DOMContentLoaded', recalcTotal);
 
