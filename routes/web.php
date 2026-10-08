@@ -87,6 +87,8 @@ use App\Http\Controllers\Admin\Settings\AttributeGroupController;
 use App\Http\Controllers\Admin\Settings\ManufacturingCapabilityController;
 use App\Http\Controllers\Admin\Settings\UnitController;
 use App\Http\Controllers\Admin\Settings\DeliveryTypeController;
+use App\Http\Controllers\Admin\Settings\PaymentMethodController;
+use App\Http\Controllers\Admin\Settings\PaymentTermController;
 
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
@@ -859,6 +861,31 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
         Route::put('{deliveryType}', [DeliveryTypeController::class, 'update'])->name('update');
         Route::patch('{deliveryType}/toggle-active', [DeliveryTypeController::class, 'toggleActive'])->name('toggle-active');
         Route::delete('{deliveryType}', [DeliveryTypeController::class, 'destroy'])->name('destroy');
+    });
+
+
+    // Payment Methods
+
+    Route::prefix('settings/payment-methods')->name('settings.payment-methods.')->group(function () {
+        Route::get('/', [PaymentMethodController::class, 'index'])->name('index');
+        Route::get('create', [PaymentMethodController::class, 'create'])->name('create');
+        Route::post('/', [PaymentMethodController::class, 'store'])->name('store');
+        Route::get('{paymentMethod}/edit', [PaymentMethodController::class, 'edit'])->name('edit');
+        Route::put('{paymentMethod}', [PaymentMethodController::class, 'update'])->name('update');
+        Route::patch('{paymentMethod}/toggle-active', [PaymentMethodController::class, 'toggle'])->name('toggle');
+        Route::delete('{paymentMethod}', [PaymentMethodController::class, 'destroy'])->name('destroy');
+    });
+
+    // Payment Terms
+
+    Route::prefix('settings/payment-terms')->name('settings.payment-terms.')->group(function () {
+        Route::get('/', [PaymentTermController::class, 'index'])->name('index');
+        Route::get('create', [PaymentTermController::class, 'create'])->name('create');
+        Route::post('/', [PaymentTermController::class, 'store'])->name('store');
+        Route::get('{paymentTerm}/edit', [PaymentTermController::class, 'edit'])->name('edit');
+        Route::put('{paymentTerm}', [PaymentTermController::class, 'update'])->name('update');
+        Route::patch('{paymentTerm}/toggle-active', [PaymentTermController::class, 'toggle'])->name('toggle');
+        Route::delete('{paymentTerm}', [PaymentTermController::class, 'destroy'])->name('destroy');
     });
 
 

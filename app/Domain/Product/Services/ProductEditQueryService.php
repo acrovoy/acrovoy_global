@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 
 use App\Models\ProductVariantItem;
 
+use App\Domain\Payment\Models\PaymentMethod;
+use App\Domain\Payment\Models\PaymentTerm;
+
 use App\Services\Company\ActiveContextService;
 
 class ProductEditQueryService
@@ -23,14 +26,16 @@ class ProductEditQueryService
 
     // 🔹 Eager load всех нужных связей
     $product->load([
-        'translations',
-        'category',
-        'materials',
-        'priceTiers',
-        'shippingTemplates',
-        'variantGroup.items.product',
-        'variantGroup.items.media',
-    ]);
+    'translations',
+    'category',
+    'materials',
+    'priceTiers',
+    'shippingTemplates',
+    'paymentMethods.translations',
+    'paymentTerms.translations',
+    'variantGroup.items.product',
+    'variantGroup.items.media',
+]);
 
     $languages = Language::where('is_active', true)->get();
 
@@ -63,7 +68,24 @@ class ProductEditQueryService
         'translations' => $this->prepareTranslations($product, $languages),
         'variants' => $variants,
         'products' => $products,
-    ];
+        'paymentMethods' => PaymentMethod::where('is_active', true)
+            ->with('translations')
+            ->orderBy('sort_order')
+            ->get(),
+
+        'paymentTerms' => PaymentTerm::where('is_active', true)
+            ->with('translations')
+            ->orderBy('sort_order')
+            ->get(),
+
+        'productPaymentMethodIds' => $product->paymentMethods
+            ->pluck('id')
+            ->toArray(),
+
+        'productPaymentTermIds' => $product->paymentTerms
+            ->pluck('id')
+            ->toArray(),
+            ];
 }
 
 

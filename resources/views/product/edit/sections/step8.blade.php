@@ -214,6 +214,171 @@
 
 
 
+
+
+
+{{-- Payment Methods --}}
+<div class="mt-6 bg-white border rounded-xl p-6">
+
+    <div class="flex items-center gap-2 mb-4">
+        <h3 class="text-xl font-semibold">Payment Methods</h3>
+
+        <x-help-tooltip width="w-80">
+            <div class="space-y-2 leading-relaxed">
+                <div class="font-semibold text-white">
+                    Payment Methods
+                </div>
+
+                <div class="text-gray-200 text-sm">
+                    Выберите способы оплаты, которые доступны покупателю для этого товара.
+                </div>
+
+                <div class="text-gray-300 text-xs">
+                    Можно выбрать несколько способов оплаты.
+                </div>
+            </div>
+        </x-help-tooltip>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        @foreach($paymentMethods as $paymentMethod)
+
+            @php
+                $translation = $paymentMethod->translations
+                    ->firstWhere('locale', app()->getLocale());
+
+                if (!$translation) {
+                    $translation = $paymentMethod->translations
+                        ->firstWhere('locale', 'en');
+                }
+            @endphp
+
+            <label
+                class="border rounded-xl p-4 cursor-pointer transition
+                    hover:border-blue-600 hover:bg-blue-50
+                    flex gap-3 items-start bg-white shadow-sm">
+
+                <input
+                    type="checkbox"
+                    name="payment_methods[]"
+                    value="{{ $paymentMethod->id }}"
+                    class="mt-1"
+                    {{ in_array(
+                        $paymentMethod->id,
+                        old('payment_methods', $productPaymentMethodIds ?? [])
+                    ) ? 'checked' : '' }}
+                >
+
+                <div>
+                    <div class="font-semibold text-gray-900">
+                        {{ $translation?->name ?? $paymentMethod->code }}
+                    </div>
+
+                    @if($translation?->description)
+                        <div class="text-sm text-gray-600 mt-1">
+                            {{ $translation->description }}
+                        </div>
+                    @endif
+                </div>
+
+            </label>
+
+        @endforeach
+
+    </div>
+
+    <p class="text-sm text-gray-500 mt-3">
+        Выберите один или несколько способов оплаты, доступных для этого товара.
+    </p>
+
+</div>
+
+
+
+
+{{-- Payment Terms --}}
+<div class="mt-6 bg-white border rounded-xl p-6">
+
+    <div class="flex items-center gap-2 mb-4">
+        <h3 class="text-xl font-semibold">Payment Terms</h3>
+
+        <x-help-tooltip width="w-80">
+            <div class="space-y-2 leading-relaxed">
+                <div class="font-semibold text-white">
+                    Payment Terms
+                </div>
+
+                <div class="text-gray-200 text-sm">
+                    Укажите условия оплаты, доступные для этого товара.
+                </div>
+
+                <div class="text-gray-300 text-xs">
+                    Например: 100% предоплата, 50/50, Net 30 или условия по договорённости.
+                </div>
+            </div>
+        </x-help-tooltip>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        @foreach($paymentTerms as $paymentTerm)
+
+            @php
+                $translation = $paymentTerm->translations
+                    ->firstWhere('locale', app()->getLocale());
+
+                if (!$translation) {
+                    $translation = $paymentTerm->translations
+                        ->firstWhere('locale', 'en');
+                }
+            @endphp
+
+            <label
+                class="border rounded-xl p-4 cursor-pointer transition
+                    hover:border-blue-600 hover:bg-blue-50
+                    flex gap-3 items-start bg-white shadow-sm">
+
+                <input
+                    type="checkbox"
+                    name="payment_terms[]"
+                    value="{{ $paymentTerm->id }}"
+                    class="mt-1"
+                    {{ in_array(
+                        $paymentTerm->id,
+                        old('payment_terms', $productPaymentTermIds ?? [])
+                    ) ? 'checked' : '' }}
+                >
+
+                <div>
+                    <div class="font-semibold text-gray-900">
+                        {{ $translation?->name ?? $paymentTerm->code }}
+                    </div>
+
+                    @if($translation?->description)
+                        <div class="text-sm text-gray-600 mt-1">
+                            {{ $translation->description }}
+                        </div>
+                    @endif
+                </div>
+
+            </label>
+
+        @endforeach
+
+    </div>
+
+    <p class="text-sm text-gray-500 mt-3">
+        Выберите один или несколько вариантов условий оплаты.
+    </p>
+
+</div>
+
+
+
+
+
+
 <div class="flex justify-between mt-6">
 
         <a href="{{ route('supplier.products.edit-step', [$product->id, 7]) }}"

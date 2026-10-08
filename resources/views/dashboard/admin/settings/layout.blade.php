@@ -203,7 +203,47 @@
     <span class="text-sm font-medium">Delivery Types</span>
 </a>
 
-           
+           {{-- PAYMENT METHODS --}}
+<a
+    href="{{ route('admin.settings.payment-methods.index') }}"
+    class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
+    {{ request()->routeIs('admin.settings.payment-methods.*')
+        ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
+>
+    <span class="flex items-center justify-center w-8 h-8 rounded-lg
+        {{ request()->routeIs('admin.settings.payment-methods.*') ? 'bg-white/10' : 'bg-gray-100' }}">
+        <svg class="w-4 h-4 {{ request()->routeIs('admin.settings.payment-methods.*') ? 'text-white' : 'text-gray-500' }}"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M3 7h18v10H3zM3 11h18M7 15h4"/>
+        </svg>
+    </span>
+    <span class="text-sm font-medium">Payment Methods</span>
+</a>
+
+{{-- PAYMENT TERMS --}}
+<a
+    href="{{ route('admin.settings.payment-terms.index') }}"
+    class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
+    {{ request()->routeIs('admin.settings.payment-terms.*')
+        ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
+>
+    <span class="flex items-center justify-center w-8 h-8 rounded-lg
+        {{ request()->routeIs('admin.settings.payment-terms.*') ? 'bg-white/10' : 'bg-gray-100' }}">
+        <svg class="w-4 h-4 {{ request()->routeIs('admin.settings.payment-terms.*') ? 'text-white' : 'text-gray-500' }}"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M12 6v12M8 9h5a2 2 0 010 4H9a2 2 0 000 4h5M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+        </svg>
+    </span>
+    <span class="text-sm font-medium">Payment Terms</span>
+</a>
 
         </div>
     </div>

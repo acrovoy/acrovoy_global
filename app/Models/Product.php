@@ -12,6 +12,11 @@ use App\Models\Warehouse;
 use App\Models\ProductWarehouseStock;
 use App\Domain\RFQ\Models\Rfq;
 
+use App\Domain\Payment\Models\PaymentMethod;
+use App\Domain\Payment\Models\PaymentTerm;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 
 
@@ -389,6 +394,28 @@ public function collections()
         'collection_id'
     )->withPivot('sort_order')
      ->withTimestamps();
+}
+
+public function paymentMethods(): BelongsToMany
+{
+    return $this->belongsToMany(
+        PaymentMethod::class,
+        'product_payment_methods'
+    )
+        ->withPivot('sort_order')
+        ->withTimestamps()
+        ->orderBy('product_payment_methods.sort_order');
+}
+
+public function paymentTerms(): BelongsToMany
+{
+    return $this->belongsToMany(
+        PaymentTerm::class,
+        'product_payment_terms'
+    )
+        ->withPivot('sort_order')
+        ->withTimestamps()
+        ->orderBy('product_payment_terms.sort_order');
 }
 
 }

@@ -96,89 +96,173 @@
         </div>
 
         {{-- DELIVERY OPTIONS --}}
-        <div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-            <div class="mb-5">
-                <h4 class="font-semibold text-gray-900">Delivery Options & Pricing</h4>
-                <p class="text-xs text-gray-500 mt-1">
-    Set a price for each delivery type. Leave the price empty to disable the option. A price of 0 means free delivery.
-</p>
-<p class="text-xs text-gray-500 mt-4">
-    Prices are entered in USD and automatically converted to the user's selected currency.
-    Free delivery can be set to 0.00. Leave the price empty to disable the option.
-</p>
+<div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+
+    <div class="mb-5">
+
+        <h4 class="font-semibold text-gray-900">
+            Delivery Options & Pricing
+        </h4>
+
+        <p class="text-xs text-gray-500 mt-1">
+            Set a price for each delivery type. Leave the field empty to disable the option.
+            Enter <span class="font-medium text-gray-700">0.00</span> to offer free delivery.
+        </p>
+
+        <p class="text-xs text-gray-500 mt-3">
+            Prices are entered in USD and automatically converted to the user's selected currency.
+        </p>
+
+    </div>
+
+    <div class="space-y-3">
+
+        @forelse($deliveryTypes as $deliveryType)
+
+            @php
+                $option = $savedDeliveryOptions->get($deliveryType->id);
+
+                $price = old(
+                    "delivery_options.{$deliveryType->id}.price",
+                    $option?->price
+                );
+
+                $priceUnit = old(
+                    "delivery_options.{$deliveryType->id}.price_unit",
+                    $option?->price_unit ?? 'flat'
+                );
+            @endphp
+
+            <div
+                class="grid grid-cols-1
+                       md:grid-cols-[minmax(0,1fr)_150px_190px]
+                       gap-3
+                       items-end
+                       p-3
+                       rounded-xl
+                       border border-gray-100
+                       hover:border-gray-200
+                       transition"
+            >
+
+                {{-- Delivery Type --}}
+                <div class="min-w-0">
+
+                    <div class="text-sm font-medium text-gray-800">
+                        {{ $deliveryType->name }}
+                    </div>
+
+                    <div class="text-xs text-gray-400 mt-0.5">
+                        {{ $deliveryType->code }}
+                    </div>
+
+                </div>
+
+
+                {{-- Price --}}
+                <div>
+
+                    <label
+                        for="delivery-price-{{ $deliveryType->id }}"
+                        class="block mb-1.5 text-xs font-medium text-gray-500"
+                    >
+                        Price (USD)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="delivery-price-{{ $deliveryType->id }}"
+                        name="delivery_options[{{ $deliveryType->id }}][price]"
+                        min="0"
+                        step="0.01"
+                        class="input"
+                        value="{{ $price }}"
+                        placeholder="Not set"
+                    >
+
+                </div>
+
+
+                {{-- Price Unit --}}
+                <div>
+
+                    <label
+                        for="delivery-price-unit-{{ $deliveryType->id }}"
+                        class="block mb-1.5 text-xs font-medium text-gray-500"
+                    >
+                        Price Unit
+                    </label>
+
+                    <select
+                        id="delivery-price-unit-{{ $deliveryType->id }}"
+                        name="delivery_options[{{ $deliveryType->id }}][price_unit]"
+                        class="input"
+                    >
+
+                        @foreach($units as $key => $label)
+
+                            <option
+                                value="{{ $key }}"
+                                {{ $priceUnit === $key ? 'selected' : '' }}
+                            >
+                                {{ $label }}
+                            </option>
+
+                        @endforeach
+
+                    </select>
+
+                </div>
+
             </div>
 
-            <div class="space-y-3">
-                @forelse($deliveryTypes as $deliveryType)
-                    @php
-                        $option = $savedDeliveryOptions->get($deliveryType->id);
+        @empty
 
-                        $price = old(
-                            "delivery_options.{$deliveryType->id}.price",
-                            $option?->price
-                        );
-
-                        $priceUnit = old(
-                            "delivery_options.{$deliveryType->id}.price_unit",
-                            $option?->price_unit ?? 'flat'
-                        );
-                    @endphp
-
-                    <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_150px_190px] gap-3 items-end p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition">
-
-                        <div class="min-w-0">
-                            <div class="text-sm font-medium text-gray-800">
-                                {{ $deliveryType->name }}
-                            </div>
-                            <div class="text-xs text-gray-400 mt-0.5">
-                                {{ $deliveryType->code }}
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block mb-1.5 text-xs font-medium text-gray-500">
-                                Price (USD)
-                            </label>
-                            <input type="number"
-                                   name="delivery_options[{{ $deliveryType->id }}][price]"
-                                   min="0"
-                                   step="0.01"
-                                   class="input"
-                                   value="{{ $price }}"
-                                   placeholder="0.00">
-                        </div>
-
-                        <div>
-                            <label class="block mb-1.5 text-xs font-medium text-gray-500">
-                                Price Unit
-                            </label>
-                            <select name="delivery_options[{{ $deliveryType->id }}][price_unit]"
-                                    class="input">
-                                @foreach($units as $key => $label)
-                                    <option value="{{ $key }}" {{ $priceUnit === $key ? 'selected' : '' }}>
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                    </div>
-                @empty
-                    <div class="p-4 rounded-xl bg-gray-50 text-sm text-gray-500">
-                        No active delivery types found. Add or activate delivery types in Settings.
-                    </div>
-                @endforelse
+            <div class="p-4 rounded-xl bg-gray-50 text-sm text-gray-500">
+                No active delivery types found. Add or activate delivery types in Settings.
             </div>
 
-            <p class="text-xs text-gray-500 mt-4">
-                Prices are entered in USD and automatically converted to the user's selected currency.
-                Only delivery options with a price greater than zero will be used.
-            </p>
+        @endforelse
 
-            {{-- Compatibility with existing shipping_templates fields --}}
-            <input type="hidden" name="price" value="0">
-            <input type="hidden" name="price_unit" value="flat">
+    </div>
+
+
+    {{-- Pricing Rules --}}
+    <div class="mt-4 p-3 rounded-lg bg-gray-50 border border-gray-100">
+
+        <div class="text-xs text-gray-500 leading-relaxed">
+
+            <div>
+                <span class="font-medium text-gray-700">
+                    Empty
+                </span>
+                — option is disabled.
+            </div>
+
+            <div class="mt-1">
+                <span class="font-medium text-gray-700">
+                    0.00
+                </span>
+                — free delivery.
+            </div>
+
+            <div class="mt-1">
+                <span class="font-medium text-gray-700">
+                    Any amount above 0
+                </span>
+                — paid delivery.
+            </div>
+
         </div>
+
+    </div>
+
+
+    {{-- Compatibility with existing shipping_templates fields --}}
+    <input type="hidden" name="price" value="0">
+    <input type="hidden" name="price_unit" value="flat">
+
+</div>
 
   
 

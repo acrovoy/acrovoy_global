@@ -43,6 +43,8 @@ use App\Models\ProductWarehouseStock;
 use App\Models\ProductVariantItem;
 use App\Models\ProductVariantGroup;
 
+use App\Domain\Payment\Models\PaymentMethod;
+use App\Domain\Payment\Models\PaymentTerm;
 
 use App\Domain\Media\Services\MediaService;
 use App\Domain\Media\DTO\UploadMediaDTO;
@@ -684,6 +686,14 @@ class ProductController extends Controller
                 shippingTemplates: $request->shipping_templates ?? [],
 
             );
+
+            $product->paymentMethods()->sync(
+    $request->input('payment_methods', [])
+);
+
+$product->paymentTerms()->sync(
+    $request->input('payment_terms', [])
+);
 
 
             
