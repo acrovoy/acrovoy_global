@@ -141,6 +141,101 @@
             </div>
 
 
+          
+{{-- SVG ICON --}}
+
+<div x-data="{
+    svgCode: @js(old('icon_svg', $paymentMethod->icon_svg ?? ''))
+}">
+
+    <label
+        for="icon_svg"
+        class="block text-[13px] font-semibold text-gray-800"
+    >
+        SVG Icon
+    </label>
+
+    <p class="mt-1 text-[11px] text-gray-400">
+        Paste the complete SVG code for this payment method.
+    </p>
+
+    <textarea
+        name="icon_svg"
+        id="icon_svg"
+        rows="8"
+        x-model="svgCode"
+        spellcheck="false"
+        class="
+            mt-2
+            w-full
+            px-3
+            py-3
+            rounded-lg
+            border border-gray-200
+            bg-gray-50
+            text-sm
+            font-mono
+            text-gray-900
+            outline-none
+            transition
+            resize-y
+            focus:bg-white
+            focus:border-gray-400
+            focus:ring-2
+            focus:ring-gray-100
+        "
+        placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">...</svg>'
+    ></textarea>
+
+    @error('icon_svg')
+        <span class="block mt-1.5 text-xs text-red-500">
+            {{ $message }}
+        </span>
+    @enderror
+
+    {{-- PREVIEW --}}
+
+    <div class="mt-4">
+
+        <div class="text-[13px] font-semibold text-gray-800 mb-2">
+            Preview
+        </div>
+
+        <div
+            class="
+                min-h-[100px]
+                flex
+                items-center
+                justify-center
+                rounded-xl
+                border
+                border-gray-200
+                bg-white
+                p-5
+            "
+        >
+            <template x-if="svgCode.trim()">
+                <div
+                    class="max-w-full max-h-24 [&>svg]:max-w-full [&>svg]:max-h-24 [&>svg]:w-auto [&>svg]:h-auto"
+                    x-html="svgCode"
+                ></div>
+            </template>
+
+            <template x-if="!svgCode.trim()">
+                <span class="text-sm text-gray-400">
+                    No SVG icon added
+                </span>
+            </template>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
             {{-- STATUS --}}
 
             <div>

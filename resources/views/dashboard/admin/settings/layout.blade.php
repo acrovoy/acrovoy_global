@@ -245,6 +245,98 @@
     <span class="text-sm font-medium">Payment Terms</span>
 </a>
 
+{{-- RETURN POLICIES --}}
+<a
+    href="{{ route('admin.settings.return-policies.index') }}"
+    class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
+    {{ request()->routeIs('admin.settings.return-policies.*')
+        ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
+>
+    <span class="flex items-center justify-center w-8 h-8 rounded-lg
+        {{ request()->routeIs('admin.settings.return-policies.*') ? 'bg-white/10' : 'bg-gray-100' }}">
+        <svg
+            class="w-4 h-4 {{ request()->routeIs('admin.settings.return-policies.*') ? 'text-white' : 'text-gray-500' }}"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a3 3 0 006 0M9 5h6"
+            />
+        </svg>
+    </span>
+
+    <span class="text-sm font-medium">
+        Return Policies
+    </span>
+</a>
+
+{{-- RETURN REASONS --}}
+<a
+    href="{{ route('admin.settings.return-policy-reasons.index') }}"
+    class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
+    {{ request()->routeIs('admin.settings.return-policy-reasons.*')
+        ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
+>
+    <span class="flex items-center justify-center w-8 h-8 rounded-lg
+        {{ request()->routeIs('admin.settings.return-policy-reasons.*') ? 'bg-white/10' : 'bg-gray-100' }}">
+        <svg
+            class="w-4 h-4 {{ request()->routeIs('admin.settings.return-policy-reasons.*') ? 'text-white' : 'text-gray-500' }}"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="M8 7h8M8 11h8M8 15h5M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z"
+            />
+        </svg>
+    </span>
+
+    <span class="text-sm font-medium">
+        Return Reasons
+    </span>
+</a>
+
+
+{{-- RETURN RESOLUTIONS --}}
+<a
+    href="{{ route('admin.settings.return-policy-resolutions.index') }}"
+    class="group flex items-center gap-3 px-4 py-3 rounded-xl border transition
+    {{ request()->routeIs('admin.settings.return-policy-resolutions.*')
+        ? 'bg-gray-900 border-gray-900 text-white shadow-sm'
+        : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50' }}"
+>
+    <span class="flex items-center justify-center w-8 h-8 rounded-lg
+        {{ request()->routeIs('admin.settings.return-policy-resolutions.*') ? 'bg-white/10' : 'bg-gray-100' }}">
+        <svg
+            class="w-4 h-4 {{ request()->routeIs('admin.settings.return-policy-resolutions.*') ? 'text-white' : 'text-gray-500' }}"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="M9 12l2 2 4-4m5-1.5A7.5 7.5 0 1112.5 4 7.5 7.5 0 0120 11.5z"
+            />
+        </svg>
+    </span>
+
+    <span class="text-sm font-medium">
+        Return Resolutions
+    </span>
+</a>
+
+
         </div>
     </div>
 

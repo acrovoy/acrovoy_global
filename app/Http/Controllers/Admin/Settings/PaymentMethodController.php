@@ -130,90 +130,99 @@ class PaymentMethodController extends Controller
     /**
      * Update the specified payment method.
      */
-    public function update(
-        Request $request,
-        PaymentMethod $paymentMethod
+  
+public function update(
+    Request $request,
+    PaymentMethod $paymentMethod
+) {
+    $validated = $request->validate([
+        'code' => [
+            'required',
+            'string',
+            'max:255',
+            'alpha_dash',
+            Rule::unique('payment_methods', 'code')
+                ->ignore($paymentMethod->id),
+        ],
+
+        'icon_svg' => [
+            'nullable',
+            'string',
+            'max:1000000',
+        ],
+
+        'is_active' => [
+            'nullable',
+            'boolean',
+        ],
+
+        'sort_order' => [
+            'nullable',
+            'integer',
+            'min:0',
+        ],
+
+        'translations' => [
+            'nullable',
+            'array',
+        ],
+
+        'translations.*.name' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'translations.*.description' => [
+            'nullable',
+            'string',
+        ],
+    ]);
+
+    DB::transaction(function () use (
+        $validated,
+        $paymentMethod
     ) {
-        $validated = $request->validate([
-            'code' => [
-                'required',
-                'string',
-                'max:255',
-                'alpha_dash',
-                Rule::unique('payment_methods', 'code')
-                    ->ignore($paymentMethod->id),
-            ],
-
-            'is_active' => [
-                'nullable',
-                'boolean',
-            ],
-
-            'sort_order' => [
-                'nullable',
-                'integer',
-                'min:0',
-            ],
-
-            'translations' => [
-                'nullable',
-                'array',
-            ],
-
-            'translations.*.name' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'translations.*.description' => [
-                'nullable',
-                'string',
-            ],
+        $paymentMethod->update([
+            'code' => $validated['code'],
+            'icon_svg' => $validated['icon_svg'] ?? null,
+            'is_active' => $validated['is_active'] ?? false,
+            'sort_order' => $validated['sort_order'] ?? 0,
         ]);
 
-        DB::transaction(function () use (
-            $validated,
-            $paymentMethod
-        ) {
-            $paymentMethod->update([
-                'code' => $validated['code'],
-                'is_active' => $validated['is_active'] ?? false,
-                'sort_order' => $validated['sort_order'] ?? 0,
-            ]);
+        foreach ($validated['translations'] ?? [] as $locale => $translation) {
+            if (
+                empty($translation['name'] ?? null)
+                && empty($translation['description'] ?? null)
+            ) {
+                PaymentMethodTranslation::where(
+                    'payment_method_id',
+                    $paymentMethod->id
+                )
+                    ->where('locale', $locale)
+                    ->delete();
 
-            foreach ($validated['translations'] ?? [] as $locale => $translation) {
-                if (
-                    empty($translation['name'] ?? null)
-                    && empty($translation['description'] ?? null)
-                ) {
-                    PaymentMethodTranslation::where(
-                        'payment_method_id',
-                        $paymentMethod->id
-                    )
-                        ->where('locale', $locale)
-                        ->delete();
-
-                    continue;
-                }
-
-                PaymentMethodTranslation::updateOrCreate(
-                    [
-                        'payment_method_id' => $paymentMethod->id,
-                        'locale' => $locale,
-                    ],
-                    [
-                        'name' => $translation['name'] ?? '',
-                        'description' => $translation['description'] ?? null,
-                    ]
-                );
+                continue;
             }
-        });
 
-        return redirect()
-            ->route('dashboard.admin.settings.payment-methods.index')
-            ->with('success', 'Payment method updated successfully.');
-    }
+            PaymentMethodTranslation::updateOrCreate(
+                [
+                    'payment_method_id' => $paymentMethod->id,
+                    'locale' => $locale,
+                ],
+                [
+                    'name' => $translation['name'] ?? '',
+                    'description' => $translation['description'] ?? null,
+                ]
+            );
+        }
+    });
+
+    return redirect()
+        ->route('dashboard.admin.settings.payment-methods.index')
+        ->with('success', 'Payment method updated successfully.');
+}
+
 
     /**
      * Remove the specified payment method.

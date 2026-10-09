@@ -15,27 +15,30 @@ use App\Models\ProductVariantItem;
 
 use App\Domain\Payment\Models\PaymentMethod;
 use App\Domain\Payment\Models\PaymentTerm;
+use App\Domain\Returns\Models\ReturnPolicy;
+use App\Domain\Returns\Models\ProductReturnPolicy;
+use App\Domain\Returns\Models\SupplierReturnPolicySetting;
+
+
 
 use App\Services\Company\ActiveContextService;
 
 class ProductEditQueryService
 {
-    public function getEditViewData(Product $product): array
+public function getEditViewData(Product $product): array
 {
-    
-
     // 🔹 Eager load всех нужных связей
     $product->load([
-    'translations',
-    'category',
-    'materials',
-    'priceTiers',
-    'shippingTemplates',
-    'paymentMethods.translations',
-    'paymentTerms.translations',
-    'variantGroup.items.product',
-    'variantGroup.items.media',
-]);
+        'translations',
+        'category',
+        'materials',
+        'priceTiers',
+        'shippingTemplates',
+        'paymentMethods.translations',
+        'paymentTerms.translations',
+        'variantGroup.items.product',
+        'variantGroup.items.media',
+    ]);
 
     $languages = Language::where('is_active', true)->get();
 
@@ -49,25 +52,94 @@ class ProductEditQueryService
 
     // 🔹 Собираем коллекцию для Blade
     $variants = collect();
-    if ($parentItem) $variants->push($parentItem);
+
+    if ($parentItem) {
+        $variants->push($parentItem);
+    }
+
     $variants = $variants->merge($otherVariants);
 
     // 🔹 Продукты поставщика
     $products = $this->getSupplierProducts();
 
+    /*
+    |--------------------------------------------------------------------------
+    | RETURNS & REFUNDS
+    |--------------------------------------------------------------------------
+    */
+
+    // 🔹 Available return policies
+    $returnPolicies = ReturnPolicy::query()
+        ->with([
+            'translations',
+            'reasons.translations',
+            'resolutions.translations',
+        ])
+        ->where('is_active', true)
+        ->orderByDesc('is_default')
+        ->orderBy('name')
+        ->orderBy('id')
+        ->get();
+
+    // 🔹 Current product return policy
+    $productReturnPolicy = ProductReturnPolicy::query()
+        ->with([
+            'returnPolicy.translations',
+            'returnPolicy.reasons.translations',
+            'returnPolicy.resolutions.translations',
+        ])
+        ->where('product_id', $product->id)
+        ->first();
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUPPLIER DEFAULT RETURN POLICY
+    |--------------------------------------------------------------------------
+    */
+
+    $identity = app(ActiveContextService::class)->identity();
+
+    $supplierDefaultReturnPolicyId = null;
+
+    if (!empty($identity['entity_id'])) {
+
+        $supplierDefaultReturnPolicyId = SupplierReturnPolicySetting::query()
+            ->where('supplier_id', $identity['entity_id'])
+            ->value('default_return_policy_id');
+    }
+
     return [
         'product' => $product,
+
         'categories' => Category::all(),
+
         'languages' => $languages,
+
         'countries' => Country::withCurrentTranslation()->get(),
+
         'shippingTemplates' => $this->getShippingTemplates(),
+
         'defaultShippingTemplate' => $this->getDefaultShippingTemplate(),
-        'productShippingIds' => $product->shippingTemplates->pluck('id')->toArray(),
+
+        'productShippingIds' => $product->shippingTemplates
+            ->pluck('id')
+            ->toArray(),
+
         'materialsPrepared' => $this->prepareMaterials($languages),
-        'selectedMaterials' => $product->materials->pluck('id')->toArray(),
-        'translations' => $this->prepareTranslations($product, $languages),
+
+        'selectedMaterials' => $product->materials
+            ->pluck('id')
+            ->toArray(),
+
+        'translations' => $this->prepareTranslations(
+            $product,
+            $languages
+        ),
+
         'variants' => $variants,
+
         'products' => $products,
+
         'paymentMethods' => PaymentMethod::where('is_active', true)
             ->with('translations')
             ->orderBy('sort_order')
@@ -85,8 +157,21 @@ class ProductEditQueryService
         'productPaymentTermIds' => $product->paymentTerms
             ->pluck('id')
             ->toArray(),
-            ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | RETURNS & REFUNDS
+        |--------------------------------------------------------------------------
+        */
+
+        'returnPolicies' => $returnPolicies,
+
+        'productReturnPolicy' => $productReturnPolicy,
+
+        'supplierDefaultReturnPolicyId' => $supplierDefaultReturnPolicyId,
+    ];
 }
+
 
 
 

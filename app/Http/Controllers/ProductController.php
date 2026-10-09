@@ -46,6 +46,9 @@ use App\Models\ProductVariantGroup;
 use App\Domain\Payment\Models\PaymentMethod;
 use App\Domain\Payment\Models\PaymentTerm;
 
+use App\Domain\Returns\Models\ReturnPolicy;
+use App\Domain\Returns\Models\ProductReturnPolicy;
+
 use App\Domain\Media\Services\MediaService;
 use App\Domain\Media\DTO\UploadMediaDTO;
 
@@ -696,7 +699,118 @@ $product->paymentTerms()->sync(
 );
 
 
-            
+
+
+/*
+|--------------------------------------------------------------------------
+| RETURNS & REFUNDS
+|--------------------------------------------------------------------------
+|
+| The supplier can either:
+|
+| 1. Use supplier default
+| 2. Select a platform return policy specifically for this product
+|
+| When "Use supplier default" is selected,
+| return_policy_id is stored as NULL.
+|
+*/
+
+$useSupplierDefault = $request->boolean('use_supplier_default');
+
+$returnPolicyId = null;
+
+
+/*
+|--------------------------------------------------------------------------
+| SELECT PLATFORM RETURN POLICY
+|--------------------------------------------------------------------------
+*/
+
+if (!$useSupplierDefault) {
+
+    $returnPolicyId = $request->input('return_policy_id');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE SELECTED POLICY
+    |--------------------------------------------------------------------------
+    |
+    | Only active platform policies can be assigned to products here.
+    |
+    | Supplier-owned policies are not available in the product editor.
+    |
+    */
+
+    
+if ($returnPolicyId) {
+
+    $returnPolicyExists = ReturnPolicy::query()
+        ->where('id', $returnPolicyId)
+        ->where('is_active', true)
+        ->exists();
+
+    if (!$returnPolicyExists) {
+
+        return redirect()
+            ->back()
+            ->withErrors([
+                'return_policy_id' => 'Please select a valid return policy.',
+            ])
+            ->withInput();
+    }
+}
+
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SAVE PRODUCT RETURN POLICY
+|--------------------------------------------------------------------------
+|
+| One return policy configuration is stored per product.
+|
+| Product-specific overrides are not used yet.
+| The selected platform policy controls the return behavior.
+|
+*/
+
+ProductReturnPolicy::updateOrCreate(
+    [
+        'product_id' => $product->id,
+    ],
+    [
+        'return_policy_id' => $returnPolicyId,
+        'use_supplier_default' => $useSupplierDefault,
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRODUCT-SPECIFIC OVERRIDES
+        |--------------------------------------------------------------------------
+        |
+        | These fields remain NULL for now.
+        | They can be introduced later if product-level customization
+        | of the selected return policy is required.
+        |
+        */
+
+        'returnable' => null,
+        'return_window_days' => null,
+        'return_shipping_payer' => null,
+        'restocking_fee_enabled' => null,
+        'restocking_fee_percent' => null,
+        'custom_products_returnable' => null,
+        'additional_information' => null,
+    ]
+);
+
+
+
+
+
         }
 
         return redirect()

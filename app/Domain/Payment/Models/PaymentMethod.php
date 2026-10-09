@@ -15,6 +15,7 @@ class PaymentMethod extends Model
         'code',
         'is_active',
         'sort_order',
+        'icon_svg',
     ];
 
     protected $casts = [

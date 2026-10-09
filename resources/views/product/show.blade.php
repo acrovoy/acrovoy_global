@@ -1732,124 +1732,178 @@
 
 
 
-        {{-- COLUMN 2 : PAYMENT METHOD --}}
-        <div>
+      
 
-            <h3 class="font-bold text-[17px] leading-tight text-gray-900">
-                Payment Method
-            </h3>
+{{-- COLUMN 2 : PAYMENT METHOD --}}
+<div>
 
-            <p class="mt-2 text-sm leading-relaxed text-gray-600">
-                Shipping fee and delivery date to be negotiated. Chat with supplier now for more details.
-            </p>
+    <h3 class="font-bold text-[17px] leading-tight text-gray-900">
+        Payment Method
+    </h3>
 
-            @if(!empty($paymentGuarantees))
+    <p class="mt-2 text-sm leading-relaxed text-gray-600">
+        Available payment methods for this product. Payment terms can be discussed with the supplier.
+    </p>
 
-                <hr class="mt-4 border-gray-200">
+        {{-- =====================================================
+        PAYMENT METHODS
+    ====================================================== --}}
 
-                <div class="mt-4 space-y-5">
+    @if($product1->paymentMethods->isNotEmpty())
 
-                    @foreach($paymentGuarantees as $item)
+        <hr class="mt-4 border-gray-200">
 
-                        <div class="flex items-start gap-3">
+        <div class="mt-4">
 
-                            {{-- Green guarantee icon --}}
-                            <span class="mt-0.5 flex w-5 h-5 shrink-0 items-center justify-center rounded border border-emerald-600">
+            <div class="space-y-4">
 
-                                @switch($item['icon'])
+                @foreach($product1->paymentMethods->where('is_active', true) as $paymentMethod)
 
-                                    @case('return')
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="w-3 h-3 text-emerald-600"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="3"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            aria-hidden="true">
+    @php
+        $paymentTranslation = $paymentMethod->translations
+            ->firstWhere('locale', app()->getLocale());
 
-                                            <path d="M1 4v6h6"/>
-                                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        if (!$paymentTranslation) {
+            $paymentTranslation = $paymentMethod->translations
+                ->firstWhere('locale', 'en');
+        }
+    @endphp
 
-                                        </svg>
-                                        @break
+    <div class="flex items-start gap-3">
 
-                                    @case('money')
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="w-3 h-3 text-emerald-600"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="3"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            aria-hidden="true">
+        {{-- Payment method icon --}}
+        <span class="mt-0.2 flex w-5 h-5 shrink-0 items-center justify-center">
+            @if($paymentMethod->icon_svg)
+                {!! $paymentMethod->icon_svg !!}
+            @else
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-emerald-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <rect x="3" y="5" width="18" height="14" rx="2"/>
+                    <path d="M3 10h18"/>
+                    <path d="M7 15h3"/>
+                </svg>
+            @endif
+        </span>
 
-                                            <path d="M12 2v20"/>
-                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        <div class="min-w-0">
 
-                                        </svg>
-                                        @break
+            <div class="text-sm font-semibold text-gray-900 leading-snug">
+                {{ $paymentTranslation?->name ?? $paymentMethod->code }}
+            </div>
 
-                                    @default
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="w-3 h-3 text-emerald-600"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="3"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            aria-hidden="true">
-
-                                            <path d="M4 12.5l5.5 5.5L20 6.5"/>
-
-                                        </svg>
-
-                                    @endswitch
-
-                            </span>
-
-                            <div class="min-w-0 flex-1">
-
-                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-
-                                    <span class="text-sm font-semibold text-gray-900 leading-snug">
-                                        {{ $item['title'] }}
-                                    </span>
-
-                                    @if(!empty($item['logos']))
-                                        <span class="flex flex-wrap items-center gap-1">
-
-                                            @foreach($item['logos'] as $logo)
-                                                <span class="inline-flex h-4 min-w-[26px] items-center justify-center rounded-[3px] border border-gray-300 bg-white px-1 text-[8px] font-bold leading-none text-gray-700">
-                                                    {{ $logo }}
-                                                </span>
-                                            @endforeach
-
-                                        </span>
-                                    @endif
-
-                                </div>
-
-                                @if($item['description'])
-                                    <div class="mt-1 text-xs text-gray-500 leading-snug">
-                                        {{ $item['description'] }}
-                                    </div>
-                                @endif
-
-                            </div>
-
-                        </div>
-
-                    @endforeach
-
+            @if($paymentTranslation?->description)
+                <div class="mt-1 text-xs text-gray-500 leading-snug">
+                    {{ $paymentTranslation->description }}
                 </div>
-
             @endif
 
         </div>
+
+    </div>
+
+@endforeach
+
+            </div>
+
+        </div>
+
+    @endif
+
+
+    {{-- =====================================================
+RETURN POLICY
+====================================================== --}}
+
+@if(!empty($returnPolicyData))
+
+
+<div x-data="{ returnPolicyModalOpen: false }">
+
+    <hr class="mt-6 border-gray-200">
+
+    <div class="mt-5">
+
+        <h3 class="font-bold text-[17px] leading-tight text-gray-900">
+            Return Policy
+        </h3>
+
+        <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
+
+            {{-- Policy name --}}
+            @if(!empty($returnPolicyData['name']))
+                <span class="font-semibold text-gray-900">
+                    {{ $returnPolicyData['name'] }}
+                </span>
+            @endif
+
+            {{-- Return window --}}
+            @if(($returnPolicyData['return_window_days'] ?? null) !== null)
+                <span>
+                    {{ $returnPolicyData['return_window_days'] }}-day returns
+                </span>
+            @endif
+
+            {{-- Return shipping --}}
+            @if(!empty($returnPolicyData['return_shipping_payer']))
+                <span>
+                    <span class="font-medium text-gray-700">Return shipping:</span>
+                    {{ $returnPolicyData['return_shipping_payer'] }}
+                </span>
+            @endif
+
+            {{-- Restocking fee --}}
+            @if(!empty($returnPolicyData['restocking_fee_enabled'])
+                && ($returnPolicyData['restocking_fee_percent'] ?? null) !== null
+                && (float) $returnPolicyData['restocking_fee_percent'] > 0)
+
+                <span>
+                    <span class="font-medium text-gray-700">Restocking fee:</span>
+                    {{ $returnPolicyData['restocking_fee_percent'] }}%
+                </span>
+
+            @endif
+
+            {{-- Custom products --}}
+            @if(!empty($returnPolicyData['custom_products_returnable']))
+                <span>
+                    Custom products returnable
+                </span>
+            @endif
+
+            {{-- View full policy --}}
+            <button
+                type="button"
+                @click="returnPolicyModalOpen = true"
+                class="font-medium text-xs text-emerald-700 hover:text-emerald-800 underline underline-offset-2 whitespace-nowrap"
+            >
+                View full policy
+            </button>
+
+        </div>
+
+    </div>
+
+    {{-- Full Return Policy Modal --}}
+    @include('product.partials.return-policy-modal')
+
+</div>
+
+
+@endif
+
+
+</div>
+
+
 
         {{-- COLUMN 3 : ACTIONS --}}
         <div class="flex flex-col">

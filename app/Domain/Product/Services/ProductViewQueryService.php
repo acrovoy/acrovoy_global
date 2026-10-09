@@ -8,6 +8,13 @@ use App\Models\Unit;
 use App\Domain\Project\Models\Project;
 use App\Services\Company\ActiveContextService;
 
+use App\Domain\Returns\Models\ProductReturnPolicy;
+use App\Domain\Returns\Models\ReturnPolicy;
+use App\Domain\Returns\Models\SupplierReturnPolicySetting;
+
+
+
+
 class ProductViewQueryService
 {
     public function __construct(
@@ -46,6 +53,14 @@ class ProductViewQueryService
             'priceTiers',
             'supplier',
             'category',
+
+            'paymentMethods.translations',
+            'paymentTerms.translations',
+
+            'returnPolicy',
+            'returnPolicy.returnPolicy.translations',
+            'returnPolicy.returnPolicy.reasons.translations',
+            'returnPolicy.returnPolicy.resolutions.translations',
 
             'variantGroup.items.product',
             'variantGroup.items.product.images',
@@ -285,83 +300,83 @@ class ProductViewQueryService
 |--------------------------------------------------------------------------
 */
 
-$shippingTemplates = $product1->shippingTemplates
-    ->filter(fn ($template) => $template->is_active)
-    ->map(function ($template) use ($product1) {
+        $shippingTemplates = $product1->shippingTemplates
+            ->filter(fn($template) => $template->is_active)
+            ->map(function ($template) use ($product1) {
 
-        $template->computed_price =
-            $product1->computeShippingPrice($template);
+                $template->computed_price =
+                    $product1->computeShippingPrice($template);
 
-        return $template;
-    });
+                return $template;
+            });
 
 
-       /*
+        /*
 |--------------------------------------------------------------------------
 | SHIPPING OPTIONS FOR PRODUCT CARD
 |--------------------------------------------------------------------------
 */
 
-$deliveryOptions = $shippingTemplates
-    ->map(function ($template) use ($product1) {
+        $deliveryOptions = $shippingTemplates
+            ->map(function ($template) use ($product1) {
 
-        $option = $template->deliveryOptions
-            ->filter(function ($option) {
-                return $option->is_active
-                    && (float) $option->price > 0;
+                $option = $template->deliveryOptions
+                    ->filter(function ($option) {
+                        return $option->is_active
+                            && (float) $option->price > 0;
+                    })
+                    ->sortBy('sort_order')
+                    ->first();
+
+                if (!$option) {
+                    return null;
+                }
+
+                $computedPrice = $product1->computeShippingPrice(
+                    $template,
+                    $option
+                );
+
+                if ($computedPrice <= 0) {
+                    return null;
+                }
+
+                $deliveryTypeName =
+                    $option->deliveryType?->name
+                    ?? $option->deliveryType?->code
+                    ?? '';
+
+                return [
+                    'title' => trim(
+                        $template->title .
+                            ($deliveryTypeName ? ' · ' . $deliveryTypeName : '')
+                    ),
+                    'price' => '$' . number_format($computedPrice, 2),
+                    'description' => $template->description,
+                    'badge' => $template->delivery_time
+                        ? $template->delivery_time . ' days'
+                        : null,
+                    'expanded' => false,
+                    'template' => $template,
+                    'delivery_option' => $option,
+                ];
             })
-            ->sortBy('sort_order')
-            ->first();
+            ->filter()
+            ->values();
 
-        if (!$option) {
-            return null;
-        }
-
-        $computedPrice = $product1->computeShippingPrice(
-            $template,
-            $option
-        );
-
-        if ($computedPrice <= 0) {
-            return null;
-        }
-
-        $deliveryTypeName =
-            $option->deliveryType?->name
-            ?? $option->deliveryType?->code
-            ?? '';
-
-        return [
-            'title' => trim(
-                $template->title .
-                ($deliveryTypeName ? ' · ' . $deliveryTypeName : '')
-            ),
-            'price' => '$' . number_format($computedPrice, 2),
-            'description' => $template->description,
-            'badge' => $template->delivery_time
-                ? $template->delivery_time . ' days'
-                : null,
-            'expanded' => false,
-            'template' => $template,
-            'delivery_option' => $option,
-        ];
-    })
-    ->filter()
-    ->values();
-
-/*
+        /*
 |--------------------------------------------------------------------------
 | SHOW MORE
 |--------------------------------------------------------------------------
 */
 
-$deliveryOptions = $deliveryOptions
-    ->map(function ($option, $index) {
-        $option['expanded'] = $index < 2;
-        return $option;
-    });
+        $deliveryOptions = $deliveryOptions
+            ->map(function ($option, $index) {
+                $option['expanded'] = $index < 2;
+                return $option;
+            });
 
-$hasHiddenDelivery = $deliveryOptions->count() > 2;
+        $hasHiddenDelivery = $deliveryOptions->count() > 2;
 
 
 
@@ -383,22 +398,158 @@ $hasHiddenDelivery = $deliveryOptions->count() > 2;
             ->values();
 
 
-         $customAbilityAttributes = $product1->attributeValues
-        ->load([
-            'attribute',
-            'options.option.translations',
-        ])
-        ->filter(function ($attrValue) {
-            return $attrValue->attribute?->group_id === 29;
-        })
-        ->values();
+        $customAbilityAttributes = $product1->attributeValues
+            ->load([
+                'attribute',
+                'options.option.translations',
+            ])
+            ->filter(function ($attrValue) {
+                return $attrValue->attribute?->group_id === 29;
+            })
+            ->values();
+
 
 
         /*
         |--------------------------------------------------------------------------
-        | RETURN
+        | RETURN POLICY
+        |--------------------------------------------------------------------------
+        |
+        | The product can either:
+        |
+        | 1. Use the supplier default policy
+        | 2. Use a specific policy assigned to the product
+        |
+        | If the product uses supplier default, the actual policy is resolved
+        | through supplier_return_policy_settings.
+        |
         |--------------------------------------------------------------------------
         */
+
+        $productReturnPolicy = $product1->returnPolicy;
+
+        $returnPolicy = null;
+
+        if ($productReturnPolicy) {
+
+            /*
+     * ---------------------------------------------------------
+     * SPECIFIC PRODUCT POLICY
+     * ---------------------------------------------------------
+     */
+
+            if (
+                !$productReturnPolicy->use_supplier_default
+                && $productReturnPolicy->returnPolicy
+            ) {
+
+                $returnPolicy = $productReturnPolicy->returnPolicy;
+            }
+
+
+            /*
+     * ---------------------------------------------------------
+     * SUPPLIER DEFAULT POLICY
+     * ---------------------------------------------------------
+     */ elseif (
+                $productReturnPolicy->use_supplier_default
+                && $product1->supplier
+            ) {
+
+                $supplierDefaultPolicyId =
+                    SupplierReturnPolicySetting::query()
+                    ->where(
+                        'supplier_id',
+                        $product1->supplier->id
+                    )
+                    ->value('default_return_policy_id');
+
+
+                if ($supplierDefaultPolicyId) {
+
+                    $returnPolicy = ReturnPolicy::query()
+                        ->with([
+                            'translations',
+                            'reasons.translations',
+                            'resolutions.translations',
+                        ])
+                        ->where('id', $supplierDefaultPolicyId)
+                        ->where('is_active', true)
+                        ->first();
+                }
+            }
+        }
+
+
+        /*
+|--------------------------------------------------------------------------
+| RETURN POLICY TRANSLATION
+|--------------------------------------------------------------------------
+*/
+
+        $returnPolicyTranslation = null;
+
+        if ($returnPolicy) {
+
+            $returnPolicyTranslation =
+                $returnPolicy->translation(app()->getLocale())
+                ?? $returnPolicy->translation('en');
+        }
+
+
+        /*
+|--------------------------------------------------------------------------
+| RETURN POLICY DISPLAY DATA
+|--------------------------------------------------------------------------
+*/
+
+        $returnPolicyData = null;
+
+        if ($returnPolicy) {
+
+            $returnPolicyName =
+                $returnPolicyTranslation?->name
+                ?: $returnPolicy->name;
+
+
+            $returnPolicyDescription =
+                $returnPolicyTranslation?->description
+                ?: null;
+
+
+            $returnShippingPayer = match ($returnPolicy->return_shipping_payer) {
+                'buyer' => 'Оплачивает покупатель',
+                'supplier' => 'Supplier pays return shipping',
+                'depends_on_reason' => 'Return shipping depends on reason',
+                default => null,
+            };
+
+
+            $returnPolicyData = [
+                'name' => $returnPolicyName,
+                'description' => $returnPolicyDescription,
+
+                'return_window_days' =>
+                $returnPolicy->return_window_days,
+
+                'return_shipping_payer' =>
+                $returnShippingPayer,
+
+                'restocking_fee_enabled' =>
+                $returnPolicy->restocking_fee_enabled,
+
+                'restocking_fee_percent' =>
+                $returnPolicy->restocking_fee_percent,
+
+                'custom_products_returnable' =>
+                $returnPolicy->custom_products_returnable,
+            ];
+        }
+
+
+
+
+
 
         return compact(
             'product1',
@@ -414,7 +565,9 @@ $hasHiddenDelivery = $deliveryOptions->count() > 2;
             'customAbilityAttributes',
             'deliveryOptions',
             'hasHiddenDelivery',
-            
+            'returnPolicy', 
+            'returnPolicyData',
+
         );
     }
 }

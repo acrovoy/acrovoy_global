@@ -136,6 +136,8 @@ class MenuService
                 'can' => ['logisticsAccess', User::class],
             ],
 
+            [ 'type' => 'link', 'label' => 'Return Policies', 'route' => 'supplier.return-policies.index', ],
+
             ['type' => 'header', 'label' => 'Team'],
 
             [
@@ -256,6 +258,8 @@ class MenuService
             'label' => 'Shipping Center',
             'route' => 'supplier.shipping-templates.index',
         ],
+
+        [ 'type' => 'link', 'label' => 'Return Policies', 'route' => 'supplier.return-policies.index', ],
 
          ['type' => 'header', 'label' => 'Business Profile'],
             ['type' => 'link', 'label' => 'Business Profile', 'route' => 'supplier.profile.show'],

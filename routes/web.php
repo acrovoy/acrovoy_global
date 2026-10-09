@@ -44,6 +44,7 @@ use App\Http\Controllers\MaterialController;
 
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
+use App\Http\Controllers\Supplier\SupplierReturnPolicyController;
 
 use App\Http\Controllers\Buyer\BuyerRfqController;
 use App\Http\Controllers\Buyer\RfqRequirementController;
@@ -89,6 +90,9 @@ use App\Http\Controllers\Admin\Settings\UnitController;
 use App\Http\Controllers\Admin\Settings\DeliveryTypeController;
 use App\Http\Controllers\Admin\Settings\PaymentMethodController;
 use App\Http\Controllers\Admin\Settings\PaymentTermController;
+use App\Http\Controllers\Admin\Settings\ReturnPolicyController;
+use App\Http\Controllers\Admin\Settings\ReturnPolicyReasonController;
+use App\Http\Controllers\Admin\Settings\ReturnPolicyResolutionController;
 
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
@@ -175,6 +179,21 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
 //main supplier
 Route::middleware('auth')->prefix('supplier')->group(function () {
+
+    // RETURNS
+    Route::prefix('return-policies')->name('supplier.return-policies.')->group(function () {
+        Route::get('/', [SupplierReturnPolicyController::class, 'index'])->name('index');
+        Route::get('create', [SupplierReturnPolicyController::class, 'create'])->name('create');
+        Route::post('/', [SupplierReturnPolicyController::class, 'store'])->name('store');
+        Route::get('{returnPolicy}/edit', [SupplierReturnPolicyController::class, 'edit'])->name('edit');
+        Route::put('{returnPolicy}', [SupplierReturnPolicyController::class, 'update'])->name('update');
+        Route::patch('{returnPolicy}/toggle-active', [SupplierReturnPolicyController::class, 'toggleActive'])->name('toggle-active');
+        Route::patch('{returnPolicy}/set-default', [SupplierReturnPolicyController::class, 'setDefault'])->name('set-default');
+        Route::delete('default', [SupplierReturnPolicyController::class, 'removeDefault'])->name('remove-default');
+        Route::delete('{returnPolicy}', [SupplierReturnPolicyController::class, 'destroy'])->name('destroy');
+    });
+
+
 
     // MATERIALS
     Route::get('materials', [MaterialController::class, 'index'])->name('supplier.materials.index');
@@ -887,6 +906,40 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
         Route::patch('{paymentTerm}/toggle-active', [PaymentTermController::class, 'toggle'])->name('toggle');
         Route::delete('{paymentTerm}', [PaymentTermController::class, 'destroy'])->name('destroy');
     });
+
+    // Return Policies
+    Route::prefix('settings/return-policies')->name('settings.return-policies.')->group(function () {
+        Route::get('/', [ReturnPolicyController::class, 'index'])->name('index');
+        Route::get('create', [ReturnPolicyController::class, 'create'])->name('create');
+        Route::post('/', [ReturnPolicyController::class, 'store'])->name('store');
+        Route::get('{returnPolicy}/edit', [ReturnPolicyController::class, 'edit'])->name('edit');
+        Route::put('{returnPolicy}', [ReturnPolicyController::class, 'update'])->name('update');
+        Route::patch('{returnPolicy}/toggle-active', [ReturnPolicyController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('{returnPolicy}', [ReturnPolicyController::class, 'destroy'])->name('destroy');
+    });
+
+    // Return Policy Reasons
+    Route::prefix('settings/return-policy-reasons')->name('settings.return-policy-reasons.')->group(function () {
+        Route::get('/', [ReturnPolicyReasonController::class, 'index'])->name('index');
+        Route::get('create', [ReturnPolicyReasonController::class, 'create'])->name('create');
+        Route::post('/', [ReturnPolicyReasonController::class, 'store'])->name('store');
+        Route::get('{reason}/edit', [ReturnPolicyReasonController::class, 'edit'])->name('edit');
+        Route::put('{reason}', [ReturnPolicyReasonController::class, 'update'])->name('update');
+        Route::patch('{reason}/toggle-active', [ReturnPolicyReasonController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('{reason}', [ReturnPolicyReasonController::class, 'destroy'])->name('destroy');
+    });
+
+    // Return Policy Resolutions
+    Route::prefix('settings/return-policy-resolutions')->name('settings.return-policy-resolutions.')->group(function () {
+        Route::get('/', [ReturnPolicyResolutionController::class, 'index'])->name('index');
+        Route::get('create', [ReturnPolicyResolutionController::class, 'create'])->name('create');
+        Route::post('/', [ReturnPolicyResolutionController::class, 'store'])->name('store');
+        Route::get('{resolution}/edit', [ReturnPolicyResolutionController::class, 'edit'])->name('edit');
+        Route::put('{resolution}', [ReturnPolicyResolutionController::class, 'update'])->name('update');
+        Route::patch('{resolution}/toggle-active', [ReturnPolicyResolutionController::class, 'toggleActive'])->name('toggle-active');
+        Route::delete('{resolution}', [ReturnPolicyResolutionController::class, 'destroy'])->name('destroy');
+    });
+
 
 
     Route::prefix('settings')->name('settings.')->group(function () {

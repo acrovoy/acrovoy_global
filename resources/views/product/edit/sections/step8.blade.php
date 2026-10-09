@@ -377,6 +377,799 @@
 
 
 
+{{-- =========================================================
+    RETURNS & REFUNDS
+========================================================= --}}
+
+
+@php
+    /*
+     * ---------------------------------------------------------
+     * CURRENT PRODUCT RETURN POLICY
+     * ---------------------------------------------------------
+     */
+
+    $currentReturnPolicy = $productReturnPolicy ?? null;
+
+    $useSupplierDefault = old(
+        'use_supplier_default',
+        $currentReturnPolicy?->use_supplier_default ?? true
+    );
+
+    $selectedReturnPolicyId = old(
+        'return_policy_id',
+        $currentReturnPolicy?->return_policy_id
+    );
+
+
+    /*
+     * ---------------------------------------------------------
+     * TRANSLATION HELPER
+     * ---------------------------------------------------------
+     */
+
+    $returnPolicyTranslation = function ($policy) {
+        return $policy->translation(app()->getLocale())
+            ?? $policy->translation('en');
+    };
+
+
+    /*
+     * ---------------------------------------------------------
+     * SUPPLIER DEFAULT RETURN POLICY
+     * ---------------------------------------------------------
+     *
+     * The supplier default is stored separately from the product
+     * return policy.
+     *
+     * ProductReturnPolicy:
+     * - use_supplier_default = true
+     * - return_policy_id = NULL
+     *
+     * The actual default policy is taken from:
+     * supplier_return_policy_settings
+     */
+
+    $supplierDefaultPolicy = null;
+
+    if (!empty($supplierDefaultReturnPolicyId)) {
+        $supplierDefaultPolicy = collect($returnPolicies ?? [])
+            ->firstWhere('id', $supplierDefaultReturnPolicyId);
+    }
+
+
+    /*
+     * ---------------------------------------------------------
+     * SUPPLIER DEFAULT TRANSLATION
+     * ---------------------------------------------------------
+     */
+
+    $supplierDefaultPolicyTranslation = null;
+
+    if ($supplierDefaultPolicy) {
+        $supplierDefaultPolicyTranslation =
+            $returnPolicyTranslation($supplierDefaultPolicy);
+    }
+
+
+    /*
+     * ---------------------------------------------------------
+     * SUPPLIER DEFAULT DISPLAY DATA
+     * ---------------------------------------------------------
+     */
+
+    $supplierDefaultPolicyName =
+        $supplierDefaultPolicyTranslation?->name
+        ?: $supplierDefaultPolicy?->name;
+
+    $supplierDefaultPolicyDescription =
+        $supplierDefaultPolicyTranslation?->description
+        ?: null;
+
+
+    /*
+     * ---------------------------------------------------------
+     * SHIPPING PAYER LABEL
+     * ---------------------------------------------------------
+     */
+
+    $supplierDefaultShippingPayer = null;
+
+    if ($supplierDefaultPolicy?->return_shipping_payer) {
+
+        $supplierDefaultShippingPayer = match (
+            $supplierDefaultPolicy->return_shipping_payer
+        ) {
+            'buyer' => 'Buyer pays shipping',
+            'supplier' => 'Supplier pays shipping',
+            'depends_on_reason' => 'Shipping depends on reason',
+            default => $supplierDefaultPolicy->return_shipping_payer,
+        };
+    }
+@endphp
+
+
+
+
+<div
+    class="mt-8 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
+    x-data="{
+        useSupplierDefault: {{ $useSupplierDefault ? 'true' : 'false' }},
+        selectedPolicyId: '{{ $selectedReturnPolicyId ?? '' }}'
+    }"
+>
+
+    {{-- =====================================================
+        HEADER
+    ====================================================== --}}
+
+    <div class="px-6 py-5 border-b border-gray-100">
+
+        <div class="flex items-start justify-between gap-5">
+
+            <div>
+
+                <div class="flex items-center gap-2">
+
+                    <h3 class="font-bold text-[17px] leading-tight text-gray-900">
+                        Returns & Refunds
+                    </h3>
+
+                    <div
+                        class="w-5 h-5 rounded-full border border-gray-300 text-gray-500 flex items-center justify-center text-[11px] font-semibold"
+                        title="Choose how returns are handled for this product."
+                    >
+                        ?
+                    </div>
+
+                </div>
+
+                <p class="mt-1.5 text-sm leading-relaxed text-gray-500">
+                    Choose the return policy that applies to this product.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- =====================================================
+        CONTENT
+    ====================================================== --}}
+
+    <div class="p-6">
+
+        {{-- =================================================
+            POLICY MODE
+        ================================================== --}}
+
+        <div class="space-y-3">
+
+            
+{{-- ---------------------------------------------
+    USE SUPPLIER DEFAULT
+---------------------------------------------- --}}
+
+<label
+    class="block cursor-pointer"
+    @click="
+        useSupplierDefault = true;
+        selectedPolicyId = '';
+    "
+>
+
+    <input
+        type="radio"
+        name="use_supplier_default"
+        value="1"
+        class="sr-only"
+        x-model="useSupplierDefault"
+        @checked($useSupplierDefault)
+    >
+
+
+    <div
+        class="rounded-xl border p-4 transition"
+        :class="useSupplierDefault
+            ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+            : 'border-gray-200 bg-white hover:border-gray-300'"
+    >
+
+        <div class="flex items-start gap-3">
+
+            {{-- Radio indicator --}}
+
+            <div
+                class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                :class="useSupplierDefault
+                    ? 'border-gray-900'
+                    : 'border-gray-300'"
+            >
+
+                <div
+                    x-show="useSupplierDefault"
+                    class="w-2.5 h-2.5 rounded-full bg-gray-900"
+                ></div>
+
+            </div>
+
+
+            {{-- Content --}}
+
+            <div class="min-w-0 flex-1">
+
+                <div class="text-sm font-semibold text-gray-900">
+                    Use supplier default
+                </div>
+
+                <p class="mt-1 text-sm leading-relaxed text-gray-500">
+                    Use the default return policy configured for the supplier.
+                </p>
+
+
+                {{-- =============================================
+                    SUPPLIER DEFAULT POLICY
+                ============================================== --}}
+
+                @if($supplierDefaultPolicy)
+
+                    <div
+                        class="mt-4 rounded-xl border border-gray-200 bg-white p-3"
+                    >
+
+                        <div class="flex items-start justify-between gap-4">
+
+                            <div class="min-w-0">
+
+                                <div
+                                    class="text-[11px] font-semibold uppercase tracking-wide text-gray-400"
+                                >
+                                    Supplier default
+                                </div>
+
+                                <div class="mt-1 text-sm font-semibold text-gray-900">
+                                    {{ $supplierDefaultPolicyName }}
+                                </div>
+
+                                @if($supplierDefaultPolicyDescription)
+
+                                    <p class="mt-1 text-xs leading-relaxed text-gray-500">
+                                        {{ $supplierDefaultPolicyDescription }}
+                                    </p>
+
+                                @endif
+
+                            </div>
+
+
+                            {{-- Policy code --}}
+
+                            <span
+                                class="shrink-0 rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500"
+                            >
+                                {{ $supplierDefaultPolicy->code }}
+                            </span>
+
+                        </div>
+
+
+                        {{-- =====================================
+                            POLICY SUMMARY
+                        ====================================== --}}
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+
+                            {{-- Return window --}}
+
+                            @if($supplierDefaultPolicy->return_window_days !== null)
+
+                                <span
+                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
+                                >
+                                    {{ $supplierDefaultPolicy->return_window_days }} days
+                                </span>
+
+                            @else
+
+                                <span
+                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
+                                >
+                                    No time limit
+                                </span>
+
+                            @endif
+
+
+                            {{-- Shipping payer --}}
+
+                            @if($supplierDefaultShippingPayer)
+
+                                <span
+                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
+                                >
+                                    {{ $supplierDefaultShippingPayer }}
+                                </span>
+
+                            @endif
+
+
+                            {{-- Restocking fee --}}
+
+                            @if($supplierDefaultPolicy->restocking_fee_enabled)
+
+                                <span
+                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
+                                >
+
+                                    Restocking
+
+                                    @if($supplierDefaultPolicy->restocking_fee_percent !== null)
+                                        {{ $supplierDefaultPolicy->restocking_fee_percent }}%
+                                    @endif
+
+                                </span>
+
+                            @endif
+
+
+                            {{-- Custom products --}}
+
+                            @if($supplierDefaultPolicy->custom_products_returnable)
+
+                                <span
+                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
+                                >
+                                    Custom products allowed
+                                </span>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                @else
+
+                    {{-- =========================================
+                        NO DEFAULT CONFIGURED
+                    ========================================== --}}
+
+                    <div
+                        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5"
+                    >
+
+                        <div class="text-xs font-medium text-amber-700">
+                            No supplier default return policy has been configured.
+                        </div>
+
+                    </div>
+
+                @endif
+
+            </div>
+
+        </div>
+
+    </div>
+
+</label>
+
+
+
+
+            {{-- ---------------------------------------------
+                SELECT POLICY FOR THIS PRODUCT
+            ---------------------------------------------- --}}
+
+            <label
+                class="block cursor-pointer"
+                @click="useSupplierDefault = false"
+            >
+
+                <input
+                    type="radio"
+                    name="use_supplier_default"
+                    value="0"
+                    class="sr-only"
+                    x-model="useSupplierDefault"
+                    @checked(!$useSupplierDefault)
+                >
+
+                <div
+                    class="rounded-xl border p-4 transition"
+                    :class="!useSupplierDefault
+                        ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                        : 'border-gray-200 bg-white hover:border-gray-300'"
+                >
+
+                    <div class="flex items-start gap-3">
+
+                        {{-- Radio indicator --}}
+
+                        <div
+                            class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                            :class="!useSupplierDefault
+                                ? 'border-gray-900'
+                                : 'border-gray-300'"
+                        >
+
+                            <div
+                                x-show="!useSupplierDefault"
+                                class="w-2.5 h-2.5 rounded-full bg-gray-900"
+                            ></div>
+
+                        </div>
+
+
+                        {{-- Content --}}
+
+                        <div class="min-w-0">
+
+                            <div class="text-sm font-semibold text-gray-900">
+                                Select policy for this product
+                            </div>
+
+                            <p class="mt-1 text-sm leading-relaxed text-gray-500">
+                                Choose a specific platform return policy for this product.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </label>
+
+        </div>
+
+
+        {{-- =================================================
+            PLATFORM POLICIES
+        ================================================== --}}
+
+        <div
+            x-show="!useSupplierDefault"
+            x-transition
+            class="mt-5"
+        >
+
+            <div class="mb-3">
+
+                <div class="text-sm font-semibold text-gray-900">
+                    Platform return policies
+                </div>
+
+                <p class="mt-1 text-sm text-gray-500">
+                    Select one of the available platform policies.
+                </p>
+
+            </div>
+
+
+            @if(isset($returnPolicies) && $returnPolicies->count())
+
+                <div class="space-y-3">
+
+                    @foreach($returnPolicies as $policy)
+
+                        @php
+                            $translation = $returnPolicyTranslation($policy);
+
+                            $policyName = $translation?->name
+                                ?? $policy->name;
+
+                            $policyDescription = $translation?->description
+                                ?? null;
+                        @endphp
+
+
+                        <label class="block cursor-pointer">
+
+                            <input
+                                type="radio"
+                                name="return_policy_id"
+                                value="{{ $policy->id }}"
+                                class="sr-only"
+                                x-model="selectedPolicyId"
+                            >
+
+                            <div
+                                class="rounded-xl border p-4 transition"
+                                :class="selectedPolicyId == '{{ $policy->id }}'
+                                    ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'"
+                            >
+
+                                <div class="flex items-start justify-between gap-4">
+
+                                    <div class="flex items-start gap-3 min-w-0">
+
+                                        {{-- Radio indicator --}}
+
+                                        <div
+                                            class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                                            :class="selectedPolicyId == '{{ $policy->id }}'
+                                                ? 'border-gray-900'
+                                                : 'border-gray-300'"
+                                        >
+
+                                            <div
+                                                x-show="selectedPolicyId == '{{ $policy->id }}'"
+                                                class="w-2.5 h-2.5 rounded-full bg-gray-900"
+                                            ></div>
+
+                                        </div>
+
+
+                                        <div class="min-w-0">
+
+                                            <div class="flex items-center gap-2 flex-wrap">
+
+                                                <span class="text-sm font-semibold text-gray-900">
+                                                    {{ $policyName }}
+                                                </span>
+
+                                                @if($policy->is_default)
+
+                                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                                                        Default
+                                                    </span>
+
+                                                @endif
+
+                                            </div>
+
+
+                                            @if($policyDescription)
+
+                                                <p class="mt-1 text-sm leading-relaxed text-gray-500">
+                                                    {{ $policyDescription }}
+                                                </p>
+
+                                            @endif
+
+                                        </div>
+
+                                    </div>
+
+
+                                    @if($policy->code)
+
+                                        <span class="shrink-0 text-[11px] font-medium text-gray-400">
+                                            {{ $policy->code }}
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+
+                                {{-- =========================================
+                                    POLICY SUMMARY
+                                ========================================== --}}
+
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+                                        {{-- Return Window --}}
+
+                                        <div>
+
+                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                Return Window
+                                            </div>
+
+                                            <div class="mt-1 text-sm font-medium text-gray-800">
+
+                                                @if($policy->return_window_days !== null)
+
+                                                    {{ $policy->return_window_days }} days
+
+                                                @else
+
+                                                    No return window
+
+                                                @endif
+
+                                            </div>
+
+                                        </div>
+
+
+                                        {{-- Shipping --}}
+
+                                        <div>
+
+                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                Return Shipping
+                                            </div>
+
+                                            <div class="mt-1 text-sm font-medium text-gray-800">
+
+                                                @switch($policy->return_shipping_payer)
+
+                                                    @case('buyer')
+                                                        Buyer
+                                                        @break
+
+                                                    @case('supplier')
+                                                        Supplier
+                                                        @break
+
+                                                    @case('depends_on_reason')
+                                                        Depends on reason
+                                                        @break
+
+                                                    @default
+                                                        Not specified
+
+                                                @endswitch
+
+                                            </div>
+
+                                        </div>
+
+
+                                        {{-- Restocking Fee --}}
+
+                                        <div>
+
+                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                Restocking Fee
+                                            </div>
+
+                                            <div class="mt-1 text-sm font-medium text-gray-800">
+
+                                                @if($policy->restocking_fee_enabled)
+
+                                                    {{ rtrim(rtrim(number_format((float) $policy->restocking_fee_percent, 2), '0'), '.') }}%
+
+                                                @else
+
+                                                    None
+
+                                                @endif
+
+                                            </div>
+
+                                        </div>
+
+
+                                        {{-- Custom Products --}}
+
+                                        <div>
+
+                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                Custom Products
+                                            </div>
+
+                                            <div class="mt-1 text-sm font-medium text-gray-800">
+
+                                                {{ $policy->custom_products_returnable ? 'Allowed' : 'Not allowed' }}
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {{-- =====================================
+                                        REASONS
+                                    ====================================== --}}
+
+                                    @if($policy->reasons->count())
+
+                                        <div class="mt-4">
+
+                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                Return Reasons
+                                            </div>
+
+                                            <div class="mt-2 flex flex-wrap gap-1.5">
+
+                                                @foreach($policy->reasons as $reason)
+
+                                                    @php
+                                                        $reasonTranslation = $reason->translation(app()->getLocale())
+                                                            ?? $reason->translation('en');
+                                                    @endphp
+
+                                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                                                        {{ $reasonTranslation?->name ?? $reason->code }}
+                                                    </span>
+
+                                                @endforeach
+
+                                            </div>
+
+                                        </div>
+
+                                    @endif
+
+
+                                    {{-- =====================================
+                                        RESOLUTIONS
+                                    ====================================== --}}
+
+                                    @if($policy->resolutions->count())
+
+                                        <div class="mt-4">
+
+                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                Resolutions
+                                            </div>
+
+                                            <div class="mt-2 flex flex-wrap gap-1.5">
+
+                                                @foreach($policy->resolutions as $resolution)
+
+                                                    @php
+                                                        $resolutionTranslation = $resolution->translation(app()->getLocale())
+                                                            ?? $resolution->translation('en');
+                                                    @endphp
+
+                                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                                                        {{ $resolutionTranslation?->name ?? $resolution->code }}
+                                                    </span>
+
+                                                @endforeach
+
+                                            </div>
+
+                                        </div>
+
+                                    @endif
+
+                                </div>
+
+                            </div>
+
+                        </label>
+
+                    @endforeach
+
+                </div>
+
+            @else
+
+                <div class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4">
+
+                    <div class="text-sm font-medium text-gray-800">
+                        No return policies are currently available.
+                    </div>
+
+                    <p class="mt-1 text-sm text-gray-500">
+                        Please contact the platform administrator to configure return policies.
+                    </p>
+
+                </div>
+
+            @endif
+
+
+            @error('return_policy_id')
+
+                <p class="mt-2 text-sm text-red-600">
+                    {{ $message }}
+                </p>
+
+            @enderror
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
 
 
 <div class="flex justify-between mt-6">

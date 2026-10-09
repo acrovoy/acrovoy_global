@@ -418,4 +418,12 @@ public function paymentTerms(): BelongsToMany
         ->orderBy('product_payment_terms.sort_order');
 }
 
+public function returnPolicy() 
+{ 
+    return $this->hasOne( 
+        \App\Domain\Returns\Models\ProductReturnPolicy::class, 'product_id' 
+    ); 
+    
+}
+
 }

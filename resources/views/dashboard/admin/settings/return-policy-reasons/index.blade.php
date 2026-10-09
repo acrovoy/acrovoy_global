@@ -8,24 +8,24 @@
 
     {{-- ============================================================
         HEADER
-    ============================================================= --}}
+    ============================================================ --}}
 
     <div class="flex items-start justify-between gap-4">
 
         <div>
 
             <h1 class="text-2xl font-semibold text-gray-900">
-                Payment Methods
+                Return Reasons
             </h1>
 
             <p class="text-sm text-gray-500 mt-1">
-                Manage payment methods available for products and orders.
+                Manage the reasons buyers can select when requesting a return.
             </p>
 
         </div>
 
         <a
-            href="{{ route('admin.settings.payment-methods.create') }}"
+            href="{{ route('admin.settings.return-policy-reasons.create') }}"
             class="
                 inline-flex
                 items-center
@@ -41,7 +41,7 @@
                 transition
             "
         >
-            + Add Payment Method
+            + Add Return Reason
         </a>
 
     </div>
@@ -49,11 +49,11 @@
 
     {{-- ============================================================
         TABLE
-    ============================================================= --}}
+    ============================================================ --}}
 
     <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
 
-        @if($paymentMethods->count())
+        @if($reasons->count())
 
             <div class="overflow-x-auto">
 
@@ -64,15 +64,11 @@
                         <tr>
 
                             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                Icon
+                                ID
                             </th>
 
                             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                Sort Order
-                            </th>
-
-                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                Name
+                                Reason
                             </th>
 
                             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -80,7 +76,15 @@
                             </th>
 
                             <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                Sort Order
+                            </th>
+
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 Status
+                            </th>
+
+                            <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                Policies
                             </th>
 
                             <th class="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -91,75 +95,55 @@
 
                     </thead>
 
-
                     <tbody class="divide-y divide-gray-100">
 
-                        @foreach($paymentMethods as $paymentMethod)
+                        @foreach($reasons as $reason)
 
                             @php
-                                $translation = $paymentMethod->translations
-                                    ->firstWhere('locale', app()->getLocale());
-
-                                $translation ??= $paymentMethod->translations->first();
+                                $translation = $reason->translation(app()->getLocale())
+                                    ?? $reason->translation('en');
                             @endphp
 
                             <tr class="hover:bg-gray-50 transition">
 
-                                
-{{-- ICON --}}
-
-<td class="px-5 py-1">
-    <div class="flex items-center justify-start w-6 h-6">
-        @if($paymentMethod->icon_svg)
-            <div class="w-6 h-6 flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:w-auto [&>svg]:h-auto">
-                {!! $paymentMethod->icon_svg !!}
-            </div>
-        @else
-            <span class="text-xs text-gray-400">No icon</span>
-        @endif
-    </div>
-</td>
-
-
-                                {{-- SORT ORDER --}}
+                                {{-- ID --}}
 
                                 <td class="px-5 py-4">
 
-                                    <span
-                                        class="
-                                            inline-flex
-                                            items-center
-                                            justify-center
-                                            min-w-8
-                                            h-7
-                                            px-2
-                                            rounded-md
-                                            bg-gray-100
-                                            border
-                                            border-gray-200
-                                            text-xs
-                                            font-semibold
-                                            text-gray-600
-                                        "
-                                    >
-                                        {{ $paymentMethod->sort_order ?? 0 }}
+                                    <span class="text-sm text-gray-500">
+                                        #{{ $reason->id }}
                                     </span>
 
                                 </td>
 
 
-                                {{-- NAME --}}
+                                {{-- REASON --}}
 
                                 <td class="px-5 py-4">
 
                                     <div class="font-medium text-gray-900">
-                                        {{ $translation?->name ?? $paymentMethod->code }}
+                                        {{ $translation?->name ?? $reason->code }}
                                     </div>
 
                                     @if($translation?->description)
 
                                         <div class="text-xs text-gray-400 mt-1 max-w-md truncate">
                                             {{ $translation->description }}
+                                        </div>
+
+                                    @endif
+
+                                    @if($reason->translations->count())
+
+                                        <div class="text-xs text-gray-400 mt-1">
+
+                                            {{ $reason->translations->count() }}
+
+                                            {{ $reason->translations->count() === 1
+                                                ? 'translation'
+                                                : 'translations'
+                                            }}
+
                                         </div>
 
                                     @endif
@@ -183,8 +167,19 @@
                                             rounded
                                         "
                                     >
-                                        {{ $paymentMethod->code }}
+                                        {{ $reason->code }}
                                     </code>
+
+                                </td>
+
+
+                                {{-- SORT ORDER --}}
+
+                                <td class="px-5 py-4">
+
+                                    <span class="text-sm text-gray-700">
+                                        {{ $reason->sort_order }}
+                                    </span>
 
                                 </td>
 
@@ -193,7 +188,7 @@
 
                                 <td class="px-5 py-4">
 
-                                    @if($paymentMethod->is_active)
+                                    @if($reason->is_active)
 
                                         <span
                                             class="
@@ -238,18 +233,29 @@
                                 </td>
 
 
+                                {{-- POLICIES --}}
+
+                                <td class="px-5 py-4">
+
+                                    <span class="text-sm text-gray-700">
+                                        {{ $reason->policies_count ?? 0 }}
+                                    </span>
+
+                                </td>
+
+
                                 {{-- ACTIONS --}}
 
                                 <td class="px-5 py-4">
 
                                     <div class="flex items-center justify-end gap-2">
 
-                                        {{-- TOGGLE --}}
+                                        {{-- TOGGLE ACTIVE --}}
 
                                         <form
                                             action="{{ route(
-                                                'admin.settings.payment-methods.toggle',
-                                                $paymentMethod->id
+                                                'admin.settings.return-policy-reasons.toggle-active',
+                                                $reason->id
                                             ) }}"
                                             method="POST"
                                         >
@@ -272,7 +278,7 @@
                                                     transition
                                                 "
                                             >
-                                                {{ $paymentMethod->is_active ? 'Deactivate' : 'Activate' }}
+                                                {{ $reason->is_active ? 'Deactivate' : 'Activate' }}
                                             </button>
 
                                         </form>
@@ -282,8 +288,8 @@
 
                                         <a
                                             href="{{ route(
-                                                'admin.settings.payment-methods.edit',
-                                                $paymentMethod->id
+                                                'admin.settings.return-policy-reasons.edit',
+                                                $reason->id
                                             ) }}"
                                             class="
                                                 px-3
@@ -306,11 +312,11 @@
 
                                         <form
                                             action="{{ route(
-                                                'admin.settings.payment-methods.destroy',
-                                                $paymentMethod->id
+                                                'admin.settings.return-policy-reasons.destroy',
+                                                $reason->id
                                             ) }}"
                                             method="POST"
-                                            onsubmit="return confirm('Are you sure you want to delete this payment method?');"
+                                            onsubmit="return confirm('Are you sure you want to delete this return reason?');"
                                         >
 
                                             @csrf
@@ -352,7 +358,9 @@
 
         @else
 
-            {{-- EMPTY STATE --}}
+            {{-- ====================================================
+                EMPTY STATE
+            ===================================================== --}}
 
             <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
 
@@ -381,22 +389,22 @@
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
-                            d="M2.25 8.25h19.5M3 6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 17.25V6.75z"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414A1 1 0 0118 8.414V19a2 2 0 01-2 2z"
                         />
                     </svg>
 
                 </div>
 
                 <h3 class="text-sm font-semibold text-gray-900">
-                    No payment methods
+                    No return reasons
                 </h3>
 
                 <p class="text-sm text-gray-500 mt-1 max-w-sm">
-                    Create a payment method to make it available for products.
+                    Create a return reason to define why buyers can request a return.
                 </p>
 
                 <a
-                    href="{{ route('admin.settings.payment-methods.create') }}"
+                    href="{{ route('admin.settings.return-policy-reasons.create') }}"
                     class="
                         inline-flex
                         items-center
@@ -412,7 +420,7 @@
                         transition
                     "
                 >
-                    Add Payment Method
+                    Add Return Reason
                 </a>
 
             </div>
