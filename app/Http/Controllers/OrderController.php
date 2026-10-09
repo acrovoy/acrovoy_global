@@ -65,75 +65,105 @@ public function __construct(
     }
 
     // Переход на страницу чекаута
-    public function checkout()
-    {
-
+    
+public function checkout()
+{
     $buyer = $this->context->buyer();
 
+    $cartItems = CartItem::where('buyer_type', Buyer::class)
+        ->where('buyer_id', $buyer->id)
+        ->with([
+            'product.shippingTemplates.translations',
+            'product.shippingTemplates.courier.translations',
+            'product.shippingTemplates.deliveryOptions.deliveryType',
+            'product.paymentMethods.translations',
+        ])
+        ->get();
 
-        $cartItems = CartItem::where('buyer_type', Buyer::class)
-            ->where('buyer_id', $buyer->id)
-            ->with(['product.shippingTemplates.translations'])
-            ->get();
-
-        if ($cartItems->isEmpty()) {
-            return redirect()->route('buyer.cart.index')
-                ->with('error', 'Your cart is empty.');
-        }
-
-        $total = $cartItems->sum(fn($item) => $item->price * $item->quantity);
-
-        // Собираем все шаблоны доставки товаров
-        $allShippingTemplates = $cartItems
-            ->flatMap(function ($item) {
-                return $item->product->shippingTemplates->map(function ($template) use ($item) {
-                    // Добавляем вычисленную цену доставки
-                    $template->computed_price = $item->product->computeShippingPrice($template);
-                    return $template;
-                });
-            })
-            ->unique('id')
-            ->values();
-
-
-
-        // Получаем все адресные шаблоны пользователя (по убыванию даты)
-
-        $savedAddresses = UserAddress::query()
-            ->where('user_id', Buyer::class)
-            ->where('user_type', $buyer->id)
-            ->orderByDesc('updated_at')->get();
-
-        // Берём последний сохранённый шаблон
-        $lastAddress = $savedAddresses->first();
-
-        $regions = collect(); // пустой по умолчанию
-
-        $countries = Country::withCurrentTranslation()
-            ->orderBy('name')->get();
-
-
-
-        if ($lastAddress && $lastAddress->country) {
-            $regions = Location::whereNull('parent_id')
-                ->where('country_id', $lastAddress->country)
-                ->orderBy('name')
-                ->get();
-        }
-
-
-
-
-        return view('dashboard.buyer.orders.checkout', [
-            'cartItems'        => $cartItems,
-            'total'            => $total,
-            'shippingOptions'  => $allShippingTemplates,
-            'savedAddresses'   => $savedAddresses, // для селекта
-            'lastAddress'      => $lastAddress,    // для предзаполнения формы
-            'countries'        => $countries,
-            'regions'          => $regions,
-        ]);
+    if ($cartItems->isEmpty()) {
+        return redirect()->route('buyer.cart.index')
+            ->with('error', 'Your cart is empty.');
     }
+
+    $total = $cartItems->sum(
+        fn ($item) => $item->price * $item->quantity
+    );
+
+    // Собираем все шаблоны доставки товаров
+    $allShippingTemplates = $cartItems
+        ->flatMap(function ($item) {
+            return $item->product->shippingTemplates->map(
+                function ($template) use ($item) {
+                    $template->computed_price =
+                        $item->product->computeShippingPrice($template);
+
+                    return $template;
+                }
+            );
+        })
+        ->unique('id')
+        ->values();
+
+    // Получаем активные способы оплаты, доступные всем товарам корзины
+    $availablePaymentMethods = $cartItems
+        ->first()
+        ->product
+        ->paymentMethods
+        ->filter(fn ($method) => (bool) $method->is_active)
+        ->keyBy('id');
+
+    foreach ($cartItems->skip(1) as $item) {
+        $productPaymentMethodIds = $item->product
+            ->paymentMethods
+            ->filter(fn ($method) => (bool) $method->is_active)
+            ->pluck('id');
+
+        $availablePaymentMethods = $availablePaymentMethods
+            ->filter(
+                fn ($method) => $productPaymentMethodIds->contains($method->id)
+            );
+    }
+
+    $availablePaymentMethods = $availablePaymentMethods->values();
+
+    // Получаем сохранённые адреса пользователя
+    $savedAddresses = UserAddress::query()
+    ->where('user_id', $buyer->id)
+    ->where('user_type', Buyer::class)
+    ->orderByDesc('is_default')
+    ->orderByDesc('updated_at')
+    ->orderByDesc('id')
+    ->get();
+
+$lastAddress = $savedAddresses->first();
+
+    $regions = collect();
+
+    $countries = Country::withCurrentTranslation()
+        ->orderBy('name')
+        ->get();
+
+    if ($lastAddress && $lastAddress->country) {
+        $regions = Location::whereNull('parent_id')
+            ->where('country_id', $lastAddress->country)
+            ->orderBy('name')
+            ->get();
+    }
+
+    return view('dashboard.buyer.orders.checkout', [
+        'cartItems'              => $cartItems,
+        'total'                  => $total,
+        'shippingOptions'        => $allShippingTemplates,
+        'availablePaymentMethods' => $availablePaymentMethods,
+        'savedAddresses'         => $savedAddresses,
+        'lastAddress'            => $lastAddress,
+        'countries'              => $countries,
+        'regions'                 => $regions,
+    ]);
+}
+
+
+
 
     public function rfqCheckout(Request $request, RfqOfferVersion $offerVersion)
     {

@@ -51,6 +51,7 @@ use App\Http\Controllers\Buyer\RfqRequirementController;
 use App\Http\Controllers\Buyer\RfqParticipantController;
 use App\Http\Controllers\Buyer\RfqAuditController;
 use App\Http\Controllers\Buyer\RfqVisibilityController;
+use App\Http\Controllers\Buyer\UserAddressController;
 
 use App\Http\Controllers\Project\Buyer\BuyerProjectController;
 use App\Http\Controllers\Project\Supplier\SupplierProjectController;
@@ -74,6 +75,8 @@ use App\Http\Controllers\Admin\AdminExchangeRateController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\AdminShippingCenterController;
 use App\Http\Controllers\Admin\AdminShippingTemplateController;
+use App\Http\Controllers\Admin\CourierController;
+
 use App\Http\Controllers\Admin\Settings\ConstantsController;
 use App\Http\Controllers\Admin\Settings\BusinessTypeController;
 use App\Http\Controllers\Admin\Settings\UnitsController;
@@ -329,6 +332,20 @@ Route::prefix('buyer/wishlist')->name('buyer.wishlist.')->group(function () {
 });
 
 Route::prefix('dashboard/buyer')->name('buyer.')->group(function () {
+
+
+        // =========================
+        // DELIVERY ADDRESSES
+        // =========================
+        Route::prefix('addresses')->name('addresses.')->group(function () {
+            Route::get('/', [UserAddressController::class, 'index'])->name('index');
+            Route::get('/create', [UserAddressController::class, 'create'])->name('create');
+            Route::post('/', [UserAddressController::class, 'store'])->name('store');
+            Route::get('/{address}/edit', [UserAddressController::class, 'edit'])->name('edit');
+            Route::put('/{address}', [UserAddressController::class, 'update'])->name('update');
+            Route::patch('/{address}/set-default', [UserAddressController::class, 'setDefault'])->name('set-default');
+            Route::delete('/{address}', [UserAddressController::class, 'destroy'])->name('destroy');
+        });
 
         // =========================
         // RFQ CORE
@@ -706,6 +723,18 @@ Route::get('/faq', function () { return view('pages.faq'); })->name('faq');
 
 // ADMIN ROUTES /////////////////////////////////////////////////////////////
 Route::prefix('dashboard/admin')->name('admin.')->group(function () {
+
+
+    // Couriers
+    Route::prefix('couriers')->name('couriers.')->group(function () {
+        Route::get('/', [CourierController::class, 'index'])->name('index');
+        Route::get('create', [CourierController::class, 'create'])->name('create');
+        Route::post('/', [CourierController::class, 'store'])->name('store');
+        Route::get('{courier}/edit', [CourierController::class, 'edit'])->name('edit');
+        Route::put('{courier}', [CourierController::class, 'update'])->name('update');
+        Route::patch('{courier}/toggle-active', [CourierController::class, 'toggleStatus'])->name('toggle-active');
+        Route::delete('{courier}', [CourierController::class, 'destroy'])->name('destroy');
+    });
 
 
    Route::prefix('pages')->name('pages.')->group(function () {

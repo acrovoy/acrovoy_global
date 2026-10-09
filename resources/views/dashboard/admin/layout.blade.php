@@ -242,6 +242,8 @@
             </li>
 
            
+            <li> <a href="{{ route('admin.couriers.index') }}" class="block py-1.5 text-sm {{ request()->routeIs('admin.couriers.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}"> Couriers </a> </li>
+            
 
             <li>
                 <a href="{{ route('admin.settings.index') }}"

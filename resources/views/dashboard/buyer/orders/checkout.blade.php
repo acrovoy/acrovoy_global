@@ -205,7 +205,7 @@ $cents = round(($total - $dollars) * 100);
        
     </div>
 
-   {{-- Delivery Option --}}
+  {{-- Delivery Option --}}
 <div class="bg-white p-4 rounded-lg border border-gray-200 mb-6">
 
     <div class="flex items-start justify-between gap-5">
@@ -229,46 +229,70 @@ $cents = round(($total - $dollars) * 100);
                 </p>
 
                 {{-- Selected state --}}
-                <div
-                    id="selected-delivery-details"
-                    class="hidden"
-                >
+                <div id="selected-delivery-details" class="hidden">
 
-                    {{-- Template + Delivery type --}}
-                    <div class="flex items-center gap-2 flex-wrap">
+                    <div class="flex items-start gap-3">
 
-                        {{-- Delivery template --}}
-                        <span
-                            id="selected-delivery-template-name"
-                            class="text-sm font-medium text-gray-900 truncate"
-                        ></span>
-
-                        <span
-                            class="text-gray-300 select-none"
-                            aria-hidden="true"
+                        {{-- Courier logo --}}
+                        <div
+                            id="selected-delivery-logo-wrapper"
+                            class="hidden h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5"
                         >
-                            /
-                        </span>
+                            <img
+                                id="selected-delivery-logo"
+                                src=""
+                                alt=""
+                                class="h-full w-full object-contain"
+                            >
+                        </div>
 
-                        {{-- Delivery type --}}
-                        <span
-                            id="selected-delivery-label"
-                            class="text-sm text-gray-600"
-                        ></span>
+                        {{-- Delivery information --}}
+                        <div class="min-w-0 flex-1">
 
-                    </div>
+                            {{-- Template + Delivery type --}}
+                            <div class="flex items-center gap-2 flex-wrap">
 
-                    {{-- Shipping price --}}
-                    <div class="mt-1 flex items-center gap-1.5">
+                                <span
+                                    id="selected-delivery-template-name"
+                                    class="text-sm font-medium text-gray-900"
+                                ></span>
 
-                        <span class="text-sm text-gray-500">
-                            Shipping:
-                        </span>
+                                <span
+                                    id="selected-delivery-separator"
+                                    class="hidden text-gray-300 select-none"
+                                    aria-hidden="true"
+                                >
+                                    /
+                                </span>
 
-                        <span
-                            id="selected-delivery-price"
-                            class="text-sm font-semibold text-gray-900"
-                        ></span>
+                                <span
+                                    id="selected-delivery-label"
+                                    class="text-sm text-gray-600"
+                                ></span>
+
+                            </div>
+
+                            {{-- Courier name --}}
+                            <!-- <p
+                                id="selected-delivery-courier-name"
+                                class="hidden mt-1 text-xs text-gray-500"
+                            ></p> -->
+
+                            {{-- Shipping price --}}
+                            <div class="mt-1 flex items-center">
+
+                                <span class="text-sm text-gray-500">
+                                
+                                </span>
+
+                                <span
+                                    id="selected-delivery-price"
+                                    class="text-sm font-semibold text-gray-900"
+                                ></span>
+
+                            </div>
+
+                        </div>
 
                     </div>
 
@@ -283,17 +307,7 @@ $cents = round(($total - $dollars) * 100);
             type="button"
             id="delivery-option-button"
             onclick="openDeliveryModal()"
-            class="shrink-0
-                   inline-flex items-center justify-center
-                   px-4 py-2
-                   text-sm font-medium
-                   bg-blue-900 text-white
-                   rounded-lg
-                   hover:bg-blue-800
-                   focus:outline-none
-                   focus:ring-2
-                   focus:ring-blue-900/20
-                   transition"
+            class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium bg-blue-900 text-white rounded-lg hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-900/20 transition"
             aria-controls="delivery-option-modal"
             aria-haspopup="dialog"
         >
@@ -305,6 +319,84 @@ $cents = round(($total - $dollars) * 100);
 </div>
 
 @include('dashboard.buyer.partials.delivery-option-modal')
+
+
+
+
+
+{{-- Payment Method --}}
+<div class="bg-white p-4 rounded-lg border border-gray-200 mb-6">
+    <div class="flex items-start justify-between gap-5">
+        <div class="min-w-0 flex-1">
+            <h3 class="font-semibold text-gray-900">
+                Payment Method
+            </h3>
+
+            {{-- Selected payment method --}}
+            <div id="selected-payment-summary" class="mt-2">
+                <p id="selected-payment-empty" class="text-sm text-gray-500">
+                    Select a payment method
+                </p>
+
+                <div id="selected-payment-details" class="hidden">
+                    <div class="flex items-start gap-3">
+                        <div
+                            id="selected-payment-logo-wrapper"
+                            class="hidden h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5"
+                        >
+                            <img
+                                id="selected-payment-logo"
+                                src=""
+                                alt=""
+                                class="h-full w-full object-contain"
+                            >
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span
+                                    id="selected-payment-name"
+                                    class="text-sm font-medium text-gray-900"
+                                ></span>
+                            </div>
+
+                            <p
+                                id="selected-payment-description"
+                                class="hidden mt-1 text-xs text-gray-500"
+                            ></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button
+            type="button"
+            id="payment-method-button"
+            onclick="openPaymentMethodModal()"
+            class="shrink-0 inline-flex items-center justify-center px-4 py-2 text-sm font-medium bg-blue-900 text-white rounded-lg hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-900/20 transition"
+            aria-controls="payment-method-modal"
+            aria-haspopup="dialog"
+        >
+            Select
+        </button>
+    </div>
+
+    {{-- Submitted payment method ID --}}
+    <input
+        type="hidden"
+        name="payment_method_id"
+        id="selected-payment-method-id"
+        value="{{ old('payment_method_id') }}"
+    >
+
+    @error('payment_method_id')
+        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
+
+@include('dashboard.buyer.partials.payment-method-modal')
+
 
 
 
@@ -1255,6 +1347,16 @@ function confirmDeliveryOption() {
         parseFloat(selected.dataset.price || 0);
 
     // ================================
+    // Courier
+    // ================================
+
+    const courierLogo =
+        selected.dataset.courierLogo || '';
+
+    const courierName =
+        selected.dataset.courierName || '';
+
+    // ================================
     // Delivery template
     // ================================
 
@@ -1287,17 +1389,99 @@ function confirmDeliveryOption() {
     const actionButton =
         document.getElementById('delivery-option-button');
 
+    // ================================
+    // Courier logo and name
+    // ================================
+
+    const logoWrapper =
+        document.getElementById('selected-delivery-logo-wrapper');
+
+    const logoImage =
+        document.getElementById('selected-delivery-logo');
+
+    const courierNameElement =
+        document.getElementById('selected-delivery-courier-name');
+
+    if (logoWrapper && logoImage) {
+
+        // Reset previous logo
+        logoImage.onload = null;
+        logoImage.onerror = null;
+
+        logoImage.removeAttribute('src');
+
+        logoWrapper.classList.add('hidden');
+        logoWrapper.classList.remove('flex');
+
+        if (courierLogo.trim() !== '') {
+
+            let logoUrl = courierLogo.trim();
+
+            // Absolute URL or root-relative path
+            if (!/^https?:\/\//i.test(logoUrl)) {
+
+                // Remove a possible leading slash
+                logoUrl = logoUrl.replace(/^\/+/, '');
+
+                // Avoid adding storage/ twice
+                if (!logoUrl.startsWith('storage/')) {
+                    logoUrl = 'storage/' + logoUrl;
+                }
+
+                // Laravel-compatible URL
+                logoUrl = '/' + logoUrl;
+            }
+
+            logoImage.alt = courierName || 'Shipping courier';
+
+            logoImage.onload = function () {
+                logoWrapper.classList.remove('hidden');
+                logoWrapper.classList.add('flex');
+            };
+
+            logoImage.onerror = function () {
+                logoWrapper.classList.add('hidden');
+                logoWrapper.classList.remove('flex');
+
+                console.error(
+                    'Courier logo failed to load:',
+                    logoUrl
+                );
+            };
+
+            logoImage.src = logoUrl;
+        }
+    }
+
+    // Courier name
+    if (courierNameElement) {
+        courierNameElement.textContent = courierName;
+        courierNameElement.classList.toggle(
+            'hidden',
+            !courierName
+        );
+    }
+
+    // ================================
     // Template name
+    // ================================
+
     if (templateNameElement) {
         templateNameElement.textContent = templateName;
     }
 
+    // ================================
     // Delivery type
+    // ================================
+
     if (labelElement) {
         labelElement.textContent = deliveryLabel;
     }
 
+    // ================================
     // Price
+    // ================================
+
     if (priceElement) {
 
         if (price > 0) {
@@ -1383,7 +1567,337 @@ window.addEventListener('DOMContentLoaded', recalcTotal);
 });
 </script>
 
+<script>
+    // =========================================================
+    // PAYMENT METHOD MODAL
+    // =========================================================
 
+    function openPaymentMethodModal() {
+        const modal = document.getElementById('payment-method-modal');
+
+        if (!modal) {
+            return;
+        }
+
+        const selectedId = document.getElementById(
+            'selected-payment-method-id'
+        )?.value;
+
+        const radios = modal.querySelectorAll(
+            'input[name="payment_method_option_id"]'
+        );
+
+        radios.forEach(radio => {
+            radio.checked = selectedId
+                ? radio.value === selectedId
+                : false;
+        });
+
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closePaymentMethodModal() {
+        const modal = document.getElementById('payment-method-modal');
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    // =========================================================
+    // SVG ICON HELPERS
+    // =========================================================
+
+    function decodePaymentMethodIcon(encodedIcon) {
+        if (!encodedIcon) {
+            return '';
+        }
+
+        try {
+            const binary = atob(encodedIcon);
+
+            const bytes = Uint8Array.from(
+                binary,
+                character => character.charCodeAt(0)
+            );
+
+            return new TextDecoder('utf-8').decode(bytes);
+        } catch (error) {
+            console.error('Unable to decode payment method icon.', error);
+            return '';
+        }
+    }
+
+    function isSafePaymentMethodSvg(svg) {
+        if (!svg || typeof svg !== 'string') {
+            return false;
+        }
+
+        const parser = new DOMParser();
+        const documentSvg = parser.parseFromString(
+            svg,
+            'image/svg+xml'
+        );
+
+        if (
+            documentSvg.querySelector('parsererror') ||
+            documentSvg.documentElement?.localName !== 'svg'
+        ) {
+            return false;
+        }
+
+        // Reject potentially executable or externally loaded SVG content.
+        if (
+            documentSvg.querySelector(
+                'script, foreignObject, iframe, object, embed, audio, video'
+            )
+        ) {
+            return false;
+        }
+
+        const elements = documentSvg.querySelectorAll('*');
+
+        for (const element of elements) {
+            for (const attribute of Array.from(element.attributes)) {
+                const name = attribute.name.toLowerCase();
+                const value = attribute.value.trim();
+
+                if (name.startsWith('on')) {
+                    return false;
+                }
+
+                if (
+                    ['href', 'xlink:href', 'src'].includes(name) &&
+                    value &&
+                    !value.startsWith('#') &&
+                    !value.startsWith('data:')
+                ) {
+                    return false;
+                }
+
+                if (
+                    name === 'style' &&
+                    /url\s*\(|expression\s*\(/i.test(value)
+                ) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    function renderPaymentMethodIcon(encodedIcon) {
+        const wrapper = document.getElementById(
+            'selected-payment-logo-wrapper'
+        );
+
+        const imageElement = document.getElementById(
+            'selected-payment-logo'
+        );
+
+        if (!wrapper || !imageElement) {
+            return;
+        }
+
+        // Remove the previously rendered SVG, if any.
+        const existingIcon = wrapper.querySelector(
+            '[data-payment-method-svg]'
+        );
+
+        if (existingIcon) {
+            existingIcon.remove();
+        }
+
+        imageElement.classList.remove('hidden');
+        imageElement.removeAttribute('src');
+        imageElement.removeAttribute('alt');
+
+        const svg = decodePaymentMethodIcon(encodedIcon);
+
+        if (!svg || !isSafePaymentMethodSvg(svg)) {
+            wrapper.classList.add('hidden');
+            return;
+        }
+
+        const parser = new DOMParser();
+        const parsed = parser.parseFromString(
+            svg,
+            'image/svg+xml'
+        );
+
+        const svgElement = parsed.documentElement;
+
+        // Normalize presentation for the checkout summary.
+        svgElement.setAttribute('aria-hidden', 'true');
+        svgElement.setAttribute('focusable', 'false');
+        svgElement.removeAttribute('width');
+        svgElement.removeAttribute('height');
+
+        svgElement.style.width = '100%';
+        svgElement.style.height = '100%';
+        svgElement.style.maxWidth = '100%';
+        svgElement.style.maxHeight = '40px';
+        svgElement.style.display = 'block';
+
+        // Import the SVG as a DOM node rather than using innerHTML.
+        const importedSvg = document.importNode(svgElement, true);
+        importedSvg.setAttribute('data-payment-method-svg', '');
+
+        imageElement.classList.add('hidden');
+        wrapper.appendChild(importedSvg);
+        wrapper.classList.remove('hidden');
+    }
+
+    // =========================================================
+    // UPDATE SELECTED PAYMENT METHOD SUMMARY
+    // =========================================================
+
+    function updatePaymentMethodSummary(radio) {
+        if (!radio) {
+            return;
+        }
+
+        const methodId = radio.dataset.methodId || radio.value;
+        const methodName = radio.dataset.methodName || '';
+        const methodDescription = radio.dataset.methodDescription || '';
+        const methodIcon = radio.dataset.methodLogo || '';
+
+        const hiddenInput = document.getElementById(
+            'selected-payment-method-id'
+        );
+
+        const emptyState = document.getElementById(
+            'selected-payment-empty'
+        );
+
+        const details = document.getElementById(
+            'selected-payment-details'
+        );
+
+        const nameElement = document.getElementById(
+            'selected-payment-name'
+        );
+
+        const descriptionElement = document.getElementById(
+            'selected-payment-description'
+        );
+
+        const button = document.getElementById(
+            'payment-method-button'
+        );
+
+        if (!methodId) {
+            return;
+        }
+
+        if (hiddenInput) {
+            hiddenInput.value = methodId;
+        }
+
+        if (emptyState) {
+            emptyState.classList.add('hidden');
+        }
+
+        if (details) {
+            details.classList.remove('hidden');
+        }
+
+        if (nameElement) {
+            nameElement.textContent = methodName;
+        }
+
+        if (descriptionElement) {
+            descriptionElement.textContent = methodDescription;
+            descriptionElement.classList.toggle(
+                'hidden',
+                !methodDescription
+            );
+        }
+
+        renderPaymentMethodIcon(methodIcon);
+
+        if (button) {
+            button.textContent = 'Change';
+        }
+    }
+
+    // =========================================================
+    // CONFIRM PAYMENT METHOD
+    // =========================================================
+
+    function confirmPaymentMethod() {
+        const modal = document.getElementById('payment-method-modal');
+
+        if (!modal) {
+            return;
+        }
+
+        const selected = modal.querySelector(
+            'input[name="payment_method_option_id"]:checked'
+        );
+
+        if (!selected) {
+            alert('Please select a payment method.');
+            return;
+        }
+
+        const methodId = selected.dataset.methodId || selected.value;
+
+        if (!methodId) {
+            alert('Unable to determine the selected payment method.');
+            return;
+        }
+
+        updatePaymentMethodSummary(selected);
+        closePaymentMethodModal();
+    }
+
+    // =========================================================
+    // RESTORE SELECTED PAYMENT METHOD AFTER PAGE RELOAD
+    // =========================================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const hiddenInput = document.getElementById(
+            'selected-payment-method-id'
+        );
+
+        const modal = document.getElementById('payment-method-modal');
+
+        if (!hiddenInput || !modal || !hiddenInput.value) {
+            return;
+        }
+
+        const selectedId = hiddenInput.value;
+
+        const radio = Array.from(
+            modal.querySelectorAll(
+                'input[name="payment_method_option_id"]'
+            )
+        ).find(input => input.value === selectedId);
+
+        if (!radio) {
+            return;
+        }
+
+        radio.checked = true;
+        updatePaymentMethodSummary(radio);
+    });
+
+    // =========================================================
+    // CLOSE MODAL WITH ESCAPE
+    // =========================================================
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closePaymentMethodModal();
+        }
+    });
+</script>
 
 
 

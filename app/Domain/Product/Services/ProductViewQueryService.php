@@ -294,89 +294,107 @@ class ProductViewQueryService
         }
 
 
-        /*
+       /*
 |--------------------------------------------------------------------------
 | SHIPPING TEMPLATES
 |--------------------------------------------------------------------------
 */
 
-        $shippingTemplates = $product1->shippingTemplates
-            ->filter(fn($template) => $template->is_active)
-            ->map(function ($template) use ($product1) {
+$shippingTemplates = $product1->shippingTemplates
+    ->filter(fn($template) => $template->is_active)
+    ->map(function ($template) use ($product1) {
 
-                $template->computed_price =
-                    $product1->computeShippingPrice($template);
+        // Загружаем курьера и его переводы.
+        $template->loadMissing('courier.translations');
 
-                return $template;
-            });
+        $template->computed_price =
+            $product1->computeShippingPrice($template);
+
+        return $template;
+    });
 
 
-        /*
+/*
 |--------------------------------------------------------------------------
 | SHIPPING OPTIONS FOR PRODUCT CARD
 |--------------------------------------------------------------------------
 */
 
-        $deliveryOptions = $shippingTemplates
-            ->map(function ($template) use ($product1) {
+$deliveryOptions = $shippingTemplates
+    ->map(function ($template) use ($product1) {
 
-                $option = $template->deliveryOptions
-                    ->filter(function ($option) {
-                        return $option->is_active
-                            && (float) $option->price > 0;
-                    })
-                    ->sortBy('sort_order')
-                    ->first();
+        $option = $template->deliveryOptions
+            ->where('is_active', true)
+            ->sortBy('sort_order')
+            ->first();
 
-                if (!$option) {
-                    return null;
-                }
+        $computedPrice = null;
+        $price = null;
+        $deliveryTypeName = '';
+        $deliveryTime = null;
 
+        if ($option) {
+            if ($option->price !== null && $option->price !== '') {
                 $computedPrice = $product1->computeShippingPrice(
                     $template,
                     $option
                 );
 
-                if ($computedPrice <= 0) {
-                    return null;
+                if ($computedPrice > 0) {
+                    $price = '$' . number_format($computedPrice, 2);
                 }
+            }
 
-                $deliveryTypeName =
-                    $option->deliveryType?->name
-                    ?? $option->deliveryType?->code
-                    ?? '';
+            $deliveryTypeName =
+                $option->deliveryType?->name
+                ?? $option->deliveryType?->code
+                ?? '';
 
-                return [
-                    'title' => trim(
-                        $template->title .
-                            ($deliveryTypeName ? ' · ' . $deliveryTypeName : '')
-                    ),
-                    'price' => '$' . number_format($computedPrice, 2),
-                    'description' => $template->description,
-                    'badge' => $template->delivery_time
-                        ? $template->delivery_time . ' days'
-                        : null,
-                    'expanded' => false,
-                    'template' => $template,
-                    'delivery_option' => $option,
-                ];
-            })
-            ->filter()
-            ->values();
+            $deliveryTime = $option->delivery_time;
+        }
 
-        /*
+        $courier = $template->courier;
+
+        $courierTranslation = $courier?->translations
+            ->firstWhere('locale', app()->getLocale())
+            ?? $courier?->translations->firstWhere('locale', 'en');
+
+        return [
+            'title' => trim(
+                $template->title .
+                ($deliveryTypeName ? ' · ' . $deliveryTypeName : '')
+            ),
+            'price' => $price,
+            'description' => $template->description,
+            'badge' => $deliveryTime
+                ? $deliveryTime . ' days'
+                : null,
+            'expanded' => false,
+            'template' => $template,
+            'delivery_option' => $option,
+
+            // Courier.
+            'courier_logo' => $courier?->logo,
+            'courier_name' => $courierTranslation?->name
+                ?? $courier?->code,
+        ];
+    })
+    ->values();
+
+
+/*
 |--------------------------------------------------------------------------
 | SHOW MORE
 |--------------------------------------------------------------------------
 */
 
-        $deliveryOptions = $deliveryOptions
-            ->map(function ($option, $index) {
-                $option['expanded'] = $index < 2;
-                return $option;
-            });
+$deliveryOptions = $deliveryOptions
+    ->map(function ($option, $index) {
+        $option['expanded'] = $index < 4;
+        return $option;
+    });
 
-        $hasHiddenDelivery = $deliveryOptions->count() > 2;
+$hasHiddenDelivery = $deliveryOptions->count() > 4;
 
 
 

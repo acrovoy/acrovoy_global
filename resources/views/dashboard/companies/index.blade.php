@@ -248,9 +248,23 @@
                                                         bg-gray-50 border border-gray-200
                                                         flex items-center justify-center">
 
-                                                <span class="text-sm font-semibold text-gray-600">
-                                                    {{ strtoupper(substr($company->name, 0, 1)) }}
-                                                </span>
+@php
+    $companyLogo = $company->logo();
+@endphp
+
+@if($companyLogo)
+    <img
+        src="{{ asset($companyLogo->cdn_url) }}"
+        alt="{{ $company->name }}"
+        class="w-full h-full object-cover rounded-lg
+"
+    >
+@else
+   <span class="text-sm font-semibold text-gray-600">
+        {{ strtoupper(substr($company->name ?? 'C', 0, 1)) }}
+    </span>
+@endif
+
 
                                             </div>
 
@@ -560,9 +574,22 @@
                                                         bg-gray-100 border border-gray-200
                                                         flex items-center justify-center">
 
-                                                <span class="text-sm font-semibold text-gray-400">
-                                                    {{ strtoupper(substr($company->name, 0, 1)) }}
-                                                </span>
+                                                @php
+    $companyLogo = $company->logo();
+@endphp
+
+@if($companyLogo)
+    <img
+        src="{{ asset($companyLogo->cdn_url) }}"
+        alt="{{ $company->name }}"
+        class="w-full h-full object-cover rounded-lg
+"
+    >
+@else
+   <span class="text-sm font-semibold text-gray-600">
+        {{ strtoupper(substr($company->name ?? 'C', 0, 1)) }}
+    </span>
+@endif
 
                                             </div>
 

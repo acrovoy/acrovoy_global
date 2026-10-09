@@ -108,7 +108,7 @@ class PaymentMethodController extends Controller
         });
 
         return redirect()
-            ->route('dashboard.admin.settings.payment-methods.index')
+            ->route('admin.settings.payment-methods.index')
             ->with('success', 'Payment method created successfully.');
     }
 
@@ -219,7 +219,7 @@ public function update(
     });
 
     return redirect()
-        ->route('dashboard.admin.settings.payment-methods.index')
+        ->route('admin.settings.payment-methods.index')
         ->with('success', 'Payment method updated successfully.');
 }
 

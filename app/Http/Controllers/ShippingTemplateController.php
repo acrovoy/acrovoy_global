@@ -103,6 +103,7 @@ class ShippingTemplateController extends Controller
     $data = $request->validate([
         'title' => 'required|array',
         'description' => 'nullable|array',
+        'courier_id' => ['nullable', 'integer', 'exists:couriers,id'],
         'price' => 'required|numeric|min:0',
         'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
         'delivery_time' => 'nullable|string|max:255',
@@ -112,6 +113,11 @@ class ShippingTemplateController extends Controller
         'delivery_options.*.price' => 'nullable|numeric|min:0',
         'delivery_options.*.price_unit' => 'nullable|in:per_item,per_kg,per_cubic_meter,flat',
     ]);
+
+    // Курьер необязательный: пустое значение сохраняем как NULL.
+    $data['courier_id'] = $request->filled('courier_id')
+        ? (int) $data['courier_id']
+        : null;
 
     DB::transaction(function () use ($data) {
 
@@ -132,7 +138,6 @@ class ShippingTemplateController extends Controller
 
             $rawPrice = $option['price'] ?? null;
 
-            // Пустое значение = тип доставки не используется
             if ($rawPrice === null || $rawPrice === '') {
                 continue;
             }
@@ -150,12 +155,15 @@ class ShippingTemplateController extends Controller
             break;
         }
 
-        // 1. Создаем базовую запись шаблона
+        // 1. Создаем базовую запись шаблона.
         $template = ShippingTemplate::create([
             'provider_type' => $entity::class,
             'provider_id' => $entity->getKey(),
 
-            // Старая схема
+            // Связь с курьером необязательна.
+            'courier_id' => $data['courier_id'],
+
+            // Старая схема.
             'price' => $legacyPrice,
             'price_unit' => $legacyPriceUnit,
             'delivery_type' => $legacyDeliveryType,
@@ -164,7 +172,7 @@ class ShippingTemplateController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        // 2. Создаем мультиязычные переводы
+        // 2. Создаем мультиязычные переводы.
         foreach ($data['title'] as $locale => $title) {
 
             if (empty($title)) {
@@ -179,13 +187,13 @@ class ShippingTemplateController extends Controller
             ]);
         }
 
-        // 3. Новая схема: сохраняем каждый настроенный тип доставки отдельно
+        // 3. Сохраняем каждый настроенный тип доставки отдельно.
         foreach ($deliveryOptions as $deliveryTypeId => $option) {
 
             $rawPrice = $option['price'] ?? null;
 
-            // Пустая цена = тип доставки отключен
-            // 0 = бесплатная доставка, поэтому НЕ пропускаем
+            // Пустая цена = тип доставки отключен.
+            // 0 = бесплатная доставка, поэтому сохраняем.
             if ($rawPrice === null || $rawPrice === '') {
                 continue;
             }
@@ -206,7 +214,7 @@ class ShippingTemplateController extends Controller
             ]);
         }
 
-        // 4. Привязка стран / регионов / городов
+        // 4. Привязываем страны, регионы и города.
         $template->locations()->sync($data['locations'] ?? []);
     });
 
@@ -214,7 +222,6 @@ class ShippingTemplateController extends Controller
         ->route('supplier.shipping-templates.index')
         ->with('success', 'Shipping template created successfully');
 }
-
 
 
 
@@ -288,6 +295,7 @@ $this->authorize('update', $shippingTemplate);
     $data = $request->validate([
         'title' => 'required|array',
         'description' => 'nullable|array',
+        'courier_id' => ['nullable', 'integer', 'exists:couriers,id'],
         'price' => 'required|numeric|min:0',
         'price_unit' => 'required|in:per_item,per_kg,per_cubic_meter,flat',
         'delivery_time' => 'nullable|string|max:255',
@@ -297,6 +305,12 @@ $this->authorize('update', $shippingTemplate);
         'delivery_options.*.price' => 'nullable|numeric|min:0',
         'delivery_options.*.price_unit' => 'nullable|in:per_item,per_kg,per_cubic_meter,flat',
     ]);
+
+    // Курьер необязательный.
+    // Если выбран пустой пункт, очищаем предыдущую связь.
+    $data['courier_id'] = $request->filled('courier_id')
+        ? (int) $data['courier_id']
+        : null;
 
     DB::transaction(function () use ($shippingTemplate, $data) {
 
@@ -313,7 +327,6 @@ $this->authorize('update', $shippingTemplate);
 
             $rawPrice = $option['price'] ?? null;
 
-            // Пустая цена = тип доставки не используется
             if ($rawPrice === null || $rawPrice === '') {
                 continue;
             }
@@ -331,8 +344,9 @@ $this->authorize('update', $shippingTemplate);
             break;
         }
 
-        // 1. Обновляем базовый шаблон
+        // 1. Обновляем базовый шаблон.
         $shippingTemplate->update([
+            'courier_id' => $data['courier_id'],
             'price' => $legacyPrice,
             'price_unit' => $legacyPriceUnit,
             'delivery_type' => $legacyDeliveryType,
@@ -340,7 +354,7 @@ $this->authorize('update', $shippingTemplate);
             'updated_by' => auth()->id(),
         ]);
 
-        // 2. Обновляем переводы
+        // 2. Обновляем переводы.
         foreach ($data['title'] as $locale => $title) {
 
             if (empty($title)) {
@@ -356,12 +370,12 @@ $this->authorize('update', $shippingTemplate);
             );
         }
 
-        // 3. Обновляем delivery options
+        // 3. Обновляем delivery options.
         foreach ($deliveryOptions as $deliveryTypeId => $option) {
 
             $rawPrice = $option['price'] ?? null;
 
-            // Пустая цена = удалить / отключить опцию.
+            // Пустая цена = удалить опцию.
             // 0 = бесплатная доставка, поэтому сохраняем.
             if ($rawPrice === null || $rawPrice === '') {
 
@@ -392,7 +406,7 @@ $this->authorize('update', $shippingTemplate);
             );
         }
 
-        // 4. Обновляем страны / регионы / города
+        // 4. Обновляем страны, регионы и города.
         $shippingTemplate->locations()->sync($data['locations'] ?? []);
     });
 
@@ -400,7 +414,6 @@ $this->authorize('update', $shippingTemplate);
         ->route('supplier.shipping-templates.index')
         ->with('success', 'Shipping template updated successfully');
 }
-
 
 
     /**

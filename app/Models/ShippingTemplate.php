@@ -18,6 +18,7 @@ class ShippingTemplate extends Model
     protected $fillable = [
         'provider_id',
         'provider_type',
+        'courier_id',
         'warehouse_id',
         'created_by',
         'updated_by',
@@ -109,6 +110,15 @@ public function deliveryTypes()
         ])
         ->withTimestamps()
         ->orderByPivot('sort_order');
+}
+
+
+public function courier()
+{
+    return $this->belongsTo(
+        \App\Domain\Courier\Models\Courier::class,
+        'courier_id'
+    );
 }
 
 }

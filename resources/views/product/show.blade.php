@@ -1635,23 +1635,54 @@
                 <div class="flex items-start gap-3"
                     @if(!$isExpanded) x-show="showMore" x-cloak @endif>
 
-                    {{-- Truck icon --}}
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        class="w-6 h-6 shrink-0 text-emerald-600"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.7"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true">
+                    
+                    
+                    {{-- Courier logo / Default truck icon --}}
+@if(!empty($option['courier_logo']))
+    <img
+        src="{{ \Illuminate\Support\Str::startsWith($option['courier_logo'], ['http://', 'https://'])
+            ? $option['courier_logo']
+            : asset('storage/' . ltrim($option['courier_logo'], '/')) }}"
+        alt="{{ $option['courier_name'] ?? 'Shipping courier' }}"
+        class="w-6 h-6 shrink-0 object-contain"
+        loading="lazy"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+    >
 
-                        <path d="M1 3h13v13H1z"/>
-                        <path d="M14 8h4l3 3v5h-7z"/>
-                        <circle cx="5.5" cy="18.5" r="2"/>
-                        <circle cx="17.5" cy="18.5" r="2"/>
+    <svg xmlns="http://www.w3.org/2000/svg"
+        class="hidden w-6 h-6 shrink-0 text-emerald-600"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true">
 
-                    </svg>
+        <path d="M1 3h13v13H1z"/>
+        <path d="M14 8h4l3 3v5h-7z"/>
+        <circle cx="5.5" cy="18.5" r="2"/>
+        <circle cx="17.5" cy="18.5" r="2"/>
+    </svg>
+@else
+    <svg xmlns="http://www.w3.org/2000/svg"
+        class="w-6 h-6 shrink-0 text-emerald-600"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.7"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true">
+
+        <path d="M1 3h13v13H1z"/>
+        <path d="M14 8h4l3 3v5h-7z"/>
+        <circle cx="5.5" cy="18.5" r="2"/>
+        <circle cx="17.5" cy="18.5" r="2"/>
+    </svg>
+@endif
+
+
 
                     <div class="min-w-0 flex-1">
 
@@ -1954,7 +1985,7 @@ RETURN POLICY
            
 
             <p class="mt-4 text-sm leading-relaxed text-gray-500">
-                Only orders placed and paid through Alibaba.com can enjoy free protection by
+                
             </p>
 @endcan
 

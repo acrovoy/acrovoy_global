@@ -20,7 +20,10 @@ class CompanyController extends Controller
     /**
      * INDEX
      */
-   public function index()
+   /**
+ * INDEX
+ */
+public function index()
 {
     $userId = auth()->id();
 
@@ -29,31 +32,63 @@ class CompanyController extends Controller
         ->where('role', 'owner')
         ->get(['company_type', 'company_id']);
 
-    $buyerIds = $relations->where('company_type', 'App\Models\Buyer')->pluck('company_id');
-    $supplierIds = $relations->where('company_type', 'App\Models\Supplier')->pluck('company_id');
-    $logisticsIds = $relations->where('company_type', 'App\Models\LogisticCompany')->pluck('company_id');
+    $modelMap = [
+        \App\Models\Buyer::class => [
+            'type' => 'buyer',
+            'model' => \App\Models\Buyer::class,
+        ],
+        \App\Models\Supplier::class => [
+            'type' => 'supplier',
+            'model' => \App\Models\Supplier::class,
+        ],
+        \App\Models\LogisticCompany::class => [
+            'type' => 'logistics',
+            'model' => \App\Models\LogisticCompany::class,
+        ],
+    ];
 
-    $buyers = DB::table('buyers')
-        ->whereIn('id', $buyerIds)
-        ->select('id','name','slug','status', DB::raw("'buyer' as type"), 'created_at');
+    $companies = collect();
 
-    $suppliers = DB::table('suppliers')
-        ->whereIn('id', $supplierIds)
-        ->select('id','name','slug','status', DB::raw("'supplier' as type"), 'created_at');
+    foreach ($modelMap as $companyType => $config) {
+        $ids = $relations
+            ->where('company_type', $companyType)
+            ->pluck('company_id');
 
-    $logistics = DB::table('logistic_companies')
-        ->whereIn('id', $logisticsIds)
-        ->select('id','name','slug','status', DB::raw("'logistics' as type"), 'created_at');
+        if ($ids->isEmpty()) {
+            continue;
+        }
 
-    $companies = $buyers->get()
-        ->merge($suppliers->get())
-        ->merge($logistics->get())
+        $items = $config['model']::query()
+    ->whereIn('id', $ids)
+    ->with('media')
+    ->get()
+    ->each(function ($company) use ($config) {
+        $company->type = $config['type'];
+    });
+
+        $companies = $companies->merge($items);
+    }
+
+    $companies = $companies
         ->sortByDesc('created_at')
         ->values();
 
-    // 👇 ВАЖНО: разделяем тут, не в blade
-    $activeCompanies = $companies->whereIn('status', ['active', 'pending']);
-    $inactiveCompanies = $companies->whereIn('status', ['blocked', 'deleted','inactive']);
+    $activeCompanies = $companies
+        ->whereIn('status', ['active', 'pending'])
+        ->values();
+
+    $inactiveCompanies = $companies
+        ->whereIn('status', ['blocked', 'deleted', 'inactive'])
+        ->values();
+
+        foreach ($companies as $company) {
+    logger()->debug('Company logo debug', [
+        'class' => get_class($company),
+        'id' => $company->id,
+        'logo_method_id' => $company->logo()?->id,
+        'logo_method_url' => $company->logo()?->cdn_url,
+    ]);
+}
 
     return view('dashboard.companies.index', compact(
         'activeCompanies',

@@ -45,6 +45,7 @@ class MenuService
             ['type' => 'header', 'label' => 'Shopping'],
             ['type' => 'link', 'label' => 'Cart', 'route' => 'buyer.cart.index'],
             ['type' => 'link', 'label' => 'Wishlist', 'route' => 'buyer.wishlist.index'],
+            ['type' => 'link', 'label' => 'Delivery Addresses', 'route' => 'buyer.addresses.index'],
 
             ['type' => 'header', 'label' => 'Communication'],
             ['type' => 'link', 'label' => 'Messages', 'route' => 'buyer.messenger.index'],
@@ -306,6 +307,7 @@ private static function buyerIndividual($m)
         ['type' => 'header', 'label' => 'Shopping'],
         ['type' => 'link', 'label' => 'Cart', 'route' => 'buyer.cart.index'],
         ['type' => 'link', 'label' => 'Wishlist', 'route' => 'buyer.wishlist.index'],
+        ['type' => 'link', 'label' => 'Delivery Addresses', 'route' => 'buyer.addresses.index'],
 
         ['type' => 'header', 'label' => 'Business Profile'],
             ['type' => 'link', 'label' => 'Business Profile', 'route' => 'buyer.profile.show'],

@@ -16,6 +16,14 @@
         $languages = \App\Models\Language::where('is_active', true)->orderBy('sort_order')->get();
         $selectedLocations = $shippingTemplate ? $shippingTemplate->locations->pluck('id')->toArray() : [];
 
+       $couriers = \App\Domain\Courier\Models\Courier::with('translations')
+    ->where('is_active', true)
+    ->orderBy('sort_order')
+    ->orderBy('id')
+    ->get();
+
+$selectedCourierId = old('courier_id', $shippingTemplate->courier_id ?? '');
+
         $units = [
             'per_item' => 'Per Item',
             'per_kg' => 'Per Kilogram',
@@ -38,6 +46,56 @@
             <h3 class="text-2xl font-bold text-gray-900">Basic Information</h3>
             <p class="text-sm text-gray-500 mt-1">Create a shipping template with pricing, delivery service and destination.</p>
         </div>
+
+
+        {{-- SHIPPING COURIER --}}
+<div class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+    <div class="mb-4">
+        <h4 class="font-semibold text-gray-900">Shipping Courier</h4>
+        <p class="mt-1 text-sm text-gray-500">
+            Select a courier to automatically fill the template title.
+        </p>
+    </div>
+
+    <div>
+        <label for="courier_id" class="block mb-1.5 text-sm font-medium text-gray-700">
+            Courier
+        </label>
+
+        <select
+            id="courier_id"
+            name="courier_id"
+            class="input w-full"
+            onchange="fillShippingTemplateTitles(this)"
+        >
+            <option value="">Select a courier (optional)</option>
+
+            @foreach($couriers as $courier)
+                @php
+                    $courierNames = $courier->translations
+                        ->pluck('name', 'locale')
+                        ->toArray();
+
+                    $courierName = $courierNames[app()->getLocale()]
+                        ?? $courierNames['en']
+                        ?? $courier->code;
+                @endphp
+
+                <option
+                    value="{{ $courier->id }}"
+                    data-names="{{ json_encode($courierNames, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP) }}"
+                    @selected((string) $selectedCourierId === (string) $courier->id)
+                >
+                    {{ $courierName }}
+                </option>
+            @endforeach
+        </select>
+
+        @error('courier_id')
+            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+    </div>
+</div>
 
         {{-- TRANSLATIONS --}}
         <div x-data="{ open: false }" class="bg-white border border-gray-200 rounded-xl p-5 mb-5">
@@ -343,4 +401,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+</script>
+
+<script>
+    function fillShippingTemplateTitles(select) {
+        const option = select.options[select.selectedIndex];
+
+        if (!option || !option.value) {
+            return;
+        }
+
+        let names = {};
+
+        try {
+            names = JSON.parse(option.dataset.names || '{}');
+        } catch (error) {
+            console.error('Unable to read courier translations.', error);
+            return;
+        }
+
+        document.querySelectorAll('input[name^="title["]').forEach((input) => {
+            const match = input.name.match(/^title\[([^\]]+)\]$/);
+
+            if (!match) {
+                return;
+            }
+
+            const locale = match[1];
+            const courierName = names[locale] || names.en;
+
+            if (courierName) {
+                input.value = courierName;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+    }
 </script>
