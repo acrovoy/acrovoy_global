@@ -41,6 +41,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\PublicCollectionController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\SavedSupplierController;
 
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
@@ -329,6 +330,21 @@ Route::prefix('buyer/wishlist')->name('buyer.wishlist.')->group(function () {
     Route::get('/', [WishlistController::class, 'index'])->name('index');
     Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('toggle');
     Route::get('/count', [WishlistController::class, 'count'])->name('count');
+
+    // Добавить товар в Wishlist
+    Route::post('/{product}', [WishlistController::class, 'store'])->name('store');
+    // Удалить товар из Wishlist
+    Route::delete('/{product}', [WishlistController::class, 'destroy'])->name('destroy');
+});
+
+Route::prefix('buyer/saved-suppliers')->name('buyer.saved-suppliers.')->group(function () {
+    Route::get('/', [SavedSupplierController::class, 'index'])->name('index');
+    Route::get('/count', [SavedSupplierController::class, 'count'])->name('count');
+
+    // Добавить поставщика в Saved Suppliers
+    Route::post('/{supplier}', [SavedSupplierController::class, 'store'])->name('store');
+    // Удалить поставщика из Saved Suppliers
+    Route::delete('/{supplier}', [SavedSupplierController::class, 'destroy'])->name('destroy');
 });
 
 Route::prefix('dashboard/buyer')->name('buyer.')->group(function () {
@@ -345,6 +361,9 @@ Route::prefix('dashboard/buyer')->name('buyer.')->group(function () {
             Route::put('/{address}', [UserAddressController::class, 'update'])->name('update');
             Route::patch('/{address}/set-default', [UserAddressController::class, 'setDefault'])->name('set-default');
             Route::delete('/{address}', [UserAddressController::class, 'destroy'])->name('destroy');
+            Route::get('/regions/{country}', [UserAddressController::class, 'getRegions'])->whereNumber('country')->name('regions');
+            Route::get('/cities/{country}/{region}', [UserAddressController::class, 'getCities'])->whereNumber('country')->whereNumber('region')->name('cities');
+
         });
 
         // =========================
