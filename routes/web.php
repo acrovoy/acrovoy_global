@@ -98,6 +98,9 @@ use App\Http\Controllers\Admin\Settings\ReturnPolicyController;
 use App\Http\Controllers\Admin\Settings\ReturnPolicyReasonController;
 use App\Http\Controllers\Admin\Settings\ReturnPolicyResolutionController;
 
+use App\Http\Controllers\Admin\SupplierLead\SupplierLeadController;
+use App\Http\Controllers\Admin\SupplierLead\SupplierLeadContactController;
+
 use App\Http\Controllers\Admin\Help\AdminHelpController;
 use App\Http\Controllers\Admin\AdminMessengerController;
 use App\Http\Controllers\Admin\ProductCollectionController;
@@ -743,6 +746,25 @@ Route::get('/faq', function () { return view('pages.faq'); })->name('faq');
 // ADMIN ROUTES /////////////////////////////////////////////////////////////
 Route::prefix('dashboard/admin')->name('admin.')->group(function () {
 
+
+    // Supplier Leads
+    Route::prefix('supplier-leads')->name('supplier-leads.')->group(function () {
+        Route::get('/', [SupplierLeadController::class, 'index'])->name('index');
+        Route::get('create', [SupplierLeadController::class, 'create'])->name('create');
+        Route::post('/', [SupplierLeadController::class, 'store'])->name('store');
+        Route::get('{supplierLead}/edit', [SupplierLeadController::class, 'edit'])->name('edit');
+        Route::put('{supplierLead}', [SupplierLeadController::class, 'update'])->name('update');
+        Route::delete('{supplierLead}', [SupplierLeadController::class, 'destroy'])->name('destroy');
+        Route::get('{supplierLead}', [SupplierLeadController::class, 'show'])->name('show');
+
+        
+        Route::get('{supplierLead}/contacts/create', [SupplierLeadContactController::class, 'create'])->name('contacts.create');
+        Route::post('{supplierLead}/contacts', [SupplierLeadContactController::class, 'store'])->name('contacts.store');
+        Route::get('{supplierLead}/contacts/{contact}/edit', [SupplierLeadContactController::class, 'edit'])->name('contacts.edit');
+        Route::put('{supplierLead}/contacts/{contact}', [SupplierLeadContactController::class, 'update'])->name('contacts.update');
+        Route::delete('{supplierLead}/contacts/{contact}', [SupplierLeadContactController::class, 'destroy'])->name('contacts.destroy');
+        Route::get('{supplierLead}/contacts/{contact}', [SupplierLeadContactController::class, 'show'])->name('contacts.show');
+        });
 
     // Couriers
     Route::prefix('couriers')->name('couriers.')->group(function () {

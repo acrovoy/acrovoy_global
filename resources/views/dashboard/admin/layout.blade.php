@@ -38,6 +38,24 @@
     </li>
 
 
+        {{-- SUPPLIER ACQUISITION --}}
+    <li>
+        <div class="px-3 text-xs uppercase tracking-wider text-gray-500">
+            Supplier Acquisition
+        </div>
+
+        <ul class="mt-2 ml-4 pl-4 border-l border-stone-200 space-y-1">
+            <li>
+                <a href="{{ route('admin.supplier-leads.index') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.supplier-leads.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Factories & Suppliers CRM
+                </a>
+            </li>
+        </ul>
+    </li>
+
+    
+
     {{-- CATALOG --}}
     <li>
 
