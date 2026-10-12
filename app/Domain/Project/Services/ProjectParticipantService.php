@@ -2,6 +2,7 @@
 
 namespace App\Domain\Project\Services;
 
+use App\Domain\Email\Services\EmailService;
 use App\Domain\Project\Models\Project;
 use App\Domain\Project\Models\ProjectParticipant;
 use App\Domain\Project\Enums\ProjectParticipantStatus;
@@ -11,6 +12,11 @@ use App\Models\Supplier;
 
 class ProjectParticipantService
 {
+    public function __construct(
+        private readonly EmailService $emailService,
+    ) {
+    }
+
     /**
      * Invite any participant (polymorphic)
      */
@@ -46,11 +52,10 @@ class ProjectParticipantService
      */
     public function inviteByEmail(Project $project, string $email): void
     {
-        \Mail::raw(
-            "You were invited to Project #{$project->id}",
-            fn ($mail) => $mail
-                ->to($email)
-                ->subject('Project Invitation')
+        $this->emailService->sendSystemEmail(
+            recipient: $email,
+            title: 'Project Invitation',
+            messageText: "You were invited to Project #{$project->id}",
         );
     }
 

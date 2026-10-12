@@ -2,6 +2,7 @@
 
 namespace App\Domain\RFQ\Services;
 
+use App\Domain\Email\Services\EmailService;
 use App\Domain\RFQ\Models\Rfq;
 use App\Domain\RFQ\Models\RfqParticipant;
 use App\Domain\RFQ\Enums\RfqParticipantStatus;
@@ -11,15 +12,16 @@ use App\Models\Supplier;
 
 class RfqParticipantService
 {
+    public function __construct(
+        private readonly EmailService $emailService,
+    ) {
+    }
+
     /**
      * CORE DOMAIN ACTION (POLYMORPHIC INVITE)
      */
     public function invite(Rfq $rfq, Model $participant): RfqParticipant
     {
-
-    
-
-
         return RfqParticipant::updateOrCreate(
             [
                 'rfq_id' => $rfq->id,
@@ -45,16 +47,15 @@ class RfqParticipantService
         }
     }
 
-    
-
     /**
      * EMAIL INVITE (EXTERNAL PARTICIPANT)
      */
     public function inviteByEmail(Rfq $rfq, string $email): void
     {
-        \Mail::raw(
-            "You were invited to RFQ #{$rfq->id}",
-            fn ($mail) => $mail->to($email)->subject('RFQ Invitation')
+        $this->emailService->sendSystemEmail(
+            recipient: $email,
+            title: 'RFQ Invitation',
+            messageText: "You were invited to RFQ #{$rfq->id}",
         );
     }
 

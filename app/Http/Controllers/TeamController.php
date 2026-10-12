@@ -14,9 +14,20 @@ use App\Services\Company\ActiveContextService;
 class TeamController extends Controller
 {
 
+public function __construct(
+        private ActiveContextService $context,
+             
+
+ 
+)
+{
+
+}
+
     public function index()
     {
-        $companyId = ActiveCompany::id();
+        $identity = $this->context->identity();
+        $companyId = $identity['entity_id'];
 
         $membersCount = CompanyUser::where('company_id', $companyId)->count();
 
