@@ -9,13 +9,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use App\Models\CompanyUser;
+use App\Models\CompanyInvite;
 
 class AuthenticatedSessionController extends Controller
 {
     public function create(): View
     {
-
-    
         return view('auth.login');
     }
 
@@ -32,11 +31,8 @@ class AuthenticatedSessionController extends Controller
         |--------------------------------------------------------------------------
         */
         if ($user->role === 'admin') {
-
-            // сохраняем последний выбранный режим
             $user->setSetting('platform_mode', 'admin');
 
-            // создаем активный контекст администратора
             session([
                 'active_mode' => 'admin',
                 'active_company_type' => null,
@@ -50,7 +46,54 @@ class AuthenticatedSessionController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | GLOBAL PERSONAL MODE (DEFAULT STATE)
+        | TEAM INVITATION
+        |--------------------------------------------------------------------------
+        | Если вход выполнен по приглашению, сначала продолжаем приглашение.
+        */
+        $inviteToken = $request->session()->get('company_invite_token');
+
+        if ($inviteToken) {
+            $invite = CompanyInvite::where('token', $inviteToken)->first();
+
+            if (
+                $invite &&
+                $invite->isPending() &&
+                strtolower($invite->email) === strtolower($user->email)
+            ) {
+                if (!$user->hasVerifiedEmail()) {
+                    return redirect()->route('verification.notice');
+                }
+
+                return redirect()->route('team.invitation.continue', [
+                    'token' => $invite->token,
+                ]);
+            }
+
+            // Не продолжаем приглашение для другого email
+            // или недействительного приглашения.
+            $request->session()->forget([
+                'company_invite_token',
+                'company_invite_url',
+            ]);
+
+            if ($invite && strtolower($invite->email) !== strtolower($user->email)) {
+                return redirect()->route('dashboard.home')
+                    ->with('error', 'This invitation was sent to a different email address.');
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | EMAIL VERIFICATION
+        |--------------------------------------------------------------------------
+        */
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | GLOBAL PERSONAL MODE
         |--------------------------------------------------------------------------
         */
         $personalMode = $user->setting('platform_mode', 'buyer');
@@ -63,11 +106,12 @@ class AuthenticatedSessionController extends Controller
         $lastCompanyUserId = $user->setting('last_company_user_id');
 
         if ($lastCompanyUserId) {
-
-            $membership = CompanyUser::find($lastCompanyUserId);
+            $membership = CompanyUser::where('id', $lastCompanyUserId)
+                ->where('user_id', $user->id)
+                ->where('status', 'active')
+                ->first();
 
             if ($membership) {
-
                 session([
                     'active_mode' => 'company',
                     'active_company_type' => $membership->company_type,
@@ -82,10 +126,12 @@ class AuthenticatedSessionController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | 2. LOAD MEMBERSHIPS
+        | 2. LOAD ACTIVE MEMBERSHIPS
         |--------------------------------------------------------------------------
         */
-        $memberships = CompanyUser::where('user_id', $user->id)->get();
+        $memberships = CompanyUser::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->get();
 
         /*
         |--------------------------------------------------------------------------
@@ -93,7 +139,6 @@ class AuthenticatedSessionController extends Controller
         |--------------------------------------------------------------------------
         */
         if ($memberships->isEmpty()) {
-
             session([
                 'active_mode' => 'personal',
                 'active_company_type' => null,
@@ -111,22 +156,21 @@ class AuthenticatedSessionController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | 4. SINGLE COMPANY → AUTO LOGIN
+        | 4. SINGLE COMPANY → AUTO SELECT
         |--------------------------------------------------------------------------
         */
         if ($memberships->count() === 1) {
-
-            $m = $memberships->first();
+            $membership = $memberships->first();
 
             session([
                 'active_mode' => 'company',
-                'active_company_type' => $m->company_type,
-                'active_company_id' => $m->company_id,
-                'active_company_role' => $m->role,
+                'active_company_type' => $membership->company_type,
+                'active_company_id' => $membership->company_id,
+                'active_company_role' => $membership->role,
                 'active_personal_mode' => $personalMode,
             ]);
 
-            $user->setSetting('last_company_user_id', $m->id);
+            $user->setSetting('last_company_user_id', $membership->id);
 
             return redirect()->route('dashboard.home');
         }

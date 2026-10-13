@@ -17,6 +17,11 @@ class CompanyInvite extends Model
         'invited_by',
     ];
 
+    protected $casts = [
+        'accepted_at' => 'datetime',
+        'expires_at' => 'datetime',
+    ];
+
     public function company()
     {
         return $this->morphTo(null, 'company_type', 'company_id');
@@ -29,11 +34,12 @@ class CompanyInvite extends Model
 
     public function isExpired(): bool
     {
-        return $this->expires_at && now()->gt($this->expires_at);
+        return $this->expires_at === null
+            || now()->greaterThanOrEqualTo($this->expires_at);
     }
 
     public function isPending(): bool
     {
-        return !$this->accepted_at && !$this->isExpired();
+        return $this->accepted_at === null && ! $this->isExpired();
     }
 }

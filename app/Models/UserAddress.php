@@ -20,25 +20,18 @@ class UserAddress extends Model
         'is_default',
     ];
 
-    public function user()
+    public function buyer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Buyer::class, 'user_id');
     }
 
     public function regionLocation()
-{
-    return $this->belongsTo(Location::class, 'region');
-}
+    {
+        return $this->belongsTo(Location::class, 'region');
+    }
 
-public function country()
-{
-    return $this->belongsTo(Country::class, 'country');
-}
-
-public function countryLocation()
-{
-    return $this->belongsTo(Country::class, 'country');
-}
-
-
+    public function countryLocation()
+    {
+        return $this->belongsTo(Location::class, 'country');
+    }
 }

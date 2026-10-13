@@ -172,7 +172,8 @@ Route::put('/dashboard/admin/settings/materials/groups/{group}', [MaterialsContr
 Route::delete('/dashboard/admin/settings/materials/groups/{group}', [MaterialsController::class, 'destroyGroup'])->name('admin.settings.material-groups.destroy');
 
 
-
+Route::get('/team/invitations/{token}', [TeamController::class, 'acceptInvitation'])->middleware('signed')->name('team.invitation.accept');
+Route::get('/team/invitations/{token}/continue', [TeamController::class, 'continueInvitation',])->middleware('auth')->name('team.invitation.continue');
 
 Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
 
@@ -494,6 +495,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
         Route::get('/invite', [TeamController::class, 'invite'])->name('invite');
         Route::post('/invite', [TeamController::class, 'sendInvite'])->name('invite.send');
         Route::get('/roles', [TeamController::class, 'roles'])->name('roles');
+        
     });
 
     Route::resource('shipping-templates', ShippingTemplateController::class)->except(['show']);

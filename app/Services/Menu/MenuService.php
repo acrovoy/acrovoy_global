@@ -192,6 +192,13 @@ class MenuService
             ['type' => 'header', 'label' => 'Team'],
             [
                 'type' => 'link',
+                'label' => 'Team Overview',
+                'route' => 'supplier.team.index',
+                'can' => ['viewAny', User::class],
+            ],
+
+            [
+                'type' => 'link',
                 'label' => 'Team Members',
                 'route' => 'supplier.team.members',
                 'can' => ['viewAny', User::class],

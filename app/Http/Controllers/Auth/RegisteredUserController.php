@@ -90,7 +90,7 @@ public function __construct(
             'show_in_profile' => true,
         ]);
 
-        event(new Registered($user));
+        
 
         return $user;
     });
@@ -100,7 +100,7 @@ public function __construct(
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        return redirect()->route('verification.notice');
     }
 
 

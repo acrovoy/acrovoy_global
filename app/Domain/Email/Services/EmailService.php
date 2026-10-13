@@ -2,8 +2,7 @@
 
 namespace App\Domain\Email\Services;
 
-use App\Domain\Email\Mailables\SystemEmail;
-use Illuminate\Support\Facades\Mail;
+use App\Domain\Email\Jobs\SendEmailJob;
 use InvalidArgumentException;
 
 class EmailService
@@ -21,13 +20,12 @@ class EmailService
             );
         }
 
-        Mail::to($recipient)->send(
-            new SystemEmail(
-                title: $title,
-                messageText: $messageText,
-                actionUrl: $actionUrl,
-                actionLabel: $actionLabel,
-            )
+        SendEmailJob::dispatch(
+            recipient: $recipient,
+            title: $title,
+            messageText: $messageText,
+            actionUrl: $actionUrl,
+            actionLabel: $actionLabel,
         );
     }
 }

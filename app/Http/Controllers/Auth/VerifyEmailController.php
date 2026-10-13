@@ -10,19 +10,29 @@ use Illuminate\Http\RedirectResponse;
 
 class VerifyEmailController extends Controller
 {
-    /**
-     * Mark the authenticated user's email address as verified.
-     */
-    public function __invoke(EmailVerificationRequest $request): RedirectResponse
-    {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(RouteServiceProvider::HOME.'?verified=1');
+    public function __invoke(
+        EmailVerificationRequest $request
+    ): RedirectResponse {
+        $user = $request->user();
+
+        if (!$user->hasVerifiedEmail()) {
+            if ($user->markEmailAsVerified()) {
+                event(new Verified($user));
+            }
         }
 
-        if ($request->user()->markEmailAsVerified()) {
-            event(new Verified($request->user()));
-        }
+        // Если пользователь пришёл по приглашению в команду,
+        // возвращаем его к исходной подписанной ссылке.
+        $inviteToken = $request->session()->get('company_invite_token');
 
-        return redirect()->intended(RouteServiceProvider::HOME.'?verified=1');
+if ($inviteToken) {
+    return redirect()->route('team.invitation.continue', [
+        'token' => $inviteToken,
+    ]);
+}
+
+        return redirect()->intended(
+            RouteServiceProvider::HOME . '?verified=1'
+        );
     }
 }
