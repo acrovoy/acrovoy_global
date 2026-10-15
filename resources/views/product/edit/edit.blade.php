@@ -541,6 +541,28 @@ function deleteAttributeFromDrawer(productId, attributeId, button) {
      }
  </script>
 
+<script>
+
+function detachAttributeFromProduct(attributeId) {
+    const checkbox = document.querySelector(
+        `#attribute-picker-drawer input[name="attributes[]"][value="${attributeId}"]`
+    );
+
+    if (!checkbox) {
+        alert('Attribute checkbox not found.');
+        return;
+    }
+
+    checkbox.checked = false;
+
+    const form = checkbox.closest('form');
+
+    if (form) {
+        form.requestSubmit();
+    }
+}
+
+</script>
 
 <style>
 

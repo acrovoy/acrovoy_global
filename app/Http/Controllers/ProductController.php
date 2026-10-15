@@ -31,6 +31,7 @@ use App\Domain\Product\Actions\UpdateProductMoqPriceAction;
 use App\Domain\Product\Actions\UpdateProductCountryShippingAction;
 use App\Domain\Product\Actions\UpdateProductVariantAction;
 use App\Domain\Product\Actions\AttachProductVariantAction;
+use App\Domain\Product\Actions\CreateProductEditingCopyAction;
 
 /* === MODELS === */
 use App\Models\Product;
@@ -660,158 +661,23 @@ class ProductController extends Controller
                 ]);
 
 
-        } elseif ($step == 8) {
+       } elseif ($step == 8) {
 
+    $response = $this->saveFinishStep(
+        $request,
+        $product,
+        $updateCountryShippingaction,
+        $dtoFactory
+    );
 
-            // 🔹 Сохраняем/обновляем Shipping Dimensions (габариты и вес упаковки)
-            $shippingData = $request->input('shipping', []);
-
-            if (!empty($shippingData)) {
-                $product->shippingDimensions()->updateOrCreate(
-                    [
-                        'dimensionable_type' => Product::class,
-                        'dimensionable_id'   => $product->id,
-                    ], // Laravel автоматически подставит product_id
-                    [
-                        'length'       => $shippingData['length'] ?? 0,
-                        'width'        => $shippingData['width'] ?? 0,
-                        'height'       => $shippingData['height'] ?? 0,
-                        'weight'       => $shippingData['weight'] ?? 0,
-                        'package_type' => $shippingData['package_type'] ?? 'box',
-                    ]
-                );
-            }
-            $dto = $dtoFactory->fromUpdateCountryRequest($request);
-
-            $updateCountryShippingaction->execute(
-                product: $product,
-                data: $dto,
-                shippingTemplates: $request->shipping_templates ?? [],
-
-            );
-
-            $product->paymentMethods()->sync(
-    $request->input('payment_methods', [])
-);
-
-$product->paymentTerms()->sync(
-    $request->input('payment_terms', [])
-);
-
-
-
-
-/*
-|--------------------------------------------------------------------------
-| RETURNS & REFUNDS
-|--------------------------------------------------------------------------
-|
-| The supplier can either:
-|
-| 1. Use supplier default
-| 2. Select a platform return policy specifically for this product
-|
-| When "Use supplier default" is selected,
-| return_policy_id is stored as NULL.
-|
-*/
-
-$useSupplierDefault = $request->boolean('use_supplier_default');
-
-$returnPolicyId = null;
-
-
-/*
-|--------------------------------------------------------------------------
-| SELECT PLATFORM RETURN POLICY
-|--------------------------------------------------------------------------
-*/
-
-if (!$useSupplierDefault) {
-
-    $returnPolicyId = $request->input('return_policy_id');
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | VALIDATE SELECTED POLICY
-    |--------------------------------------------------------------------------
-    |
-    | Only active platform policies can be assigned to products here.
-    |
-    | Supplier-owned policies are not available in the product editor.
-    |
-    */
-
-    
-if ($returnPolicyId) {
-
-    $returnPolicyExists = ReturnPolicy::query()
-        ->where('id', $returnPolicyId)
-        ->where('is_active', true)
-        ->exists();
-
-    if (!$returnPolicyExists) {
-
-        return redirect()
-            ->back()
-            ->withErrors([
-                'return_policy_id' => 'Please select a valid return policy.',
-            ])
-            ->withInput();
+    if ($response) {
+        return $response;
     }
+
+    return redirect()
+    ->route('supplier.products.index')
+    ->with('success', 'Product details saved successfully.');
 }
-
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| SAVE PRODUCT RETURN POLICY
-|--------------------------------------------------------------------------
-|
-| One return policy configuration is stored per product.
-|
-| Product-specific overrides are not used yet.
-| The selected platform policy controls the return behavior.
-|
-*/
-
-ProductReturnPolicy::updateOrCreate(
-    [
-        'product_id' => $product->id,
-    ],
-    [
-        'return_policy_id' => $returnPolicyId,
-        'use_supplier_default' => $useSupplierDefault,
-
-        /*
-        |--------------------------------------------------------------------------
-        | PRODUCT-SPECIFIC OVERRIDES
-        |--------------------------------------------------------------------------
-        |
-        | These fields remain NULL for now.
-        | They can be introduced later if product-level customization
-        | of the selected return policy is required.
-        |
-        */
-
-        'returnable' => null,
-        'return_window_days' => null,
-        'return_shipping_payer' => null,
-        'restocking_fee_enabled' => null,
-        'restocking_fee_percent' => null,
-        'custom_products_returnable' => null,
-        'additional_information' => null,
-    ]
-);
-
-
-
-
-
-        }
 
         return redirect()
             ->route('supplier.products.edit-step', [
@@ -820,6 +686,127 @@ ProductReturnPolicy::updateOrCreate(
             ]);
     }
 
+    public function saveFinishStep(
+    Request $request,
+    Product $product,
+    UpdateProductCountryShippingAction $updateCountryShippingAction,
+    ProductDTOFactory $dtoFactory
+) {
+    $this->authorize('update', $product);
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHIPPING DIMENSIONS
+    |--------------------------------------------------------------------------
+    */
+
+    $shippingData = $request->input('shipping', []);
+
+    if (!empty($shippingData)) {
+        $product->shippingDimensions()->updateOrCreate(
+            [
+                'dimensionable_type' => Product::class,
+                'dimensionable_id' => $product->id,
+            ],
+            [
+                'length' => $shippingData['length'] ?? 0,
+                'width' => $shippingData['width'] ?? 0,
+                'height' => $shippingData['height'] ?? 0,
+                'weight' => $shippingData['weight'] ?? 0,
+                'package_type' => $shippingData['package_type'] ?? 'box',
+            ]
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | COUNTRY AND SHIPPING TEMPLATES
+    |--------------------------------------------------------------------------
+    */
+
+    $dto = $dtoFactory->fromUpdateCountryRequest($request);
+
+    $updateCountryShippingAction->execute(
+        product: $product,
+        data: $dto,
+        shippingTemplates: $request->input('shipping_templates', [])
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT METHODS
+    |--------------------------------------------------------------------------
+    */
+
+    $product->paymentMethods()->sync(
+        $request->input('payment_methods', [])
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | PAYMENT TERMS
+    |--------------------------------------------------------------------------
+    */
+
+    $product->paymentTerms()->sync(
+        $request->input('payment_terms', [])
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | RETURNS AND REFUNDS
+    |--------------------------------------------------------------------------
+    */
+
+    $useSupplierDefault = $request->boolean('use_supplier_default');
+
+    $returnPolicyId = null;
+
+    if (!$useSupplierDefault) {
+        $returnPolicyId = $request->input('return_policy_id');
+
+        if ($returnPolicyId) {
+            $returnPolicyExists = ReturnPolicy::query()
+                ->where('id', $returnPolicyId)
+                ->where('is_active', true)
+                ->exists();
+
+            if (!$returnPolicyExists) {
+                return redirect()
+                    ->back()
+                    ->withErrors([
+                        'return_policy_id' => 'Please select a valid return policy.',
+                    ])
+                    ->withInput();
+            }
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE PRODUCT RETURN POLICY
+    |--------------------------------------------------------------------------
+    */
+
+    ProductReturnPolicy::updateOrCreate(
+        [
+            'product_id' => $product->id,
+        ],
+        [
+            'return_policy_id' => $returnPolicyId,
+            'use_supplier_default' => $useSupplierDefault,
+            'returnable' => null,
+            'return_window_days' => null,
+            'return_shipping_payer' => null,
+            'restocking_fee_enabled' => null,
+            'restocking_fee_percent' => null,
+            'custom_products_returnable' => null,
+            'additional_information' => null,
+        ]
+    );
+
+    return null;
+}
 
     public function updateStock(Request $request, Product $product)
     {
@@ -1064,4 +1051,81 @@ ProductReturnPolicy::updateOrCreate(
             'success' => true,
         ]);
     }
+
+    public function publish(
+    Request $request,
+    Product $product,
+    UpdateProductCountryShippingAction $updateCountryShippingAction,
+    ProductDTOFactory $dtoFactory
+) {
+    $this->authorize('update', $product);
+
+    $response = $this->saveFinishStep(
+        $request,
+        $product,
+        $updateCountryShippingAction,
+        $dtoFactory
+    );
+
+    if ($response) {
+        return $response;
+    }
+
+    $product->update([
+        'status' => 'pending',
+        'reject_reason' => null,
+    ]);
+
+    return redirect()
+    ->route('supplier.products.index')
+    ->with('success', 'Product submitted for moderation.');
+}
+
+public function saveDraft(
+    Request $request,
+    Product $product,
+    UpdateProductCountryShippingAction $updateCountryShippingAction,
+    ProductDTOFactory $dtoFactory
+) {
+    $this->authorize('update', $product);
+
+    $response = $this->saveFinishStep(
+        $request,
+        $product,
+        $updateCountryShippingAction,
+        $dtoFactory
+    );
+
+    if ($response) {
+        return $response;
+    }
+
+    return redirect()
+        ->route('supplier.products.edit-step', [$product->id, 8])
+        ->with('success', 'Product saved successfully.');
+}
+
+
+public function editApproved(
+    Product $product,
+    CreateProductEditingCopyAction $createEditingCopyAction
+) {
+    $this->authorize('update', $product);
+
+    if ($product->status !== 'approved') {
+        return redirect()->route(
+            'supplier.products.edit-step',
+            [$product->id, 1]
+        );
+    }
+
+    $copy = $createEditingCopyAction->execute($product);
+
+    return redirect()->route(
+        'supplier.products.edit-step',
+        [$copy->id, 1]
+    );
+
+
+}
 }

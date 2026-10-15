@@ -26,4 +26,6 @@ interface StorageInterface
         string $path,
         bool $private = false
     ): string;
+
+    public function copy(string $from, string $to, bool $private = false): bool;
 }

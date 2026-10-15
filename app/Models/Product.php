@@ -44,6 +44,7 @@ class Product extends Model
         'origin_contact_name',
         'origin_contact_phone',
         'variant_group_id',
+        'original_product_id',
     ];
 
 
@@ -424,6 +425,16 @@ public function returnPolicy()
         \App\Domain\Returns\Models\ProductReturnPolicy::class, 'product_id' 
     ); 
     
+}
+
+public function originalProduct()
+{
+    return $this->belongsTo(self::class, 'original_product_id');
+}
+
+public function editingCopy()
+{
+    return $this->hasOne(self::class, 'original_product_id');
 }
 
 }

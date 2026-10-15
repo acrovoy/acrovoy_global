@@ -109,31 +109,54 @@
                                     >
 
                                         {{-- TOP --}}
-                                        <div class="flex items-start justify-between gap-3 mb-3">
+<div class="flex items-start justify-between gap-3 mb-3">
 
-                                            <div class="min-w-0">
+    <div class="min-w-0">
 
-                                                <label class="block text-sm font-semibold text-gray-900 truncate">
+        <label class="block text-sm font-semibold text-gray-900 truncate">
+            {{ $attribute->name ?? $attribute->code }}
+        </label>
 
-                                                    {{ $attribute->name ?? $attribute->code }}
+        <div class="flex items-center gap-2 mt-1">
 
-                                                </label>
+            @if($attribute->is_required)
+                <span class="text-[10px] text-red-500">
+                    Required
+                </span>
+            @endif
 
-                                                <div class="flex items-center gap-2 mt-1">
+        </div>
 
-                                                   
+    </div>
 
-                                                    @if($attribute->is_required)
-                                                        <span class="text-[10px] text-red-500">
-                                                            Required
-                                                        </span>
-                                                    @endif
+    @if($attribute->is_custom)
+        <button
+            type="button"
+            onclick="detachAttributeFromProduct({{ $attribute->id }})"
+            title="Detach attribute from this product"
+            aria-label="Detach attribute from this product"
+            class="shrink-0 flex items-center justify-center
+                   w-7 h-7 rounded-lg
+                   text-gray-400 hover:text-red-600
+                   hover:bg-red-50 transition"
+        >
+            <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                />
+            </svg>
+        </button>
+    @endif
 
-                                                </div>
-
-                                            </div>
-
-                                        </div>
+</div>
 
                                         {{-- FIELD --}}
                                         <div>

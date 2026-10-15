@@ -310,16 +310,14 @@ Route::get('/locations/search', [LocationController::class, 'search']);
 Route::post('/warehouses/attach-location', [WarehouseController::class, 'attachLocation'])->name('supplier.warehouses.attach-location');
 
 Route::post('/products/{product}/attach-attributes', [ProductController::class, 'attachAttributes'])->name('products.attach-attributes');
-Route::delete(
-    'products/{product}/attributes/{attribute}',
-    [ProductController::class, 'deleteAttribute']
-)->name('products.delete-attribute');
+Route::delete('products/{product}/attributes/{attribute}', [ProductController::class, 'deleteAttribute'])->name('products.delete-attribute');
 
 Route::post('/rfq/{rfq}/custom-attribute', [RfqRequirementController::class, 'storeCustomAttribute'])->name('rfqs.custom-attributes.store');
 Route::post('/rfqs/{rfq}/custom-attributes/attach', [RfqRequirementController::class, 'attach'])->name('rfqs.custom-attributes.attach');
 Route::delete('/rfqs/{rfq}/custom-attributes/{attribute}', [RfqRequirementController::class, 'dettach'])->name('rfqs.custom-attributes.dettach');
 Route::post('/rfqs/{rfq}/custom-attributes/bulk-archive', [RfqRequirementController::class, 'bulkArchive'])->name('rfqs.custom-attributes.bulk-archive');
 Route::post('/custom-attributes', [ProductController::class, 'storeCustomAttribute'])->name('custom-attributes.store');
+
 Route::post('/dashboard/supplier/rfqs/{rfq}/offer/create-revision', [RfqOfferController::class, 'createRevision'])->name('supplier.rfq.offer.create-revision');
 
 Route::prefix('buyer/cart')->name('buyer.cart.')->group(function () {
@@ -565,7 +563,10 @@ Route::middleware('auth')->prefix('dashboard/supplier')->name('supplier.')->grou
     Route::post('/products-step1', [ProductController::class, 'store'])->name('products.store');
     Route::get('/products/{product}/edit-step/{step}', [ProductController::class, 'edit'])->name('products.edit-step');
     Route::put('/products/{product}/update-step1/{step}', [ProductController::class, 'update'])->name('products.update');
-    
+    Route::post('/products/{product}/publish', [ProductController::class, 'publish'])->name('products.publish');
+    Route::post('/products/{product}/save-draft', [ProductController::class, 'saveDraft'])->name('products.save-draft');
+    Route::get('/products/{product}/edit-approved', [ProductController::class, 'editApproved'])->name('products.edit-approved');
+
     Route::get('/orders', [ManufacturerOrderController::class, 'index'])->name('orders');
     Route::get('/orders/{id}', [ManufacturerOrderController::class, 'show'])->name('orders.show');
     Route::get('/analytics', function () {

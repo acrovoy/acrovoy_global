@@ -57,4 +57,18 @@ if (!Storage::disk($disk)->exists($directory)) {
     return Storage::disk('public')->deleteDirectory($path);
 }
 
+
+public function copy(string $from, string $to, bool $private = false): bool
+{
+    $disk = $private ? 'private' : 'public';
+
+    $directory = dirname($to);
+
+    if (!Storage::disk($disk)->exists($directory)) {
+        Storage::disk($disk)->makeDirectory($directory);
+    }
+
+    return Storage::disk($disk)->copy($from, $to);
+}
+
 }
