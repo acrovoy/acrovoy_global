@@ -7,6 +7,39 @@
     <x-alerts />
 
 
+    @if (!empty($isDraftPreview) && $isDraftPreview)
+        <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4">
+            <div class="flex items-start gap-3">
+                <svg
+                    class="mt-0.5 h-5 w-5 shrink-0 text-amber-700"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v3m0 4h.01M10.3 3.9 2.8 17.1A2 2 0 0 0 4.5 20h15a2 2 0 0 0 1.7-2.9L13.7 3.9a2 2 0 0 0-3.4 0Z"
+                    />
+                </svg>
+
+                <div>
+                    <p class="font-semibold text-amber-900">
+                        Предпросмотр черновика
+                    </p>
+
+                    <p class="mt-1 text-sm text-amber-800">
+                        Это сохранённая неопубликованная версия товара.
+                        Покупатели не видят этот черновик. Опубликованная версия
+                        товара остаётся доступной до одобрения изменений.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
         @include('product.partials.breadcrumb', ['product1' => $product1, 'projects' => $projects])
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">

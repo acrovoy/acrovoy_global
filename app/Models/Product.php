@@ -437,4 +437,12 @@ public function editingCopy()
     return $this->hasOne(self::class, 'original_product_id');
 }
 
+public function creator()
+{
+    return $this->belongsTo(
+        \App\Models\User::class,
+        'created_by'
+    );
+}
+
 }

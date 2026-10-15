@@ -2,14 +2,32 @@
 
 @section('dashboard-content')
 
+<div class="flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-semibold text-gray-900">Edit Product</h2>
+        <p class="text-sm text-gray-500 mb-4">
+            Manage all your products, edit details, prices, and inventory.
+        </p>
+    </div>
 
-<div>
-    <h2 class="text-2xl font-semibold text-gray-900">Edit Product</h2>
-    <p class="text-sm text-gray-500 mb-4">
-        Manage all your products, edit details, prices, and inventory.
-    </p>
+    <div class="flex items-center gap-3">
+
+    
+                @if ($editingCopy)
+                    <a
+                        href="{{ route('supplier.products.draft-preview', ['product' => $editingCopy->id]) }}"
+                        target="_blank"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium
+                            text-gray-700 bg-white border border-gray-200 rounded-lg
+                            hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
+                            transition-all duration-150 shadow-sm"
+                    >
+                        <span>Просмотреть черновик</span>
+                    </a>
+                @endif
+    </div>
+
 </div>
-
 <x-alerts />
 
 <div class="bg-gray-50 border border-gray-200 rounded-xl shadow-sm">

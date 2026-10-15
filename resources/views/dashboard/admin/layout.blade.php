@@ -68,7 +68,14 @@
             <li>
                 <a href="{{ route('admin.products.index') }}"
                    class="block py-1.5 text-sm {{ request()->routeIs('admin.products.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
-                    Products
+                    Products Await Checking
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('admin.products.management') }}"
+                   class="block py-1.5 text-sm {{ request()->routeIs('admin.products.*') ? 'font-semibold text-stone-900' : 'text-stone-600 hover:text-stone-900 hover:font-medium' }}">
+                    Products Management
                 </a>
             </li>
 

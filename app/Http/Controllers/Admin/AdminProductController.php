@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Domain\Product\Actions\ApplyProductEditingCopyAction;
+use App\Domain\Product\Actions\DeleteProductEditingCopyAction;
 use Illuminate\Validation\ValidationException;
+use App\Domain\Product\Actions\DeleteProductAction;
+
 
 class AdminProductController extends Controller
 {
@@ -63,42 +66,45 @@ class AdminProductController extends Controller
     }
 
     public function approve(
-        Product $product,
-        ApplyProductEditingCopyAction $applyEditingCopyAction
-    ) {
-        try {
-            if ($product->original_product_id !== null) {
-                $original = $applyEditingCopyAction->execute($product);
+    Product $product,
+    ApplyProductEditingCopyAction $applyEditingCopyAction,
+    DeleteProductEditingCopyAction $deleteEditingCopyAction
+) {
+    try {
+        if ($product->original_product_id !== null) {
+            $original = $applyEditingCopyAction->execute($product);
 
-                return redirect()
-                    ->route('admin.products.index')
-                    ->with(
-                        'success',
-                        "Changes to product #{$original->id} approved successfully."
-                    );
-            }
-
-            if ($product->status !== 'pending') {
-                return redirect()
-                    ->route('admin.products.index')
-                    ->with('error', 'Only pending products can be approved.');
-            }
-
-            $product->update([
-                'status' => 'approved',
-                'reject_reason' => null,
-            ]);
+            $deleteEditingCopyAction->execute($product);
 
             return redirect()
                 ->route('admin.products.index')
                 ->with(
                     'success',
-                    "Product #{$product->id} approved successfully."
+                    "Changes to product #{$original->id} approved successfully."
                 );
-        } catch (ValidationException $e) {
-            throw $e;
         }
+
+        if ($product->status !== 'pending') {
+            return redirect()
+                ->route('admin.products.index')
+                ->with('error', 'Only pending products can be approved.');
+        }
+
+        $product->update([
+            'status' => 'approved',
+            'reject_reason' => null,
+        ]);
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with(
+                'success',
+                "Product #{$product->id} approved successfully."
+            );
+    } catch (ValidationException $e) {
+        throw $e;
     }
+}
 
     public function reject(Request $request, Product $product)
     {
@@ -113,4 +119,62 @@ class AdminProductController extends Controller
 
         return back()->with('error', 'Product rejected with reason.');
     }
+
+
+    public function destroy(
+    Product $product,
+    DeleteProductAction $deleteProductAction
+) {
+    try {
+        $productId = $product->id;
+
+        $deleteProductAction->execute($product);
+
+        return redirect()
+            ->route('admin.products.management')
+            ->with(
+                'success',
+                "Product #{$productId} deleted successfully."
+            );
+    } catch (ValidationException $e) {
+        throw $e;
+    }
+}
+
+public function managementIndex()
+{
+    $sort = request('sort', '');
+    $status = request('status', '');
+    $userFilter = request('user', '');
+
+    $products = Product::query()
+        ->with(['supplier.user', 'images'])
+        ->whereNull('original_product_id')
+        ->when(
+            in_array($status, ['pending', 'approved', 'rejected'], true),
+            fn ($query) => $query->where('status', $status)
+        )
+        ->when(
+            $userFilter !== '',
+            fn ($query) => $query->whereHas('supplier.user', function ($query) use ($userFilter) {
+                $query->where('name', 'like', "%{$userFilter}%")
+                    ->orWhere('last_name', 'like', "%{$userFilter}%");
+            })
+        )
+        ->when(
+            $sort === 'oldest',
+            fn ($query) => $query->orderBy('created_at'),
+            fn ($query) => $query->orderByDesc('created_at')
+        )
+        ->paginate(20)
+        ->withQueryString();
+
+    return view('dashboard.admin.products.management', compact(
+        'products',
+        'sort',
+        'status',
+        'userFilter'
+    ));
+}
+
 }

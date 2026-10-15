@@ -1,9 +1,17 @@
 <div>
 
     @php
-    $parent = $variants->firstWhere('product_id', $product->id);
-    $children = $variants->where('product_id','!=',$product->id);
-    @endphp
+    $originalProductId = $product->original_product_id ?? $product->id;
+
+    $parent = $variants->firstWhere('product_id', $originalProductId);
+
+    $children = $variants
+        ->where('product_id', '!=', $originalProductId)
+        ->values();
+@endphp
+
+<input type="hidden" name="variants_present" value="1">
+
 
     {{-- 🔹 Parent Product Preview Editor --}}
     <div id="parent-product-block"
@@ -16,7 +24,7 @@
                 <input type="hidden" name="variants[0][id]" value="{{ $parent->id }}">
             @endif
 
-            
+            <input type="hidden" name="variants[0][is_primary]" value="1">
 
             <input type="text"
                 name="variants[0][title]"
@@ -25,8 +33,8 @@
                 placeholder="Example: White Fabric">
 
             <input type="hidden"
-                name="variants[0][linked_product_id]"
-                value="{{ $product->id }}">
+    name="variants[0][linked_product_id]"
+    value="{{ $originalProductId }}">
 
         </div>
 
@@ -137,16 +145,25 @@
             </div>
 
             <div>
-                <label class="text-sm font-medium">Variant Image</label>
-                <label class="w-24 h-24 flex items-center justify-center border rounded cursor-pointer bg-gray-100 hover:bg-gray-200 transition relative overflow-hidden text-center">
-                    <span class="text-gray-500 text-sm leading-tight variant-upload-text absolute" style="{{ $v->image ? 'display:none;' : '' }}">
-                        Click<br>to upload
-                    </span>
-                    <img class="variant-image-preview w-full h-full object-cover rounded {{ $v->image ? '' : 'hidden' }}" src="{{ $v->image_url ?? '' }}">
-                    <input type="file" name="variants[{{ $loop->index+1 }}][image]" class="variant-image opacity-0 absolute inset-0 cursor-pointer" accept="image/*">
-                </label>
-                <img class="variant-image-preview w-24 h-24 object-cover rounded border bg-gray-100 mt-2 transition-transform duration-150 hover:scale-105 {{ $v->image ? '' : 'hidden' }}" src="{{ $v->image_url ?? '' }}">
-            </div>
+    <label class="text-sm font-medium">Variant Image</label>
+    <label class="w-24 h-24 flex items-center justify-center border rounded cursor-pointer bg-gray-100 hover:bg-gray-200 transition relative overflow-hidden text-center">
+        <span
+            class="text-gray-500 text-sm leading-tight variant-upload-text absolute"
+            style="{{ $v->media_id ? 'display:none;' : '' }}">
+            Click<br>to upload
+        </span>
+
+        <img
+            class="variant-image-preview w-full h-full object-cover rounded {{ $v->media_id ? '' : 'hidden' }}"
+            src="{{ $v->image_url ?? '' }}">
+
+        <input
+            type="file"
+            name="variants[{{ $loop->index+1 }}][image]"
+            class="variant-image opacity-0 absolute inset-0 cursor-pointer"
+            accept="image/*">
+    </label>
+</div>
 
         </div>
         @endforeach
@@ -240,275 +257,269 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('variant-container');
+    const addBtn = document.getElementById('addVariantBtn');
+    const template = document.getElementById('variant-row-template');
+    const parentBlock = document.getElementById('parent-product-block');
 
-        const container = document.getElementById('variant-container');
-        const addBtn = document.getElementById('addVariantBtn');
+    if (!container || !addBtn || !template || !parentBlock) {
+        return;
+    }
 
-        let variantIndex = 0;
+    let variantIndex = 0;
 
-        /* INIT existing rows */
+    /*
+    |--------------------------------------------------------------------------
+    | Parent image preview
+    |--------------------------------------------------------------------------
+    */
 
-        const existingRows = container.querySelectorAll('.variant-row');
+    const parentInput = document.querySelector('.parent-image-input');
+    const parentPreview = document.querySelector('.parent-image-preview');
+    const parentUploadText = document.querySelector('.parent-upload-text');
 
-        if (existingRows.length) {
+    if (parentInput) {
+        parentInput.addEventListener('change', function () {
+            const file = this.files?.[0];
 
-            existingRows.forEach((row, index) => {
+            if (file) {
+                parentPreview.src = URL.createObjectURL(file);
+                parentPreview.classList.remove('hidden');
+                parentUploadText?.classList.add('hidden');
+            } else {
+                parentPreview?.classList.add('hidden');
+                parentUploadText?.classList.remove('hidden');
+            }
+        });
+    }
 
-                attachRowEvents(row, index);
+    /*
+    |--------------------------------------------------------------------------
+    | Initialize existing rows
+    |--------------------------------------------------------------------------
+    */
 
-                const preview = row.querySelector('.variant-image-preview');
-                const uploadText = row.querySelector('.variant-upload-text');
+    const existingRows = container.querySelectorAll('.variant-row');
 
-                if (preview && preview.src) {
+    existingRows.forEach((row, index) => {
+        attachRowEvents(row, index);
+    });
+
+    variantIndex = existingRows.length;
+
+    if (existingRows.length > 0) {
+        parentBlock.classList.remove('hidden');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attach events to one row
+    |--------------------------------------------------------------------------
+    */
+
+    function attachRowEvents(row, index) {
+        const titleInput = row.querySelector('.variant-title');
+        const productInput = row.querySelector('.variant-product-select');
+        const imageInput = row.querySelector('.variant-image');
+        const idInput = row.querySelector('.variant-id');
+
+        if (titleInput) {
+            titleInput.name = `variants[${index + 1}][title]`;
+        }
+
+        if (productInput) {
+            productInput.name = `variants[${index + 1}][linked_product_id]`;
+        }
+
+        if (imageInput) {
+            imageInput.name = `variants[${index + 1}][image]`;
+        }
+
+        if (idInput) {
+            idInput.name = `variants[${index + 1}][id]`;
+        }
+
+        const label = imageInput?.closest('label');
+        const preview = label?.querySelector('.variant-image-preview');
+        const uploadText = label?.querySelector('.variant-upload-text');
+
+        if (imageInput && !imageInput.dataset.previewBound) {
+            imageInput.dataset.previewBound = '1';
+
+            imageInput.addEventListener('change', function () {
+                const file = this.files?.[0];
+
+                if (file && preview) {
+                    preview.src = URL.createObjectURL(file);
                     preview.classList.remove('hidden');
                     uploadText?.classList.add('hidden');
+                } else {
+                    preview?.classList.add('hidden');
+                    uploadText?.classList.remove('hidden');
                 }
-
-                initProductSelector(row);
-
             });
-
-            variantIndex = existingRows.length;
-
-            document
-                .getElementById('parent-product-block')
-                .classList.remove('hidden');
-
         }
 
-        /* remove variant */
+        initProductSelector(row);
+    }
 
-        container.addEventListener('click', function(e) {
+    /*
+    |--------------------------------------------------------------------------
+    | Product selector
+    |--------------------------------------------------------------------------
+    */
 
-            const btn = e.target.closest('.remove-variant');
+    function initProductSelector(row) {
+        const selector = row.querySelector('.variant-product-selector');
 
-            if (btn) {
+        if (!selector || selector.dataset.initialized === '1') {
+            return;
+        }
 
-                const row = btn.closest('.variant-row');
-                row.remove();
+        selector.dataset.initialized = '1';
 
-                reindexRows();
+        const trigger = selector.querySelector('.product-selector-trigger');
+        const dropdown = selector.querySelector('.product-selector-dropdown');
+        const options = selector.querySelectorAll('.product-option');
+        const hiddenInput = selector.querySelector('.variant-product-select');
+        const searchInput = selector.querySelector('.product-search');
 
-                const parentBlock =
-                    document.getElementById('parent-product-block');
+        function selectOption(option) {
+            const id = option.dataset.id;
+            const name = option.dataset.name;
+            const image = option.dataset.image;
 
-                if (container.querySelectorAll('.variant-row').length === 0) {
-                    parentBlock.classList.add('hidden');
-                }
+            hiddenInput.value = id;
 
+            trigger.replaceChildren();
+
+            const img = document.createElement('img');
+            img.src = image;
+            img.className = 'w-6 h-6 rounded object-cover border';
+
+            const span = document.createElement('span');
+            span.className = 'text-sm';
+            span.textContent = `${name} (ID: ${id})`;
+
+            trigger.append(img, span);
+            dropdown.classList.add('hidden');
+        }
+
+        if (hiddenInput?.value) {
+            const selectedOption = selector.querySelector(
+                `[data-id="${hiddenInput.value}"]`
+            );
+
+            if (selectedOption) {
+                selectOption(selectedOption);
             }
+        }
 
-        });
-
-        /* attach events */
-
-        function attachRowEvents(row, index) {
-
-            row.querySelector('.variant-title')
-                .setAttribute('name', `variants[${index+1}][title]`);
-
-            row.querySelector('.variant-product-select')
-                .setAttribute('name', `variants[${index+1}][linked_product_id]`);
-
-            row.querySelector('.variant-image')
-                .setAttribute('name', `variants[${index+1}][image]`);
-
-                
-
-            const inputFile = row.querySelector('.variant-image');
-            const label = inputFile.closest('label');
-            const idInput = row.querySelector('.variant-id');
-            const preview = label.querySelector('.variant-image-preview');
-            const uploadText = label.querySelector('.variant-upload-text');
-            const parentInput = document.querySelector('.parent-image-input');
-            const parentPreview = document.querySelector('.parent-image-preview');
-            const parentUploadText = document.querySelector('.parent-upload-text');
-
-            if (parentInput) {
-                parentInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        parentPreview.src = URL.createObjectURL(file);
-                        parentPreview.classList.remove('hidden');
-                        parentUploadText.classList.add('hidden');
-                    } else {
-                        parentPreview.classList.add('hidden');
-                        parentUploadText.classList.remove('hidden');
+        trigger.addEventListener('click', function () {
+            document.querySelectorAll('.product-selector-dropdown')
+                .forEach(item => {
+                    if (item !== dropdown) {
+                        item.classList.add('hidden');
                     }
                 });
-            }
 
-            if(idInput){
-                idInput.setAttribute('name', `variants[${index+1}][id]`);
-            }
+            dropdown.classList.toggle('hidden');
+        });
 
-            inputFile.addEventListener('change', function(e) {
-
-                const file = e.target.files[0];
-
-                if (file) {
-
-                    preview.src = URL.createObjectURL(file);
-
-                    preview.classList.remove('hidden');
-                    uploadText.classList.add('hidden');
-
-                } else {
-
-                    preview.classList.add('hidden');
-                    uploadText.classList.remove('hidden');
-
-                }
-
+        options.forEach(option => {
+            option.addEventListener('click', function () {
+                selectOption(option);
             });
+        });
 
-            initProductSelector(row);
-
-        }
-
-        /* product selector */
-
-        function initProductSelector(row) {
-
-            const selector = row.querySelector('.variant-product-selector');
-
-            if (!selector) return;
-
-            const trigger = selector.querySelector('.product-selector-trigger');
-            const dropdown = selector.querySelector('.product-selector-dropdown');
-
-            const options = selector.querySelectorAll('.product-option');
-
-            const hiddenInput = selector.querySelector('.variant-product-select');
-
-            const searchInput = selector.querySelector('.product-search');
-
-            if (hiddenInput.value) {
-
-                const selectedOption =
-                    selector.querySelector(`[data-id="${hiddenInput.value}"]`);
-
-                if (selectedOption) {
-
-                    const id = selectedOption.dataset.id;
-                    const name = selectedOption.dataset.name;
-                    const image = selectedOption.dataset.image;
-
-                    trigger.innerHTML =
-                        `<img src="${image}" class="w-6 h-6 rounded object-cover border">
-<span class="text-sm">${name}
-<span class="text-gray-400">(ID: ${id})</span>
-</span>`;
-
-                }
-
-            }
-
-            trigger.addEventListener('click', () => {
-
-                document
-                    .querySelectorAll('.product-selector-dropdown')
-                    .forEach(d => d.classList.add('hidden'));
-
-                dropdown.classList.toggle('hidden');
-
-            });
+        searchInput?.addEventListener('input', function () {
+            const value = this.value.toLowerCase();
 
             options.forEach(option => {
-
-                option.addEventListener('click', () => {
-
-                    const id = option.dataset.id;
-                    const name = option.dataset.name;
-                    const image = option.dataset.image;
-
-                    hiddenInput.value = id;
-
-                    trigger.innerHTML =
-                        `<img src="${image}" class="w-6 h-6 rounded object-cover border">
-<span class="text-sm">${name}
-<span class="text-gray-400">(ID: ${id})</span>
-</span>`;
-
-                    dropdown.classList.add('hidden');
-
-                });
-
+                option.style.display = option.innerText
+                    .toLowerCase()
+                    .includes(value)
+                    ? 'flex'
+                    : 'none';
             });
+        });
+    }
 
-            searchInput.addEventListener('input', function() {
+    /*
+    |--------------------------------------------------------------------------
+    | Reindex rows
+    |--------------------------------------------------------------------------
+    */
 
-                const value = this.value.toLowerCase();
+    function reindexRows() {
+        const rows = container.querySelectorAll('.variant-row');
 
-                options.forEach(opt => {
+        rows.forEach((row, index) => {
+            attachRowEvents(row, index);
+        });
 
-                    const text = opt.innerText.toLowerCase();
+        variantIndex = rows.length;
+    }
 
-                    opt.style.display =
-                        text.includes(value) ? "flex" : "none";
+    /*
+    |--------------------------------------------------------------------------
+    | Remove child variant
+    |--------------------------------------------------------------------------
+    */
 
-                });
+    container.addEventListener('click', function (event) {
+        const button = event.target.closest('.remove-variant');
 
-            });
-
+        if (!button) {
+            return;
         }
 
-        /* reindex */
+        const row = button.closest('.variant-row');
 
-        function reindexRows() {
-
-            const rows = container.querySelectorAll('.variant-row');
-
-            rows.forEach((row, index) => attachRowEvents(row, index));
-
-            variantIndex = rows.length;
-
+        if (!row) {
+            return;
         }
 
-        /* create row */
+        row.remove();
+        reindexRows();
 
-        function createVariantRow() {
-
-            const parentBlock =
-                document.getElementById('parent-product-block');
-
-            if (variantIndex === 0)
-                parentBlock.classList.remove('hidden');
-
-            const template =
-                document.getElementById('variant-row-template');
-
-            const clone =
-                template.content.cloneNode(true);
-
-            container.appendChild(clone);
-
-            const rows = container.querySelectorAll('.variant-row');
-
-            const row = rows[rows.length - 1];
-
-            attachRowEvents(row, variantIndex);
-
-            variantIndex++;
-
-        }
-
-        addBtn.addEventListener('click', createVariantRow);
-
+        // Родительский товар остаётся частью группы.
+        parentBlock.classList.remove('hidden');
     });
 
-    /* close dropdown */
+    /*
+    |--------------------------------------------------------------------------
+    | Create new child variant
+    |--------------------------------------------------------------------------
+    */
 
-    document.addEventListener('click', function(e) {
+    function createVariantRow() {
+        parentBlock.classList.remove('hidden');
 
-        if (!e.target.closest('.variant-product-selector')) {
+        const clone = template.content.cloneNode(true);
+        container.appendChild(clone);
 
-            document
-                .querySelectorAll('.product-selector-dropdown')
-                .forEach(d => d.classList.add('hidden'));
+        const rows = container.querySelectorAll('.variant-row');
+        const row = rows[rows.length - 1];
 
+        attachRowEvents(row, variantIndex);
+        variantIndex++;
+    }
+
+    addBtn.addEventListener('click', createVariantRow);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Close dropdowns when clicking outside
+    |--------------------------------------------------------------------------
+    */
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.variant-product-selector')) {
+            document.querySelectorAll('.product-selector-dropdown')
+                .forEach(dropdown => dropdown.classList.add('hidden'));
         }
-
     });
+});
 </script>

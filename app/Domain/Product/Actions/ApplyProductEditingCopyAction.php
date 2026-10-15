@@ -15,6 +15,9 @@ use App\Domain\Media\Models\Media;
 use App\Domain\Media\Services\CdnUrlService;
 use App\Domain\Media\Services\MediaProcessingService;
 
+use App\Models\ProductVariantGroup;
+use App\Models\ProductVariantItem;
+
 class ApplyProductEditingCopyAction
 {
     public function execute(Product $copy): Product
@@ -270,6 +273,7 @@ class ApplyProductEditingCopyAction
 
 
 
+            $this->applyVariantEditingCopy($original, $copy);
 
             $this->replaceGalleryMedia($original, $copy);
 
@@ -280,6 +284,325 @@ class ApplyProductEditingCopyAction
             return $original->fresh();
         });
     }
+
+    private function applyVariantEditingCopy(
+    Product $original,
+    Product $copy
+): void {
+    /*
+    |--------------------------------------------------------------------------
+    | Проверяем, что поставщик действительно сохранял варианты
+    |--------------------------------------------------------------------------
+    */
+
+    if (!$copy->variant_group_id) {
+        return;
+    }
+
+    $stagingGroup = ProductVariantGroup::query()
+        ->whereKey($copy->variant_group_id)
+        ->first();
+
+    if (!$stagingGroup) {
+        return;
+    }
+
+    $metadata = $stagingGroup->metadata ?? [];
+
+    if (
+        (int) ($metadata['editing_copy_of'] ?? 0) !== (int) $original->id
+        || ($metadata['variants_saved'] ?? false) !== true
+    ) {
+        return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Загружаем сохранённые элементы временной группы
+    |--------------------------------------------------------------------------
+    */
+
+    $stagedItems = ProductVariantItem::query()
+        ->with('media')
+        ->where('variant_group_id', $stagingGroup->id)
+        ->orderBy('sort_order')
+        ->get();
+
+
+    // Если в staging-группе осталась только запись самого оригинала,
+    // это означает, что все дочерние вариации были удалены.
+    if (
+        $stagedItems->count() === 1
+        && (int) $stagedItems->first()->product_id === (int) $original->id
+    ) {
+        $stagedItems = collect();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Определяем группу оригинального товара
+    |--------------------------------------------------------------------------
+    */
+
+    $originalGroup = $original->variant_group_id
+        ? ProductVariantGroup::query()
+            ->whereKey($original->variant_group_id)
+            ->lockForUpdate()
+            ->first()
+        : null;
+
+    if (!$originalGroup && $stagedItems->isNotEmpty()) {
+        $originalGroup = ProductVariantGroup::create([
+            'name' => $stagingGroup->name,
+            'sort_order' => $stagingGroup->sort_order,
+            'metadata' => [],
+        ]);
+
+        $original->update([
+            'variant_group_id' => $originalGroup->id,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Если сохранён пустой список, удаляем связи оригинальной группы
+    |--------------------------------------------------------------------------
+    */
+
+    if ($stagedItems->isEmpty()) {
+        if ($originalGroup) {
+            $oldItems = ProductVariantItem::query()
+                ->with('media')
+                ->where('variant_group_id', $originalGroup->id)
+                ->get();
+
+            $mediaService = app(
+                \App\Domain\Media\Services\MediaService::class
+            );
+
+            foreach ($oldItems as $oldItem) {
+                $linkedProduct = $oldItem->product;
+
+                if ($oldItem->media) {
+                    $mediaService->delete($oldItem->media);
+                }
+
+                $oldItem->delete();
+
+                if (
+                    $linkedProduct
+                    && (int) $linkedProduct->variant_group_id
+                        === (int) $originalGroup->id
+                ) {
+                    $linkedProduct->update([
+                        'variant_group_id' => null,
+                    ]);
+                }
+            }
+
+            $originalGroup->delete();
+
+            $original->update([
+                'variant_group_id' => null,
+            ]);
+        }
+
+        return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Удаляем из исходной группы варианты, которых больше нет в копии
+    |--------------------------------------------------------------------------
+    */
+
+    $incomingProductIds = $stagedItems
+        ->pluck('product_id')
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values();
+
+    $oldItems = ProductVariantItem::query()
+        ->with('media')
+        ->where('variant_group_id', $originalGroup->id)
+        ->get();
+
+    $mediaService = app(
+        \App\Domain\Media\Services\MediaService::class
+    );
+
+    foreach ($oldItems as $oldItem) {
+        if (
+            $incomingProductIds->contains(
+                (int) $oldItem->product_id
+            )
+        ) {
+            continue;
+        }
+
+        $linkedProduct = $oldItem->product;
+
+        if ($oldItem->media) {
+            $mediaService->delete($oldItem->media);
+        }
+
+        $oldItem->delete();
+
+        // Убираем связь с группой, но сам товар не удаляем.
+        if (
+            $linkedProduct
+            && (int) $linkedProduct->variant_group_id
+                === (int) $originalGroup->id
+        ) {
+            $linkedProduct->update([
+                'variant_group_id' => null,
+            ]);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Создаём или обновляем элементы исходной группы
+    |--------------------------------------------------------------------------
+    */
+
+    foreach ($stagedItems as $stagedItem) {
+        $targetItem = ProductVariantItem::query()
+            ->where('variant_group_id', $originalGroup->id)
+            ->where('product_id', $stagedItem->product_id)
+            ->first();
+
+        if (!$targetItem) {
+            $targetItem = new ProductVariantItem();
+
+            $targetItem->variant_group_id = $originalGroup->id;
+            $targetItem->product_id = $stagedItem->product_id;
+        }
+
+        $targetItem->title = $stagedItem->title;
+        $targetItem->attribute_value_json =
+            $stagedItem->attribute_value_json;
+        $targetItem->sort_order = $stagedItem->sort_order;
+        $targetItem->metadata = $stagedItem->metadata;
+        $targetItem->save();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Переносим изображение, только если оно есть в копии
+        |--------------------------------------------------------------------------
+        | Если поставщик не загружал новое изображение, сохраняем
+        | существующее изображение исходного элемента.
+        */
+
+        if ($stagedItem->media) {
+            $newMedia = $this->copyVariantMedia(
+                $stagedItem->media,
+                $targetItem
+            );
+
+            $oldMedia = $targetItem->media;
+
+            $targetItem->update([
+                'media_id' => $newMedia->id,
+            ]);
+
+            if ($oldMedia && $oldMedia->id !== $newMedia->id) {
+                $mediaService->delete($oldMedia);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Обновляем принадлежность связанного товара группе
+        |--------------------------------------------------------------------------
+        */
+
+        if ($stagedItem->product_id) {
+            Product::query()
+                ->whereKey($stagedItem->product_id)
+                ->update([
+                    'variant_group_id' => $originalGroup->id,
+                ]);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Оригинал должен ссылаться на исходную, а не временную группу
+    |--------------------------------------------------------------------------
+    */
+
+    $original->update([
+        'variant_group_id' => $originalGroup->id,
+    ]);
+}
+
+private function copyVariantMedia(
+    Media $media,
+    ProductVariantItem $targetItem
+): Media {
+    $storage = app(StorageInterface::class);
+    $cdnService = app(CdnUrlService::class);
+    $processingService = app(MediaProcessingService::class);
+
+    $uuid = (string) Str::uuid();
+
+    $extension = $media->extension
+        ?: pathinfo($media->file_name, PATHINFO_EXTENSION);
+
+    $fileName = $uuid . ($extension ? ".{$extension}" : '');
+    $basePath = "media/{$media->collection}/{$uuid}";
+    $originalPath = "{$basePath}/original/{$fileName}";
+
+    if (!$storage->copy(
+        $media->originalPath(),
+        $originalPath,
+        (bool) $media->is_private
+    )) {
+        throw new \RuntimeException(
+            "Не удалось скопировать изображение варианта {$media->id}."
+        );
+    }
+
+    try {
+        $newMedia = Media::create([
+            'uuid' => $uuid,
+            'model_type' => ProductVariantItem::class,
+            'model_id' => $targetItem->id,
+            'collection' => $media->collection,
+            'media_role' => $media->media_role,
+            'original_file_name' => $media->original_file_name,
+            'file_name' => $fileName,
+            'file_path' => $originalPath,
+            'cdn_url' => $cdnService->generate(
+                $originalPath,
+                (bool) $media->is_private
+            ),
+            'mime_type' => $media->mime_type,
+            'extension' => $extension,
+            'size_bytes' => $media->size_bytes,
+            'width' => $media->width,
+            'height' => $media->height,
+            'checksum_hash' => $media->checksum_hash,
+            'is_private' => $media->is_private,
+            'is_primary' => $media->is_primary,
+            'sort_order' => $media->sort_order,
+            'is_main' => $media->is_main,
+            'processing_status' => Media::STATUS_QUEUED,
+            'metadata' => $media->metadata,
+        ]);
+    } catch (\Throwable $e) {
+        $storage->deleteDirectory($basePath);
+
+        throw $e;
+    }
+
+    $processingService->dispatchPipeline($newMedia, 2);
+
+    return $newMedia;
+}
+
 
     private function replaceGalleryMedia(Product $original, Product $copy): void
 {

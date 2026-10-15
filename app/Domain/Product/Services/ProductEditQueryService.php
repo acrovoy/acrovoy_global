@@ -3,6 +3,8 @@
 namespace App\Domain\Product\Services;
 
 use App\Models\Product;
+use App\Models\ProductVariantGroup;
+use App\Models\ProductVariantItem;
 use App\Models\Category;
 use App\Models\Language;
 use App\Models\Country;
@@ -11,15 +13,11 @@ use App\Models\Supplier;
 use App\Models\ShippingTemplate;
 use Illuminate\Support\Facades\Auth;
 
-use App\Models\ProductVariantItem;
-
 use App\Domain\Payment\Models\PaymentMethod;
 use App\Domain\Payment\Models\PaymentTerm;
 use App\Domain\Returns\Models\ReturnPolicy;
 use App\Domain\Returns\Models\ProductReturnPolicy;
 use App\Domain\Returns\Models\SupplierReturnPolicySetting;
-
-
 
 use App\Services\Company\ActiveContextService;
 
@@ -42,22 +40,58 @@ public function getEditViewData(Product $product): array
 
     $languages = Language::where('is_active', true)->get();
 
-    // 🔹 Получаем parent item
-    $parentItem = ProductVariantItem::where('product_id', $product->id)->first();
+        // Определяем оригинальный товар.
+        $originalProductId = $product->original_product_id ?? $product->id;
 
-    // 🔹 Получаем все остальные варианты
-    $otherVariants = $product->variantGroup?->items
-        ->where('product_id', '!=', $product->id)
-        ->values();
+        // Загружаем оригинал, если редактируется временная копия.
+        $originalProduct = $product->original_product_id
+            ? Product::findOrFail($originalProductId)
+            : $product;
 
-    // 🔹 Собираем коллекцию для Blade
-    $variants = collect();
+        // Группа оригинала используется для первоначального отображения.
+        $sourceGroupId = $originalProduct->variant_group_id;
 
-    if ($parentItem) {
-        $variants->push($parentItem);
-    }
+        // Проверяем, существует ли отдельная временная группа копии.
+        $editingGroup = $product->original_product_id && $product->variant_group_id
+            ? ProductVariantGroup::find($product->variant_group_id)
+            : null;
 
-    $variants = $variants->merge($otherVariants);
+        $isStagingGroup = $editingGroup
+            && (int) ($editingGroup->metadata['editing_copy_of'] ?? 0)
+                === (int) $originalProductId;
+
+        // Если временная группа уже создана, показываем её.
+        // Иначе показываем варианты оригинала.
+        $variantGroupId = $isStagingGroup
+            ? $editingGroup->id
+            : $sourceGroupId;
+
+        $groupItems = $variantGroupId
+            ? ProductVariantItem::with(['product.translations', 'media'])
+                ->where('variant_group_id', $variantGroupId)
+                ->orderBy('sort_order')
+                ->get()
+            : collect();
+
+        // Родитель — оригинальный товар, дочерние элементы — остальные товары.
+        $parentItem = $groupItems->firstWhere('product_id', $originalProductId);
+
+        $otherVariants = $groupItems
+            ->where('product_id', '!=', $originalProductId)
+            ->values();
+
+        $variants = collect();
+
+        if ($parentItem) {
+            $variants->push($parentItem);
+        }
+
+        $variants = $variants->merge($otherVariants);
+
+
+
+
+
 
     // 🔹 Продукты поставщика
     $products = $this->getSupplierProducts();
@@ -110,6 +144,8 @@ public function getEditViewData(Product $product): array
 
     return [
         'product' => $product,
+
+        'originalProductId' => $originalProductId,
 
         'categories' => Category::all(),
 

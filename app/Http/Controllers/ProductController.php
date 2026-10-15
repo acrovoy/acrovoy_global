@@ -79,34 +79,72 @@ class ProductController extends Controller
 
     ) {}
 
-    public function index(Request $request, ProductListQueryService $service)
-    {
+    
+public function index(Request $request, ProductListQueryService $service)
+{
+    $this->authorize('viewAny', Product::class);
 
-        $this->authorize('viewAny', Product::class);
+    $entity = $this->context->entity();
+    $supplierId = $entity->getKey();
 
-        $entity = $this->context->entity();
+    $filters = $request->validate([
+        'search' => ['nullable', 'string', 'max:150'],
+        'status' => [
+            'nullable',
+            'string',
+            'in:draft,pending,approved,rejected',
+        ],
+        'category' => ['nullable', 'integer', 'min:1'],
+        'user' => ['nullable', 'string', 'max:150'],
+        'sort' => [
+            'nullable',
+            'string',
+            'in:newest,oldest,name_asc,name_desc,status',
+        ],
+    ]);
 
-        $supplierId = $entity->getKey();
-        $products = $service->getSupplierProducts(
-            $supplierId,
-            $request->only(['sort', 'status', 'user'])
-        );
+    $products = $service->getSupplierProducts(
+        $supplierId,
+        $filters
+    );
 
-        $warehouses = Warehouse::where('provider_id', $entity->getKey())
-            ->where('provider_type', $entity::class)
-            ->get();
+    $statistics = $service->getSupplierProductStatistics($supplierId);
 
+    $warehouses = Warehouse::query()
+        ->where('provider_id', $supplierId)
+        ->where('provider_type', $entity::class)
+        ->get();
 
+    $categoryIds = Product::query()
+        ->where('supplier_id', $supplierId)
+        ->whereNull('original_product_id')
+        ->where('status', '!=', 'archived')
+        ->whereNotNull('category_id')
+        ->distinct()
+        ->pluck('category_id');
 
+    $categories = \App\Models\Category::query()
+        ->whereIn('id', $categoryIds)
+        ->orderBy('name')
+        ->get();
 
-        return view('dashboard.supplier.products', [
-            'products' => $products,
-            'warehouses' => $warehouses,
-            'sort' => $request->sort,
-            'status' => $request->status,
-            'userFilter' => $request->user,
-        ]);
-    }
+    return view('dashboard.supplier.products', [
+        'products' => $products,
+        'warehouses' => $warehouses,
+        'categories' => $categories,
+        'search' => $filters['search'] ?? '',
+        'sort' => $filters['sort'] ?? 'newest',
+        'status' => $filters['status'] ?? '',
+        'categoryFilter' => $filters['category'] ?? '',
+        'userFilter' => $filters['user'] ?? '',
+        'addedCount' => $statistics['addedCount'],
+        'publishedCount' => $statistics['publishedCount'],
+        'inCatalogCount' => $statistics['inCatalogCount'],
+        'notInCatalogCount' => $statistics['notInCatalogCount'],
+        'productLimit' => $statistics['productLimit'],
+    ]);
+}
+
 
 
     public function show(string $slug, ProductViewQueryService $service)
@@ -216,6 +254,14 @@ class ProductController extends Controller
             ->get();
 
 
+           $editingCopy = $product->original_product_id !== null
+    ? (in_array($product->status, ['draft', 'rejected'], true) ? $product : null)
+    : Product::query()
+        ->where('original_product_id', $product->id)
+        ->where('supplier_id', $product->supplier_id)
+        ->whereIn('status', ['draft', 'rejected'])
+        ->latest('id')
+        ->first();
 
         $editData = $service->getEditViewData($product);
 
@@ -240,6 +286,7 @@ class ProductController extends Controller
                 'attachedIds' => $attachedIds,
                 'groups' => $groups,
                 'availableAttributesGrouped' => $availableAttributesGrouped,
+                'editingCopy' => $editingCopy,
             ]
         );
     }
@@ -525,143 +572,312 @@ class ProductController extends Controller
                     'product' => $product->id,
                     'step' => $nextstep,
                 ]);
-        } elseif ($step == 7) {
+       } elseif ($step == 7) {
 
+    if (
+        $request->boolean('variants_present')
+        || $request->has('variants')
+    ) {
+        DB::transaction(function () use ($request, $product) {
 
+            $variantRows = collect($request->input('variants', []))
+                ->map(function ($row, $index) use ($request) {
+                    $row['image'] = $request->file(
+                        "variants.{$index}.image"
+                    );
 
+                    return $row;
+                })
+                ->values();
 
+            $isEditingCopy = $product->original_product_id !== null;
 
-            if ($request->has('variants')) {
+            /*
+            |--------------------------------------------------------------------------
+            | Для копии определяем, остались ли дочерние вариации
+            |--------------------------------------------------------------------------
+            |
+            | Если дочерних вариаций нет, не сохраняем родительский товар
+            | в staging-группу как вариацию самого себя.
+            |
+            */
 
+            if ($isEditingCopy) {
+                $hasChildVariants = $variantRows->contains(
+                    fn ($row) => empty($row['is_primary'])
+                );
 
+                if (!$hasChildVariants) {
+                    $variantRows = collect();
+                }
+            }
 
-                // 🔹 Новый вариант — ищем variant_group_id среди существующих айтемов
-                $variantGroupId = $product->variantItems()->first()?->variant_group_id;
+            /*
+            |--------------------------------------------------------------------------
+            | Определяем группу вариантов
+            |--------------------------------------------------------------------------
+            */
 
-                // Если группы нет и будут добавляться новые айтемы, создаём её
-                if (!$variantGroupId && collect($request->variants)->filter(fn($v) => !empty($v['linked_product_id']))->isNotEmpty()) {
-                    $variantGroup = ProductVariantGroup::create([
-                        'product_id' => $product->id,
+            $variantGroupId = null;
+
+            if ($isEditingCopy) {
+                $original = Product::query()
+                    ->findOrFail($product->original_product_id);
+
+                // Используем только staging-группу текущей копии.
+                $currentGroup = $product->variant_group_id
+                    ? ProductVariantGroup::find($product->variant_group_id)
+                    : null;
+
+                if (
+                    $currentGroup
+                    && (int) ($currentGroup->metadata['editing_copy_of'] ?? 0)
+                        === (int) $original->id
+                ) {
+                    $variantGroupId = $currentGroup->id;
+                }
+
+                // Создаём staging-группу даже при отсутствии вариаций.
+                if (!$variantGroupId) {
+                    $group = ProductVariantGroup::create([
+                        'name' => null,
+                        'sort_order' => 0,
+                        'metadata' => [
+                            'editing_copy_of' => $original->id,
+                            'variants_saved' => true,
+                        ],
                     ]);
-                    $variantGroupId = $variantGroup->id;
 
-                    // Обновляем родительский продукт
-                    $product->update(['variant_group_id' => $variantGroupId]);
+                    $variantGroupId = $group->id;
+
+                    // Меняем только временную копию.
+                    $product->update([
+                        'variant_group_id' => $variantGroupId,
+                    ]);
+                } else {
+                    $group = ProductVariantGroup::findOrFail(
+                        $variantGroupId
+                    );
+
+                    $metadata = $group->metadata ?? [];
+                    $metadata['variants_saved'] = true;
+
+                    $group->update([
+                        'metadata' => $metadata,
+                    ]);
+                }
+            } else {
+                // Для обычного товара используем его собственную группу.
+                $variantGroupId = $product->variant_group_id;
+
+                if (!$variantGroupId) {
+                    $variantGroupId = ProductVariantItem::query()
+                        ->where('product_id', $product->id)
+                        ->value('variant_group_id');
                 }
 
-                $incomingIds = collect($request->variants)->pluck('id')->filter()->all();
-                $existingVariants = $product->variantItems;
+                if (!$variantGroupId && $variantRows->isNotEmpty()) {
+                    $hasLinkedProducts = $variantRows->contains(
+                        fn ($row) => !empty($row['linked_product_id'])
+                    );
 
-                // Удаляем отсутствующие
-                $existingVariants->each(function ($variant) use ($incomingIds) {
-                    if (!in_array($variant->id, $incomingIds)) {
-                        if ($variant->media) $this->mediaService->delete($variant->media);
-                        $product = $variant->product;
-                        $variant->delete();
+                    if ($hasLinkedProducts) {
+                        $group = ProductVariantGroup::create([]);
 
-                        $product->update(['variant_group_id' => null]);
-                    }
-                });
+                        $variantGroupId = $group->id;
 
-
-
-
-
-
-
-                // Создаем / обновляем
-                foreach ($request->variants as $variantData) {
-
-                    if (!empty($variantData['id'])) {
-                        // 🔹 Существующий вариант
-
-                        $variant = ProductVariantItem::find($variantData['id']);
-
-
-                        //БЕЗОПАСНІЙ ВАРИАНТ. ПОТОМ ПОМЕНЯТЬ И ПРОВЕРИТЬ
-                        // $variant = ProductVariantItem::where('variant_group_id', $product->variant_group_id)->find($variantData['id']);
-
-
-
-                        if (!$variant) continue;
-
-                        $variant->title = $variantData['title'];
-                        $variant->product_id = $variantData['linked_product_id'] ?? null;
-                        $variant->save();
-                    } else {
-
-
-
-
-                        // 🔹 Создаём новый вариант
-                        $variant = ProductVariantItem::create([
-                            'product_id' => $variantData['linked_product_id'] ?? null,
+                        $product->update([
                             'variant_group_id' => $variantGroupId,
-                            'title' => $variantData['title'],
-
                         ]);
-
-                        $linkedProductId = $variantData['linked_product_id'] ?? $product->id;
-                        if ($linkedProductId) {
-                            Product::where('id', $linkedProductId)
-                                ->update(['variant_group_id' => $variantGroupId]);
-                        }
-                    }
-
-                    // 🔹 Обработка изображения
-                    if (!empty($variantData['image'])) {
-
-                        $media = $this->mediaService->upload(
-                            new UploadMediaDTO(
-                                file: $variantData['image'],
-                                model: $variant,
-                                collection: 'product_variant_image',
-                                sortOrder: 0,
-                                isMain: false
-                            )
-                        );
-
-                        $variant->update(['media_id' => $media->id]);
                     }
                 }
 
-                // Проверяем, сколько айтемов осталось в группе
-                $remainingVariants = $product->variantItems()->get();
+                // Обычный товар без группы и без вариантов.
+                if (!$variantGroupId) {
+                    return;
+                }
+            }
 
-                if ($remainingVariants->count() <= 1) {
-                    foreach ($remainingVariants as $variant) {
-                        if ($variant->media) $this->mediaService->delete($variant->media);
-                        $variant->delete();
-                    }
+            /*
+            |--------------------------------------------------------------------------
+            | Загружаем только элементы текущей группы
+            |--------------------------------------------------------------------------
+            */
 
-                    // Удаляем саму группу
-                    if ($product->variant_group_id) {
-                        ProductVariantGroup::find($product->variant_group_id)?->delete();
-                        $product->update(['variant_group_id' => null]);
+            $existingVariants = ProductVariantItem::query()
+                ->where('variant_group_id', $variantGroupId)
+                ->get()
+                ->keyBy('id');
+
+            $incomingIds = $variantRows
+                ->pluck('id')
+                ->filter()
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Удаляем элементы, отсутствующие в отправленной форме
+            |--------------------------------------------------------------------------
+            */
+
+            foreach ($existingVariants as $existingVariant) {
+                if (!in_array(
+                    (int) $existingVariant->id,
+                    $incomingIds,
+                    true
+                )) {
+                    $linkedProduct = $existingVariant->product;
+
+                    $existingVariant->delete();
+
+                    // При редактировании копии товары каталога не меняем.
+                    if (
+                        !$isEditingCopy
+                        && $linkedProduct
+                        && (int) $linkedProduct->variant_group_id
+                            === (int) $variantGroupId
+                    ) {
+                        $linkedProduct->update([
+                            'variant_group_id' => null,
+                        ]);
                     }
                 }
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Создаём и обновляем элементы группы
+            |--------------------------------------------------------------------------
+            */
 
+            foreach ($variantRows as $index => $variantData) {
+                $variantId = !empty($variantData['id'])
+                    ? (int) $variantData['id']
+                    : null;
 
+                // Разрешено обновлять только элементы своей группы.
+                $variant = $variantId
+                    ? $existingVariants->get($variantId)
+                    : null;
 
-            $dto = $dtoFactory->fromUpdateVariantRequest($request);
+                $linkedProductId = $variantData['linked_product_id'] ?? null;
 
+                // Родительская строка копии ссылается на оригинал.
+                if (
+                    $isEditingCopy
+                    && !empty($variantData['is_primary'])
+                ) {
+                    $linkedProductId = $product->original_product_id;
+                }
 
-            $updateProductVariantAction->execute(
-                product: $product,
-                data: $dto,
+                if (!$variant) {
+                    $variant = new ProductVariantItem();
+                    $variant->variant_group_id = $variantGroupId;
+                }
 
-            );
+                $variant->title = $variantData['title'] ?? null;
+                $variant->product_id = $linkedProductId ?: null;
+                $variant->sort_order = $index;
+                $variant->save();
 
-            return redirect()
-                ->route('supplier.products.edit-step', [
-                    'product' => $product->id,
-                    'step' => $nextstep,
-                ]);
+                // Только для обычного товара обновляем группы товаров.
+                if (!$isEditingCopy && $linkedProductId) {
+                    Product::query()
+                        ->whereKey($linkedProductId)
+                        ->update([
+                            'variant_group_id' => $variantGroupId,
+                        ]);
+                }
 
+                /*
+                |--------------------------------------------------------------------------
+                | Загружаем изображение элемента
+                |--------------------------------------------------------------------------
+                */
 
-       } elseif ($step == 8) {
+                $image = $variantData['image'] ?? null;
+
+                if (
+                    $image instanceof \Illuminate\Http\UploadedFile
+                    && $image->isValid()
+                ) {
+                    $media = $this->mediaService->upload(
+                        new UploadMediaDTO(
+                            file: $image,
+                            model: $variant,
+                            collection: 'product_variant_image',
+                            sortOrder: 0,
+                            isMain: false
+                        )
+                    );
+
+                    $variant->update([
+                        'media_id' => $media->id,
+                    ]);
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Очистка группы обычного товара
+            |--------------------------------------------------------------------------
+            |
+            | Поведение первоначального создания и редактирования обычного
+            | товара не меняем.
+            |
+            */
+
+            if (!$isEditingCopy) {
+                $remainingCount = ProductVariantItem::query()
+                    ->where('variant_group_id', $variantGroupId)
+                    ->count();
+
+                if ($remainingCount <= 1) {
+                    $remainingVariants = ProductVariantItem::query()
+                        ->where('variant_group_id', $variantGroupId)
+                        ->get();
+
+                    foreach ($remainingVariants as $variant) {
+                        $linkedProduct = $variant->product;
+
+                        $variant->delete();
+
+                        if (
+                            $linkedProduct
+                            && (int) $linkedProduct->variant_group_id
+                                === (int) $variantGroupId
+                        ) {
+                            $linkedProduct->update([
+                                'variant_group_id' => null,
+                            ]);
+                        }
+                    }
+
+                    ProductVariantGroup::whereKey($variantGroupId)->delete();
+
+                    $product->update([
+                        'variant_group_id' => null,
+                    ]);
+                }
+            }
+        });
+    }
+
+    $dto = $dtoFactory->fromUpdateVariantRequest($request);
+
+    $updateProductVariantAction->execute(
+        product: $product,
+        data: $dto,
+    );
+
+    return redirect()
+        ->route('supplier.products.edit-step', [
+            'product' => $product->id,
+            'step' => $nextstep,
+        ]);
+
+} elseif ($step == 8) {
 
     $response = $this->saveFinishStep(
         $request,
@@ -1101,8 +1317,8 @@ public function saveDraft(
     }
 
     return redirect()
-        ->route('supplier.products.edit-step', [$product->id, 8])
-        ->with('success', 'Product saved successfully.');
+    ->route('supplier.products.index')
+    ->with('success', 'Product saved successfully.');
 }
 
 
@@ -1128,4 +1344,109 @@ public function editApproved(
 
 
 }
+
+
+public function archive(Product $product)
+{
+    $this->authorize('update', $product);
+
+    if ($product->status === 'pending') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Products pending moderation cannot be archived.',
+        ], 422);
+    }
+
+    $product->update([
+        'status' => 'archived',
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Product archived successfully.',
+    ]);
+}
+
+public function draftPreview(
+    Product $product,
+    ProductViewQueryService $service
+) {
+    $entity = $this->context->entity();
+
+    abort_unless(
+        (int) $product->supplier_id === (int) $entity->getKey()
+        && $product->original_product_id !== null
+        && in_array($product->status, ['draft', 'rejected']),
+        404
+    );
+
+    $originalProduct = Product::query()
+        ->whereKey($product->original_product_id)
+        ->where('supplier_id', $entity->getKey())
+        ->where('status', 'approved')
+        ->firstOrFail();
+
+    return view(
+        'product.show',
+        array_merge(
+            $service->getProductViewData($product->slug),
+            [
+                'isDraftPreview' => true,
+                'originalProduct' => $originalProduct,
+            ]
+        )
+    );
+}
+
+public function bulkArchive(Request $request)
+{
+    $validated = $request->validate([
+        'ids' => ['required', 'array', 'min:1'],
+        'ids.*' => ['required', 'integer', 'distinct'],
+    ]);
+
+    $entity = $this->context->entity();
+    $supplierId = $entity->getKey();
+    $ids = $validated['ids'];
+
+    $products = Product::query()
+        ->where('supplier_id', $supplierId)
+        ->whereIn('id', $ids)
+        ->get();
+
+    if ($products->count() !== count($ids)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Some selected products were not found.',
+        ], 422);
+    }
+
+    foreach ($products as $product) {
+        $this->authorize('update', $product);
+
+        $hasActiveCopy = Product::query()
+            ->where('original_product_id', $product->id)
+            ->whereIn('status', ['draft', 'rejected', 'pending'])
+            ->exists();
+
+        if ($product->status === 'pending' || $hasActiveCopy) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some products cannot be archived because they are pending moderation or have an active editing copy.',
+            ], 422);
+        }
+    }
+
+    Product::query()
+        ->where('supplier_id', $supplierId)
+        ->whereIn('id', $ids)
+        ->update(['status' => 'archived']);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Selected products archived successfully.',
+        'ids' => $ids,
+    ]);
+}
+
 }

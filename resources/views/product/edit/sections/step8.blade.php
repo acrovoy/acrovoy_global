@@ -1174,32 +1174,35 @@
 
     <div class="flex justify-between mt-6">
 
-        <a href="{{ route('supplier.products.edit-step', [$product->id, 7]) }}"
-            class="mt-4 bg-gray-50 border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded">
-            Previous
-        </a>
+    <a href="{{ route('supplier.products.edit-step', [$product->id, 7]) }}"
+       class="mt-4 bg-gray-50 border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded">
+        Previous
+    </a>
 
-        <div class="flex gap-3">
+    <div class="flex gap-3">
 
-            <button
-                type="submit"
-                form="productForm"
-                class="mt-4 bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-50">
-                Save
-            </button>
+        <button
+            type="submit"
+            form="productForm"
+            formaction="{{ route('supplier.products.save-draft', $product->id) }}"
+            formmethod="POST"
+            onclick="document.getElementById('productForm').querySelector('[name=_method]')?.setAttribute('disabled', 'disabled');"
+            class="mt-4 bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-50">
+            Save
+        </button>
 
-            <button
-                type="submit"
-                form="productForm"
-                formaction="{{ route('supplier.products.publish', $product->id) }}"
-                formmethod="POST"
-                onclick="document.getElementById('productForm').querySelector('[name=_method]').disabled = true;"
-                class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-500">
-                Publish
-            </button>
+        <button
+            type="submit"
+            form="productForm"
+            formaction="{{ route('supplier.products.publish', $product->id) }}"
+            formmethod="POST"
+            onclick="document.getElementById('productForm').querySelector('[name=_method]')?.setAttribute('disabled', 'disabled');"
+            class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-500">
+            Publish
+        </button>
 
-        </div>
     </div>
+</div>
 
 </form>
 

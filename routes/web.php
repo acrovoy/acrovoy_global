@@ -566,6 +566,10 @@ Route::middleware('auth')->prefix('dashboard/supplier')->name('supplier.')->grou
     Route::post('/products/{product}/publish', [ProductController::class, 'publish'])->name('products.publish');
     Route::post('/products/{product}/save-draft', [ProductController::class, 'saveDraft'])->name('products.save-draft');
     Route::get('/products/{product}/edit-approved', [ProductController::class, 'editApproved'])->name('products.edit-approved');
+    Route::post('/products/{product}/archive', [ProductController::class, 'archive'])->name('products.archive');
+
+    Route::get('/products/{product}/draft-preview', [ProductController::class, 'draftPreview'])->name('products.draft-preview');
+    Route::post('/products/bulk-archive', [ProductController::class, 'bulkArchive'])->name('products.bulk-archive');
 
     Route::get('/orders', [ManufacturerOrderController::class, 'index'])->name('orders');
     Route::get('/orders/{id}', [ManufacturerOrderController::class, 'show'])->name('orders.show');
@@ -857,11 +861,17 @@ Route::prefix('dashboard/admin')->name('admin.')->group(function () {
     Route::post('sellers/{seller}/verify-trust', [AdminSellersController::class, 'updateVerifyTrust']);
 
     // Products moderation
+    Route::get('products/management', [AdminProductController::class, 'managementIndex'])->name('products.management');
     Route::resource('products', AdminProductController::class);
+    Route::get('products/management', [AdminProductController::class, 'managementIndex'])->name('products.management');
     Route::prefix('products/{product}')->name('products.')->group(function () {
             Route::post('approve', [AdminProductController::class, 'approve'])->name('approve');
             Route::post('reject', [AdminProductController::class, 'reject'])->name('reject');
+            Route::delete('/', [AdminProductController::class, 'destroy'])->name('destroy');
+            
+
         });
+    
 
     // Users
     Route::prefix('users')->name('users.')->group(function () {
