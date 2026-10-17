@@ -36,6 +36,7 @@ class Product extends Model
         'supplier_type',
         'created_by',
         'status',
+        'sort_order',
         'country_id',
         'reject_reason',
         'origin_region_id',
@@ -434,7 +435,9 @@ public function originalProduct()
 
 public function editingCopy()
 {
-    return $this->hasOne(self::class, 'original_product_id');
+    return $this->hasOne(Product::class, 'original_product_id')
+        ->whereIn('status', ['draft', 'pending', 'rejected'])
+        ->latestOfMany();
 }
 
 public function creator()

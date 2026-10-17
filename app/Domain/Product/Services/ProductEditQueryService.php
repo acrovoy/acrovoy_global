@@ -13,6 +13,8 @@ use App\Models\Supplier;
 use App\Models\ShippingTemplate;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Support\Facades\DB;
+
 use App\Domain\Payment\Models\PaymentMethod;
 use App\Domain\Payment\Models\PaymentTerm;
 use App\Domain\Returns\Models\ReturnPolicy;
@@ -142,6 +144,39 @@ public function getEditViewData(Product $product): array
             ->value('default_return_policy_id');
     }
 
+
+    /*
+|--------------------------------------------------------------------------
+| SUPPLIER DEFAULT PAYMENT METHODS
+|--------------------------------------------------------------------------
+*/
+
+$supplierId = app(ActiveContextService::class)->supplierId();
+
+$defaultPaymentMethodIds = $supplierId
+    ? DB::table('supplier_payment_methods')
+        ->where('supplier_id', $supplierId)
+        ->orderBy('sort_order')
+        ->pluck('payment_method_id')
+        ->map(fn ($id) => (int) $id)
+        ->toArray()
+    : [];
+
+    
+
+    $supplierId = app(ActiveContextService::class)->supplierId();
+
+$defaultPaymentTermIds = $supplierId
+    ? DB::table('supplier_payment_settings')
+        ->where('supplier_id', $supplierId)
+        ->whereNotNull('default_payment_term_id')
+        ->pluck('default_payment_term_id')
+        ->map(fn ($id) => (int) $id)
+        ->toArray()
+    : [];
+
+
+
     return [
         'product' => $product,
 
@@ -159,6 +194,25 @@ public function getEditViewData(Product $product): array
 
         'productShippingIds' => $product->shippingTemplates
             ->pluck('id')
+            ->toArray(),
+
+        'paymentMethods' => PaymentMethod::where('is_active', true)
+            ->with('translations')
+            ->orderBy('sort_order')
+            ->get(),
+
+        'defaultPaymentMethodIds' => $defaultPaymentMethodIds,
+
+        'productPaymentMethodIds' => $product->paymentMethods
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray(),
+
+        'defaultPaymentTermIds' => $defaultPaymentTermIds,
+
+        'productPaymentTermIds' => $product->paymentTerms
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
             ->toArray(),
 
         'materialsPrepared' => $this->prepareMaterials($languages),

@@ -67,9 +67,7 @@
 
                     <tr>
 
-                        <th class="w-[70px] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            ID
-                        </th>
+                        
 
                         <th class="min-w-[280px] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                             Policy
@@ -95,9 +93,7 @@
                             Restocking
                         </th>
 
-                        <th class="min-w-[120px] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            Type
-                        </th>
+                        
 
                         <th class="min-w-[110px] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                             Status
@@ -232,14 +228,7 @@
 
                         <tr class="align-top transition hover:bg-gray-50/70">
 
-                            {{-- =================================================
-                                ID
-                            ================================================== --}}
-
-                            <td class="px-5 py-4 text-sm font-medium text-gray-500">
-                                #{{ $policy->id }}
-                            </td>
-
+                            
 
                             {{-- =================================================
                                 POLICY
@@ -411,27 +400,7 @@
                             </td>
 
 
-                            {{-- =================================================
-                                TYPE
-                            ================================================== --}}
-
-                            <td class="px-5 py-4">
-
-                                @if($isPlatformPolicy)
-
-                                    <span class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                                        Platform
-                                    </span>
-
-                                @else
-
-                                    <span class="inline-flex items-center rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                                        My Policy
-                                    </span>
-
-                                @endif
-
-                            </td>
+                           
 
 
                             {{-- =================================================

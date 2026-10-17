@@ -1,249 +1,408 @@
 
-
 @include('product.edit.partials.progress-bar', [$mode = 'edit'])
+
+
+
 
 <form method="POST"
     action="{{ route('supplier.products.update', [
-          'product' => $product->id,
-          'step' => 8
-      ]) }}"
+        'product' => $product->id,
+        'step' => 8
+    ]) }}"
     enctype="multipart/form-data"
-    class="" id="productForm">
+    id="productForm">
+
     @csrf
     @method('PUT')
 
     <input type="hidden" name="user_id" value="{{ auth()->id() }}">
-    
-    
-    {{-- Country of origin --}}
-<div>
-    <h3 class="text-xl font-semibold mb-4">Country of Origin</h3>
-    <select name="country_id" class="input w-full">
-        <option value="">Select a country</option>
-        @foreach($countries as $country)
-            <option value="{{ $country->id }}" {{ $product->country_id == $country->id ? 'selected' : '' }}>
-                {{ $country->name }}
-            </option>
-        @endforeach
-    </select>
-    <p class="text-sm text-gray-500 mt-1">Выберите страну, из которой поставляется товар.</p>
-</div>
 
+    {{-- =====================================================
+        SHIPPING & DELIVERY
+    ====================================================== --}}
 
+    <div class="mt-6 bg-white border border-gray-200 rounded shadow-sm overflow-hidden">
 
-{{-- Shipping Dimensions --}}
-<div class="mt-6 bg-white border rounded-xl p-6">
-    <h3 class="text-xl font-semibold mb-4">Shipping Dimensions
+        {{-- HEADER --}}
+        <div class="px-6 py-5 border-b border-gray-100">
+            <div class="flex items-center gap-3">
 
-    <x-help-tooltip width="w-80">
-    <div class="space-y-2 leading-relaxed">
-        <div class="font-semibold text-white">Shipping Dimensions</div>
-        <div class="text-gray-200 text-sm">
-            Укажите габариты и вес упаковки для расчёта доставки и логистики.
-            Размеры упаковки могут отличаться от реальных размеров самого товара.
-        </div>
-        <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
-            <li>Length — длина упаковки в сантиметрах</li>
-            <li>Width — ширина упаковки в сантиметрах</li>
-            <li>Height — высота упаковки в сантиметрах</li>
-            <li>Weight — вес упаковки в килограммах</li>
-            <li>Package Type — тип упаковки: коробка, паллет, комплект и т.д.</li>
-        </ul>
-        <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
-            Note: <span class="text-white/80">транспортировочные габариты могут включать упаковку и защитные материалы,
-            поэтому могут быть больше реальных размеров товара.</span>
-        </div>
-    </div>
-</x-help-tooltip>
-
-
-    </h3>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {{-- Length --}}
-        <div>
-            <label class="block mb-1 font-medium">Length (cm)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[length]" 
-                value="{{ old('shipping.length', isset($product->shippingDimensions->length) ? number_format($product->shippingDimensions->length, 1, '.', '') : '') }}"
-                class="input w-full"
-            >
-        </div>
-
-        {{-- Width --}}
-        <div>
-            <label class="block mb-1 font-medium">Width (cm)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[width]" 
-                value="{{ old('shipping.width', $product->shippingDimensions->width ?? '') }}"
-                class="input w-full"
-            >
-        </div>
-
-        {{-- Height --}}
-        <div>
-            <label class="block mb-1 font-medium">Height (cm)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[height]" 
-                value="{{ old('shipping.height', $product->shippingDimensions->height ?? '') }}"
-                class="input w-full"
-            >
-        </div>
-
-        {{-- Weight --}}
-        <div>
-            <label class="block mb-1 font-medium">Weight (kg)</label>
-            <input 
-                type="number" 
-                step="0.001" 
-                name="shipping[weight]" 
-                value="{{ old('shipping.weight', $product->shippingDimensions->weight ?? '') }}"
-                class="input w-full"
-            >
-        </div>
-
-        {{-- Package Type --}}
-        <div>
-            <label class="block mb-1 font-medium">Package Type</label>
-            <select name="shipping[package_type]" class="input w-full">
-                <option value="box" {{ (old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'box') ? 'selected' : '' }}>Box</option>
-                <option value="pallet" {{ (old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'pallet') ? 'selected' : '' }}>Pallet</option>
-                <option value="set" {{ (old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'set') ? 'selected' : '' }}>Set</option>
-            </select>
-        </div>
-
-    </div>
-
-    <p class="text-sm text-gray-500 mt-2">
-        Укажите габариты и вес упаковки для расчёта доставки и логистики.
-    </p>
-</div>
-
-
-
-
-{{-- Shipping Templates --}}
-<div class="mt-6">
-    <h3 class="text-xl font-semibold mb-4">Shipping Templates</h3>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {{-- Platform / Default Shipping --}}
-        @if($defaultShippingTemplate)
-            <label
-                class="border-2 border-dashed border-gray-400 rounded-xl p-4 cursor-pointer transition
-                    hover:border-gray-700 hover:bg-gray-100
-                    flex gap-3 items-start bg-gray-50 shadow-sm">
-
-                {{-- Скрытый input, чтобы значение отправлялось --}}
-                <input type="hidden" name="shipping_templates[]" value="{{ $defaultShippingTemplate->id }}">
-
-                {{-- Видимый чекбокс только для UI --}}
-                <input
-                    type="checkbox"
-                    value="{{ $defaultShippingTemplate->id }}"
-                    class="mt-1"
-                    checked
-                    disabled
-                >
+                
 
                 <div>
-                    <div class="font-semibold text-gray-900 flex items-center gap-2">
-                        {{ $defaultShippingTemplate->title }}
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">
-                            Platform delivery
-                        </span>
-                    </div>
-
-                    <div class="text-sm text-gray-600 mt-1">
-                        {{ $defaultShippingTemplate->description }}
-                    </div>
-
-                    <div class="text-xs text-gray-500 mt-2">
-                        Price and delivery time will be calculated after order placement
-                    </div>
-                </div>
-            </label>
-        @endif
-
-        {{-- Seller Shipping Templates --}}
-        @foreach($shippingTemplates as $template)
-            <label
-                    class="border rounded-xl p-4 cursor-pointer transition
-                        hover:border-blue-600 hover:bg-blue-50
-                        flex gap-3 items-start bg-white shadow-sm">
-
-                    <input
-                        type="checkbox"
-                        name="shipping_templates[]"
-                        value="{{ $template->id }}"
-                        class="mt-1"
-                        {{ in_array($template->id, old('shipping_templates', $productShippingIds ?? [])) ? 'checked' : '' }}
-                    >
-
-                    <div>
-                        <div class="font-semibold text-gray-900">
-                            {{ $template->title }}
-                        </div>
-
-                        <div class="text-sm text-gray-600 mt-1">
-                            {{ $template->description }}
-                        </div>
-
-                        <div class="text-xs text-gray-500 mt-2">
-                            Seller-defined delivery
-                        </div>
-                    </div>
-            </label>
-        @endforeach
-
-    </div>
-
-    <p class="text-sm text-gray-500 mt-2">
-            Выберите один или несколько шаблонов доставки.
-            Если выбран только платформенный вариант — заказ будет ожидать расчёта доставки.
-    </p>
-</div>
-
-
-
-
-
-
-{{-- Payment Methods --}}
-<div class="mt-6 bg-white border rounded-xl p-6">
-
-    <div class="flex items-center gap-2 mb-4">
-        <h3 class="text-xl font-semibold">Payment Methods</h3>
-
-        <x-help-tooltip width="w-80">
-            <div class="space-y-2 leading-relaxed">
-                <div class="font-semibold text-white">
-                    Payment Methods
+                    <h3 class="text-lg font-bold text-gray-900">
+                        Shipping & Delivery
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Configure delivery time, package details and shipping options.
+                    </p>
                 </div>
 
-                <div class="text-gray-200 text-sm">
-                    Выберите способы оплаты, которые доступны покупателю для этого товара.
-                </div>
-
-                <div class="text-gray-300 text-xs">
-                    Можно выбрать несколько способов оплаты.
-                </div>
             </div>
-        </x-help-tooltip>
+        </div>
+
+        <div class="p-6 space-y-8">
+
+            {{-- LEAD TIME --}}
+            <div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-3">
+                    Lead Time
+                </h4>
+
+                <div class="max-w-md flex items-center gap-3">
+                    <input
+                        type="number"
+                        name="lead_time"
+                        placeholder="e.g., 25"
+                        value="{{ old('lead_time', $product->lead_time) }}"
+                        class="input w-full">
+
+                    <span class="text-sm text-gray-500 whitespace-nowrap">
+                        day(s)
+                    </span>
+                </div>
+
+                <p class="text-sm text-gray-500 mt-2">
+                    Estimated number of days required to prepare the product for dispatch.
+                </p>
+            </div>
+
+            <div class="border-t border-gray-100"></div>
+
+            {{-- SHIPPING DIMENSIONS --}}
+            <div>
+                <div class="flex items-center gap-2 mb-4">
+                    <h4 class="text-sm font-semibold text-gray-900">
+                        Shipping Dimensions
+                    </h4>
+
+                    <x-help-tooltip width="w-80">
+                        <div class="space-y-2 leading-relaxed">
+                            <div class="font-semibold text-white">
+                                Shipping Dimensions
+                            </div>
+
+                            <div class="text-gray-200 text-sm">
+                                Укажите габариты и вес упаковки для расчёта доставки и логистики.
+                                Размеры упаковки могут отличаться от реальных размеров самого товара.
+                            </div>
+
+                            <ul class="text-gray-300 text-xs list-disc ml-4 space-y-1">
+                                <li>Length — длина упаковки в сантиметрах</li>
+                                <li>Width — ширина упаковки в сантиметрах</li>
+                                <li>Height — высота упаковки в сантиметрах</li>
+                                <li>Weight — вес упаковки в килограммах</li>
+                                <li>Package Type — тип упаковки: коробка, паллет, комплект и т.д.</li>
+                            </ul>
+
+                            <div class="text-blue-400 text-xs border-t border-gray-700 pt-2">
+                                Note:
+                                <span class="text-white/80">
+                                    транспортировочные габариты могут включать упаковку и защитные материалы,
+                                    поэтому могут быть больше реальных размеров товара.
+                                </span>
+                            </div>
+                        </div>
+                    </x-help-tooltip>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {{-- Length --}}
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">
+                            Length (cm)
+                        </label>
+
+                        <input
+                            type="number"
+                            step="0.001"
+                            name="shipping[length]"
+                            value="{{ old('shipping.length', isset($product->shippingDimensions->length) ? number_format($product->shippingDimensions->length, 1, '.', '') : '') }}"
+                            class="input w-full">
+                    </div>
+
+                    {{-- Width --}}
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">
+                            Width (cm)
+                        </label>
+
+                        <input
+                            type="number"
+                            step="0.001"
+                            name="shipping[width]"
+                            value="{{ old('shipping.width', $product->shippingDimensions->width ?? '') }}"
+                            class="input w-full">
+                    </div>
+
+                    {{-- Height --}}
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">
+                            Height (cm)
+                        </label>
+
+                        <input
+                            type="number"
+                            step="0.001"
+                            name="shipping[height]"
+                            value="{{ old('shipping.height', $product->shippingDimensions->height ?? '') }}"
+                            class="input w-full">
+                    </div>
+
+                    {{-- Weight --}}
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">
+                            Weight (kg)
+                        </label>
+
+                        <input
+                            type="number"
+                            step="0.001"
+                            name="shipping[weight]"
+                            value="{{ old('shipping.weight', $product->shippingDimensions->weight ?? '') }}"
+                            class="input w-full">
+                    </div>
+
+                    {{-- Package Type --}}
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">
+                            Package Type
+                        </label>
+
+                        <select name="shipping[package_type]" class="input w-full">
+                            <option value="box"
+                                {{ old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'box' ? 'selected' : '' }}>
+                                Box
+                            </option>
+
+                            <option value="pallet"
+                                {{ old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'pallet' ? 'selected' : '' }}>
+                                Pallet
+                            </option>
+
+                            <option value="set"
+                                {{ old('shipping.package_type', $product->shippingDimensions->package_type ?? '') == 'set' ? 'selected' : '' }}>
+                                Set
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <p class="text-sm text-gray-500 mt-3">
+                    Укажите габариты и вес упаковки для расчёта доставки и логистики.
+                </p>
+            </div>
+
+            <div class="border-t border-gray-100"></div>
+
+            {{-- SHIPPING TEMPLATES --}}
+            <div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-4">
+                    Shipping Templates
+                </h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {{-- Platform / Default Shipping --}}
+                    @if($defaultShippingTemplate)
+                        <label
+                            class="border-2 border-dashed border-gray-400 rounded-xl p-4 cursor-pointer transition
+                                hover:border-gray-700 hover:bg-gray-100
+                                flex gap-3 items-start bg-gray-50 shadow-sm">
+
+                            <input
+                                type="hidden"
+                                name="shipping_templates[]"
+                                value="{{ $defaultShippingTemplate->id }}">
+
+                            <input
+                                type="checkbox"
+                                value="{{ $defaultShippingTemplate->id }}"
+                                class="mt-1"
+                                checked
+                                disabled>
+
+                            <div class="min-w-0">
+                                <div class="font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
+                                    {{ $defaultShippingTemplate->title }}
+
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">
+                                        Platform delivery
+                                    </span>
+                                </div>
+
+                                <div class="text-sm text-gray-600 mt-1">
+                                    {{ $defaultShippingTemplate->description }}
+                                </div>
+
+                                <div class="text-xs text-gray-500 mt-2">
+                                    Price and delivery time will be calculated after order placement
+                                </div>
+                            </div>
+                        </label>
+                    @endif
+
+                    {{-- Seller Shipping Templates --}}
+                    @foreach($shippingTemplates as $template)
+                        <label
+                            class="border rounded-xl p-4 cursor-pointer transition
+                                hover:border-blue-600 hover:bg-blue-50
+                                flex gap-3 items-start bg-white shadow-sm">
+
+                            <input
+                                type="checkbox"
+                                name="shipping_templates[]"
+                                value="{{ $template->id }}"
+                                class="mt-1"
+                                {{ in_array($template->id, old('shipping_templates', $productShippingIds ?? [])) ? 'checked' : '' }}>
+
+                            <div class="min-w-0">
+                                <div class="font-semibold text-gray-900">
+                                    {{ $template->title }}
+                                </div>
+
+                                <div class="text-sm text-gray-600 mt-1">
+                                    {{ $template->description }}
+                                </div>
+
+                                <div class="text-xs text-gray-500 mt-2">
+                                    Seller-defined delivery
+                                </div>
+                            </div>
+                        </label>
+                    @endforeach
+
+                </div>
+
+                <p class="text-sm text-gray-500 mt-3">
+                    Выберите один или несколько шаблонов доставки.
+                    Если выбран только платформенный вариант — заказ будет ожидать расчёта доставки.
+                </p>
+            </div>
+
+            <div class="border-t border-gray-100"></div>
+
+            {{-- COUNTRY OF ORIGIN --}}
+            <div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-3">
+                    Country of Origin
+                </h4>
+
+                <div class="max-w-md">
+                    <select name="country_id" class="input w-full">
+                        <option value="">Select a country</option>
+
+                        @foreach($countries as $country)
+                            <option
+                                value="{{ $country->id }}"
+                                {{ old('country_id', $product->country_id) == $country->id ? 'selected' : '' }}>
+                                {{ $country->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <p class="text-sm text-gray-500 mt-2">
+                    Выберите страну, из которой поставляется товар.
+                </p>
+            </div>
+
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        @foreach($paymentMethods as $paymentMethod)
+    {{-- =====================================================
+        PAYMENT
+    ====================================================== --}}
 
+    <div class="mt-6 bg-white border border-gray-200 rounded shadow-sm overflow-hidden">
+
+        {{-- HEADER --}}
+        <div class="px-6 py-5 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+
+                
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">
+                        Payment
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Configure accepted payment methods and payment terms.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="p-6 space-y-8">
+
+           {{-- PAYMENT METHODS --}}
+@php
+    $defaultPaymentMethodIds = collect($defaultPaymentMethodIds ?? [])
+        ->map(fn ($id) => (int) $id)
+        ->values()
+        ->all();
+
+    $productPaymentMethodIds = collect($productPaymentMethodIds ?? [])
+        ->map(fn ($id) => (int) $id)
+        ->values()
+        ->all();
+
+    $selectedPaymentMethodIds = collect(
+        old(
+            'payment_methods',
+            !empty($productPaymentMethodIds)
+                ? $productPaymentMethodIds
+                : $defaultPaymentMethodIds
+        )
+    )
+        ->map(fn ($id) => (int) $id)
+        ->values()
+        ->all();
+
+    $selectedPaymentMethods = $paymentMethods->filter(
+        fn ($method) => in_array(
+            (int) $method->id,
+            $selectedPaymentMethodIds,
+            true
+        )
+    );
+@endphp
+
+<div>
+    <div class="mb-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <h4 class="text-sm font-semibold text-gray-900">
+                Payment Methods
+            </h4>
+
+            <x-help-tooltip width="w-80">
+                <div class="space-y-2 leading-relaxed">
+                    <div class="font-semibold text-white">Payment Methods</div>
+                    <div class="text-sm text-gray-200">
+                        Выберите способы оплаты, доступные покупателю для этого товара.
+                    </div>
+                    <div class="text-xs text-gray-300">
+                        Можно выбрать несколько способов оплаты. Изменения применяются только к этому товару.
+                    </div>
+                </div>
+            </x-help-tooltip>
+        </div>
+
+        <button
+            type="button"
+            data-open-payment-methods
+            class="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+        >
+            Manage
+        </button>
+    </div>
+
+    <div id="product-payment-method-summary" class="space-y-2">
+        @forelse ($selectedPaymentMethods as $paymentMethod)
             @php
                 $translation = $paymentMethod->translations
                     ->firstWhere('locale', app()->getLocale());
@@ -254,958 +413,1422 @@
                 }
             @endphp
 
-            <label
-                class="border rounded-xl p-4 cursor-pointer transition
-                    hover:border-blue-600 hover:bg-blue-50
-                    flex gap-3 items-start bg-white shadow-sm">
+            <div
+                data-summary-method="{{ $paymentMethod->id }}"
+                class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3"
+            >
+                <div class="flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white p-2">
+                    @if (!empty($paymentMethod->icon_svg))
+                        <div class="flex h-full w-full items-center justify-center [&>svg]:h-auto [&>svg]:w-auto [&>svg]:max-h-full [&>svg]:max-w-full">
+                            {!! $paymentMethod->icon_svg !!}
+                        </div>
+                    @else
+                        <svg class="h-6 w-6 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                            <rect x="3" y="5" width="18" height="14" rx="2"/>
+                            <path d="M3 10h18"/>
+                        </svg>
+                    @endif
+                </div>
 
-                <input
-                    type="checkbox"
-                    name="payment_methods[]"
-                    value="{{ $paymentMethod->id }}"
-                    class="mt-1"
-                    {{ in_array(
-                        $paymentMethod->id,
-                        old('payment_methods', $productPaymentMethodIds ?? [])
-                    ) ? 'checked' : '' }}
-                >
-
-                <div>
-                    <div class="font-semibold text-gray-900">
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm font-semibold text-emerald-800">
                         {{ $translation?->name ?? $paymentMethod->code }}
                     </div>
 
-                    @if($translation?->description)
-                        <div class="text-sm text-gray-600 mt-1">
+                    @if ($translation?->description)
+                        <div class="mt-0.5 line-clamp-2 text-xs text-gray-500">
                             {{ $translation->description }}
                         </div>
                     @endif
                 </div>
 
-            </label>
-
-        @endforeach
-
+                <svg class="h-5 w-5 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.415l-7.2 7.2a1 1 0 01-1.415 0l-3.5-3.5a1 1 0 011.415-1.415l2.793 2.793 6.492-6.493a1 1 0 011.415 0z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+        @empty
+            <p class="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500">
+                No payment methods selected.
+            </p>
+        @endforelse
     </div>
 
-    <p class="text-sm text-gray-500 mt-3">
-        Выберите один или несколько способов оплаты, доступных для этого товара.
+    <p class="mt-3 text-sm text-gray-500">
+        Manage payment methods available for this product.
     </p>
-
+    
 </div>
 
+{{-- Product Payment Methods Drawer Overlay --}}
+<div
+    id="product-payment-methods-overlay"
+    class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300"
+></div>
 
-
-
-{{-- Payment Terms --}}
-<div class="mt-6 bg-white border rounded-xl p-6">
-
-    <div class="flex items-center gap-2 mb-4">
-        <h3 class="text-xl font-semibold">Payment Terms</h3>
-
-        <x-help-tooltip width="w-80">
-            <div class="space-y-2 leading-relaxed">
-                <div class="font-semibold text-white">
-                    Payment Terms
-                </div>
-
-                <div class="text-gray-200 text-sm">
-                    Укажите условия оплаты, доступные для этого товара.
-                </div>
-
-                <div class="text-gray-300 text-xs">
-                    Например: 100% предоплата, 50/50, Net 30 или условия по договорённости.
-                </div>
+{{-- Product Payment Methods Drawer --}}
+<aside
+    id="product-payment-methods-drawer"
+    class="fixed right-0 top-0 z-50 flex h-full w-full max-w-[460px] translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="product-payment-methods-title"
+    aria-hidden="true"
+>
+    {{-- Header --}}
+    <div class="border-b bg-gray-50 px-6 py-5">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 id="product-payment-methods-title" class="text-lg font-semibold text-gray-900">
+                    Payment Methods
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Choose payment methods for this product.
+                </p>
             </div>
-        </x-help-tooltip>
+
+            <button
+                type="button"
+                data-close-product-payment-methods
+                class="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close"
+            >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="m18 6-12 12M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {{-- Search --}}
+    <div class="border-b border-gray-200 px-6 py-4">
+        <label for="product-payment-method-search" class="sr-only">
+            Search payment methods
+        </label>
 
-        @foreach($paymentTerms as $paymentTerm)
+        <div class="relative">
+            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="m16 16 4 4"/>
+            </svg>
 
+            <input
+                id="product-payment-method-search"
+                type="search"
+                placeholder="Search payment methods..."
+                class="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+            >
+        </div>
+
+        <p class="mt-3 text-xs text-gray-400">
+            <span id="product-payment-method-count">{{ count($selectedPaymentMethodIds) }}</span> selected
+        </p>
+    </div>
+
+    {{-- List --}}
+    <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div id="product-payment-method-options" class="space-y-3">
+            @foreach ($paymentMethods as $paymentMethod)
+                @php
+                    $translation = $paymentMethod->translations
+                        ->firstWhere('locale', app()->getLocale());
+
+                    if (!$translation) {
+                        $translation = $paymentMethod->translations
+                            ->firstWhere('locale', 'en');
+                    }
+
+                    $methodName = $translation?->name ?? $paymentMethod->code;
+                    $methodDescription = $translation?->description ?? '';
+                    $isSelected = in_array(
+                        (int) $paymentMethod->id,
+                        $selectedPaymentMethodIds,
+                        true
+                    );
+                @endphp
+
+                <label
+                    data-product-payment-option
+                    data-option-search="{{ \Illuminate\Support\Str::lower($methodName . ' ' . $methodDescription) }}"
+                    class="flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition {{ $isSelected ? 'border-emerald-200 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50' }}"
+                >
+                    <input
+                        type="checkbox"
+                        name="payment_methods[]"
+                        value="{{ $paymentMethod->id }}"
+                        data-product-payment-checkbox
+                        class="sr-only"
+                        @checked($isSelected)
+                    >
+
+                    <div class="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white p-2">
+                        @if (!empty($paymentMethod->icon_svg))
+                            <div class="flex h-full w-full items-center justify-center [&>svg]:h-auto [&>svg]:w-auto [&>svg]:max-h-full [&>svg]:max-w-full">
+                                {!! $paymentMethod->icon_svg !!}
+                            </div>
+                        @else
+                            <svg class="h-6 w-6 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                                <rect x="3" y="5" width="18" height="14" rx="2"/>
+                                <path d="M3 10h18"/>
+                            </svg>
+                        @endif
+                    </div>
+
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-semibold {{ $isSelected ? 'text-emerald-800' : 'text-gray-900' }}">
+                            {{ $methodName }}
+                        </div>
+
+                        @if ($methodDescription)
+                            <div class="mt-0.5 line-clamp-2 text-xs leading-relaxed text-gray-500">
+                                {{ $methodDescription }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <span
+                        data-product-payment-check
+                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition {{ $isSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-gray-300 bg-white text-transparent' }}"
+                    >
+                        <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.415l-7.2 7.2a1 1 0 01-1.415 0l-3.5-3.5a1 1 0 011.415-1.415l2.793 2.793 6.492-6.493a1 1 0 011.415 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                </label>
+            @endforeach
+        </div>
+
+        <p id="product-payment-method-no-results" class="hidden py-8 text-center text-sm text-gray-400">
+            No matching payment methods found.
+        </p>
+    </div>
+
+    {{-- Footer --}}
+    <div class="flex items-center justify-between gap-4 border-t bg-white px-6 py-4">
+        <button
+            type="button"
+            data-close-product-payment-methods
+            class="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 transition hover:bg-gray-50"
+        >
+            Cancel
+        </button>
+
+        <button
+            type="button"
+            id="product-payment-methods-done"
+            class="rounded-lg bg-gray-900 px-4 py-2 text-sm text-white shadow-sm transition hover:bg-gray-800"
+        >
+            Done
+        </button>
+    </div>
+</aside>
+
+
+            <div class="border-t border-gray-100"></div>
+
+            
+{{-- PAYMENT TERMS --}}
+@php
+    $defaultPaymentTermIds = collect($defaultPaymentTermIds ?? [])
+        ->map(fn ($id) => (int) $id)
+        ->values()
+        ->all();
+
+    $productPaymentTermIds = collect($productPaymentTermIds ?? [])
+        ->map(fn ($id) => (int) $id)
+        ->values()
+        ->all();
+
+    $selectedPaymentTermId = (int) old(
+    'payment_term_id',
+    $productPaymentTermIds[0] ?? $defaultPaymentTermIds[0] ?? 0
+);
+
+$selectedPaymentTermIds = $selectedPaymentTermId
+    ? [$selectedPaymentTermId]
+    : [];
+
+    $selectedPaymentTerms = $paymentTerms->filter(
+        fn ($term) => in_array(
+            (int) $term->id,
+            $selectedPaymentTermIds,
+            true
+        )
+    );
+
+    $getPaymentTermTranslation = function ($paymentTerm) {
+        return $paymentTerm->translations->firstWhere('locale', app()->getLocale())
+            ?? $paymentTerm->translations->firstWhere('locale', 'en');
+    };
+@endphp
+
+<div class="mt-8">
+    <div class="mb-4 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <h4 class="text-sm font-semibold text-gray-900">
+                Payment Terms
+            </h4>
+
+            <x-help-tooltip width="w-80">
+                <div class="space-y-2 leading-relaxed">
+                    <div class="font-semibold text-white">Payment Terms</div>
+                    <div class="text-sm text-gray-200">
+                        Укажите условия оплаты, доступные для этого товара.
+                    </div>
+                    <div class="text-xs text-gray-300">
+                        Например: 100% предоплата, 50/50, Net 30 или условия по договорённости.
+                    </div>
+                </div>
+            </x-help-tooltip>
+        </div>
+
+        <button
+            type="button"
+            data-open-payment-terms
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+        >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+            </svg>
+            Manage
+        </button>
+    </div>
+
+    <div
+        id="selected-payment-terms"
+        class="space-y-2"
+        data-empty-text="No payment terms selected"
+    >
+        @forelse($selectedPaymentTerms as $paymentTerm)
             @php
-                $translation = $paymentTerm->translations
-                    ->firstWhere('locale', app()->getLocale());
-
-                if (!$translation) {
-                    $translation = $paymentTerm->translations
-                        ->firstWhere('locale', 'en');
-                }
+                $translation = $getPaymentTermTranslation($paymentTerm);
             @endphp
 
-            <label
-                class="border rounded-xl p-4 cursor-pointer transition
-                    hover:border-blue-600 hover:bg-blue-50
-                    flex gap-3 items-start bg-white shadow-sm">
+            <div
+                class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3"
+                data-selected-term="{{ $paymentTerm->id }}"
+            >
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                    </svg>
+                </div>
 
-                <input
-                    type="checkbox"
-                    name="payment_terms[]"
-                    value="{{ $paymentTerm->id }}"
-                    class="mt-1"
-                    {{ in_array(
-                        $paymentTerm->id,
-                        old('payment_terms', $productPaymentTermIds ?? [])
-                    ) ? 'checked' : '' }}
-                >
-
-                <div>
-                    <div class="font-semibold text-gray-900">
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm font-medium text-gray-900" data-term-name>
                         {{ $translation?->name ?? $paymentTerm->code }}
                     </div>
 
                     @if($translation?->description)
-                        <div class="text-sm text-gray-600 mt-1">
+                        <div class="mt-0.5 text-xs text-gray-500" data-term-description>
                             {{ $translation->description }}
                         </div>
                     @endif
                 </div>
 
-            </label>
-
-        @endforeach
-
+                <svg class="h-5 w-5 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/>
+                </svg>
+            </div>
+        @empty
+            <div
+                class="rounded-xl border border-dashed border-gray-300 px-4 py-5 text-sm text-gray-500"
+                data-empty-terms
+            >
+                No payment terms selected
+            </div>
+        @endforelse
     </div>
 
-    <p class="text-sm text-gray-500 mt-3">
-        Выберите один или несколько вариантов условий оплаты.
+    <p class="mt-3 text-sm text-gray-500">
+        Выберите условия оплаты, доступные для этого товара.
     </p>
-
 </div>
 
-
-
-
-{{-- =========================================================
-    RETURNS & REFUNDS
-========================================================= --}}
-
-
-@php
-    /*
-     * ---------------------------------------------------------
-     * CURRENT PRODUCT RETURN POLICY
-     * ---------------------------------------------------------
-     */
-
-    $currentReturnPolicy = $productReturnPolicy ?? null;
-
-    $useSupplierDefault = old(
-        'use_supplier_default',
-        $currentReturnPolicy?->use_supplier_default ?? true
-    );
-
-    $selectedReturnPolicyId = old(
-        'return_policy_id',
-        $currentReturnPolicy?->return_policy_id
-    );
-
-
-    /*
-     * ---------------------------------------------------------
-     * TRANSLATION HELPER
-     * ---------------------------------------------------------
-     */
-
-    $returnPolicyTranslation = function ($policy) {
-        return $policy->translation(app()->getLocale())
-            ?? $policy->translation('en');
-    };
-
-
-    /*
-     * ---------------------------------------------------------
-     * SUPPLIER DEFAULT RETURN POLICY
-     * ---------------------------------------------------------
-     *
-     * The supplier default is stored separately from the product
-     * return policy.
-     *
-     * ProductReturnPolicy:
-     * - use_supplier_default = true
-     * - return_policy_id = NULL
-     *
-     * The actual default policy is taken from:
-     * supplier_return_policy_settings
-     */
-
-    $supplierDefaultPolicy = null;
-
-    if (!empty($supplierDefaultReturnPolicyId)) {
-        $supplierDefaultPolicy = collect($returnPolicies ?? [])
-            ->firstWhere('id', $supplierDefaultReturnPolicyId);
-    }
-
-
-    /*
-     * ---------------------------------------------------------
-     * SUPPLIER DEFAULT TRANSLATION
-     * ---------------------------------------------------------
-     */
-
-    $supplierDefaultPolicyTranslation = null;
-
-    if ($supplierDefaultPolicy) {
-        $supplierDefaultPolicyTranslation =
-            $returnPolicyTranslation($supplierDefaultPolicy);
-    }
-
-
-    /*
-     * ---------------------------------------------------------
-     * SUPPLIER DEFAULT DISPLAY DATA
-     * ---------------------------------------------------------
-     */
-
-    $supplierDefaultPolicyName =
-        $supplierDefaultPolicyTranslation?->name
-        ?: $supplierDefaultPolicy?->name;
-
-    $supplierDefaultPolicyDescription =
-        $supplierDefaultPolicyTranslation?->description
-        ?: null;
-
-
-    /*
-     * ---------------------------------------------------------
-     * SHIPPING PAYER LABEL
-     * ---------------------------------------------------------
-     */
-
-    $supplierDefaultShippingPayer = null;
-
-    if ($supplierDefaultPolicy?->return_shipping_payer) {
-
-        $supplierDefaultShippingPayer = match (
-            $supplierDefaultPolicy->return_shipping_payer
-        ) {
-            'buyer' => 'Buyer pays shipping',
-            'supplier' => 'Supplier pays shipping',
-            'depends_on_reason' => 'Shipping depends on reason',
-            default => $supplierDefaultPolicy->return_shipping_payer,
-        };
-    }
-@endphp
-
-
-
-
+{{-- PAYMENT TERMS DRAWER --}}
 <div
-    class="mt-8 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
-    x-data="{
-        useSupplierDefault: {{ $useSupplierDefault ? 'true' : 'false' }},
-        selectedPolicyId: '{{ $selectedReturnPolicyId ?? '' }}'
-    }"
+    id="product-payment-terms-overlay"
+    class="fixed inset-0 z-50 hidden bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-300"
+></div>
+
+<aside
+    id="product-payment-terms-drawer"
+    class="fixed right-0 top-0 z-50 flex h-full w-full max-w-[460px] translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300"
+    aria-hidden="true"
+>
+    <div class="border-b border-gray-200 bg-gray-50 px-6 py-5">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Payment Terms
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Choose payment terms for this product.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                data-close-payment-terms
+                class="rounded-lg p-2 text-gray-500 transition hover:bg-gray-200 hover:text-gray-900"
+                aria-label="Close"
+            >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m18 6-12 12M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="mt-5">
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path stroke-linecap="round" d="m16 16 4 4"/>
+                </svg>
+
+                <input
+                    id="payment-terms-search"
+                    type="search"
+                    placeholder="Search payment terms..."
+                    class="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-100"
+                >
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+        <div id="payment-terms-options" class="space-y-2">
+            @foreach($paymentTerms as $paymentTerm)
+                @php
+                    $translation = $getPaymentTermTranslation($paymentTerm);
+                    $isSelected = in_array(
+                        (int) $paymentTerm->id,
+                        $selectedPaymentTermIds,
+                        true
+                    );
+                @endphp
+
+                <label
+                    data-term-option
+                    data-id="{{ $paymentTerm->id }}"
+                    data-name="{{ $translation?->name ?? $paymentTerm->code }}"
+                    data-description="{{ $translation?->description ?? '' }}"
+                    class="flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition {{ $isSelected ? 'border-emerald-200 bg-emerald-50' : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50' }}"
+                >
+                    <input
+    type="radio"
+    name="payment_term_id"
+    value="{{ $paymentTerm->id }}"
+    data-term-checkbox
+    class="h-4 w-4 border-gray-300 text-emerald-600 focus:ring-emerald-500"
+    {{ $isSelected ? 'checked' : '' }}
 >
 
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                        </svg>
+                    </span>
+
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-sm font-medium text-gray-900">
+                            {{ $translation?->name ?? $paymentTerm->code }}
+                        </span>
+
+                        @if($translation?->description)
+                            <span class="mt-0.5 block text-xs text-gray-500">
+                                {{ $translation->description }}
+                            </span>
+                        @endif
+                    </span>
+
+                    <svg
+                        data-term-indicator
+                        class="h-5 w-5 shrink-0 text-emerald-600 {{ $isSelected ? '' : 'invisible' }}"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/>
+                    </svg>
+                </label>
+            @endforeach
+        </div>
+
+        <p id="payment-terms-no-results" class="hidden py-8 text-center text-sm text-gray-500">
+            No payment terms found.
+        </p>
+    </div>
+
+    <div class="flex items-center justify-between gap-4 border-t border-gray-200 bg-white px-6 py-4">
+        <span class="text-sm text-gray-500">
+            <span id="payment-terms-selected-count">{{ count($selectedPaymentTermIds) }}</span>
+            selected
+        </span>
+
+        <div class="flex items-center gap-3">
+            <button
+                type="button"
+                data-close-payment-terms
+                class="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                data-done-payment-terms
+                class="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+            >
+                Done
+            </button>
+        </div>
+    </div>
+</aside>
+
+
+
+
+
+
+
+        </div>
+    </div>
+
+
     {{-- =====================================================
-        HEADER
+        RETURNS & REFUNDS
     ====================================================== --}}
 
-    <div class="px-6 py-5 border-b border-gray-100">
+    @php
+        $currentReturnPolicy = $productReturnPolicy ?? null;
 
-        <div class="flex items-start justify-between gap-5">
+        $useSupplierDefault = old(
+            'use_supplier_default',
+            $currentReturnPolicy?->use_supplier_default ?? true
+        );
 
-            <div>
+        $selectedReturnPolicyId = old(
+            'return_policy_id',
+            $currentReturnPolicy?->return_policy_id
+        );
 
-                <div class="flex items-center gap-2">
+        $returnPolicyTranslation = function ($policy) {
+            return $policy->translation(app()->getLocale())
+                ?? $policy->translation('en');
+        };
 
-                    <h3 class="font-bold text-[17px] leading-tight text-gray-900">
+        $supplierDefaultPolicy = null;
+
+        if (!empty($supplierDefaultReturnPolicyId)) {
+            $supplierDefaultPolicy = collect($returnPolicies ?? [])
+                ->firstWhere('id', $supplierDefaultReturnPolicyId);
+        }
+
+        $supplierDefaultPolicyTranslation = null;
+
+        if ($supplierDefaultPolicy) {
+            $supplierDefaultPolicyTranslation =
+                $returnPolicyTranslation($supplierDefaultPolicy);
+        }
+
+        $supplierDefaultPolicyName =
+            $supplierDefaultPolicyTranslation?->name
+            ?: $supplierDefaultPolicy?->name;
+
+        $supplierDefaultPolicyDescription =
+            $supplierDefaultPolicyTranslation?->description
+            ?: null;
+
+        $supplierDefaultShippingPayer = null;
+
+        if ($supplierDefaultPolicy?->return_shipping_payer) {
+            $supplierDefaultShippingPayer = match (
+                $supplierDefaultPolicy->return_shipping_payer
+            ) {
+                'buyer' => 'Buyer pays shipping',
+                'supplier' => 'Supplier pays shipping',
+                'depends_on_reason' => 'Shipping depends on reason',
+                default => $supplierDefaultPolicy->return_shipping_payer,
+            };
+        }
+    @endphp
+
+    <div
+        class="mt-6 bg-white border border-gray-200 rounded shadow-sm overflow-hidden"
+        x-data="{
+            useSupplierDefault: {{ $useSupplierDefault ? 'true' : 'false' }},
+            selectedPolicyId: '{{ $selectedReturnPolicyId ?? '' }}'
+        }">
+
+        {{-- HEADER --}}
+        <div class="px-6 py-5 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+
+                
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">
                         Returns & Refunds
                     </h3>
 
-                    <div
-                        class="w-5 h-5 rounded-full border border-gray-300 text-gray-500 flex items-center justify-center text-[11px] font-semibold"
-                        title="Choose how returns are handled for this product."
-                    >
-                        ?
-                    </div>
-
+                    <p class="mt-1 text-sm text-gray-500">
+                        Choose the return policy that applies to this product.
+                    </p>
                 </div>
 
-                <p class="mt-1.5 text-sm leading-relaxed text-gray-500">
-                    Choose the return policy that applies to this product.
-                </p>
-
             </div>
-
         </div>
 
-    </div>
+        <div class="p-6">
 
+            {{-- POLICY MODE --}}
+            <div class="space-y-3">
 
-    {{-- =====================================================
-        CONTENT
-    ====================================================== --}}
+                {{-- USE SUPPLIER DEFAULT --}}
+                <label
+                    class="block cursor-pointer"
+                    @click="
+                        useSupplierDefault = true;
+                        selectedPolicyId = '';
+                    ">
 
-    <div class="p-6">
-
-        {{-- =================================================
-            POLICY MODE
-        ================================================== --}}
-
-        <div class="space-y-3">
-
-            
-{{-- ---------------------------------------------
-    USE SUPPLIER DEFAULT
----------------------------------------------- --}}
-
-<label
-    class="block cursor-pointer"
-    @click="
-        useSupplierDefault = true;
-        selectedPolicyId = '';
-    "
->
-
-    <input
-        type="radio"
-        name="use_supplier_default"
-        value="1"
-        class="sr-only"
-        x-model="useSupplierDefault"
-        @checked($useSupplierDefault)
-    >
-
-
-    <div
-        class="rounded-xl border p-4 transition"
-        :class="useSupplierDefault
-            ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
-            : 'border-gray-200 bg-white hover:border-gray-300'"
-    >
-
-        <div class="flex items-start gap-3">
-
-            {{-- Radio indicator --}}
-
-            <div
-                class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
-                :class="useSupplierDefault
-                    ? 'border-gray-900'
-                    : 'border-gray-300'"
-            >
-
-                <div
-                    x-show="useSupplierDefault"
-                    class="w-2.5 h-2.5 rounded-full bg-gray-900"
-                ></div>
-
-            </div>
-
-
-            {{-- Content --}}
-
-            <div class="min-w-0 flex-1">
-
-                <div class="text-sm font-semibold text-gray-900">
-                    Use supplier default
-                </div>
-
-                <p class="mt-1 text-sm leading-relaxed text-gray-500">
-                    Use the default return policy configured for the supplier.
-                </p>
-
-
-                {{-- =============================================
-                    SUPPLIER DEFAULT POLICY
-                ============================================== --}}
-
-                @if($supplierDefaultPolicy)
+                    <input
+                        type="radio"
+                        name="use_supplier_default"
+                        value="1"
+                        class="sr-only"
+                        x-model="useSupplierDefault"
+                        @checked($useSupplierDefault)>
 
                     <div
-                        class="mt-4 rounded-xl border border-gray-200 bg-white p-3"
-                    >
+                        class="rounded-xl border p-4 transition"
+                        :class="useSupplierDefault
+                            ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                            : 'border-gray-200 bg-white hover:border-gray-300'">
 
-                        <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-3">
 
-                            <div class="min-w-0">
+                            <div
+                                class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                                :class="useSupplierDefault
+                                    ? 'border-gray-900'
+                                    : 'border-gray-300'">
 
                                 <div
-                                    class="text-[11px] font-semibold uppercase tracking-wide text-gray-400"
-                                >
-                                    Supplier default
+                                    x-show="useSupplierDefault"
+                                    class="w-2.5 h-2.5 rounded-full bg-gray-900">
+                                </div>
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+
+                                <div class="text-sm font-semibold text-gray-900">
+                                    Use supplier default
                                 </div>
 
-                                <div class="mt-1 text-sm font-semibold text-gray-900">
-                                    {{ $supplierDefaultPolicyName }}
-                                </div>
+                                <p class="mt-1 text-sm leading-relaxed text-gray-500">
+                                    Use the default return policy configured for the supplier.
+                                </p>
 
-                                @if($supplierDefaultPolicyDescription)
+                                @if($supplierDefaultPolicy)
 
-                                    <p class="mt-1 text-xs leading-relaxed text-gray-500">
-                                        {{ $supplierDefaultPolicyDescription }}
-                                    </p>
+                                    <div class="mt-4 rounded-xl border border-gray-200 bg-white p-3">
+
+                                        <div class="flex items-start justify-between gap-4">
+
+                                            <div class="min-w-0">
+
+                                                <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                                                    Supplier default
+                                                </div>
+
+                                                <div class="mt-1 text-sm font-semibold text-gray-900">
+                                                    {{ $supplierDefaultPolicyName }}
+                                                </div>
+
+                                                @if($supplierDefaultPolicyDescription)
+                                                    <p class="mt-1 text-xs leading-relaxed text-gray-500">
+                                                        {{ $supplierDefaultPolicyDescription }}
+                                                    </p>
+                                                @endif
+
+                                            </div>
+
+                                            <span class="shrink-0 rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500">
+                                                {{ $supplierDefaultPolicy->code }}
+                                            </span>
+
+                                        </div>
+
+                                        <div class="mt-3 flex flex-wrap items-center gap-2">
+
+                                            {{-- Return Window --}}
+                                            <span class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200">
+                                                @if($supplierDefaultPolicy->return_window_days !== null)
+                                                    {{ $supplierDefaultPolicy->return_window_days }} days
+                                                @else
+                                                    No time limit
+                                                @endif
+                                            </span>
+
+                                            {{-- Shipping Payer --}}
+                                            @if($supplierDefaultShippingPayer)
+                                                <span class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200">
+                                                    {{ $supplierDefaultShippingPayer }}
+                                                </span>
+                                            @endif
+
+                                            {{-- Restocking Fee --}}
+                                            @if($supplierDefaultPolicy->restocking_fee_enabled)
+                                                <span class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200">
+                                                    Restocking
+
+                                                    @if($supplierDefaultPolicy->restocking_fee_percent !== null)
+                                                        {{ $supplierDefaultPolicy->restocking_fee_percent }}%
+                                                    @endif
+                                                </span>
+                                            @endif
+
+                                            {{-- Custom Products --}}
+                                            @if($supplierDefaultPolicy->custom_products_returnable)
+                                                <span class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200">
+                                                    Custom products allowed
+                                                </span>
+                                            @endif
+
+                                        </div>
+                                    </div>
+
+                                @else
+
+                                    <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                                        <div class="text-xs font-medium text-amber-700">
+                                            No supplier default return policy has been configured.
+                                        </div>
+                                    </div>
 
                                 @endif
 
                             </div>
+                        </div>
+                    </div>
+                </label>
 
 
-                            {{-- Policy code --}}
+                {{-- SELECT POLICY FOR THIS PRODUCT --}}
+                <label
+                    class="block cursor-pointer"
+                    @click="useSupplierDefault = false">
 
-                            <span
-                                class="shrink-0 rounded-lg bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500"
-                            >
-                                {{ $supplierDefaultPolicy->code }}
-                            </span>
+                    <input
+                        type="radio"
+                        name="use_supplier_default"
+                        value="0"
+                        class="sr-only"
+                        x-model="useSupplierDefault"
+                        @checked(!$useSupplierDefault)>
+
+                    <div
+                        class="rounded-xl border p-4 transition"
+                        :class="!useSupplierDefault
+                            ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                            : 'border-gray-200 bg-white hover:border-gray-300'">
+
+                        <div class="flex items-start gap-3">
+
+                            <div
+                                class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                                :class="!useSupplierDefault
+                                    ? 'border-gray-900'
+                                    : 'border-gray-300'">
+
+                                <div
+                                    x-show="!useSupplierDefault"
+                                    class="w-2.5 h-2.5 rounded-full bg-gray-900">
+                                </div>
+                            </div>
+
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-gray-900">
+                                    Select policy for this product
+                                </div>
+
+                                <p class="mt-1 text-sm leading-relaxed text-gray-500">
+                                    Choose a specific platform return policy for this product.
+                                </p>
+                            </div>
 
                         </div>
+                    </div>
+                </label>
+
+            </div>
 
 
-                        {{-- =====================================
-                            POLICY SUMMARY
-                        ====================================== --}}
+            {{-- PLATFORM POLICIES --}}
+            <div
+                x-show="!useSupplierDefault"
+                x-transition
+                class="mt-5">
 
-                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                <div class="mb-3">
+                    <div class="text-sm font-semibold text-gray-900">
+                        Platform return policies
+                    </div>
 
-                            {{-- Return window --}}
+                    <p class="mt-1 text-sm text-gray-500">
+                        Select one of the available platform policies.
+                    </p>
+                </div>
 
-                            @if($supplierDefaultPolicy->return_window_days !== null)
+                @if(isset($returnPolicies) && $returnPolicies->count())
 
-                                <span
-                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
-                                >
-                                    {{ $supplierDefaultPolicy->return_window_days }} days
-                                </span>
+                    <div class="space-y-3">
 
-                            @else
+                        @foreach($returnPolicies as $policy)
 
-                                <span
-                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
-                                >
-                                    No time limit
-                                </span>
+                            @php
+                                $translation = $returnPolicyTranslation($policy);
 
-                            @endif
+                                $policyName = $translation?->name
+                                    ?? $policy->name;
 
+                                $policyDescription = $translation?->description
+                                    ?? null;
+                            @endphp
 
-                            {{-- Shipping payer --}}
+                            <label class="block cursor-pointer">
 
-                            @if($supplierDefaultShippingPayer)
+                                <input
+                                    type="radio"
+                                    name="return_policy_id"
+                                    value="{{ $policy->id }}"
+                                    class="sr-only"
+                                    x-model="selectedPolicyId">
 
-                                <span
-                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
-                                >
-                                    {{ $supplierDefaultShippingPayer }}
-                                </span>
+                                <div
+                                    class="rounded-xl border p-4 transition"
+                                    :class="selectedPolicyId == '{{ $policy->id }}'
+                                        ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                                        : 'border-gray-200 bg-white hover:border-gray-300'">
 
-                            @endif
+                                    <div class="flex items-start justify-between gap-4">
 
+                                        <div class="flex items-start gap-3 min-w-0">
 
-                            {{-- Restocking fee --}}
+                                            <div
+                                                class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                                                :class="selectedPolicyId == '{{ $policy->id }}'
+                                                    ? 'border-gray-900'
+                                                    : 'border-gray-300'">
 
-                            @if($supplierDefaultPolicy->restocking_fee_enabled)
+                                                <div
+                                                    x-show="selectedPolicyId == '{{ $policy->id }}'"
+                                                    class="w-2.5 h-2.5 rounded-full bg-gray-900">
+                                                </div>
+                                            </div>
 
-                                <span
-                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
-                                >
+                                            <div class="min-w-0">
 
-                                    Restocking
+                                                <div class="flex items-center gap-2 flex-wrap">
 
-                                    @if($supplierDefaultPolicy->restocking_fee_percent !== null)
-                                        {{ $supplierDefaultPolicy->restocking_fee_percent }}%
-                                    @endif
+                                                    <span class="text-sm font-semibold text-gray-900">
+                                                        {{ $policyName }}
+                                                    </span>
 
-                                </span>
+                                                    @if($policy->is_default)
+                                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                                                            Default
+                                                        </span>
+                                                    @endif
 
-                            @endif
+                                                </div>
 
+                                                @if($policyDescription)
+                                                    <p class="mt-1 text-sm leading-relaxed text-gray-500">
+                                                        {{ $policyDescription }}
+                                                    </p>
+                                                @endif
 
-                            {{-- Custom products --}}
+                                            </div>
+                                        </div>
 
-                            @if($supplierDefaultPolicy->custom_products_returnable)
+                                        @if($policy->code)
+                                            <span class="shrink-0 text-[11px] font-medium text-gray-400">
+                                                {{ $policy->code }}
+                                            </span>
+                                        @endif
 
-                                <span
-                                    class="inline-flex items-center rounded-lg bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600 border border-gray-200"
-                                >
-                                    Custom products allowed
-                                </span>
+                                    </div>
 
-                            @endif
+                                    {{-- POLICY SUMMARY --}}
+                                    <div class="mt-4 pt-4 border-t border-gray-100">
 
-                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+                                            {{-- Return Window --}}
+                                            <div>
+                                                <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                    Return Window
+                                                </div>
+
+                                                <div class="mt-1 text-sm font-medium text-gray-800">
+                                                    @if($policy->return_window_days !== null)
+                                                        {{ $policy->return_window_days }} days
+                                                    @else
+                                                        No return window
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Return Shipping --}}
+                                            <div>
+                                                <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                    Return Shipping
+                                                </div>
+
+                                                <div class="mt-1 text-sm font-medium text-gray-800">
+                                                    @switch($policy->return_shipping_payer)
+                                                        @case('buyer')
+                                                            Buyer
+                                                            @break
+
+                                                        @case('supplier')
+                                                            Supplier
+                                                            @break
+
+                                                        @case('depends_on_reason')
+                                                            Depends on reason
+                                                            @break
+
+                                                        @default
+                                                            Not specified
+                                                    @endswitch
+                                                </div>
+                                            </div>
+
+                                            {{-- Restocking Fee --}}
+                                            <div>
+                                                <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                    Restocking Fee
+                                                </div>
+
+                                                <div class="mt-1 text-sm font-medium text-gray-800">
+                                                    @if($policy->restocking_fee_enabled)
+                                                        {{ rtrim(rtrim(number_format((float) $policy->restocking_fee_percent, 2), '0'), '.') }}%
+                                                    @else
+                                                        None
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Custom Products --}}
+                                            <div>
+                                                <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                    Custom Products
+                                                </div>
+
+                                                <div class="mt-1 text-sm font-medium text-gray-800">
+                                                    {{ $policy->custom_products_returnable ? 'Allowed' : 'Not allowed' }}
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        {{-- RETURN REASONS --}}
+                                        @if($policy->reasons->count())
+                                            <div class="mt-4">
+
+                                                <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                    Return Reasons
+                                                </div>
+
+                                                <div class="mt-2 flex flex-wrap gap-1.5">
+                                                    @foreach($policy->reasons as $reason)
+
+                                                        @php
+                                                            $reasonTranslation = $reason->translation(app()->getLocale())
+                                                                ?? $reason->translation('en');
+                                                        @endphp
+
+                                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                                                            {{ $reasonTranslation?->name ?? $reason->code }}
+                                                        </span>
+
+                                                    @endforeach
+                                                </div>
+
+                                            </div>
+                                        @endif
+
+                                        {{-- RESOLUTIONS --}}
+                                        @if($policy->resolutions->count())
+                                            <div class="mt-4">
+
+                                                <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
+                                                    Resolutions
+                                                </div>
+
+                                                <div class="mt-2 flex flex-wrap gap-1.5">
+                                                    @foreach($policy->resolutions as $resolution)
+
+                                                        @php
+                                                            $resolutionTranslation = $resolution->translation(app()->getLocale())
+                                                                ?? $resolution->translation('en');
+                                                        @endphp
+
+                                                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                                                            {{ $resolutionTranslation?->name ?? $resolution->code }}
+                                                        </span>
+
+                                                    @endforeach
+                                                </div>
+
+                                            </div>
+                                        @endif
+
+                                    </div>
+                                </div>
+                            </label>
+
+                        @endforeach
 
                     </div>
 
                 @else
 
-                    {{-- =========================================
-                        NO DEFAULT CONFIGURED
-                    ========================================== --}}
-
-                    <div
-                        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5"
-                    >
-
-                        <div class="text-xs font-medium text-amber-700">
-                            No supplier default return policy has been configured.
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4">
+                        <div class="text-sm font-medium text-gray-800">
+                            No return policies are currently available.
                         </div>
 
+                        <p class="mt-1 text-sm text-gray-500">
+                            Please contact the platform administrator to configure return policies.
+                        </p>
                     </div>
 
                 @endif
 
-            </div>
-
-        </div>
-
-    </div>
-
-</label>
-
-
-
-
-            {{-- ---------------------------------------------
-                SELECT POLICY FOR THIS PRODUCT
-            ---------------------------------------------- --}}
-
-            <label
-                class="block cursor-pointer"
-                @click="useSupplierDefault = false"
-            >
-
-                <input
-                    type="radio"
-                    name="use_supplier_default"
-                    value="0"
-                    class="sr-only"
-                    x-model="useSupplierDefault"
-                    @checked(!$useSupplierDefault)
-                >
-
-                <div
-                    class="rounded-xl border p-4 transition"
-                    :class="!useSupplierDefault
-                        ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
-                        : 'border-gray-200 bg-white hover:border-gray-300'"
-                >
-
-                    <div class="flex items-start gap-3">
-
-                        {{-- Radio indicator --}}
-
-                        <div
-                            class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
-                            :class="!useSupplierDefault
-                                ? 'border-gray-900'
-                                : 'border-gray-300'"
-                        >
-
-                            <div
-                                x-show="!useSupplierDefault"
-                                class="w-2.5 h-2.5 rounded-full bg-gray-900"
-                            ></div>
-
-                        </div>
-
-
-                        {{-- Content --}}
-
-                        <div class="min-w-0">
-
-                            <div class="text-sm font-semibold text-gray-900">
-                                Select policy for this product
-                            </div>
-
-                            <p class="mt-1 text-sm leading-relaxed text-gray-500">
-                                Choose a specific platform return policy for this product.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </label>
-
-        </div>
-
-
-        {{-- =================================================
-            PLATFORM POLICIES
-        ================================================== --}}
-
-        <div
-            x-show="!useSupplierDefault"
-            x-transition
-            class="mt-5"
-        >
-
-            <div class="mb-3">
-
-                <div class="text-sm font-semibold text-gray-900">
-                    Platform return policies
-                </div>
-
-                <p class="mt-1 text-sm text-gray-500">
-                    Select one of the available platform policies.
-                </p>
-
-            </div>
-
-
-            @if(isset($returnPolicies) && $returnPolicies->count())
-
-                <div class="space-y-3">
-
-                    @foreach($returnPolicies as $policy)
-
-                        @php
-                            $translation = $returnPolicyTranslation($policy);
-
-                            $policyName = $translation?->name
-                                ?? $policy->name;
-
-                            $policyDescription = $translation?->description
-                                ?? null;
-                        @endphp
-
-
-                        <label class="block cursor-pointer">
-
-                            <input
-                                type="radio"
-                                name="return_policy_id"
-                                value="{{ $policy->id }}"
-                                class="sr-only"
-                                x-model="selectedPolicyId"
-                            >
-
-                            <div
-                                class="rounded-xl border p-4 transition"
-                                :class="selectedPolicyId == '{{ $policy->id }}'
-                                    ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
-                                    : 'border-gray-200 bg-white hover:border-gray-300'"
-                            >
-
-                                <div class="flex items-start justify-between gap-4">
-
-                                    <div class="flex items-start gap-3 min-w-0">
-
-                                        {{-- Radio indicator --}}
-
-                                        <div
-                                            class="mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
-                                            :class="selectedPolicyId == '{{ $policy->id }}'
-                                                ? 'border-gray-900'
-                                                : 'border-gray-300'"
-                                        >
-
-                                            <div
-                                                x-show="selectedPolicyId == '{{ $policy->id }}'"
-                                                class="w-2.5 h-2.5 rounded-full bg-gray-900"
-                                            ></div>
-
-                                        </div>
-
-
-                                        <div class="min-w-0">
-
-                                            <div class="flex items-center gap-2 flex-wrap">
-
-                                                <span class="text-sm font-semibold text-gray-900">
-                                                    {{ $policyName }}
-                                                </span>
-
-                                                @if($policy->is_default)
-
-                                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
-                                                        Default
-                                                    </span>
-
-                                                @endif
-
-                                            </div>
-
-
-                                            @if($policyDescription)
-
-                                                <p class="mt-1 text-sm leading-relaxed text-gray-500">
-                                                    {{ $policyDescription }}
-                                                </p>
-
-                                            @endif
-
-                                        </div>
-
-                                    </div>
-
-
-                                    @if($policy->code)
-
-                                        <span class="shrink-0 text-[11px] font-medium text-gray-400">
-                                            {{ $policy->code }}
-                                        </span>
-
-                                    @endif
-
-                                </div>
-
-
-                                {{-- =========================================
-                                    POLICY SUMMARY
-                                ========================================== --}}
-
-                                <div class="mt-4 pt-4 border-t border-gray-100">
-
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-
-                                        {{-- Return Window --}}
-
-                                        <div>
-
-                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
-                                                Return Window
-                                            </div>
-
-                                            <div class="mt-1 text-sm font-medium text-gray-800">
-
-                                                @if($policy->return_window_days !== null)
-
-                                                    {{ $policy->return_window_days }} days
-
-                                                @else
-
-                                                    No return window
-
-                                                @endif
-
-                                            </div>
-
-                                        </div>
-
-
-                                        {{-- Shipping --}}
-
-                                        <div>
-
-                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
-                                                Return Shipping
-                                            </div>
-
-                                            <div class="mt-1 text-sm font-medium text-gray-800">
-
-                                                @switch($policy->return_shipping_payer)
-
-                                                    @case('buyer')
-                                                        Buyer
-                                                        @break
-
-                                                    @case('supplier')
-                                                        Supplier
-                                                        @break
-
-                                                    @case('depends_on_reason')
-                                                        Depends on reason
-                                                        @break
-
-                                                    @default
-                                                        Not specified
-
-                                                @endswitch
-
-                                            </div>
-
-                                        </div>
-
-
-                                        {{-- Restocking Fee --}}
-
-                                        <div>
-
-                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
-                                                Restocking Fee
-                                            </div>
-
-                                            <div class="mt-1 text-sm font-medium text-gray-800">
-
-                                                @if($policy->restocking_fee_enabled)
-
-                                                    {{ rtrim(rtrim(number_format((float) $policy->restocking_fee_percent, 2), '0'), '.') }}%
-
-                                                @else
-
-                                                    None
-
-                                                @endif
-
-                                            </div>
-
-                                        </div>
-
-
-                                        {{-- Custom Products --}}
-
-                                        <div>
-
-                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
-                                                Custom Products
-                                            </div>
-
-                                            <div class="mt-1 text-sm font-medium text-gray-800">
-
-                                                {{ $policy->custom_products_returnable ? 'Allowed' : 'Not allowed' }}
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    {{-- =====================================
-                                        REASONS
-                                    ====================================== --}}
-
-                                    @if($policy->reasons->count())
-
-                                        <div class="mt-4">
-
-                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
-                                                Return Reasons
-                                            </div>
-
-                                            <div class="mt-2 flex flex-wrap gap-1.5">
-
-                                                @foreach($policy->reasons as $reason)
-
-                                                    @php
-                                                        $reasonTranslation = $reason->translation(app()->getLocale())
-                                                            ?? $reason->translation('en');
-                                                    @endphp
-
-                                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                                                        {{ $reasonTranslation?->name ?? $reason->code }}
-                                                    </span>
-
-                                                @endforeach
-
-                                            </div>
-
-                                        </div>
-
-                                    @endif
-
-
-                                    {{-- =====================================
-                                        RESOLUTIONS
-                                    ====================================== --}}
-
-                                    @if($policy->resolutions->count())
-
-                                        <div class="mt-4">
-
-                                            <div class="text-[11px] uppercase tracking-wide font-semibold text-gray-400">
-                                                Resolutions
-                                            </div>
-
-                                            <div class="mt-2 flex flex-wrap gap-1.5">
-
-                                                @foreach($policy->resolutions as $resolution)
-
-                                                    @php
-                                                        $resolutionTranslation = $resolution->translation(app()->getLocale())
-                                                            ?? $resolution->translation('en');
-                                                    @endphp
-
-                                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                                                        {{ $resolutionTranslation?->name ?? $resolution->code }}
-                                                    </span>
-
-                                                @endforeach
-
-                                            </div>
-
-                                        </div>
-
-                                    @endif
-
-                                </div>
-
-                            </div>
-
-                        </label>
-
-                    @endforeach
-
-                </div>
-
-            @else
-
-                <div class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4">
-
-                    <div class="text-sm font-medium text-gray-800">
-                        No return policies are currently available.
-                    </div>
-
-                    <p class="mt-1 text-sm text-gray-500">
-                        Please contact the platform administrator to configure return policies.
+                @error('return_policy_id')
+                    <p class="mt-2 text-sm text-red-600">
+                        {{ $message }}
                     </p>
+                @enderror
 
-                </div>
-
-            @endif
-
-
-            @error('return_policy_id')
-
-                <p class="mt-2 text-sm text-red-600">
-                    {{ $message }}
-                </p>
-
-            @enderror
+            </div>
 
         </div>
-
     </div>
 
-</div>
 
-
-
-
-
-
+    {{-- =====================================================
+        NAVIGATION & ACTIONS
+    ====================================================== --}}
 
     <div class="flex justify-between mt-6">
 
-    <a href="{{ route('supplier.products.edit-step', [$product->id, 7]) }}"
-       class="mt-4 bg-gray-50 border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded">
-        Previous
-    </a>
+        <a href="{{ route('supplier.products.edit-step', [$product->id, 7]) }}"
+            class="mt-4 bg-gray-50 border border-gray-300 hover:bg-gray-100 text-gray-700 px-6 py-2 rounded">
+            Previous
+        </a>
 
-    <div class="flex gap-3">
+        <div class="flex gap-3">
 
-        <button
-            type="submit"
-            form="productForm"
-            formaction="{{ route('supplier.products.save-draft', $product->id) }}"
-            formmethod="POST"
-            onclick="document.getElementById('productForm').querySelector('[name=_method]')?.setAttribute('disabled', 'disabled');"
-            class="mt-4 bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-50">
-            Save
-        </button>
+            <button
+                type="submit"
+                form="productForm"
+                formaction="{{ route('supplier.products.save-draft', $product->id) }}"
+                formmethod="POST"
+                class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-500">
+                Save
+            </button>
 
-        <button
-            type="submit"
-            form="productForm"
-            formaction="{{ route('supplier.products.publish', $product->id) }}"
-            formmethod="POST"
-            onclick="document.getElementById('productForm').querySelector('[name=_method]')?.setAttribute('disabled', 'disabled');"
-            class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-500">
-            Publish
-        </button>
-
+        </div>
     </div>
-</div>
 
 </form>
 
 
 
-</form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const overlay = document.getElementById('product-payment-methods-overlay');
+    const drawer = document.getElementById('product-payment-methods-drawer');
+    const search = document.getElementById('product-payment-method-search');
+    const options = document.getElementById('product-payment-method-options');
+    const count = document.getElementById('product-payment-method-count');
+    const noResults = document.getElementById('product-payment-method-no-results');
+    const summary = document.getElementById('product-payment-method-summary');
+    const openButton = document.querySelector('[data-open-payment-methods]');
+    const doneButton = document.getElementById('product-payment-methods-done');
+
+    if (!overlay || !drawer || !options || !summary) return;
+
+    let previousFocus = null;
+
+    function getCheckboxes() {
+        return Array.from(options.querySelectorAll('[data-product-payment-checkbox]'));
+    }
+
+    function updateOption(checkbox) {
+        const row = checkbox.closest('[data-product-payment-option]');
+        const check = row.querySelector('[data-product-payment-check]');
+        const name = row.querySelector('.text-sm.font-semibold');
+        const selected = checkbox.checked;
+
+        row.classList.toggle('border-emerald-200', selected);
+        row.classList.toggle('bg-emerald-50', selected);
+        row.classList.toggle('border-gray-200', !selected);
+        row.classList.toggle('bg-white', !selected);
+        row.classList.toggle('hover:border-gray-300', !selected);
+        row.classList.toggle('hover:bg-gray-50', !selected);
+
+        name.classList.toggle('text-emerald-800', selected);
+        name.classList.toggle('text-gray-900', !selected);
+
+        check.classList.toggle('border-emerald-600', selected);
+        check.classList.toggle('bg-emerald-600', selected);
+        check.classList.toggle('text-white', selected);
+        check.classList.toggle('border-gray-300', !selected);
+        check.classList.toggle('bg-white', !selected);
+        check.classList.toggle('text-transparent', !selected);
+    }
+
+    function updateCount() {
+        count.textContent = getCheckboxes().filter(input => input.checked).length;
+    }
+
+    function updateSummary() {
+        summary.replaceChildren();
+
+        const selected = getCheckboxes().filter(input => input.checked);
+
+        if (!selected.length) {
+            const empty = document.createElement('p');
+            empty.className = 'rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500';
+            empty.textContent = 'No payment methods selected.';
+            summary.appendChild(empty);
+            return;
+        }
+
+        selected.forEach(input => {
+            const row = input.closest('[data-product-payment-option]');
+            const name = row.querySelector('.text-sm.font-semibold').textContent.trim();
+            const description = row.querySelector('.mt-0\\.5')?.textContent.trim() || '';
+            const icon = row.querySelector('.flex.h-12.w-16')?.cloneNode(true);
+
+            const item = document.createElement('div');
+            item.dataset.summaryMethod = input.value;
+            item.className = 'flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3';
+
+            if (icon) item.appendChild(icon);
+
+            const text = document.createElement('div');
+            text.className = 'min-w-0 flex-1';
+
+            const title = document.createElement('div');
+            title.className = 'text-sm font-semibold text-emerald-800';
+            title.textContent = name;
+            text.appendChild(title);
+
+            if (description) {
+                const detail = document.createElement('div');
+                detail.className = 'mt-0.5 line-clamp-2 text-xs text-gray-500';
+                detail.textContent = description;
+                text.appendChild(detail);
+            }
+
+            item.appendChild(text);
+
+            const tick = document.createElement('span');
+            tick.className = 'text-emerald-600';
+            tick.innerHTML = '<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.415l-7.2 7.2a1 1 0 01-1.415 0l-3.5-3.5a1 1 0 011.415-1.415l2.793 2.793 6.492-6.493a1 1 0 011.415 0z" clip-rule="evenodd"/></svg>';
+            item.appendChild(tick);
+
+            summary.appendChild(item);
+        });
+    }
+
+    function openDrawer() {
+        previousFocus = document.activeElement;
+        overlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            drawer.classList.remove('translate-x-full');
+            drawer.setAttribute('aria-hidden', 'false');
+            search?.focus();
+        });
+    }
+
+    function closeDrawer() {
+        drawer.classList.add('translate-x-full');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.classList.add('opacity-0');
+
+        window.setTimeout(() => {
+            overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            previousFocus?.focus?.();
+        }, 300);
+    }
+
+    getCheckboxes().forEach(input => {
+    updateOption(input);
+
+    input.addEventListener('change', () => {
+        if (input.checked) {
+            getCheckboxes().forEach(other => {
+                updateOption(other);
+            });
+        }
+
+        updateCount();
+        updateSummary();
+    });
+});
+
+    openButton?.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
+
+    document.querySelectorAll('[data-close-product-payment-methods]').forEach(button => {
+        button.addEventListener('click', closeDrawer);
+    });
+
+    doneButton?.addEventListener('click', closeDrawer);
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && drawer.getAttribute('aria-hidden') === 'false') {
+            closeDrawer();
+        }
+    });
+
+    search?.addEventListener('input', () => {
+        const query = search.value.trim().toLocaleLowerCase();
+        let visibleCount = 0;
+
+        options.querySelectorAll('[data-product-payment-option]').forEach(row => {
+            const visible = (row.dataset.optionSearch || '').includes(query);
+            row.classList.toggle('hidden', !visible);
+            if (visible) visibleCount++;
+        });
+
+        noResults?.classList.toggle('hidden', visibleCount > 0);
+    });
+
+    updateCount();
+    updateSummary();
+
+    
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const overlay = document.getElementById('product-payment-terms-overlay');
+    const drawer = document.getElementById('product-payment-terms-drawer');
+    const search = document.getElementById('payment-terms-search');
+    const options = document.getElementById('payment-terms-options');
+    const count = document.getElementById('payment-terms-selected-count');
+    const noResults = document.getElementById('payment-terms-no-results');
+    const summary = document.getElementById('selected-payment-terms');
+    const openButton = document.querySelector('[data-open-payment-terms]');
+    const doneButton = document.querySelector('[data-done-payment-terms]');
+
+    if (!overlay || !drawer || !options || !summary || !openButton) {
+        console.warn('Payment Terms drawer: required elements not found.');
+        return;
+    }
+
+    let previousFocus = null;
+    let closeTimer = null;
+
+    const getInputs = () =>
+        Array.from(options.querySelectorAll('[data-term-checkbox]'));
+
+    function updateOption(input) {
+        const row = input.closest('[data-term-option]');
+        if (!row) return;
+
+        const indicator = row.querySelector('[data-term-indicator]');
+        const selected = input.checked;
+
+        row.classList.toggle('border-emerald-200', selected);
+        row.classList.toggle('bg-emerald-50', selected);
+        row.classList.toggle('border-gray-200', !selected);
+        row.classList.toggle('bg-white', !selected);
+        row.classList.toggle('hover:border-gray-300', !selected);
+        row.classList.toggle('hover:bg-gray-50', !selected);
+
+        indicator?.classList.toggle('invisible', !selected);
+    }
+
+    function updateAllOptions() {
+        getInputs().forEach(updateOption);
+    }
+
+    function updateCount() {
+        if (count) {
+            count.textContent = getInputs().filter(input => input.checked).length;
+        }
+    }
+
+    function updateSummary() {
+        summary.replaceChildren();
+
+        const selected = getInputs().filter(input => input.checked);
+
+        if (!selected.length) {
+            const empty = document.createElement('div');
+            empty.className =
+                'rounded-xl border border-dashed border-gray-300 px-4 py-5 text-sm text-gray-500';
+            empty.textContent =
+                summary.dataset.emptyText || 'No payment terms selected';
+
+            summary.appendChild(empty);
+            return;
+        }
+
+        selected.forEach(input => {
+            const row = input.closest('[data-term-option]');
+            if (!row) return;
+
+            const name = row.dataset.name || input.value;
+            const description = row.dataset.description || '';
+
+            const item = document.createElement('div');
+            item.dataset.selectedTerm = input.value;
+            item.className =
+                'flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3';
+
+            const icon = document.createElement('div');
+            icon.className =
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600';
+            icon.innerHTML = `
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.7">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                </svg>
+            `;
+
+            const text = document.createElement('div');
+            text.className = 'min-w-0 flex-1';
+
+            const title = document.createElement('div');
+            title.className = 'text-sm font-medium text-gray-900';
+            title.textContent = name;
+            text.appendChild(title);
+
+            if (description) {
+                const detail = document.createElement('div');
+                detail.className = 'mt-0.5 text-xs text-gray-500';
+                detail.textContent = description;
+                text.appendChild(detail);
+            }
+
+            const tick = document.createElement('span');
+            tick.className = 'shrink-0 text-emerald-600';
+            tick.innerHTML = `
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="m5 12 4 4L19 6"/>
+                </svg>
+            `;
+
+            item.append(icon, text, tick);
+            summary.appendChild(item);
+        });
+    }
+
+    function syncSelectionUI() {
+        updateAllOptions();
+        updateCount();
+        updateSummary();
+    }
+
+    function openDrawer() {
+        if (closeTimer) {
+            clearTimeout(closeTimer);
+            closeTimer = null;
+        }
+
+        previousFocus = document.activeElement;
+
+        overlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            drawer.classList.remove('translate-x-full');
+            drawer.setAttribute('aria-hidden', 'false');
+            search?.focus();
+        });
+    }
+
+    function closeDrawer() {
+        if (drawer.getAttribute('aria-hidden') === 'true') return;
+
+        drawer.classList.add('translate-x-full');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.classList.add('opacity-0');
+
+        closeTimer = window.setTimeout(() => {
+            overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            previousFocus?.focus?.();
+            closeTimer = null;
+        }, 300);
+    }
+
+    // Initialize selection styling.
+    syncSelectionUI();
+
+    // Radio selection: refresh every row when the selected term changes.
+    getInputs().forEach(input => {
+        input.addEventListener('change', () => {
+            syncSelectionUI();
+        });
+    });
+
+    openButton.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
+
+    drawer.querySelectorAll('[data-close-payment-terms]').forEach(button => {
+        button.addEventListener('click', closeDrawer);
+    });
+
+    doneButton?.addEventListener('click', closeDrawer);
+
+    document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape' &&
+            drawer.getAttribute('aria-hidden') === 'false'
+        ) {
+            closeDrawer();
+        }
+    });
+
+    search?.addEventListener('input', () => {
+        const query = search.value.trim().toLocaleLowerCase();
+        let visibleCount = 0;
+
+        options.querySelectorAll('[data-term-option]').forEach(row => {
+            const name = row.dataset.name || '';
+            const description = row.dataset.description || '';
+            const text = `${name} ${description}`.toLocaleLowerCase();
+            const visible = text.includes(query);
+
+            row.classList.toggle('hidden', !visible);
+
+            if (visible) visibleCount++;
+        });
+
+        noResults?.classList.toggle('hidden', visibleCount > 0);
+    });
+});
+</script>

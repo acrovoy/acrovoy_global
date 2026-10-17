@@ -32,6 +32,7 @@ use App\Domain\Product\Actions\UpdateProductCountryShippingAction;
 use App\Domain\Product\Actions\UpdateProductVariantAction;
 use App\Domain\Product\Actions\AttachProductVariantAction;
 use App\Domain\Product\Actions\CreateProductEditingCopyAction;
+use App\Domain\Product\Actions\DuplicateProductAction;
 
 /* === MODELS === */
 use App\Models\Product;
@@ -80,6 +81,7 @@ class ProductController extends Controller
     ) {}
 
     
+
 public function index(Request $request, ProductListQueryService $service)
 {
     $this->authorize('viewAny', Product::class);
@@ -99,9 +101,12 @@ public function index(Request $request, ProductListQueryService $service)
         'sort' => [
             'nullable',
             'string',
-            'in:newest,oldest,name_asc,name_desc,status',
+            'in:position,newest,oldest,name_asc,name_desc,status',
         ],
     ]);
+
+    // Manual product order is the default.
+    $filters['sort'] = $filters['sort'] ?? 'position';
 
     $products = $service->getSupplierProducts(
         $supplierId,
@@ -133,7 +138,7 @@ public function index(Request $request, ProductListQueryService $service)
         'warehouses' => $warehouses,
         'categories' => $categories,
         'search' => $filters['search'] ?? '',
-        'sort' => $filters['sort'] ?? 'newest',
+        'sort' => $filters['sort'],
         'status' => $filters['status'] ?? '',
         'categoryFilter' => $filters['category'] ?? '',
         'userFilter' => $filters['user'] ?? '',
@@ -144,6 +149,7 @@ public function index(Request $request, ProductListQueryService $service)
         'productLimit' => $statistics['productLimit'],
     ]);
 }
+
 
 
 
@@ -910,6 +916,10 @@ public function index(Request $request, ProductListQueryService $service)
 ) {
     $this->authorize('update', $product);
 
+    $validated = $request->validate([
+    'lead_time' => ['sometimes', 'nullable', 'integer', 'min:0'],
+]);
+
     /*
     |--------------------------------------------------------------------------
     | SHIPPING DIMENSIONS
@@ -965,8 +975,10 @@ public function index(Request $request, ProductListQueryService $service)
     */
 
     $product->paymentTerms()->sync(
-        $request->input('payment_terms', [])
-    );
+    $request->filled('payment_term_id')
+        ? [(int) $request->input('payment_term_id')]
+        : []
+);
 
     /*
     |--------------------------------------------------------------------------
@@ -1021,7 +1033,20 @@ public function index(Request $request, ProductListQueryService $service)
         ]
     );
 
+    /*
+    |--------------------------------------------------------------------------
+    | SAVE LEAD TIME
+    |--------------------------------------------------------------------------
+    */
+
+    if (array_key_exists('lead_time', $validated)) {
+        $product->lead_time = $validated['lead_time'];
+        $product->save();
+    }
+
     return null;
+
+    
 }
 
     public function updateStock(Request $request, Product $product)
@@ -1448,5 +1473,186 @@ public function bulkArchive(Request $request)
         'ids' => $ids,
     ]);
 }
+
+
+
+public function unpublish(Product $product)
+{
+    $entity = $this->context->entity();
+
+    // Make sure the product belongs to the active supplier.
+    abort_unless(
+        (int) $product->supplier_id === (int) $entity->getKey(),
+        404
+    );
+
+    $this->authorize('update', $product);
+
+    // Only approved products can be unpublished.
+    if ($product->status !== 'approved') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only published products can be unpublished.',
+        ], 422);
+    }
+
+    // Do not unpublish while an editing copy is active.
+    $hasEditingCopy = Product::query()
+        ->where('supplier_id', $entity->getKey())
+        ->where('original_product_id', $product->id)
+        ->whereIn('status', ['draft', 'pending', 'rejected'])
+        ->exists();
+
+    if ($hasEditingCopy) {
+        return response()->json([
+            'success' => false,
+            'message' => 'This product cannot be unpublished while an editing copy exists.',
+        ], 422);
+    }
+
+    $product->update([
+        'status' => 'draft',
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Product unpublished successfully.',
+        'id' => $product->id,
+    ]);
+}
+
+
+protected static function booted(): void
+{
+    // Сохрани существующие обработчики модели, если они уже есть.
+
+    static::created(function (Product $product): void {
+        // Editing copies do not get an independent list position.
+        if (
+            $product->original_product_id !== null
+            || $product->status === 'archived'
+        ) {
+            return;
+        }
+
+        DB::transaction(function () use ($product): void {
+            $otherIds = DB::table('products')
+                ->where('supplier_id', $product->supplier_id)
+                ->whereNull('original_product_id')
+                ->where('status', '!=', 'archived')
+                ->where('id', '!=', $product->id)
+                ->lockForUpdate()
+                ->pluck('id');
+
+            if ($otherIds->isNotEmpty()) {
+                DB::table('products')
+                    ->whereIn('id', $otherIds)
+                    ->increment('sort_order');
+            }
+
+            DB::table('products')
+                ->where('id', $product->id)
+                ->update(['sort_order' => 1]);
+        });
+
+        $product->sort_order = 1;
+    });
+}
+
+
+
+public function moveToTop(Product $product)
+{
+    $entity = $this->context->entity();
+    $supplierId = (int) $entity->getKey();
+
+    abort_unless(
+        (int) $product->supplier_id === $supplierId
+            && $product->original_product_id === null,
+        404
+    );
+
+    $this->authorize('update', $product);
+
+    if ($product->status === 'archived') {
+    return redirect()
+        ->back()
+        ->with('error', 'Archived products cannot be reordered.');
+}
+
+    DB::transaction(function () use ($product, $supplierId) {
+        $ids = Product::query()
+            ->where('supplier_id', $supplierId)
+            ->whereNull('original_product_id')
+            ->where('status', '!=', 'archived')
+            ->orderBy('sort_order')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (!in_array((int) $product->id, $ids, true)) {
+            abort(404);
+        }
+
+        // Remove the selected product from its current position.
+        $ids = array_values(array_filter(
+            $ids,
+            fn ($id) => $id !== (int) $product->id
+        ));
+
+        // Move it to the first position.
+        array_unshift($ids, (int) $product->id);
+
+        // Rewrite sequential positions: 1, 2, 3, ...
+        foreach ($ids as $index => $id) {
+            DB::table('products')
+                ->where('id', $id)
+                ->update([
+                    'sort_order' => $index + 1,
+                ]);
+        }
+    });
+
+    return redirect()
+    ->back()
+    ->with('success', 'Product moved to the top of the list.');
+}
+
+
+
+public function duplicate(
+    Product $product,
+    DuplicateProductAction $action
+) {
+    $entity = $this->context->entity();
+
+    abort_unless(
+        (int) $product->supplier_id === (int) $entity->getKey()
+            && $product->original_product_id === null,
+        404
+    );
+
+    $this->authorize('update', $product);
+
+    $copy = $action->execute(
+        $product,
+        (int) auth()->id()
+    );
+
+    return redirect()
+        ->route('supplier.products.edit-step', [
+            'product' => $copy->id,
+            'step' => 1,
+        ])
+        ->with(
+            'success',
+            'Product copied successfully. Review the new draft before publishing.'
+        );
+}
+
+
 
 }

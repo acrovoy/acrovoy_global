@@ -35,6 +35,8 @@
 
         'buyer.profile.show' => '<circle cx="12" cy="8" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>',
 
+        'supplier.payments.index' => '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+
         'supplier.profile.show' => '<circle cx="12" cy="8" r="4"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>',
 
         'supplier.products.create' => '<path d="M12 5v14M5 12h14"/>',

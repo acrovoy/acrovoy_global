@@ -176,9 +176,18 @@ class MenuService
             ],
             [
                 'type' => 'link',
+                'label' => 'Payments',
+                'route' => 'supplier.payments.index',
+            ],
+
+            [
+                'type' => 'link',
                 'label' => 'Return Policies',
                 'route' => 'supplier.return-policies.index',
             ],
+
+           
+            
 
             // Company
             ['type' => 'header', 'label' => 'Company'],

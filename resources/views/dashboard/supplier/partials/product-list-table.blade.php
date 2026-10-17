@@ -259,40 +259,62 @@
             </div>
 
             {{-- Sort --}}
-            <div>
-                <label
-                    for="filter-sort"
-                    class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-600"
-                >
-                    Sort by
-                </label>
+<div>
+    <label
+        for="filter-sort"
+        class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-600"
+    >
+        Sort by
+    </label>
 
-                <select
-                    id="filter-sort"
-                    name="sort"
-                    class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-200"
-                >
-                    <option value="newest" @selected(($sort ?? 'newest') === 'newest')>
-                        Newest first
-                    </option>
+    <select
+        id="filter-sort"
+        name="sort"
+        class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 focus:border-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-200"
+    >
+        <option
+            value="position"
+            @selected(($sort ?? 'position') === 'position')
+        >
+            Custom order
+        </option>
 
-                    <option value="oldest" @selected(($sort ?? '') === 'oldest')>
-                        Oldest first
-                    </option>
+        <option
+            value="newest"
+            @selected(($sort ?? 'position') === 'newest')
+        >
+            Newest first
+        </option>
 
-                    <option value="name_asc" @selected(($sort ?? '') === 'name_asc')>
-                        Name: A–Z
-                    </option>
+        <option
+            value="oldest"
+            @selected(($sort ?? '') === 'oldest')
+        >
+            Oldest first
+        </option>
 
-                    <option value="name_desc" @selected(($sort ?? '') === 'name_desc')>
-                        Name: Z–A
-                    </option>
+        <option
+            value="name_asc"
+            @selected(($sort ?? '') === 'name_asc')
+        >
+            Name: A–Z
+        </option>
 
-                    <option value="status" @selected(($sort ?? '') === 'status')>
-                        By status
-                    </option>
-                </select>
-            </div>
+        <option
+            value="name_desc"
+            @selected(($sort ?? '') === 'name_desc')
+        >
+            Name: Z–A
+        </option>
+
+        <option
+            value="status"
+            @selected(($sort ?? '') === 'status')
+        >
+            By status
+        </option>
+    </select>
+</div>
 
             {{-- Creator --}}
             <div class="sm:col-span-2 xl:col-span-4">
@@ -388,7 +410,7 @@
             Delete selected
         </button>
     </div>
-
+<div class="overflow-x-auto">
     <table class="w-full border-collapse text-sm">
 
         <thead class="bg-gray-50 border-b">
@@ -434,7 +456,7 @@
         @endif
 
         <img
-            src="{{ $image ?? asset('images/no-image.png') }}"
+            src="{{ $image ?? asset('images/no-photo.png') }}"
             alt="{{ $product->name }}"
             class="h-12 w-12 shrink-0 rounded object-cover"
         >
@@ -520,12 +542,56 @@
         </svg>
 
         <span
-            id="product-update-tooltip-{{ $product->id }}"
-            role="tooltip"
-            class="invisible pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-52 rounded-lg bg-stone-800 px-3 py-2 text-left text-xs font-normal leading-5 text-white opacity-0 shadow-lg transition duration-150 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100"
-        >
-            Product card update is pending.
+    id="product-update-tooltip-{{ $product->id }}"
+    role="tooltip"
+    class="invisible pointer-events-none absolute right-0 z-50 w-64 rounded-lg bg-stone-800 px-3 py-2 text-left text-xs font-normal leading-5 text-white opacity-0 shadow-lg transition duration-150 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 {{ $loop->first ? 'top-full mt-2' : 'bottom-full mb-2' }}"
+>
+    @if ($product->status === 'pending')
+
+        <span class="mb-1 block font-semibold text-amber-200">
+            Awaiting moderation
         </span>
+        You clicked Publish and submitted this product for review.
+        It will become visible in the catalog after approval.
+
+    @elseif ($product->editingCopy?->status === 'pending')
+
+        <span class="mb-1 block font-semibold text-amber-200">
+            Changes awaiting moderation
+        </span>
+        You submitted an updated version for review.
+        The currently published version remains visible to buyers
+        until the changes are approved.
+
+    @elseif (
+        $product->status === 'approved'
+        && $product->editingCopy?->status === 'draft'
+    )
+
+        <span class="mb-1 block font-semibold text-amber-200">
+            Editing in progress
+        </span>
+        This product is already published. You have saved changes
+        to a draft but have not clicked Publish yet.
+        Buyers still see the current published version.
+        Click Publish when your changes are ready for review.
+
+    @elseif ($product->editingCopy?->status === 'rejected')
+
+        <span class="mb-1 block font-semibold text-amber-200">
+            Changes rejected
+        </span>
+        The updated version was rejected during moderation.
+        The current published version remains unchanged.
+        Review the rejection reason, make corrections, and submit
+        the updated version again.
+
+    @else
+
+        A product update is in progress.
+
+    @endif
+</span>
     </span>
 @endif
 
@@ -557,42 +623,292 @@
             created {{ $product->created_at?->format('d M Y') }}
         </span>
 
-        {{-- Actions --}}
-        <div class="flex items-center justify-end gap-3 whitespace-nowrap text-sm">
-            <a
-                href="{{ route('product.show', $product->slug) }}"
-                target="_blank"
-                class="text-stone-700 transition hover:text-black hover:underline"
+        
+
+{{-- Compact product actions --}}
+<details class="product-actions-menu relative inline-block">
+
+    <summary
+        aria-label="Product actions"
+        title="More actions"
+        class="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-md border border-stone-200 bg-white text-stone-500 transition hover:border-stone-300 hover:bg-stone-50 hover:text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-300 [&::-webkit-details-marker]:hidden"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-3.5 w-3.5"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+        >
+            <circle cx="5" cy="12" r="1.5" />
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="19" cy="12" r="1.5" />
+        </svg>
+    </summary>
+
+    {{-- Fixed dropdown: positioned by the existing JavaScript --}}
+    <div
+        data-actions-dropdown
+        class="fixed z-[9999] w-40 overflow-hidden rounded-lg border border-stone-200 bg-white p-1 shadow-xl"
+    >
+        {{-- View --}}
+        <a
+            href="{{ route('product.show', $product->slug) }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-close-product-actions
+            class="flex items-center rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-50 hover:text-stone-950"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mr-2 h-4 w-4 shrink-0 text-stone-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
             >
-                View
-            </a>
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+                />
+                <circle cx="12" cy="12" r="2.5" />
+            </svg>
+            View
+        </a>
 
-            @if ($product->status !== 'pending')
+        @if ($product->status !== 'pending')
 
-                @if (!$product->editingCopy || $product->editingCopy->status !== 'pending')
-                    <a
-                        href="{{ $product->status === 'approved'
-                            ? route('supplier.products.edit-approved', $product->id)
-                            : route('supplier.products.edit-step', [$product->id, 1]) }}"
-                        class="text-blue-700 transition hover:text-blue-900 hover:underline"
+            @if (!$product->editingCopy || $product->editingCopy->status !== 'pending')
+                {{-- Edit --}}
+                <a
+                    href="{{ $product->status === 'approved'
+                        ? route('supplier.products.edit-approved', $product->id)
+                        : route('supplier.products.edit-step', [$product->id, 1]) }}"
+                    data-close-product-actions
+                    class="flex items-center rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-50 hover:text-stone-950"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="mr-2 h-4 w-4 shrink-0 text-stone-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
                     >
-                        Edit
-                    </a>
-                @endif
-
-                @if (!$product->editingCopy)
-                    <button
-                        type="button"
-                        class="delete-product text-red-700 transition hover:text-red-900 hover:underline"
-                        data-id="{{ $product->id }}"
-                        data-url="{{ route('supplier.products.archive', ['product' => $product->id]) }}"
-                    >
-                        Delete
-                    </button>
-                @endif
-
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m14 5 5 5M4 20l4.5-1 10-10a2.12 2.12 0 0 0-3-3l-10 10L4 20Z"
+                        />
+                    </svg>
+                    Edit
+                </a>
             @endif
-        </div>
+
+
+
+            
+{{-- Move product to top --}}
+@if (
+    $product->status !== 'archived'
+    && (int) $product->sort_order > 1
+)
+    <div class="my-1 border-t border-stone-100"></div>
+
+    <form
+        action="{{ route('supplier.products.move-to-top', ['product' => $product->id]) }}"
+        method="POST"
+        class="m-0"
+    >
+        @csrf
+
+        <button
+            type="submit"
+            data-close-product-actions
+            class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-50 hover:text-stone-950"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mr-2 h-4 w-4 shrink-0 text-stone-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 19V5m-6 6 6-6 6 6"
+                />
+            </svg>
+
+            Move to top
+        </button>
+    </form>
+@endif
+
+
+
+{{-- Copy product --}}
+<div class="my-1 border-t border-stone-100"></div>
+
+<form
+    action="{{ route('supplier.products.duplicate', ['product' => $product->id]) }}"
+    method="POST"
+    class="m-0"
+>
+    @csrf
+
+    <button
+        type="submit"
+        data-close-product-actions
+        class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-50 hover:text-stone-950"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="mr-2 h-4 w-4 shrink-0 text-stone-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+        >
+            <rect
+                x="8"
+                y="8"
+                width="12"
+                height="12"
+                rx="2"
+            />
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
+            />
+        </svg>
+
+        Copy
+    </button>
+</form>
+
+
+
+            
+{{-- Determine which product should be submitted for moderation --}}
+@php
+    $draftEditingCopy = $product->editingCopy?->status === 'draft'
+        ? $product->editingCopy
+        : null;
+
+    $publishTarget = $draftEditingCopy
+        ?? (
+            in_array($product->status, ['draft', 'rejected'], true)
+            && !$product->editingCopy
+                ? $product
+                : null
+        );
+@endphp
+
+{{-- Publish --}}
+@if ($publishTarget)
+    <div class="my-1 border-t border-stone-100"></div>
+
+    <button
+        type="button"
+        data-close-product-actions
+        class="publish-product flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-800"
+        data-id="{{ $publishTarget->id }}"
+        data-url="{{ route('supplier.products.publish', ['product' => $publishTarget->id]) }}"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="mr-2 h-4 w-4 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m5 12 4 4L19 6"
+            />
+        </svg>
+
+        Publish
+    </button>
+@endif
+
+
+
+             {{-- Unpublish --}}
+            @if ($product->status === 'approved' && !$product->editingCopy)
+                <button
+                    type="button"
+                    data-close-product-actions
+                    class="unpublish-product flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-stone-100 hover:text-stone-950"
+                    data-id="{{ $product->id }}"
+                    data-url="{{ route('supplier.products.unpublish', ['product' => $product->id]) }}"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="mr-2 h-4 w-4 shrink-0 text-stone-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M3 12a9 9 0 1 0 9-9M3 4v5h5"
+                        />
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 7v5l3 2"
+                        />
+                    </svg>
+
+                    Unpublish
+                </button>
+            @endif
+
+
+            @if (!$product->editingCopy)
+                <div class="my-1 border-t border-stone-100"></div>
+
+                {{-- Delete --}}
+                <button
+                    type="button"
+                    data-close-product-actions
+                    class="delete-product flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-red-700 transition hover:bg-red-50 hover:text-red-800"
+                    data-id="{{ $product->id }}"
+                    data-url="{{ route('supplier.products.archive', ['product' => $product->id]) }}"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="mr-2 h-4 w-4 shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M4 7h16M10 11v6m4-6v6M5.5 7l1 13h11l1-13M9 7V4h6v3"
+                        />
+                    </svg>
+                    Delete
+                </button>
+            @endif
+
+        @endif
+    </div>
+</details>
+
+
 
     </div>
 </td>
@@ -607,7 +923,7 @@
             @endforelse
         </tbody>
     </table>
-
+</div>
 </div>
 
 {{-- Stock Drawer --}}
@@ -1410,6 +1726,219 @@ document.addEventListener('DOMContentLoaded', () => {
         chevron.classList.toggle('rotate-180', nextExpanded);
     });
 });
+</script>
+
+<script>
+   
+
+document.addEventListener('DOMContentLoaded', () => {
+    const menus = document.querySelectorAll('.product-actions-menu');
+
+    function closeMenu(menu) {
+        menu.open = false;
+        menu.style.zIndex = '';
+    }
+
+    function positionMenu(menu) {
+        const trigger = menu.querySelector('summary');
+        const dropdown = menu.querySelector('[data-actions-dropdown]');
+
+        if (!trigger || !dropdown) {
+            return;
+        }
+
+        const rect = trigger.getBoundingClientRect();
+        const width = dropdown.offsetWidth;
+        const height = dropdown.offsetHeight;
+        const margin = 8;
+        const gap = 6;
+
+        let left = Math.min(
+            rect.right - width,
+            window.innerWidth - width - margin
+        );
+
+        left = Math.max(margin, left);
+
+        let top = rect.bottom + gap;
+
+        if (top + height > window.innerHeight - margin) {
+            top = rect.top - height - gap;
+        }
+
+        top = Math.max(
+            margin,
+            Math.min(top, window.innerHeight - height - margin)
+        );
+
+        dropdown.style.left = `${left}px`;
+        dropdown.style.top = `${top}px`;
+    }
+
+    menus.forEach((menu) => {
+        menu.addEventListener('toggle', () => {
+            if (menu.open) {
+                menu.style.zIndex = '9999';
+
+                requestAnimationFrame(() => positionMenu(menu));
+            } else {
+                menu.style.zIndex = '';
+            }
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        menus.forEach((menu) => {
+            const clickedAction = event.target.closest(
+                '[data-close-product-actions]'
+            );
+
+            if (!menu.contains(event.target) || clickedAction) {
+                closeMenu(menu);
+            }
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            menus.forEach((menu) => {
+                if (menu.open) {
+                    closeMenu(menu);
+                    menu.querySelector('summary')?.focus();
+                }
+            });
+        }
+    });
+
+    // Close menus when the page or a scrollable container scrolls.
+    window.addEventListener('scroll', () => {
+        menus.forEach((menu) => {
+            if (menu.open) {
+                closeMenu(menu);
+            }
+        });
+    }, true);
+
+    window.addEventListener('resize', () => {
+        menus.forEach((menu) => {
+            if (menu.open) {
+                closeMenu(menu);
+            }
+        });
+    });
+});
+
+</script>
+<script>
+    
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('.unpublish-product');
+
+    if (!button) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const url = button.dataset.url;
+
+    confirmModal.open({
+        title: 'Unpublish Product',
+        message: 'Are you sure you want to unpublish this product?',
+        description: 'The product will be removed from the public catalog and returned to draft status. You can edit it and publish it again later.',
+        confirmText: 'Unpublish Product',
+        cancelText: 'Cancel',
+
+        onConfirm: async () => {
+            button.disabled = true;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document
+                            .querySelector('meta[name="csrf-token"]')
+                            .getAttribute('content'),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(
+                        data.message || 'Failed to unpublish product.'
+                    );
+                }
+
+                window.location.reload();
+
+            } catch (error) {
+                console.error(error);
+
+                alert(
+                    error.message ||
+                    'An unexpected error occurred. Please try again.'
+                );
+            } finally {
+                button.disabled = false;
+            }
+        },
+    });
+});
+
+</script>
+
+<script>
+
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('.publish-product');
+
+    if (!button) {
+        return;
+    }
+
+    event.preventDefault();
+
+    confirmModal.open({
+        title: 'Publish Product',
+        message: 'Are you sure you want to publish this product?',
+        description: 'The product will be submitted for moderation and become visible in the public catalog after approval.',
+        confirmText: 'Submit for Review',
+        cancelText: 'Cancel',
+
+        onConfirm: () => {
+            const csrfToken = document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content');
+
+            if (!csrfToken) {
+                alert('Security token is missing. Please refresh the page.');
+                return;
+            }
+
+            const form = document.createElement('form');
+
+            form.method = 'POST';
+            form.action = button.dataset.url;
+            form.style.display = 'none';
+
+            const tokenInput = document.createElement('input');
+
+            tokenInput.type = 'hidden';
+            tokenInput.name = '_token';
+            tokenInput.value = csrfToken;
+
+            form.appendChild(tokenInput);
+            document.body.appendChild(form);
+
+            form.submit();
+        },
+    });
+});
+
+
 </script>
 
 

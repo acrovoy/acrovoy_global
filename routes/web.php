@@ -46,6 +46,7 @@ use App\Http\Controllers\SavedSupplierController;
 
 use App\Http\Controllers\Supplier\SupplierRfqController;
 use App\Http\Controllers\Supplier\SupplierReturnPolicyController;
+use App\Http\Controllers\Supplier\SupplierPaymentController;
 
 use App\Http\Controllers\Buyer\BuyerRfqController;
 use App\Http\Controllers\Buyer\RfqRequirementController;
@@ -200,6 +201,14 @@ Route::middleware('auth')->prefix('supplier')->group(function () {
         Route::delete('default', [SupplierReturnPolicyController::class, 'removeDefault'])->name('remove-default');
         Route::delete('{returnPolicy}', [SupplierReturnPolicyController::class, 'destroy'])->name('destroy');
     });
+
+    // PAYMENTS
+Route::prefix('payments')->name('supplier.payments.')->group(function () {
+    Route::get('/', [SupplierPaymentController::class, 'index'])->name('index');
+    Route::put('methods', [SupplierPaymentController::class, 'updateMethods'])->name('methods.update');
+    Route::patch('methods/{paymentMethod}/set-default', [SupplierPaymentController::class, 'setDefaultMethod'])->name('methods.set-default');
+    Route::put('term', [SupplierPaymentController::class, 'updateTerm'])->name('term.update');
+});
 
 
 
@@ -564,9 +573,12 @@ Route::middleware('auth')->prefix('dashboard/supplier')->name('supplier.')->grou
     Route::get('/products/{product}/edit-step/{step}', [ProductController::class, 'edit'])->name('products.edit-step');
     Route::put('/products/{product}/update-step1/{step}', [ProductController::class, 'update'])->name('products.update');
     Route::post('/products/{product}/publish', [ProductController::class, 'publish'])->name('products.publish');
-    Route::post('/products/{product}/save-draft', [ProductController::class, 'saveDraft'])->name('products.save-draft');
+    Route::put('/products/{product}/save-draft', [ProductController::class, 'saveDraft'])->name('products.save-draft');
     Route::get('/products/{product}/edit-approved', [ProductController::class, 'editApproved'])->name('products.edit-approved');
     Route::post('/products/{product}/archive', [ProductController::class, 'archive'])->name('products.archive');
+    Route::post('/products/{product}/unpublish', [ProductController::class, 'unpublish'])->name('products.unpublish');
+    Route::post('/products/{product}/move-to-top', [ProductController::class, 'moveToTop'])->name('products.move-to-top');
+    Route::post('/products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
 
     Route::get('/products/{product}/draft-preview', [ProductController::class, 'draftPreview'])->name('products.draft-preview');
     Route::post('/products/bulk-archive', [ProductController::class, 'bulkArchive'])->name('products.bulk-archive');

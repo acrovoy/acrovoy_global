@@ -22,50 +22,11 @@
         @include('product.partials.variant-editor')
 
     </div>
-    <div class="mt-6">
-
-    <h3 class="text-xl font-semibold mb-4">
-        Lead Time
-    </h3>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {{-- LEAD TIME --}}
-        <div>
-
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-                Lead Time
-            </label>
-
-            <div class="flex items-center gap-3">
-
-                <input
-                    type="number"
-                    name="lead_time"
-                    placeholder="e.g., 25"
-                    value="{{ old('lead_time', $product->lead_time) }}"
-                    class="w-full rounded-xl border border-gray-300
-                           px-4 py-3 text-sm
-                           focus:ring-2 focus:ring-black/10
-                           focus:border-black transition">
-
-                <span class="text-sm text-gray-500 whitespace-nowrap">
-                    day(s)
-                </span>
-
-            </div>
-
-        </div>
-
-        
-
-    </div>
-
-</div>
+    
 
 
 
-    <div class="flex justify-between mt-6">
+    <div class="flex justify-between mt-8">
 
         <a href="{{ route('supplier.products.edit-step', [$product->id, 6]) }}"
             class="mt-4 bg-gray-50 border border-gray-400 hover:bg-gray-200 text-gray-400 px-6 py-2 rounded hover:text-gray-600">
