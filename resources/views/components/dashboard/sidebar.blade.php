@@ -49,6 +49,8 @@
 
         'supplier.return-policies.index' => '<path d="M3 11a9 9 0 1 0 3-6.7L3 7"/><path d="M3 3v4h4"/>',
 
+        'supplier.team.index' => '<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M5 12h14M5 12v4M19 12v4"/>',
+
         'supplier.team.members' => '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><path d="M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/>',
 
         'supplier.team.invite' => '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M19 8v6M16 11h6"/>',

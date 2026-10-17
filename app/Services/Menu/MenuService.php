@@ -123,8 +123,8 @@ class MenuService
                 'route' => 'dashboard.home',
             ],
 
-            // Sales
-            ['type' => 'header', 'label' => 'Sales'],
+            // Sales & Projects
+            ['type' => 'header', 'label' => 'Sales & Projects'],
             [
                 'type' => 'link',
                 'label' => 'Orders',
@@ -166,8 +166,8 @@ class MenuService
                 'can' => ['salesAccess', User::class],
             ],
 
-            // Fulfillment
-            ['type' => 'header', 'label' => 'Fulfillment'],
+            // Shipping & Delivery
+            ['type' => 'header', 'label' => 'Shipping & Delivery'],
             [
                 'type' => 'link',
                 'label' => 'Shipping Center',
@@ -310,8 +310,8 @@ class MenuService
                 'route' => 'dashboard.home',
             ],
 
-            // Sales
-            ['type' => 'header', 'label' => 'Sales'],
+            // Shipping & Delivery
+            ['type' => 'header', 'label' => 'Shipping & Delivery'],
             [
                 'type' => 'link',
                 'label' => 'Orders',
@@ -348,8 +348,8 @@ class MenuService
                 'route' => 'supplier.materials.index',
             ],
 
-            // Fulfillment
-            ['type' => 'header', 'label' => 'Fulfillment'],
+            // Shipping & Delivery
+            ['type' => 'header', 'label' => 'Shipping & Delivery'],
             [
                 'type' => 'link',
                 'label' => 'Shipping Center',

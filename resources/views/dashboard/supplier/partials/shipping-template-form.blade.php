@@ -338,20 +338,71 @@ $selectedCourierId = old('courier_id', $shippingTemplate->courier_id ?? '');
                    placeholder="e.g. 3-5 days">
         </div>
 
-        {{-- DELIVERY DESTINATION --}}
-        <div class="bg-white border border-gray-200 rounded-xl p-5">
-            <div class="mb-5">
-                <h4 class="font-semibold text-gray-900">Delivery Destination</h4>
-                <p class="text-xs text-gray-500 mt-1">
-                    Select the regions or cities where this shipping template is available.
-                </p>
-            </div>
-
-            <x-location-tree
-                :locations="$countries"
-                :selectedLocations="old('locations', $selectedLocations)"
-            />
+{{-- DELIVERY DESTINATION --}}
+<div class="bg-white border border-gray-200 rounded-xl p-5">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+            <h4 class="font-semibold text-gray-900">Delivery Destination</h4>
+            <p class="mt-1 text-xs text-gray-500">
+                Select the regions or cities where this shipping template is available.
+            </p>
+            <p id="selected-destinations-count" class="mt-2 text-sm text-gray-600">
+                Selected locations: {{ count(old('locations', $selectedLocations)) }}
+            </p>
         </div>
+
+        <button
+            type="button"
+            id="open-form-destinations-drawer"
+            class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.7"
+                 aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/>
+                <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            Manage destinations
+        </button>
+    </div>
+
+    {{-- Selected destinations preview --}}
+    <div id="selected-destinations-list" class="mt-4 flex flex-wrap gap-2">
+        @foreach($countries as $country)
+            @if(in_array($country->id, old('locations', $selectedLocations)))
+                <span class="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700">
+                    {{ $country->name }}
+                </span>
+            @endif
+
+            @foreach($country->childrenRecursive ?? [] as $region)
+                @if(in_array($region->id, old('locations', $selectedLocations)))
+                    <span class="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700">
+                        {{ $region->name }}
+                    </span>
+                @endif
+            @endforeach
+        @endforeach
+
+        @if(count(old('locations', $selectedLocations)) === 0)
+            <p class="text-sm text-gray-400">
+                No destinations selected yet.
+            </p>
+        @endif
+    </div>
+
+    {{-- Selected location IDs submitted with the main form --}}
+    <div id="selected-destinations-inputs">
+        @foreach(old('locations', $selectedLocations) as $locationId)
+            <input type="hidden" name="locations[]" value="{{ $locationId }}">
+        @endforeach
+    </div>
+</div>
 
     </div>
 
@@ -370,6 +421,13 @@ $selectedCourierId = old('courier_id', $shippingTemplate->courier_id ?? '');
     </div>
 
 </form>
+
+
+@include('dashboard.supplier.shipping-templates.partials.form-destinations-drawer', [
+    'countries' => $countries,
+    'selectedLocations' => old('locations', $selectedLocations),
+])
+
 
 <style>
 .input {

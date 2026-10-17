@@ -40,12 +40,42 @@ class ShippingTemplateController extends Controller
             ->where('provider_id', $entity->getKey())
             ->get();
 
-        $templates = ShippingTemplate::with('locations', 'warehouse')
-            ->where('provider_type', $entity::class)
-            ->where('provider_id', $entity->getKey())
-            ->get();
+        $templates = ShippingTemplate::with([
+    'locations',
+    'warehouse',
+    'deliveryOptions.deliveryType',
+])
+    ->where('provider_type', $entity::class)
+    ->where('provider_id', $entity->getKey())
+    ->get();
 
-        return view('dashboard.supplier.shipping-templates.index', compact('templates', 'warehouses'));
+
+            $countries = Country::withCurrentTranslation()
+    ->orderBy('name')
+    ->get();
+
+$allLocations = Location::orderBy('id')->get();
+$children = $allLocations->groupBy('parent_id');
+
+$countries = $countries->map(function ($country) use ($allLocations, $children) {
+    $regions = $allLocations
+        ->where('country_id', $country->id)
+        ->whereNull('parent_id');
+
+    $country->locations = $regions->map(function ($region) use ($children) {
+        $region->children_recursive = $children->get($region->id) ?? collect();
+
+        return $region;
+    });
+
+    return $country;
+});
+
+
+        return view(
+    'dashboard.supplier.shipping-templates.index',
+    compact('templates', 'warehouses', 'countries')
+);
     }
 
     /**
@@ -480,6 +510,23 @@ public function toggleDefault(ShippingTemplate $template)
             ? 'Shipping template added to defaults.'
             : 'Shipping template removed from defaults.'
     );
+}
+
+
+public function syncLocations(Request $request, ShippingTemplate $template)
+{
+    $this->authorize('update', $template);
+
+    $data = $request->validate([
+        'locations' => ['nullable', 'array'],
+        'locations.*' => ['integer', 'distinct', 'exists:locations,id'],
+    ]);
+
+    $template->locations()->sync($data['locations'] ?? []);
+
+    return redirect()
+        ->route('supplier.shipping-templates.index')
+        ->with('success', 'Delivery destinations updated successfully.');
 }
 
 }

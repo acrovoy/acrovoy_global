@@ -50,55 +50,58 @@
     <x-alerts />
 
     {{-- Table Card --}}
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full table-fixed divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50 text-gray-600">
     <tr>
-        <th class="w-[400px] min-w-[400px] max-w-[380px] px-5 py-3 text-left font-medium">Shipping Details</th>
-        <th class="px-5 py-3 text-left font-medium">Place of Loading</th>
-        <th class="px-5 py-3 text-left font-medium">Place of Delivery Destination</th>
-        
+        <th class="w-[42%] px-4 py-3 text-left font-medium">Shipping Details</th>
+        <th class="w-[25%] px-4 py-3 text-left font-medium">Place of Loading</th>
+        <th class="w-[33%] px-4 py-3 text-left font-medium">Delivery Destinations</th>
     </tr>
 </thead>
 
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($templates as $template)
                 <tr class="hover:bg-gray-50 transition">
-                    <td class="w-[400px] min-w-[400px] max-w-[400px] px-5 py-3 align-top">
+                    <td class="w-[400px] min-w-[400px] px-5 py-4 align-top">
     <div class="min-w-0">
 
-        {{-- Title + Description --}}
-        <div>
-            <span class="text-sm font-semibold text-gray-900 leading-snug">
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-semibold leading-5 text-stone-900">
                 {{ $template->title }}
             </span>
 
             @if($template->is_default)
-        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-            Default
-        </span>
-    @endif
-
-            @if($template->description)
-                <div class="text-sm text-gray-500 leading-snug">
-                    {{ $template->description }}
-                </div>
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-100">
+                    Default
+                </span>
             @endif
+
+            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium
+                {{ $template->is_active
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-stone-100 text-stone-500' }}">
+                {{ $template->is_active ? 'Active' : 'Inactive' }}
+            </span>
         </div>
 
-        {{-- Delivery Options --}}
-        @if($template->deliveryOptions->count())
-            <div class="mt-3 space-y-2">
-                @foreach($template->deliveryOptions as $option)
-                    <div class="flex items-center justify-between gap-3">
+        @if($template->description)
+            <p class="mt-1 text-xs leading-5 text-stone-500">
+                {{ $template->description }}
+            </p>
+        @endif
 
-                        <div class="flex flex-wrap items-center gap-2 min-w-0">
-                            <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-900">
-                                {{ $option->deliveryType?->name ?? $option->deliveryType?->code }}
+        @if($template->deliveryOptions->isNotEmpty())
+            <div class="mt-3 space-y-2 border-t border-stone-100 pt-3">
+                @foreach($template->deliveryOptions as $option)
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                            <span class="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-800">
+                                {{ $option->deliveryType?->name ?? $option->deliveryType?->code ?? 'Delivery' }}
                             </span>
 
                             @if($option->incoterm)
-                                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-700">
+                                <span class="inline-flex rounded-md bg-stone-100 px-2 py-1 text-[10px] font-medium text-stone-600">
                                     {{ $option->incoterm }}
                                 </span>
                             @endif
@@ -106,29 +109,41 @@
 
                         <div class="shrink-0 text-right">
                             @if($option->price !== null)
-                                <div class="text-sm font-semibold text-gray-900">
-                                    ${{ number_format($option->price, 2) }}
+                                <div class="text-sm font-semibold tabular-nums text-stone-900">
+                                    ${{ number_format((float) $option->price, 2) }}
                                 </div>
-
-                                <div class="text-[11px] text-gray-400">
+                                <div class="text-[10px] text-stone-400">
                                     {{ $option->price_unit_label }}
                                 </div>
                             @else
-                                <span class="text-xs text-gray-400">
+                                <span class="text-xs text-stone-400">
                                     Price on request
                                 </span>
                             @endif
                         </div>
-
                     </div>
                 @endforeach
             </div>
+        @else
+            <p class="mt-3 text-xs text-stone-400">
+                No delivery options configured
+            </p>
         @endif
 
-        {{-- Delivery Time --}}
         @if($template->delivery_time)
-            <div class="mt-2 text-xs text-gray-500 leading-snug">
-                Delivery time: {{ $template->delivery_time }}
+            <div class="mt-3 flex items-center gap-1.5 text-xs text-stone-500">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="h-3.5 w-3.5 shrink-0 text-stone-400"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 7v5l3 2"/>
+                </svg>
+                <span>Delivery time: {{ $template->delivery_time }}</span>
             </div>
         @endif
 
@@ -138,53 +153,57 @@
 
     
 
-    <td class="px-5 py-3 text-gray-700 align-top">
-
+    <td class="w-[240px] min-w-[240px] px-5 py-4 align-top">
     @if(empty($template->warehouse))
-
         <button
-            class="open-warehouse-drawer text-xs px-3 py-1.5 rounded-lg border border-gray-300
-                   text-gray-600 hover:bg-gray-100 transition"
-            data-template-id="{{ $template->id }}">
+            type="button"
+            class="open-warehouse-drawer inline-flex items-center gap-2 rounded-lg border border-dashed border-stone-300 bg-white px-3 py-2 text-xs font-medium text-stone-600 transition hover:border-stone-400 hover:bg-stone-50 hover:text-stone-900"
+            data-template-id="{{ $template->id }}"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.7"
+                 aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 5v14m-7-7h14"/>
+            </svg>
             Link warehouse
         </button>
-
     @else
+        <button
+            type="button"
+            class="open-warehouse-drawer group block max-w-full text-left"
+            data-template-id="{{ $template->id }}"
+        >
+            <span class="block text-sm font-medium leading-5 text-stone-800 transition group-hover:text-blue-700">
+                {{ $template->warehouse->name ?? 'Warehouse #' . $template->warehouse->id }}
+            </span>
 
-        <div class="space-y-1">
+            <span class="mt-1 block text-xs leading-5 text-stone-500">
+                @if($template->warehouse->location)
+                    {{ $template->warehouse->location->parent?->name ?? $template->warehouse->location->name }}
+                    @if($template->warehouse->location->parent)
+                        <span class="text-stone-300">/</span>
+                        {{ $template->warehouse->location->name }}
+                    @endif
+                @endif
 
-            
+                @if($template->warehouse->country)
+                    <span class="text-stone-300">·</span>
+                    {{ $template->warehouse->country->name }}
+                @endif
+            </span>
 
-            <button
-    class="open-warehouse-drawer hover:text-gray-100 transition"
-    data-template-id="{{ $template->id }}">
-
-    <div class="text-sm font-medium text-blue-800">
-        {{ $template->warehouse->name ?? 'Warehouse #' . $template->warehouse->id }}
-    </div>
-
-    <div class="text-xs text-gray-500">
-
-        {{-- Регион --}}
-        @if($template->warehouse?->location)
-            {{ $template->warehouse->location->parent?->name ?? $template->warehouse->location->name }}
-        @endif
-
-        {{ $template->warehouse->location->name ?? '' }}
-
-        {{-- Адрес --}}
-        @if($template->warehouse?->address)
-            · {{ $template->warehouse->address }}
-        @endif
-
-    </div>
-
-</button>
-
-        </div>
-
+            @if($template->warehouse->address)
+                <span class="mt-1 block break-words text-[11px] leading-4 text-stone-400">
+                    {{ $template->warehouse->address }}
+                </span>
+            @endif
+        </button>
     @endif
-
 </td>
 
 
@@ -365,6 +384,16 @@
         </details>
     </div>
 
+<button
+    type="button"
+    class="open-destinations-drawer mb-2 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+    data-template-id="{{ $template->id }}"
+>
+    
+
+    Manage destinations
+</button>
+
 
     
                         {{-- Delivery destinations --}}
@@ -439,6 +468,13 @@
     </div>
 
 </div>
+
+
+@include('dashboard.supplier.shipping-templates.partials.destinations-drawer', [
+    'countries' => $countries,
+])
+
+
 
 
 {{-- Warehouse Drawer Overlay --}}
@@ -836,5 +872,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
+
+
+
 
 @endsection
