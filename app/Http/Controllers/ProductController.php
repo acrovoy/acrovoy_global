@@ -912,7 +912,8 @@ public function index(Request $request, ProductListQueryService $service)
     Request $request,
     Product $product,
     UpdateProductCountryShippingAction $updateCountryShippingAction,
-    ProductDTOFactory $dtoFactory
+    ProductDTOFactory $dtoFactory,
+    bool $savePaymentSettings = true
 ) {
     $this->authorize('update', $product);
 
@@ -957,6 +958,12 @@ public function index(Request $request, ProductListQueryService $service)
         data: $dto,
         shippingTemplates: $request->input('shipping_templates', [])
     );
+
+
+
+    if ($savePaymentSettings) {
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -1032,6 +1039,12 @@ public function index(Request $request, ProductListQueryService $service)
             'additional_information' => null,
         ]
     );
+
+
+  
+
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -1252,10 +1265,7 @@ public function index(Request $request, ProductListQueryService $service)
         Product $product,
         Attribute $attribute
     ) {
-        Log::info('DELETE ATTRIBUTE START', [
-            'product_id' => $product->id,
-            'attribute_id' => $attribute->id,
-        ]);
+        
 
         $this->authorize('update', $product);
 
@@ -1302,11 +1312,12 @@ public function index(Request $request, ProductListQueryService $service)
     $this->authorize('update', $product);
 
     $response = $this->saveFinishStep(
-        $request,
-        $product,
-        $updateCountryShippingAction,
-        $dtoFactory
-    );
+    $request,
+    $product,
+    $updateCountryShippingAction,
+    $dtoFactory,
+    false
+);
 
     if ($response) {
         return $response;

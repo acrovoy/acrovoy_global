@@ -176,6 +176,22 @@ $defaultPaymentTermIds = $supplierId
     : [];
 
 
+    $isNewProduct = !$product->exists;
+
+$defaultShippingTemplateIds = $this->getDefaultShippingTemplateIds();
+
+$productShippingIds = $product->shippingTemplates
+    ->pluck('id')
+    ->map(fn ($id) => (int) $id)
+    ->all();
+
+
+
+    $context = app(ActiveContextService::class);
+$supplierId = $context->supplierId();
+
+
+
 
     return [
         'product' => $product,
@@ -259,6 +275,26 @@ $defaultPaymentTermIds = $supplierId
         'productReturnPolicy' => $productReturnPolicy,
 
         'supplierDefaultReturnPolicyId' => $supplierDefaultReturnPolicyId,
+
+        /*
+        |--------------------------------------------------------------------------
+        | SHIPPING TEMPLATES
+        |--------------------------------------------------------------------------
+        */
+
+
+
+        'shippingTemplates' => $this->getShippingTemplates(),
+
+        'defaultShippingTemplate' => $this->getDefaultShippingTemplate(),
+
+        'defaultShippingTemplateIds' => $defaultShippingTemplateIds,
+
+        'productShippingIds' => $productShippingIds,
+
+        'isNewProduct' => $isNewProduct,
+
+
     ];
 }
 
@@ -290,14 +326,41 @@ private function authorizeProduct(Product $product): void
     private function getShippingTemplates()
 {
     $context = app(ActiveContextService::class);
-
-    
-
     $supplierId = $context->supplierId();
-    
-    return ShippingTemplate::where('provider_id', $supplierId)
-        ->with('translations')
+
+    if (!$supplierId) {
+        return collect();
+    }
+
+    return ShippingTemplate::query()
+        ->where('provider_type', Supplier::class)
+        ->where('provider_id', $supplierId)
+        ->where('is_active', true)
+        ->with([
+            'translations',
+            'deliveryOptions.deliveryType',
+        ])
+        ->orderByDesc('is_default')
+        ->orderBy('id')
         ->get();
+}
+
+private function getDefaultShippingTemplateIds(): array
+{
+    $supplierId = app(ActiveContextService::class)->supplierId();
+
+    if (!$supplierId) {
+        return [];
+    }
+
+    return ShippingTemplate::query()
+        ->where('provider_type', Supplier::class)
+        ->where('provider_id', $supplierId)
+        ->where('is_active', true)
+        ->where('is_default', true)
+        ->pluck('id')
+        ->map(fn ($id) => (int) $id)
+        ->all();
 }
 
     private function getDefaultShippingTemplate()

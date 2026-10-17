@@ -197,90 +197,301 @@
 
             <div class="border-t border-gray-100"></div>
 
+            
+            
+
+
             {{-- SHIPPING TEMPLATES --}}
-            <div>
-                <h4 class="text-sm font-semibold text-gray-900 mb-4">
-                    Shipping Templates
-                </h4>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="hidden" name="_shipping_templates_submitted" value="1">
 
-                    {{-- Platform / Default Shipping --}}
-                    @if($defaultShippingTemplate)
-                        <label
-                            class="border-2 border-dashed border-gray-400 rounded-xl p-4 cursor-pointer transition
-                                hover:border-gray-700 hover:bg-gray-100
-                                flex gap-3 items-start bg-gray-50 shadow-sm">
+@php
+    $defaultShippingTemplateIds = collect($defaultShippingTemplateIds ?? [])
+        ->map(fn ($id) => (int) $id)
+        ->all();
 
-                            <input
-                                type="hidden"
-                                name="shipping_templates[]"
-                                value="{{ $defaultShippingTemplate->id }}">
+    $productShippingIds = collect($productShippingIds ?? [])
+        ->map(fn ($id) => (int) $id)
+        ->all();
 
-                            <input
-                                type="checkbox"
-                                value="{{ $defaultShippingTemplate->id }}"
-                                class="mt-1"
-                                checked
-                                disabled>
+    if (old('_shipping_templates_submitted')) {
+        $initialShippingTemplateIds = old('shipping_templates', []);
+    } elseif (!empty($productShippingIds)) {
+        $initialShippingTemplateIds = $productShippingIds;
+    } else {
+        $initialShippingTemplateIds = $defaultShippingTemplateIds;
+    }
 
-                            <div class="min-w-0">
-                                <div class="font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
-                                    {{ $defaultShippingTemplate->title }}
+    $selectedShippingTemplateIds = collect($initialShippingTemplateIds)
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values()
+        ->all();
+@endphp
 
-                                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">
-                                        Platform delivery
-                                    </span>
-                                </div>
 
-                                <div class="text-sm text-gray-600 mt-1">
-                                    {{ $defaultShippingTemplate->description }}
-                                </div>
 
-                                <div class="text-xs text-gray-500 mt-2">
-                                    Price and delivery time will be calculated after order placement
-                                </div>
-                            </div>
-                        </label>
+
+
+<div>
+    <div class="flex items-center justify-between gap-3 mb-4">
+        <h4 class="text-sm font-semibold text-gray-900">
+            Shipping Templates
+        </h4>
+
+        <button
+            type="button"
+            id="open-shipping-templates"
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:border-gray-400"
+        >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            Choose templates
+            <span
+                id="shipping-templates-count"
+                class="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-gray-100 px-1.5 text-xs font-semibold text-gray-700"
+            >{{ count($selectedShippingTemplateIds) }}</span>
+        </button>
+    </div>
+
+    {{-- Selected templates --}}
+    <div id="selected-shipping-templates" class="space-y-4">
+
+        {{-- Platform / Default Shipping is always selected --}}
+        @if($defaultShippingTemplate)
+            <div class="flex gap-3 items-start rounded-xl border-2 border-dashed border-gray-400 bg-gray-50 p-4 shadow-sm">
+                <input
+                    type="hidden"
+                    name="shipping_templates[]"
+                    value="{{ $defaultShippingTemplate->id }}"
+                >
+
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2 font-semibold text-gray-900">
+                        {{ $defaultShippingTemplate->title }}
+
+                        <span class="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700">
+                            Platform delivery
+                        </span>
+                    </div>
+
+                    @if($defaultShippingTemplate->description)
+                        <div class="mt-1 text-sm text-gray-600">
+                            {{ $defaultShippingTemplate->description }}
+                        </div>
                     @endif
 
-                    {{-- Seller Shipping Templates --}}
-                    @foreach($shippingTemplates as $template)
-                        <label
-                            class="border rounded-xl p-4 cursor-pointer transition
-                                hover:border-blue-600 hover:bg-blue-50
-                                flex gap-3 items-start bg-white shadow-sm">
+                    <div class="mt-2 text-xs text-gray-500">
+                        Price and delivery time will be confirmed after order placement.
+                    </div>
+                </div>
+            </div>
+        @endif
 
-                            <input
-                                type="checkbox"
-                                name="shipping_templates[]"
-                                value="{{ $template->id }}"
-                                class="mt-1"
-                                {{ in_array($template->id, old('shipping_templates', $productShippingIds ?? [])) ? 'checked' : '' }}>
+        {{-- Selected supplier templates are rendered by JavaScript --}}
+        <div id="selected-seller-shipping-templates" class="space-y-3"></div>
 
-                            <div class="min-w-0">
-                                <div class="font-semibold text-gray-900">
-                                    {{ $template->title }}
-                                </div>
+        <div
+    id="shipping-templates-empty"
+    class="{{ empty($selectedShippingTemplateIds) ? '' : 'hidden' }} rounded-xl border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-500"
+>
+    No supplier shipping templates selected.
+</div>
+    </div>
 
-                                <div class="text-sm text-gray-600 mt-1">
-                                    {{ $template->description }}
-                                </div>
+    <p class="mt-3 text-sm text-gray-500">
+        Select one or more shipping templates. Each selected template can provide multiple delivery options.
+    </p>
+</div>
 
-                                <div class="text-xs text-gray-500 mt-2">
-                                    Seller-defined delivery
-                                </div>
+{{-- Drawer overlay --}}
+<div
+    id="shipping-templates-overlay"
+    class="fixed inset-0 z-100 hidden bg-gray-900/40 opacity-0 transition-opacity duration-300"
+    aria-hidden="true"
+></div>
+
+{{-- Drawer --}}
+<div
+    id="shipping-templates-drawer"
+    class="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300"
+    aria-hidden="true"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="shipping-templates-drawer-title"
+>
+    <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4 sm:px-6">
+        <div>
+            <h3 id="shipping-templates-drawer-title" class="text-lg font-semibold text-gray-900">
+                Shipping Templates
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+                Select the shipping templates available for this product.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            data-close-shipping-templates
+            class="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+            aria-label="Close shipping templates"
+        >
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="m6 6 12 12M18 6 6 18"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="border-b border-gray-200 p-5 sm:px-6">
+        <div class="relative">
+            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="11" cy="11" r="7"/>
+                <path stroke-linecap="round" d="m16 16 4 4"/>
+            </svg>
+
+            <input
+                type="search"
+                id="shipping-templates-search"
+                placeholder="Search shipping templates..."
+                class="w-full rounded-xl border border-gray-300 py-2.5 pl-9 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500"
+            >
+        </div>
+    </div>
+
+    <div id="shipping-templates-options" class="flex-1 space-y-3 overflow-y-auto p-5 sm:px-6">
+        @forelse($shippingTemplates as $template)
+            @php
+                $activeOptions = $template->deliveryOptions
+                    ->where('is_active', true)
+                    ->sortBy('sort_order');
+
+                $isSelected = in_array(
+                    (int) $template->id,
+                    $selectedShippingTemplateIds,
+                    true
+                );
+            @endphp
+
+            <label
+                data-shipping-template-option
+                data-id="{{ $template->id }}"
+                data-search="{{ \Illuminate\Support\Str::lower($template->title . ' ' . ($template->description ?? '')) }}"
+                class="flex cursor-pointer items-start gap-3 rounded-xl border p-4 shadow-sm transition
+                    {{ $isSelected
+                        ? 'border-emerald-200 bg-emerald-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50' }}"
+            >
+                <input
+                    type="checkbox"
+                    name="shipping_templates[]"
+                    value="{{ $template->id }}"
+                    data-shipping-template-checkbox
+                    class="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                    {{ $isSelected ? 'checked' : '' }}
+                >
+
+                <div class="min-w-0 flex-1">
+                    <div class="shipping-template-details">
+                        <div class="font-semibold text-gray-900">
+                            {{ $template->title }}
+                        </div>
+
+                        @if($template->description)
+                            <div class="mt-1 text-sm text-gray-600">
+                                {{ $template->description }}
                             </div>
-                        </label>
-                    @endforeach
+                        @endif
 
+                        @if($activeOptions->isNotEmpty())
+                            <div class="mt-3 space-y-2">
+                                @foreach($activeOptions as $option)
+                                    <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <span class="text-sm font-medium text-gray-800">
+                                                {{ $option->deliveryType?->name
+                                                    ?? $option->deliveryType?->code
+                                                    ?? 'Delivery option' }}
+                                            </span>
+
+                                            @if($option->price !== null && $option->price !== '')
+                                                <span class="shrink-0 text-sm font-semibold text-gray-900">
+                                                    {{ number_format((float) $option->price, 2) }}
+                                                </span>
+                                            @else
+                                                <span class="shrink-0 text-xs text-gray-500">
+                                                    Carrier rates
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        @if($option->delivery_time)
+                                            <div class="mt-1 text-xs text-gray-500">
+                                                Delivery time: {{ $option->delivery_time }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="mt-2 text-xs text-gray-500">
+                                Delivery details will be confirmed with the supplier.
+                            </div>
+                        @endif
+
+                        <div class="mt-3 text-xs text-gray-500">
+                            Supplier shipping template
+                        </div>
+                    </div>
                 </div>
 
-                <p class="text-sm text-gray-500 mt-3">
-                    Выберите один или несколько шаблонов доставки.
-                    Если выбран только платформенный вариант — заказ будет ожидать расчёта доставки.
-                </p>
+                <span
+                    data-shipping-template-indicator
+                    class="mt-0.5 shrink-0 text-emerald-600 {{ $isSelected ? '' : 'invisible' }}"
+                    aria-hidden="true"
+                >
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="m5 12 4 4L19 6"/>
+                    </svg>
+                </span>
+            </label>
+        @empty
+            <div class="rounded-xl border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
+                No shipping templates available.
             </div>
+        @endforelse
+
+        <div id="shipping-templates-no-results" class="hidden py-8 text-center text-sm text-gray-500">
+            No matching shipping templates found.
+        </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-4 border-t border-gray-200 bg-white px-5 py-4 sm:px-6">
+        <span class="text-sm text-gray-500">
+            Selected: <strong id="shipping-templates-selected-count" class="text-gray-900">0</strong>
+        </span>
+
+        <button
+            type="button"
+            data-done-shipping-templates
+            class="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
+        >
+            Done
+        </button>
+    </div>
+</div>
+
+
+
+
+
 
             <div class="border-t border-gray-100"></div>
 
@@ -462,7 +673,7 @@
 {{-- Product Payment Methods Drawer Overlay --}}
 <div
     id="product-payment-methods-overlay"
-    class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300"
+    class="fixed inset-0 z-100 hidden bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300"
 ></div>
 
 {{-- Product Payment Methods Drawer --}}
@@ -747,7 +958,7 @@ $selectedPaymentTermIds = $selectedPaymentTermId
 {{-- PAYMENT TERMS DRAWER --}}
 <div
     id="product-payment-terms-overlay"
-    class="fixed inset-0 z-50 hidden bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-300"
+    class="fixed inset-0 z-100 hidden bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-300"
 ></div>
 
 <aside
@@ -1447,6 +1658,35 @@ $selectedPaymentTermIds = $selectedPaymentTermId
         </div>
     </div>
 
+
+
+   {{-- FLOATING SAVE BUTTON --}}
+<div
+    x-data="{ visible: false }"
+    x-init="visible = window.scrollY > 200"
+    @scroll.window="visible = window.scrollY > 200"
+    x-show="visible"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0 translate-y-2"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed right-6 top-1/2 -translate-y-1/2 z-40"
+    style="display: none;"
+>
+    <button
+        type="submit"
+        form="productForm"
+        formaction="{{ route('supplier.products.save-draft', $product->id) }}"
+        formmethod="POST"
+        class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg transition hover:bg-blue-500"
+    >
+        Save
+    </button>
+</div>
+
+
 </form>
 
 
@@ -1579,16 +1819,17 @@ document.addEventListener('DOMContentLoaded', function () {
     updateOption(input);
 
     input.addEventListener('change', () => {
-        if (input.checked) {
-            getCheckboxes().forEach(other => {
-                updateOption(other);
-            });
-        }
+        // Обновляем визуальное состояние всех методов,
+        // включая метод, с которого сняли выбор.
+        getCheckboxes().forEach(checkbox => {
+            updateOption(checkbox);
+        });
 
         updateCount();
         updateSummary();
     });
 });
+
 
     openButton?.addEventListener('click', openDrawer);
     overlay.addEventListener('click', closeDrawer);
@@ -1829,6 +2070,182 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         noResults?.classList.toggle('hidden', visibleCount > 0);
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const overlay = document.getElementById('shipping-templates-overlay');
+    const drawer = document.getElementById('shipping-templates-drawer');
+    const options = document.getElementById('shipping-templates-options');
+    const search = document.getElementById('shipping-templates-search');
+    const openButton = document.getElementById('open-shipping-templates');
+    const doneButton = document.querySelector('[data-done-shipping-templates]');
+    const summary = document.getElementById('selected-seller-shipping-templates');
+    const empty = document.getElementById('shipping-templates-empty');
+    const countBadge = document.getElementById('shipping-templates-count');
+    const countLabel = document.getElementById('shipping-templates-selected-count');
+    const noResults = document.getElementById('shipping-templates-no-results');
+
+    if (!overlay || !drawer || !options || !summary) return;
+
+    let previousFocus = null;
+    let closeTimer = null;
+
+    const getCheckboxes = () =>
+        Array.from(options.querySelectorAll('[data-shipping-template-checkbox]'));
+
+    function updateOption(checkbox) {
+        const row = checkbox.closest('[data-shipping-template-option]');
+        if (!row) return;
+
+        const indicator = row.querySelector('[data-shipping-template-indicator]');
+        const selected = checkbox.checked;
+
+        row.classList.toggle('border-emerald-200', selected);
+        row.classList.toggle('bg-emerald-50', selected);
+        row.classList.toggle('border-gray-200', !selected);
+        row.classList.toggle('bg-white', !selected);
+        row.classList.toggle('hover:border-gray-300', !selected);
+        row.classList.toggle('hover:bg-gray-50', !selected);
+
+        indicator?.classList.toggle('invisible', !selected);
+    }
+
+    function updateSummary() {
+    summary.replaceChildren();
+
+    const selected = getCheckboxes().filter(checkbox => checkbox.checked);
+
+    selected.forEach(checkbox => {
+        const row = checkbox.closest('[data-shipping-template-option]');
+        const details = row?.querySelector('.shipping-template-details');
+
+        if (!details) return;
+
+        const card = document.createElement('div');
+        card.dataset.selectedShippingTemplate = checkbox.value;
+        card.className =
+            'relative overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm';
+
+        const accent = document.createElement('div');
+        accent.className = 'absolute inset-y-0 left-0 w-1 bg-emerald-500';
+
+        const content = document.createElement('div');
+        content.className = 'pl-2';
+        content.appendChild(details.cloneNode(true));
+
+        content.querySelectorAll('.font-semibold.text-gray-900').forEach(title => {
+    title.classList.remove('text-gray-900');
+    title.classList.add('text-emerald-900');
+});
+
+
+        card.append(accent, content);
+        summary.appendChild(card);
+    });
+
+    empty?.classList.toggle('hidden', selected.length > 0);
+
+    if (countBadge) countBadge.textContent = selected.length;
+    if (countLabel) countLabel.textContent = selected.length;
+}
+
+    function syncSelectionUI() {
+        getCheckboxes().forEach(updateOption);
+        updateSummary();
+    }
+
+    function openDrawer() {
+        if (closeTimer) {
+            clearTimeout(closeTimer);
+            closeTimer = null;
+        }
+
+        previousFocus = document.activeElement;
+
+        overlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            drawer.classList.remove('translate-x-full');
+            drawer.setAttribute('aria-hidden', 'false');
+            overlay.setAttribute('aria-hidden', 'false');
+            search?.focus();
+        });
+    }
+
+    function closeDrawer() {
+        if (drawer.getAttribute('aria-hidden') === 'true') return;
+
+        drawer.classList.add('translate-x-full');
+        drawer.setAttribute('aria-hidden', 'true');
+        overlay.classList.add('opacity-0');
+        overlay.setAttribute('aria-hidden', 'true');
+
+        closeTimer = window.setTimeout(() => {
+            overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            previousFocus?.focus?.();
+            closeTimer = null;
+        }, 300);
+    }
+
+    // Initialize the selected state and visible summary.
+    syncSelectionUI();
+
+    // Refresh every row after selecting or deselecting a template.
+    getCheckboxes().forEach(checkbox => {
+        checkbox.addEventListener('change', syncSelectionUI);
+    });
+
+    openButton?.addEventListener('click', openDrawer);
+
+    overlay.addEventListener('click', event => {
+        if (event.target === overlay) closeDrawer();
+    });
+
+    drawer.querySelectorAll('[data-close-shipping-templates]').forEach(button => {
+        button.addEventListener('click', closeDrawer);
+    });
+
+    doneButton?.addEventListener('click', closeDrawer);
+
+    document.addEventListener('keydown', event => {
+        if (
+            event.key === 'Escape' &&
+            drawer.getAttribute('aria-hidden') === 'false'
+        ) {
+            closeDrawer();
+        }
+    });
+
+    search?.addEventListener('input', () => {
+        const query = search.value.trim().toLocaleLowerCase();
+        let visibleCount = 0;
+
+        options.querySelectorAll('[data-shipping-template-option]').forEach(row => {
+            const text = (row.dataset.search || '').toLocaleLowerCase();
+            const visible = text.includes(query);
+
+            row.classList.toggle('hidden', !visible);
+            if (visible) visibleCount++;
+        });
+
+        noResults?.classList.toggle('hidden', visibleCount > 0);
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-done-payment-terms]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            // Здесь вызывается существующее действие кнопки Done.
+            // Например, закрытие панели Payment Terms.
+        });
     });
 });
 </script>

@@ -7,6 +7,7 @@ use App\Models\ProductTranslation;
 use App\Models\PriceTier;
 use App\Models\ProductAttributeValue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 use Illuminate\Support\Str;
@@ -145,35 +146,19 @@ class ApplyProductEditingCopyAction
 
             /*
             |--------------------------------------------------------------------------
-            | Способы оплаты
+            | Способы оплаты и Условия оплаты
             |--------------------------------------------------------------------------
             */
 
-            $paymentMethods = [];
 
-            foreach ($copy->paymentMethods as $method) {
-                $paymentMethods[$method->id] = [
-                    'sort_order' => $method->pivot->sort_order,
-                ];
-            }
+$this->applyPaymentAndReturnSettings($original, $copy);
 
-            $original->paymentMethods()->sync($paymentMethods);
+$original->unsetRelations();
+$copy->unsetRelations();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Условия оплаты
-            |--------------------------------------------------------------------------
-            */
+$original->load(['paymentMethods', 'paymentTerms', 'returnPolicy']);
+$copy->load(['paymentMethods', 'paymentTerms', 'returnPolicy']);
 
-            $paymentTerms = [];
-
-            foreach ($copy->paymentTerms as $term) {
-                $paymentTerms[$term->id] = [
-                    'sort_order' => $term->pivot->sort_order,
-                ];
-            }
-
-            $original->paymentTerms()->sync($paymentTerms);
 
             /*
             |--------------------------------------------------------------------------
@@ -688,6 +673,65 @@ private function copyVariantMedia(
     }
 }
 
+
+private function applyPaymentAndReturnSettings(
+    Product $original,
+    Product $copy
+): void {
+    /*
+    |--------------------------------------------------------------------------
+    | Способы оплаты
+    |--------------------------------------------------------------------------
+    */
+
+    $paymentMethods = [];
+
+    foreach ($copy->paymentMethods as $method) {
+        $paymentMethods[$method->id] = [
+            'sort_order' => $method->pivot->sort_order,
+        ];
+    }
+
+    $original->paymentMethods()->sync($paymentMethods);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Условия оплаты
+    |--------------------------------------------------------------------------
+    */
+
+    $paymentTerms = [];
+
+    foreach ($copy->paymentTerms as $term) {
+        $paymentTerms[$term->id] = [
+            'sort_order' => $term->pivot->sort_order,
+        ];
+    }
+
+    $original->paymentTerms()->sync($paymentTerms);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Политика возврата
+    |--------------------------------------------------------------------------
+    */
+
+    $copyPolicy = $copy->returnPolicy;
+    $originalPolicy = $original->returnPolicy;
+
+    if ($originalPolicy) {
+        $originalPolicy->delete();
+    }
+
+    if ($copyPolicy) {
+        $newPolicy = $copyPolicy->replicate([
+            'created_at',
+            'updated_at',
+        ]);
+
+        $original->returnPolicy()->save($newPolicy);
+    }
+}
 
 
 }

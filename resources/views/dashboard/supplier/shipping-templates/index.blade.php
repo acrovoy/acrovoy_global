@@ -56,8 +56,8 @@
     <tr>
         <th class="w-[400px] min-w-[400px] max-w-[380px] px-5 py-3 text-left font-medium">Shipping Details</th>
         <th class="px-5 py-3 text-left font-medium">Place of Loading</th>
-        <th class="px-5 py-3 text-left font-medium">Delivery Destination</th>
-        <th class="px-5 py-3 text-left font-medium">Actions</th>
+        <th class="px-5 py-3 text-left font-medium">Place of Delivery Destination</th>
+        
     </tr>
 </thead>
 
@@ -72,6 +72,12 @@
             <span class="text-sm font-semibold text-gray-900 leading-snug">
                 {{ $template->title }}
             </span>
+
+            @if($template->is_default)
+        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+            Default
+        </span>
+    @endif
 
             @if($template->description)
                 <div class="text-sm text-gray-500 leading-snug">
@@ -182,64 +188,244 @@
 </td>
 
 
-                    <td class="px-5 py-3">
-                        <div class="flex flex-wrap gap-1">
-                            @foreach($template->locations as $location)
-                            @php
-                            // Если есть parent_id — это город, иначе регион
-                            $isCity = $location->parent_id !== null;
-                            $bgColor = $isCity ? 'bg-green-200' : 'bg-blue-100';
-                            $textColor = $isCity ? 'text-green-800' : 'text-blue-700';
-                            @endphp
-                            <span class="px-2 py-1 text-xs rounded-full {{ $bgColor }} {{ $textColor }}">
-                                {{ $location->name }}
-                            </span>
-                            @endforeach
-                        </div>
-                    </td>
-                    <td class="px-5 py-3 text-right whitespace-nowrap space-x-2 align-top">
+                    <td class="w-[240px] min-w-[240px] max-w-[240px] px-5 py-3 align-top">
 
-    {{-- ACTIVATE / DEACTIVATE --}}
-    <form action="{{ route('supplier.shipping-templates.toggle-active', $template) }}"
-          method="POST"
-          class="inline">
-        @csrf
+                    <div class="flex items-start justify-end gap-3 mb-4">
 
-        <button
-            class="px-3 py-1.5 text-xs rounded-lg border transition
-            {{ $template->is_active
-                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-                : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' }}">
+        {{-- Creation date --}}
+        <span
+            class="text-[10px] lowercase tracking-wide text-stone-400 whitespace-nowrap"
+            title="{{ $template->created_at?->format('Y-m-d H:i') }}"
+        >
+            created {{ $template->created_at?->format('d M Y') }}
+        </span>
 
-            {{ $template->is_active ? 'Deactivate' : 'Activate' }}
+        {{-- SHIPPING TEMPLATE ACTIONS --}}
+        <details class="product-actions-menu relative shrink-0">
 
-        </button>
-    </form>
-<div class="mt-2">
-    {{-- EDIT --}}
-    <a href="{{ route('supplier.shipping-templates.edit', $template) }}"
-       class="text-sm text-gray-700 hover:underline ml-2">
-        Edit
-    </a>
+            <summary
+                aria-label="Shipping template actions"
+                title="More actions"
+                class="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-md border border-stone-200 bg-white text-stone-500 transition hover:border-stone-300 hover:bg-stone-50 hover:text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-300 [&::-webkit-details-marker]:hidden"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3.5 w-3.5"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                >
+                    <circle cx="5" cy="12" r="1.5"/>
+                    <circle cx="12" cy="12" r="1.5"/>
+                    <circle cx="19" cy="12" r="1.5"/>
+                </svg>
+            </summary>
 
-   {{-- DELETE --}}
-<form action="{{ route('supplier.shipping-templates.destroy', $template) }}"
-      method="POST"
-      class="inline delete-template-form">
+            {{-- Fixed dropdown positioned by shared JavaScript --}}
+            <div
+                data-actions-dropdown
+                class="fixed z-[9999] hidden w-44 overflow-hidden rounded-lg border border-stone-200 bg-white p-1 shadow-xl"
+            >
+                {{-- Activate / Deactivate --}}
+                <form
+                    action="{{ route('supplier.shipping-templates.toggle-active', $template) }}"
+                    method="POST"
+                >
+                    @csrf
 
+                    <button
+                        type="submit"
+                        data-close-product-actions
+                        class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm transition
+                            {{ $template->is_active
+                                ? 'text-red-700 hover:bg-red-50'
+                                : 'text-green-700 hover:bg-green-50' }}"
+                    >
+                        @if($template->is_active)
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="mr-2 h-4 w-4 shrink-0"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.7">
+                                <circle cx="12" cy="12" r="9"/>
+                                <path stroke-linecap="round" d="M8 8l8 8"/>
+                            </svg>
+                            Deactivate
+                        @else
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/>
+            </svg>
+                        <span class="ml-2">Activate</span>
+                        @endif
+                    </button>
+                </form>
+
+
+
+                {{-- Toggle Default --}}
+<form
+    action="{{ route('supplier.shipping-templates.toggle-default', ['template' => $template]) }}"
+    method="POST"
+>
     @csrf
-    @method('DELETE')
 
     <button
         type="submit"
-        class="text-sm text-red-600 hover:underline ml-2"
+        data-close-product-actions
+        class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition
+            {{ $template->is_default
+                ? 'text-emerald-700 hover:bg-emerald-50'
+                : 'text-stone-700 hover:bg-stone-50 hover:text-stone-950' }}"
     >
-        Delete
+        @if($template->is_default)
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/>
+            </svg>
+            Remove Default
+        @else
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/>
+            </svg>
+            Set as Default
+        @endif
     </button>
-
 </form>
+
+
+
+                <div class="my-1 border-t border-stone-100"></div>
+
+                {{-- Edit --}}
+                <a
+                    href="{{ route('supplier.shipping-templates.edit', $template) }}"
+                    data-close-product-actions
+                    class="flex items-center rounded-md px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-50 hover:text-stone-950"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="mr-2 h-4 w-4 shrink-0 text-stone-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="m14 5 5 5M4 20l4.5-1 10-10a2.12 2.12 0 0 0-3-3l-10 10L4 20Z"/>
+                    </svg>
+                    Edit
+                </a>
+
+                <div class="my-1 border-t border-stone-100"></div>
+
+                {{-- Delete --}}
+                <form
+                    action="{{ route('supplier.shipping-templates.destroy', $template) }}"
+                    method="POST"
+                    class="delete-template-form"
+                >
+                    @csrf
+                    @method('DELETE')
+
+                    <button
+                        type="submit"
+                        data-close-product-actions
+                        class="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-red-700 transition hover:bg-red-50 hover:text-red-800"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="mr-2 h-4 w-4 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.7">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 7h16M10 11v6m4-6v6M5.5 7l1 13h11l1-13M9 7V4h6v3"/>
+                        </svg>
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </details>
+    </div>
+
+
+    
+                        {{-- Delivery destinations --}}
+<div
+    x-data="{ expanded: false, canExpand: false }"
+    x-init="$nextTick(() => {
+        const content = $refs.locations;
+        canExpand = content.scrollHeight > 60;
+    })"
+    class="mt-2 min-w-0"
+>
+    <div
+        x-ref="locations"
+        class="flex flex-wrap gap-1 overflow-hidden transition-[max-height] duration-200"
+        :style="expanded ? 'max-height: none' : 'max-height: 160px'"
+    >
+        @foreach($template->locations as $location)
+            @php
+                $isCity = $location->parent_id !== null;
+                $bgColor = $isCity ? 'bg-green-200' : 'bg-blue-100';
+                $textColor = $isCity ? 'text-green-800' : 'text-blue-700';
+            @endphp
+
+            <span class="px-2 py-1 text-xs rounded-full {{ $bgColor }} {{ $textColor }}">
+                {{ $location->name }}
+            </span>
+        @endforeach
+    </div>
+
+    <button
+        type="button"
+        x-cloak
+        x-show="canExpand"
+        @click="expanded = !expanded"
+        :aria-expanded="expanded.toString()"
+        class="mt-1 flex h-6 w-6 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-800"
+        :title="expanded ? 'Show less' : 'Show all destinations'"
+        :aria-label="expanded ? 'Collapse destinations' : 'Expand destinations'"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 transition-transform duration-200"
+            :class="expanded ? 'rotate-180' : ''"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m6 9 6 6 6-6"
+            />
+        </svg>
+    </button>
 </div>
-</td>
+
+
+                    </td>
+                   
                 </tr>
                 @empty
                 <tr>
@@ -540,6 +726,115 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const menus = document.querySelectorAll('.product-actions-menu');
+
+    if (!menus.length) return;
+
+    function closeMenu(details) {
+        const dropdown = details.querySelector('[data-actions-dropdown]');
+
+        details.open = false;
+
+        if (dropdown) {
+            dropdown.classList.add('hidden');
+            dropdown.style.top = '';
+            dropdown.style.left = '';
+        }
+    }
+
+    function positionMenu(details) {
+        const trigger = details.querySelector('summary');
+        const dropdown = details.querySelector('[data-actions-dropdown]');
+
+        if (!trigger || !dropdown || !details.open) return;
+
+        dropdown.classList.remove('hidden');
+        dropdown.style.visibility = 'hidden';
+
+        const triggerRect = trigger.getBoundingClientRect();
+        const menuRect = dropdown.getBoundingClientRect();
+        const gap = 6;
+        const padding = 8;
+
+        let left = triggerRect.right - menuRect.width;
+        let top = triggerRect.bottom + gap;
+
+        // If there is insufficient space below, open above.
+        if (top + menuRect.height > window.innerHeight - padding) {
+            top = triggerRect.top - menuRect.height - gap;
+        }
+
+        // Keep the menu within the viewport horizontally.
+        left = Math.max(
+            padding,
+            Math.min(left, window.innerWidth - menuRect.width - padding)
+        );
+
+        top = Math.max(
+            padding,
+            Math.min(top, window.innerHeight - menuRect.height - padding)
+        );
+
+        dropdown.style.left = `${left}px`;
+        dropdown.style.top = `${top}px`;
+        dropdown.style.visibility = 'visible';
+    }
+
+    menus.forEach(details => {
+        details.addEventListener('toggle', () => {
+            if (details.open) {
+                // Close other open action menus.
+                menus.forEach(other => {
+                    if (other !== details) closeMenu(other);
+                });
+
+                positionMenu(details);
+            } else {
+                const dropdown = details.querySelector('[data-actions-dropdown]');
+
+                if (dropdown) {
+                    dropdown.classList.add('hidden');
+                    dropdown.style.visibility = '';
+                }
+            }
+        });
+
+        details.querySelectorAll('[data-close-product-actions]').forEach(action => {
+            action.addEventListener('click', () => {
+                closeMenu(details);
+            });
+        });
+    });
+
+    // Close on outside click.
+    document.addEventListener('click', event => {
+        menus.forEach(details => {
+            if (!details.contains(event.target)) {
+                closeMenu(details);
+            }
+        });
+    });
+
+    // Close on Escape.
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            menus.forEach(closeMenu);
+        }
+    });
+
+    // Close when scrolling or resizing.
+    window.addEventListener('scroll', () => {
+        menus.forEach(closeMenu);
+    }, true);
+
+    window.addEventListener('resize', () => {
+        menus.forEach(closeMenu);
+    });
+});
 </script>
 
 @endsection

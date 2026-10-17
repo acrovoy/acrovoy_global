@@ -29,6 +29,7 @@ class ShippingTemplate extends Model
         'delivery_type',
         'delivery_time',
         'is_active',
+        'is_default',
     ];
 
     // Связь с пользователем

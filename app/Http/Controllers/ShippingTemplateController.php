@@ -466,6 +466,20 @@ public function toggleActive(ShippingTemplate $template)
     return back()->with('success', 'Status updated successfully');
 }
 
+public function toggleDefault(ShippingTemplate $template)
+{
+    $this->authorize('update', $template);
 
+    $template->update([
+        'is_default' => !$template->is_default,
+    ]);
+
+    return back()->with(
+        'success',
+        $template->is_default
+            ? 'Shipping template added to defaults.'
+            : 'Shipping template removed from defaults.'
+    );
+}
 
 }

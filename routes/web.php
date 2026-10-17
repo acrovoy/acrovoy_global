@@ -508,6 +508,7 @@ Route::prefix('dashboard/supplier')->name('supplier.')->group(function () {
     Route::resource('shipping-templates', ShippingTemplateController::class)->except(['show']);
     Route::post('shipping-templates/{template}/attach-warehouse', [ShippingTemplateController::class, 'attachWarehouse'])->name('shipping-templates.attach-warehouse');
     Route::post('shipping-templates/{template}/toggle-active',  [ShippingTemplateController::class, 'toggleActive'])->name('shipping-templates.toggle-active');
+    Route::post('shipping-templates/{template}/toggle-default', [ShippingTemplateController::class, 'toggleDefault'])->name('shipping-templates.toggle-default');
 
     Route::delete('certificate/{id}', [SupplierCompanyController::class, 'deleteCertificate'])->name('certificate.delete');
     Route::get('/profile/show', [SupplierCompanyController::class, 'showCompanyProfile'])->name('profile.show');
