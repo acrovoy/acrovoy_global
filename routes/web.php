@@ -61,7 +61,7 @@ use App\Http\Controllers\Project\Supplier\SupplierProjectController;
 use App\Http\Controllers\Rfq\RfqController;
 use App\Http\Controllers\Rfq\RfqOfferController;
 
-
+use App\Http\Controllers\Post\PostController;
 
 
 use App\Http\Controllers\Admin\AdminProductController;
@@ -152,6 +152,9 @@ Route::get('/collections', [PublicCollectionController::class, 'index'])->name('
 Route::get('/collections/{collection:slug}', [PublicCollectionController::class, 'show'])->name('collections.show');
 
 
+//POSTS
+Route::get('/community/post', [PostController::class, 'show'])
+    ->name('community.posts.show');
 
 //CONTACTS
 Route::prefix('contacts')->name('contacts.')->group(function () {

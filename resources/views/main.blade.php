@@ -2,6 +2,7 @@
 
 @section('content')
 
+
 {{-- ==========================================================
     HERO
 ========================================================== --}}
@@ -9,77 +10,51 @@
 
     {{-- Background decoration --}}
     <div class="absolute inset-0 pointer-events-none">
-
         <div class="absolute -right-40 -top-40 w-[600px] h-[600px] rounded-full bg-stone-100 blur-3xl opacity-70"></div>
-
         <div class="absolute -left-52 bottom-0 w-[450px] h-[450px] rounded-full bg-slate-100 blur-3xl opacity-60"></div>
-
     </div>
 
-    <div class="container relative mx-auto px-6 lg:px-12 py-24">
+    <div class="container relative mx-auto px-6 lg:px-12 py-20 lg:py-24">
 
-        <div class="grid lg:grid-cols-12 gap-16 items-center">
+        <div class="grid lg:grid-cols-12 gap-14 items-center">
 
-            {{-- ===================================================== --}}
-            {{-- LEFT --}}
-            {{-- ===================================================== --}}
-
+            {{-- =====================================================
+                LEFT
+            ====================================================== --}}
             <div class="lg:col-span-5">
 
                 <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
-
                     Hospitality Furniture & Décor Marketplace
-
                 </span>
 
                 <h1 class="mt-8 text-5xl lg:text-7xl font-black leading-[1.05] tracking-tight text-slate-900">
-
                     Design
-
-                    <span class="text-slate-500">
-
-                        Better
-
-                    </span>
-
-                    Hospitality
-                    Spaces
-
+                    <span class="text-slate-500">Better</span>
+                    Hospitality Spaces
                 </h1>
 
                 <p class="mt-8 text-xl leading-9 text-gray-600 max-w-xl">
-
                     Find verified manufacturers of hotel furniture,
                     restaurant furniture, lighting, décor,
                     outdoor collections and hospitality accessories
                     from around the world.
-
                 </p>
 
                 {{-- CTA --}}
-
                 <div class="flex flex-wrap gap-4 mt-10">
-
                     <a href="/suppliers"
                        class="rounded-xl bg-slate-900 px-8 py-4 text-white font-semibold transition hover:bg-black">
-
                         Browse Suppliers
-
                     </a>
 
                     <a href="{{ route('buyer.rfqs.create') }}"
                        class="rounded-xl border border-gray-300 bg-white px-8 py-4 font-semibold hover:bg-gray-50">
-
                         Submit RFQ
-
                     </a>
-
                 </div>
 
                 {{-- Industries --}}
-
                 <div class="mt-12 flex flex-wrap gap-3">
-
                     @foreach([
                         'Hotels',
                         'Restaurants',
@@ -88,96 +63,231 @@
                         'Bars',
                         'Outdoor'
                     ] as $item)
-
                         <span class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
-
                             {{ $item }}
-
                         </span>
-
                     @endforeach
-
                 </div>
 
                 {{-- Trust --}}
-
                 <div class="grid grid-cols-2 gap-6 mt-14">
-
                     <div class="rounded-2xl border border-gray-200 bg-white p-5">
-
                         <div class="font-semibold text-slate-900">
-
                             Verified Manufacturers
-
                         </div>
-
                         <div class="mt-2 text-sm text-gray-500">
-
                             Carefully reviewed supplier profiles.
-
                         </div>
-
                     </div>
 
                     <div class="rounded-2xl border border-gray-200 bg-white p-5">
-
                         <div class="font-semibold text-slate-900">
-
                             International Export
-
                         </div>
-
                         <div class="mt-2 text-sm text-gray-500">
-
                             Manufacturers experienced in global trade.
-
                         </div>
-
                     </div>
-
                 </div>
 
             </div>
 
-            {{-- ===================================================== --}}
-            {{-- RIGHT --}}
-            {{-- ===================================================== --}}
+            {{-- =====================================================
+                RIGHT — COMMUNITY FEATURE
+            ====================================================== --}}
+            <div class="lg:col-span-7 relative">
 
-            <div class="lg:col-span-7">
+                {{-- Main visual --}}
+                <div class="relative">
 
-                <div class="grid grid-cols-2 gap-5">
-
-                    {{-- BIG IMAGE --}}
-
-                    <div class="col-span-2 overflow-hidden rounded-[32px] shadow-xl">
-
+                    <div class="overflow-hidden rounded-[32px] shadow-xl">
                         <img
                             src="{{ asset('images/home/banners/hero.jpg') }}"
-                            class="h-[340px] w-full object-cover hover:scale-105 duration-700"
-                            alt="Hospitality">
-
+                            class="h-[340px] lg:h-[390px] w-full object-cover"
+                            alt="Hospitality interior design">
                     </div>
 
-                    {{-- CARD 1 --}}
-
-                    <div class="overflow-hidden rounded-[28px] shadow-lg">
-
-                        <img
-                            src="{{ asset('images/home/banners/hotel.jpg') }}"
-                            class="h-[270px] w-full object-cover hover:scale-110 duration-700">
-
-                    </div>
-
-                    {{-- CARD 2 --}}
-
-                    <div class="overflow-hidden rounded-[28px] shadow-lg">
-
+                    {{-- Small floating image --}}
+                    <div class="absolute -bottom-10 -left-5 lg:-left-8 w-36 lg:w-48 overflow-hidden rounded-[24px] border-4 border-white shadow-xl">
                         <img
                             src="{{ asset('images/home/banners/outdoor.jpg') }}"
-                            class="h-[270px] w-full object-cover hover:scale-110 duration-700">
+                            class="h-36 lg:h-44 w-full object-cover"
+                            alt="Outdoor furniture collection">
+                    </div>
+
+                    {{-- Community badge --}}
+                    <div class="absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-white/95 backdrop-blur px-4 py-2 shadow-lg">
+                        <span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span class="text-xs font-semibold text-slate-800">
+                            From the Acrovoy Community
+                        </span>
+                    </div>
+
+                </div>
+
+                {{-- =================================================
+                    LATEST POST CARD
+                ================================================== --}}
+                <div class="relative lg:ml-24 mt-16 lg:-mt-20 z-10">
+
+                    <div class="rounded-[28px] border border-gray-200 bg-white shadow-2xl overflow-hidden">
+
+                        {{-- Post header --}}
+                        <div class="flex items-center justify-between px-6 pt-6">
+
+                            <div class="flex items-center gap-3">
+
+                                <img
+                                    src="{{ asset('images/777.png') }}"
+                                    onerror="this.src='https://ui-avatars.com/api/?name=Studio+Design&background=e7e5e4&color=44403c'"
+                                    class="h-11 w-11 rounded-full object-cover"
+                                    alt="Author">
+
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-900">
+                                        Kevin Berbow
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-0.5">
+                                        Interior Design Studio · 2 hours ago
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <span class="rounded-full bg-stone-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                                Latest post
+                            </span>
+
+                        </div>
+
+                        {{-- Post content --}}
+                        <div class="px-6 pt-5">
+
+                            <h3 class="text-xl font-bold leading-snug text-slate-900">
+                                Creating Timeless Spaces for Modern Hospitality
+                            </h3>
+
+                            <p class="mt-3 text-sm leading-6 text-gray-600">
+                                A carefully curated furniture selection can
+                                transform the atmosphere of a hospitality space.
+                                Discover our latest inspiration for elegant
+                                hotel interiors and welcoming lounge areas.
+                            </p>
+
+                        </div>
+
+                        {{-- Post image --}}
+                        <div class="px-6 pt-5">
+
+                            <div class="overflow-hidden rounded-2xl">
+                                <img
+                                    src="{{ asset('images/home/banners/hotel.jpg') }}"
+                                    class="h-48 w-full object-cover"
+                                    alt="Hospitality project">
+                            </div>
+
+                        </div>
+
+                        {{-- Attached products --}}
+                        <div class="px-6 pt-5">
+
+                            <div class="flex items-center justify-between mb-3">
+
+                                <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                    Featured products
+                                </span>
+
+                                <span class="text-xs text-gray-500">
+                                    2 products
+                                </span>
+
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+
+                                {{-- Product 1 --}}
+                                <a href="#"
+                                   class="group flex items-center gap-3 rounded-xl border border-gray-200 p-2 hover:border-slate-400 transition">
+
+                                    <img
+                                        src="{{ asset('images/home/banners/hotel.jpg') }}"
+                                        class="h-16 w-16 rounded-lg object-cover"
+                                        alt="Lounge chair">
+
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-semibold text-slate-900 line-clamp-2">
+                                            Modern Lounge Chair
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            View product →
+                                        </div>
+                                    </div>
+
+                                </a>
+
+                                {{-- Product 2 --}}
+                                <a href="#"
+                                   class="group flex items-center gap-3 rounded-xl border border-gray-200 p-2 hover:border-slate-400 transition">
+
+                                    <img
+                                        src="{{ asset('images/home/banners/outdoor.jpg') }}"
+                                        class="h-16 w-16 rounded-lg object-cover"
+                                        alt="Outdoor furniture">
+
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-semibold text-slate-900 line-clamp-2">
+                                            Outdoor Dining Collection
+                                        </div>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            View product →
+                                        </div>
+                                    </div>
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                        {{-- Post footer --}}
+                        <div class="flex items-center justify-between border-t border-gray-100 mt-5 px-6 py-4">
+
+                            <div class="flex items-center gap-4 text-xs text-gray-500">
+
+                                <span class="inline-flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M7 10v12m0-12 5-7 1.5 1.5L12 10h7a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H7m0-12H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>
+                                    </svg>
+                                    24 likes
+                                </span>
+
+                                <span class="inline-flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M8 10h8m-8 4h5m-9 7 3-3h10a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v12l2-1z"/>
+                                    </svg>
+                                    8 comments
+                                </span>
+
+                            </div>
+
+                            <a href="{{ route('community.posts.show') }}"
+   class="text-sm font-semibold text-slate-900 hover:text-slate-500 transition">
+    Explore post →
+</a>
+
+                        </div>
 
                     </div>
 
+                </div>
+
+                {{-- Community link --}}
+                <div class="flex justify-end mt-6">
+                    <a href="#community"
+                       class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-black transition">
+                        Explore Acrovoy Community
+                        <span>→</span>
+                    </a>
                 </div>
 
             </div>
@@ -187,6 +297,7 @@
     </div>
 
 </section>
+
 
 
 

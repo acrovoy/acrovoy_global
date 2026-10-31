@@ -2,6 +2,7 @@
 @section('content')
 @php
 $company = $supplier;
+$supplier_registration_status = 1;
 @endphp
 @php
 $level = $company->level;
@@ -47,70 +48,119 @@ default => '#d1d5db',
 
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden sticky top-6">
 
-                    {{-- HEADER --}}
-                    <div class="relative overflow-hidden px-6 py-7 border-b border-gray-200 bg-white">
+                  
 
-                        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+{{-- HEADER --}}
+<div class="relative overflow-hidden px-6 py-7 border-b border-gray-200 bg-white">
 
-                            <div
-                                class="absolute -top-20 -right-16 w-52 h-52 rounded-full blur-3xl opacity-20"
-                                style="background: {{ $glow }};">
-                            </div>
+    {{-- Background decoration --}}
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
 
-                            <div
-                                class="absolute -bottom-20 -left-16 w-56 h-56 rounded-full blur-3xl opacity-10"
-                                style="background: {{ $glow }};">
-                            </div>
+        <div
+            class="absolute -top-20 -right-16 w-52 h-52 rounded-full blur-3xl opacity-20"
+            style="background: {{ $glow }};">
+        </div>
 
-                        </div>
+        <div
+            class="absolute -bottom-20 -left-16 w-56 h-56 rounded-full blur-3xl opacity-10"
+            style="background: {{ $glow }};">
+        </div>
+
+    </div>
+
+    <div class="relative flex flex-col items-center text-center">
+
+        {{-- Logo --}}
+        <div class="w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+            <img
+                src="{{ $company->logo?->cdn_url ?? asset('images/no-logo.png') }}"
+                class="w-full h-full object-cover"
+                alt="{{ $company->name }}">
+        </div>
+
+        {{-- Company name --}}
+        <h3 class="mt-4 font-semibold text-lg text-gray-900">
+            {{ $company->name }}
+        </h3>
 
 
-                        <div class="flex flex-col items-center text-center">
+        {{-- =====================================================
+            STATUS 1: UNCLAIMED
+        ====================================================== --}}
+        @if($supplier_registration_status == 1)
 
-                            <div class="w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
-                                <img
-                                    src="{{ $company->logo?->cdn_url ?? asset('images/no-logo.png') }}"
-                                    class="w-full h-full object-cover">
-                            </div>
+            <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
 
-                            <h3 class="mt-4 font-semibold text-lg text-gray-900">
-                                {{ $company->name }}111
-                            </h3>
+                <span class="inline-flex items-center gap-0.5 text-xs font-medium text-stone-500">
+                    <i class="fa-solid fa-building-circle-check"></i>
+                    Prepared by Acrovoy
+                </span>
 
-                            <div class="mt-2">
+                <span class="inline-flex items-center gap-0.5 px-0.5 py-0.5 rounded-md
+                             bg-amber-50 text-amber-700 border border-amber-200
+                             text-xs font-medium">
+                    <i class="fa-regular fa-circle-exclamation"></i>
+                    Unclaimed profile
+                </span>
 
-                                @php
-                                $level = $company->level;
-                                @endphp
+            </div>
 
-                                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold
+            <button
+                type="button"
+                disabled
+                class="mt-5 inline-flex items-center justify-center gap-2
+                       px-5 py-2.5 rounded-lg bg-gray-900 text-white
+                       text-sm font-semibold shadow-sm opacity-90
+                       cursor-not-allowed">
 
-                        {{ $level === 'Basic'
-                            ? 'bg-gray-100 text-gray-600 border border-gray-200'
-                            : '' }}
+                <i class="fa-solid fa-shield-halved text-xs"></i>
+                Claim this company profile
+                <i class="fa-solid fa-arrow-right text-xs"></i>
 
-                        {{ $level === 'Silver'
-                            ? 'bg-gray-200 text-gray-700 border border-gray-300'
-                            : '' }}
+            </button>
 
-                        {{ $level === 'Gold'
-                            ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                            : '' }}
 
-                        {{ $level === 'Platinum'
-                            ? 'bg-slate-900 text-white border border-slate-700'
-                            : '' }}
-                    ">
+        
 
-                                    {{ strtoupper($level) }} SUPPLIER
 
-                                </span>
+        @endif
 
-                            </div>
 
-                        </div>
+        {{-- =====================================================
+            SUPPLIER LEVEL
+        ====================================================== --}}
+        @if($supplier_registration_status >= 2)
 
-                    </div>
+            <div class="mt-4">
+
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold
+
+                    {{ $level === 'Basic'
+                        ? 'bg-gray-100 text-gray-600 border border-gray-200'
+                        : '' }}
+
+                    {{ $level === 'Silver'
+                        ? 'bg-gray-200 text-gray-700 border border-gray-300'
+                        : '' }}
+
+                    {{ $level === 'Gold'
+                        ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                        : '' }}
+
+                    {{ $level === 'Platinum'
+                        ? 'bg-slate-900 text-white border border-slate-700'
+                        : '' }}
+                ">
+                    {{ strtoupper($level) }} SUPPLIER
+                </span>
+
+            </div>
+
+        @endif
+
+    </div>
+
+</div>
 
 
 
@@ -173,7 +223,7 @@ default => '#d1d5db',
                     <div class="p-4 border-t border-gray-200">
 
                         <div class="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-semibold mb-3">
-                            Communication1
+                            Communication
                         </div>
                         @auth
 
@@ -306,7 +356,24 @@ default => '#d1d5db',
                     </div>
 
 
-                 
+                 {{-- Claimed but not verified --}}
+                    @if($supplier_registration_status == 2)
+
+                        <div class="border-t border-gray-200 relative items-center text-center">
+                            <button
+                                type="button"
+                                disabled
+                                class="mt-3 mb-3 text-xs font-medium text-gray-500
+                                    hover:text-gray-800 transition cursor-not-allowed">
+
+                                <i class="fa-solid fa-building-circle-check mr-1"></i>
+                                Is this your company? Claim this profile
+                                <i class="fa-solid fa-arrow-right ml-1"></i>
+
+                            </button>
+                        </div>
+
+                    @endif
 
                    
 
