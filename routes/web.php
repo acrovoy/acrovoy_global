@@ -61,7 +61,9 @@ use App\Http\Controllers\Project\Supplier\SupplierProjectController;
 use App\Http\Controllers\Rfq\RfqController;
 use App\Http\Controllers\Rfq\RfqOfferController;
 
-use App\Http\Controllers\Post\PostController;
+use App\Http\Controllers\Community\PostController;
+use App\Http\Controllers\Community\PostCommentController;
+use App\Http\Controllers\Community\PostLikeController;
 
 
 use App\Http\Controllers\Admin\AdminProductController;
@@ -153,8 +155,43 @@ Route::get('/collections/{collection:slug}', [PublicCollectionController::class,
 
 
 //POSTS
-Route::get('/community/post', [PostController::class, 'show'])
-    ->name('community.posts.show');
+Route::get('/post', [PostController::class, 'show1'])
+    ->name('posts.show');
+
+
+// COMMUNITY
+Route::prefix('community')->name('community.')->group(function () {
+
+    // PUBLIC
+    Route::get('/', [PostController::class, 'index'])->name('index');
+    Route::get('/search', [PostController::class, 'search'])->name('search');
+    Route::get('/posts/{slug}', [PostController::class, 'show'])->name('posts.show');
+
+    // AUTHENTICATED
+    Route::middleware('auth')->group(function () {
+
+        // POSTS
+        Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
+        Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
+        Route::get('/posts/{id}/edit', [PostController::class, 'edit'])->whereNumber('id')->name('posts.edit');
+        Route::put('/posts/{id}', [PostController::class, 'update'])->whereNumber('id')->name('posts.update');
+        Route::get('/posts/{id}/preview', [PostController::class, 'preview'])->whereNumber('id')->name('posts.preview');
+        Route::post('/posts/{id}/submit', [PostController::class, 'submit'])->whereNumber('id')->name('posts.submit');
+        Route::post('/posts/{id}/archive', [PostController::class, 'archive'])->whereNumber('id')->name('posts.archive');
+        Route::delete('/posts/{id}', [PostController::class, 'destroy'])->whereNumber('id')->name('posts.destroy');
+
+        // LIKES
+        Route::post('/posts/{postId}/like', [PostLikeController::class, 'toggle'])->whereNumber('postId')->name('posts.like');
+
+        // COMMENTS
+        Route::prefix('/posts/{postId}/comments')->whereNumber('postId')->name('comments.')->group(function () {
+            Route::get('/', [PostCommentController::class, 'index'])->name('index');
+            Route::post('/', [PostCommentController::class, 'store'])->name('store');
+            Route::put('/{commentId}', [PostCommentController::class, 'update'])->whereNumber('commentId')->name('update');
+            Route::delete('/{commentId}', [PostCommentController::class, 'destroy'])->whereNumber('commentId')->name('destroy');
+        });
+    });
+});
 
 //CONTACTS
 Route::prefix('contacts')->name('contacts.')->group(function () {

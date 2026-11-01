@@ -270,7 +270,7 @@
 
                             </div>
 
-                            <a href="{{ route('community.posts.show') }}"
+                            <a href="{{ route('posts.show') }}"
    class="text-sm font-semibold text-slate-900 hover:text-slate-500 transition">
     Explore post →
 </a>
@@ -282,13 +282,13 @@
                 </div>
 
                 {{-- Community link --}}
-                <div class="flex justify-end mt-6">
-                    <a href="#community"
-                       class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-black transition">
-                        Explore Acrovoy Community
-                        <span>→</span>
-                    </a>
-                </div>
+<div class="flex justify-end mt-6">
+    <a href="{{ route('community.index') }}"
+       class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-black transition">
+        Explore Acrovoy Community
+        <span>→</span>
+    </a>
+</div>
 
             </div>
 

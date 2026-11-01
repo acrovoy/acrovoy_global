@@ -4,22 +4,22 @@
 
 <div class="min-h-screen bg-[#F8F7F4]">
 
-    <!-- {{-- ==========================================================
+    {{-- ==========================================================
         BREADCRUMB
     =========================================================== --}}
-    <div class="border-b border-stone-200 bg-white">
+    
         <div class="container mx-auto px-6 lg:px-12 py-4">
             <nav class="flex items-center gap-2 text-sm text-stone-500">
                 <a href="/" class="hover:text-slate-900">Home</a>
                 <span>/</span>
-                <a href="#community" class="hover:text-slate-900">Community</a>
+                <a href="{{ route('community.index') }}" class="hover:text-slate-900">Community</a>
                 <span>/</span>
                 <span class="text-slate-900 font-medium truncate">
                     {{ $post['category'] }}
                 </span>
             </nav>
         </div>
-    </div> -->
+    
 
     <div class="container mx-auto px-6 lg:px-12 py-10 lg:py-14">
 
