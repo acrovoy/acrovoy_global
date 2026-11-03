@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Domain\Media\Models\Media;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Post extends Model
 {
@@ -103,4 +106,20 @@ class Post extends Model
     {
         return $this->status === self::STATUS_PENDING;
     }
+
+
+    public function media(): MorphMany
+{
+    return $this->morphMany(Media::class, 'model')
+        ->where('collection', 'community_posts')
+        ->orderBy('sort_order');
+}
+
+public function cover(): MorphOne
+{
+    return $this->morphOne(Media::class, 'model')
+        ->where('collection', 'community_posts')
+        ->where('is_main', true);
+}
+
 }

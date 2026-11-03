@@ -20,11 +20,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
+use App\Domain\Community\Actions\Products\SyncPostProductsAction;
+use App\Models\Product;
+
 use Illuminate\Contracts\View\View;
+
+
 
 class PostController extends Controller
 {
     public function __construct(
+        protected SyncPostProductsAction $syncPostProductsAction,
         protected PostService $postService,
         protected PostCategoryService $categoryService,
         protected ActiveContextService $context,
@@ -36,6 +42,7 @@ class PostController extends Controller
         protected DeletePostAction $deletePostAction,
         protected TogglePostLikeAction $togglePostLikeAction,
     ) {
+        
     }
 
     /*
@@ -159,6 +166,10 @@ class PostController extends Controller
     
     public function show(string $slug)
     {
+
+   
+
+
         $locale = app()->getLocale();
 
         $post = $this->postService->getPublishedBySlug(
@@ -178,6 +189,94 @@ class PostController extends Controller
             'translation'
         ));
     }
+
+    /*
+|--------------------------------------------------------------------------
+| Dashboard — My Publications
+|--------------------------------------------------------------------------
+*/
+
+public function myPublications(Request $request)
+{
+    $this->ensureCanPublish();
+
+    $identity = $this->context->identity();
+
+    $filters = $request->validate([
+        'q' => ['nullable', 'string', 'max:255'],
+        'status' => [
+            'nullable',
+            Rule::in([
+                'draft',
+                'pending',
+                'published',
+                'rejected',
+                'archived',
+            ]),
+        ],
+        'category' => ['nullable', 'integer', 'exists:post_categories,id'],
+        'sort' => ['nullable', Rule::in(['newest', 'oldest'])],
+    ]);
+
+    $search = $filters['q'] ?? '';
+    $status = $filters['status'] ?? null;
+    $categoryFilter = $filters['category'] ?? null;
+    $sort = $filters['sort'] ?? 'newest';
+
+    $query = Post::query()
+        ->where('user_id', $identity['user_id'])
+        ->where('company_type', $identity['entity_type'])
+        ->where('company_id', $identity['entity_id'])
+        ->with([
+            'translations',
+            'category.translations',
+        ])
+        ->withCount('products');
+
+    if ($status) {
+        $query->where('status', $status);
+    }
+
+    if ($categoryFilter) {
+        $query->where('post_category_id', $categoryFilter);
+    }
+
+    if ($search !== '') {
+        $query->whereHas('translations', function ($translationQuery) use ($search) {
+            $translationQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('excerpt', 'like', "%{$search}%");
+            });
+        });
+    }
+
+    $query->orderBy(
+        'created_at',
+        $sort === 'oldest' ? 'asc' : 'desc'
+    );
+
+    $posts = $query->paginate(15)->withQueryString();
+
+    $statusCounts = Post::query()
+        ->where('user_id', $identity['user_id'])
+        ->where('company_type', $identity['entity_type'])
+        ->where('company_id', $identity['entity_id'])
+        ->selectRaw('status, COUNT(*) as total')
+        ->groupBy('status')
+        ->pluck('total', 'status');
+
+    $categories = $this->categoryService->getActiveCategories();
+
+    return view('community.dashboard.index', compact(
+        'posts',
+        'statusCounts',
+        'categories',
+        'search',
+        'status',
+        'categoryFilter',
+        'sort'
+    ));
+}
 
     public function search(Request $request)
     {
@@ -204,13 +303,15 @@ class PostController extends Controller
     */
 
     public function create()
-    {
-        $this->ensureCanPublish();
+{
+   
 
-        $categories = $this->categoryService->getActiveCategories();
+    $this->ensureCanPublish();
 
-        return view('community.create', compact('categories'));
-    }
+    $categories = $this->categoryService->getActiveCategories();
+
+    return view('community.create', compact('categories'));
+}
 
     public function store(Request $request)
     {
@@ -300,6 +401,13 @@ class PostController extends Controller
 
         $identity = $this->context->identity();
 
+        $company = $this->context->entity();
+        $company?->load([
+            'businessTypes.translation',
+            'country',
+            'primaryAddress.country',
+        ]);
+
         $post = $this->postService->getPreview(
             postId: $id,
             userId: $identity['user_id']
@@ -317,7 +425,8 @@ class PostController extends Controller
         return view('community.preview', compact(
             'post',
             'translation',
-            'media'
+            'media',
+            'company'
         ));
     }
 
@@ -589,4 +698,130 @@ class PostController extends Controller
             $this->mediaService->delete($media);
         }
     }
+
+    /*
+|--------------------------------------------------------------------------
+| Community Product Management
+|--------------------------------------------------------------------------
+*/
+
+public function getProducts(int $id)
+{
+    $post = $this->getManageablePost($id);
+
+    $products = $post->products()
+        ->where('products.status', 'approved')
+        ->with([
+            'translations',
+            'category',
+            'supplier',
+        ])
+        ->orderBy('post_products.sort_order')
+        ->get();
+
+    return response()->json([
+        'products' => $products->map(
+            fn (Product $product) => $this->formatCommunityProduct($product)
+        ),
+    ]);
+}
+
+public function searchProducts(Request $request, int $id)
+{
+    $this->getManageablePost($id);
+
+    $validated = $request->validate([
+        'q' => ['nullable', 'string', 'max:255'],
+        'page' => ['nullable', 'integer', 'min:1'],
+        'per_page' => ['nullable', 'integer', 'min:1', 'max:30'],
+    ]);
+
+    $search = trim($validated['q'] ?? '');
+
+    $perPage = (int) ($validated['per_page'] ?? 20);
+
+    $query = Product::query()
+        ->where('status', 'approved')
+        ->with([
+            'translations',
+            'category',
+            'supplier',
+        ]);
+
+    if ($search !== '') {
+        $query->where(function ($q) use ($search) {
+            $q->whereHas('translations', function ($translationQuery) use ($search) {
+                $translationQuery->where('name', 'like', "%{$search}%");
+            })
+            ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                $categoryQuery->where('name', 'like', "%{$search}%");
+            })
+            ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                $supplierQuery->where('name', 'like', "%{$search}%");
+            });
+        });
+    }
+
+    $products = $query
+        ->orderByDesc('products.created_at')
+        ->paginate($perPage);
+
+    return response()->json([
+        'products' => $products->getCollection()->map(
+            fn (Product $product) => $this->formatCommunityProduct($product)
+        )->values(),
+
+        'pagination' => [
+            'current_page' => $products->currentPage(),
+            'last_page' => $products->lastPage(),
+            'total' => $products->total(),
+            'per_page' => $products->perPage(),
+        ],
+    ]);
+}
+
+public function syncProducts(Request $request, int $id)
+{
+    $post = $this->getManageablePost($id);
+
+    $validated = $request->validate([
+        'product_ids' => ['present', 'array'],
+        'product_ids.*' => [
+            'required',
+            'integer',
+            'distinct',
+        ],
+    ]);
+
+    $this->syncPostProductsAction->handle(
+        post: $post,
+        productIds: $validated['product_ids']
+    );
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Products updated successfully.',
+        'products_count' => $post->products()
+            ->where('products.status', 'approved')
+            ->count(),
+    ]);
+}
+
+protected function formatCommunityProduct(Product $product): array
+{
+    $locale = app()->getLocale();
+
+    $translation = $product->translations->firstWhere('locale', $locale)
+        ?? $product->translations->firstWhere('locale', 'en')
+        ?? $product->translations->first();
+
+    return [
+        'id' => $product->id,
+        'name' => $translation?->name ?? $product->name,
+        'category' => $product->category?->name,
+        'supplier' => $product->supplier?->name,
+        'image' => $product->catalog_image_url,
+    ];
+}
+
 }

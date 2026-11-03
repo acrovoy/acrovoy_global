@@ -13,6 +13,10 @@ import L from 'leaflet';
 
 import './collections/sortable';
 
+import './community/post-form';
+import './community/post-actions';
+import './community/manage-products';
+
 window.L = L;
 
 Alpine.plugin(collapse)

@@ -71,6 +71,10 @@
 
         'dashboard.companies.create' => '<path d="M12 5v14M5 12h14"/>',
 
+        'community.manage.index' => '<path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+
+        'community.posts.create' => '<path d="M12 5v14M5 12h14"/>',
+
         'default' => '<circle cx="12" cy="12" r="9"/>',
     ];
 @endphp

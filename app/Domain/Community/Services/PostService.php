@@ -110,11 +110,13 @@ class PostService
                 Post::STATUS_ARCHIVED,
             ])
             ->with([
-                'author',
-                'category',
-                'translations',
-                'products',
-            ])
+    'author',
+    'category.translations',
+    'translations',
+    'media',    
+    'products.translations',
+    'products.images',
+])
             ->firstOrFail();
     }
 

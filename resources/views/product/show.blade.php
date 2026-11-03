@@ -1607,6 +1607,137 @@
 
 
 
+{{-- RELATED COMMUNITY ARTICLES --}}
+@if($relatedPosts->isNotEmpty())
+
+    <section class="mb-8 px-8">
+
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Related articles
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Discover articles featuring this product.
+                </p>
+            </div>
+
+            @if($relatedPosts->count() > 1)
+                <div class="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onclick="document.getElementById('related-posts-track').scrollBy({left: -340, behavior: 'smooth'})"
+                        class="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-gray-400 hover:text-gray-900"
+                        aria-label="Previous articles"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m15 18-6-6 6-6"/>
+                        </svg>
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="document.getElementById('related-posts-track').scrollBy({left: 340, behavior: 'smooth'})"
+                        class="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-gray-400 hover:text-gray-900"
+                        aria-label="Next articles"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </button>
+                </div>
+            @endif
+        </div>
+
+        <div
+            id="related-posts-track"
+            class="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3"
+            style="scrollbar-width: thin;"
+        >
+
+            @foreach($relatedPosts as $post)
+
+                @php
+                    $translation = $post->display_translation;
+                    $cover = $post->cover;
+                @endphp
+
+                <a
+                    href="{{ route('community.posts.show', $translation->slug) }}"
+                    class="group flex w-[320px] min-w-[320px] snap-start overflow-hidden rounded-xl border border-gray-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg"
+                >
+
+                    {{-- ARTICLE COVER --}}
+                    <div class="relative h-36 w-32 shrink-0 overflow-hidden bg-gray-100">
+
+                        @if($cover?->cdn_url)
+                            <img
+                                src="{{ $cover->cdn_url }}"
+                                alt="{{ $translation->title }}"
+                                class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                loading="lazy"
+                            >
+                        @else
+                            <div class="flex h-full w-full items-center justify-center text-gray-300">
+                                <svg class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <path d="m21 15-5-5L5 21"/>
+                                </svg>
+                            </div>
+                        @endif
+
+                    </div>
+
+                    {{-- ARTICLE CONTENT --}}
+                    <div class="flex min-w-0 flex-1 flex-col justify-between p-4">
+
+                        <div>
+
+                            @if($post->display_category)
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+                                    {{ $post->display_category }}
+                                </span>
+                            @endif
+
+                            <h4 class="mt-2 line-clamp-2 text-sm font-semibold leading-snug text-gray-900 transition group-hover:text-emerald-700">
+                                {{ $translation->title }}
+                            </h4>
+
+                            @if($translation->excerpt)
+                                <p class="mt-2 line-clamp-2 text-xs leading-relaxed text-gray-500">
+                                    {{ $translation->excerpt }}
+                                </p>
+                            @endif
+
+                        </div>
+
+                        <div class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                            Read article
+                            <svg class="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14"/>
+                                <path d="m12 5 7 7-7 7"/>
+                            </svg>
+                        </div>
+
+                    </div>
+
+                </a>
+
+            @endforeach
+
+        </div>
+
+        @if($relatedPosts->count() > 1)
+            <div class="mt-1 text-xs text-gray-400">
+                {{ $relatedPosts->count() }} related articles
+            </div>
+        @endif
+
+    </section>
+
+@endif
+
 
 
 

@@ -17,6 +17,8 @@ use App\Domain\Payment\Models\PaymentTerm;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Domain\Community\Models\Post;
+
 
 
 
@@ -446,6 +448,17 @@ public function creator()
         \App\Models\User::class,
         'created_by'
     );
+}
+
+public function posts(): BelongsToMany
+{
+    return $this->belongsToMany(
+        Post::class,
+        'post_products',
+        'product_id',
+        'post_id'
+    )->withPivot('sort_order')
+        ->orderByPivot('sort_order');
 }
 
 }

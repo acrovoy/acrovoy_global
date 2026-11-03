@@ -154,9 +154,7 @@ Route::get('/collections', [PublicCollectionController::class, 'index'])->name('
 Route::get('/collections/{collection:slug}', [PublicCollectionController::class, 'show'])->name('collections.show');
 
 
-//POSTS
-Route::get('/post', [PostController::class, 'show1'])
-    ->name('posts.show');
+
 
 
 // COMMUNITY
@@ -165,7 +163,6 @@ Route::prefix('community')->name('community.')->group(function () {
     // PUBLIC
     Route::get('/', [PostController::class, 'index'])->name('index');
     Route::get('/search', [PostController::class, 'search'])->name('search');
-    Route::get('/posts/{slug}', [PostController::class, 'show'])->name('posts.show');
 
     // AUTHENTICATED
     Route::middleware('auth')->group(function () {
@@ -180,6 +177,9 @@ Route::prefix('community')->name('community.')->group(function () {
         Route::post('/posts/{id}/archive', [PostController::class, 'archive'])->whereNumber('id')->name('posts.archive');
         Route::delete('/posts/{id}', [PostController::class, 'destroy'])->whereNumber('id')->name('posts.destroy');
 
+        // DASHBOARD
+        Route::get('/dashboard', [PostController::class, 'myPublications'])->name('manage.index');
+
         // LIKES
         Route::post('/posts/{postId}/like', [PostLikeController::class, 'toggle'])->whereNumber('postId')->name('posts.like');
 
@@ -190,8 +190,33 @@ Route::prefix('community')->name('community.')->group(function () {
             Route::put('/{commentId}', [PostCommentController::class, 'update'])->whereNumber('commentId')->name('update');
             Route::delete('/{commentId}', [PostCommentController::class, 'destroy'])->whereNumber('commentId')->name('destroy');
         });
+
+        Route::get('/posts/{id}/products', [PostController::class, 'getProducts'])
+            ->whereNumber('id')
+            ->name('posts.products.index');
+
+        Route::get('/posts/{id}/products/search', [PostController::class, 'searchProducts'])
+            ->whereNumber('id')
+            ->name('posts.products.search');
+
+        Route::put('/posts/{id}/products', [PostController::class, 'syncProducts'])
+            ->whereNumber('id')
+            ->name('posts.products.sync');
+
+
     });
+
+    // PUBLIC POST — KEEP LAST
+    Route::get('/posts/{slug}', [PostController::class, 'show'])
+        ->where('slug', '^(?!create$|search$|dashboard$)[a-z0-9-]+$')
+        ->name('posts.show');
 });
+
+
+//POSTS
+Route::get('/post', [PostController::class, 'show1'])
+    ->name('posts.show');
+
 
 //CONTACTS
 Route::prefix('contacts')->name('contacts.')->group(function () {

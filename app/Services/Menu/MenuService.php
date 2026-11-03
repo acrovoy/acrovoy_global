@@ -79,6 +79,19 @@ class MenuService
                 'route' => 'buyer.addresses.index',
             ],
 
+            // Community
+['type' => 'header', 'label' => 'Community'],
+[
+    'type' => 'link',
+    'label' => 'My Publications',
+    'route' => 'community.manage.index',
+],
+[
+    'type' => 'link',
+    'label' => 'Create Publication',
+    'route' => 'community.posts.create',
+],
+
             // Communication
             ['type' => 'header', 'label' => 'Communication'],
             [
@@ -224,6 +237,19 @@ class MenuService
                 'route' => 'supplier.team.roles',
                 'can' => ['manageRoles', User::class],
             ],
+
+            // Community
+['type' => 'header', 'label' => 'Community'],
+[
+    'type' => 'link',
+    'label' => 'My Publications',
+    'route' => 'community.manage.index',
+],
+[
+    'type' => 'link',
+    'label' => 'Create Publication',
+    'route' => 'community.posts.create',
+],
 
             // Communication
             ['type' => 'header', 'label' => 'Communication'],
@@ -382,6 +408,19 @@ class MenuService
                 'route' => 'dashboard.companies.create',
             ],
 
+            // Community
+['type' => 'header', 'label' => 'Community'],
+[
+    'type' => 'link',
+    'label' => 'My Publications',
+    'route' => 'community.manage.index',
+],
+[
+    'type' => 'link',
+    'label' => 'Create Publication',
+    'route' => 'community.posts.create',
+],
+
             // Communication
             ['type' => 'header', 'label' => 'Communication'],
             [
@@ -416,6 +455,19 @@ class MenuService
                 'label' => 'Dashboard',
                 'route' => 'dashboard.home',
             ],
+
+            // Community
+['type' => 'header', 'label' => 'Community'],
+[
+    'type' => 'link',
+    'label' => 'My Publications',
+    'route' => 'community.manage.index',
+],
+[
+    'type' => 'link',
+    'label' => 'Create Publication',
+    'route' => 'community.posts.create',
+],
 
             // Communication
             ['type' => 'header', 'label' => 'Communication'],

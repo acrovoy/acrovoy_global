@@ -11,6 +11,7 @@ use App\Services\Company\ActiveContextService;
 use App\Domain\Returns\Models\ProductReturnPolicy;
 use App\Domain\Returns\Models\ReturnPolicy;
 use App\Domain\Returns\Models\SupplierReturnPolicySetting;
+use App\Domain\Community\Models\Post;
 
 
 
@@ -41,6 +42,7 @@ class ProductViewQueryService
                 ->toArray();
         }
 
+        
 
         /*
         |--------------------------------------------------------------------------
@@ -222,6 +224,49 @@ class ProductViewQueryService
                 })
                 ->values()
         );
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | RELATED COMMUNITY POSTS
+    |--------------------------------------------------------------------------
+    */
+
+    $locale = app()->getLocale();
+
+    $relatedPosts = $product1->posts()
+        ->where('posts.status', Post::STATUS_PUBLISHED)
+        ->whereNotNull('posts.published_at')
+        ->with([
+            'translations',
+            'category.translations',
+            'cover',
+        ])
+        ->orderByDesc('posts.published_at')
+        ->get()
+        ->map(function ($post) use ($locale) {
+
+            $translation = $post->translations
+                ->firstWhere('locale', $locale)
+                ?? $post->translations->firstWhere('locale', 'en');
+
+            if (!$translation || !$translation->slug) {
+                return null;
+            }
+
+            $categoryTranslation = $post->category?->translations
+                ->firstWhere('locale', $locale)
+                ?? $post->category?->translations->firstWhere('locale', 'en');
+
+            $post->display_translation = $translation;
+            $post->display_category = $categoryTranslation?->name
+                ?? $post->category?->name;
+
+            return $post;
+
+        })
+        ->filter()
+        ->values();
 
 
         /*
@@ -585,6 +630,7 @@ $hasHiddenDelivery = $deliveryOptions->count() > 4;
             'hasHiddenDelivery',
             'returnPolicy', 
             'returnPolicyData',
+            'relatedPosts',
 
         );
     }
