@@ -17,17 +17,20 @@ class UpdatePostAction
     public function execute(
         Post $post,
         int $categoryId,
+        string $slug,
         array $translations,
         array $productIds = []
     ): Post {
         return DB::transaction(function () use (
             $post,
             $categoryId,
+            $slug,
             $translations,
             $productIds
         ) {
             $post->update([
                 'post_category_id' => $categoryId,
+                'slug' => $slug,
             ]);
 
             $this->syncTranslations->handle($post, $translations);

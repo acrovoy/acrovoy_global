@@ -13,6 +13,8 @@ use App\Domain\Media\Models\Media;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+
 class Post extends Model
 {
     use SoftDeletes;
@@ -36,6 +38,7 @@ class Post extends Model
         'likes_count',
         'comments_count',
         'published_at',
+        'slug',
     ];
 
     protected $casts = [
@@ -120,6 +123,33 @@ public function cover(): MorphOne
     return $this->morphOne(Media::class, 'model')
         ->where('collection', 'community_posts')
         ->where('is_main', true);
+}
+
+public function company(): MorphTo
+{
+    return $this->morphTo(__FUNCTION__, 'company_type', 'company_id');
+}
+
+public function getCompanyInfoAttribute(): ?array
+{
+    $company = $this->company;
+
+    if (!$company) {
+        return null;
+    }
+
+    $address = $company->primaryAddress;
+    $city = $address?->city;
+
+    return [
+        'name' => $company->name,
+        'slug' => $company->slug,
+        'country' => $address?->country?->name
+            ?? $company->country?->name,
+        'city' => is_object($city)
+            ? ($city->name ?? null)
+            : ($city ?: ($address?->city_name ?? null)),
+    ];
 }
 
 }

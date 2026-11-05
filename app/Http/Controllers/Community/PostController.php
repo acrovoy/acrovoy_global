@@ -57,7 +57,7 @@ class PostController extends Controller
 
         $categoryId = $request->integer('category') ?: null;
 
-        $posts = $this->postService->getFeed(
+            $posts = $this->postService->getFeed(
             locale: $locale,
             categoryId: $categoryId,
             perPage: 12
@@ -69,7 +69,8 @@ class PostController extends Controller
         return view('community.index', compact(
             'posts',
             'categories',
-            'categoryId'
+            'categoryId',
+            
         ));
     }
 
@@ -186,7 +187,8 @@ class PostController extends Controller
 
         return view('community.show', compact(
             'post',
-            'translation'
+            'translation',
+            
         ));
     }
 
@@ -322,13 +324,14 @@ public function myPublications(Request $request)
         $identity = $this->context->identity();
 
         $post = $this->createPostAction->execute(
-            userId: $identity['user_id'],
-            categoryId: $validated['post_category_id'],
-            translations: $validated['translations'],
-            companyType: $identity['entity_type'],
-            companyId: $identity['entity_id'],
-            productIds: $validated['product_ids'] ?? [],
-        );
+    userId: $identity['user_id'],
+    categoryId: $validated['post_category_id'],
+    slug: $validated['slug'],
+    translations: $validated['translations'],
+    companyType: $identity['entity_type'],
+    companyId: $identity['entity_id'],
+    productIds: $validated['product_ids'] ?? [],
+);
 
         $this->uploadPostMedia(
             post: $post,
@@ -365,14 +368,15 @@ public function myPublications(Request $request)
     {
         $post = $this->getManageablePost($id);
 
-        $validated = $request->validate($this->postRules());
+        $validated = $request->validate($this->postRules($post));
 
         $this->updatePostAction->execute(
-            post: $post,
-            categoryId: $validated['post_category_id'],
-            translations: $validated['translations'],
-            productIds: $validated['product_ids'] ?? [],
-        );
+    post: $post,
+    categoryId: $validated['post_category_id'],
+    slug: $validated['slug'],
+    translations: $validated['translations'],
+    productIds: $validated['product_ids'] ?? [],
+);
 
         $this->deleteSelectedPostMedia(
             post: $post,
@@ -401,13 +405,6 @@ public function myPublications(Request $request)
 
         $identity = $this->context->identity();
 
-        $company = $this->context->entity();
-        $company?->load([
-            'businessTypes.translation',
-            'country',
-            'primaryAddress.country',
-        ]);
-
         $post = $this->postService->getPreview(
             postId: $id,
             userId: $identity['user_id']
@@ -426,7 +423,7 @@ public function myPublications(Request $request)
             'post',
             'translation',
             'media',
-            'company'
+            
         ));
     }
 
@@ -525,94 +522,95 @@ public function myPublications(Request $request)
     |--------------------------------------------------------------------------
     */
 
-    protected function postRules(): array
-    {
-        return [
-            'post_category_id' => [
-                'required',
-                'integer',
-                Rule::exists('post_categories', 'id')
-                    ->where('is_active', true),
-            ],
+    protected function postRules(?Post $post = null): array
+{
+    return [
+        'post_category_id' => [
+            'required',
+            'integer',
+            Rule::exists('post_categories', 'id')
+                ->where('is_active', true),
+        ],
 
-            'translations' => [
-                'required',
-                'array',
-                'min:1',
-            ],
+        'slug' => [
+            'required',
+            'string',
+            'max:255',
+            'alpha_dash',
+            Rule::unique('posts', 'slug')->ignore($post?->id),
+        ],
 
-            'translations.*.title' => [
-                'required',
-                'string',
-                'max:255',
-            ],
+        'translations' => [
+            'required',
+            'array',
+            'min:1',
+        ],
 
-            'translations.*.slug' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-            ],
+        'translations.*.title' => [
+            'required',
+            'string',
+            'max:255',
+        ],
 
-            'translations.*.excerpt' => [
-                'nullable',
-                'string',
-                'max:1000',
-            ],
+        'translations.*.excerpt' => [
+            'nullable',
+            'string',
+            'max:1000',
+        ],
 
-            'translations.*.content' => [
-                'required',
-                'string',
-            ],
+        'translations.*.content' => [
+            'required',
+            'string',
+        ],
 
-            'translations.*.seo_title' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
+        'translations.*.seo_title' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
 
-            'translations.*.seo_description' => [
-                'nullable',
-                'string',
-                'max:500',
-            ],
+        'translations.*.seo_description' => [
+            'nullable',
+            'string',
+            'max:500',
+        ],
 
-            'product_ids' => [
-                'nullable',
-                'array',
-            ],
+        'product_ids' => [
+            'nullable',
+            'array',
+        ],
 
-            'product_ids.*' => [
-                'required',
-                'integer',
-                'distinct',
-                'exists:products,id',
-            ],
+        'product_ids.*' => [
+            'required',
+            'integer',
+            'distinct',
+            'exists:products,id',
+        ],
 
-            'media' => [
-                'nullable',
-                'array',
-                'max:10',
-            ],
+        'media' => [
+            'nullable',
+            'array',
+            'max:10',
+        ],
 
-            'media.*' => [
-                'required',
-                'image',
-                'mimes:jpeg,jpg,png,webp',
-                'max:10240',
-            ],
+        'media.*' => [
+            'required',
+            'image',
+            'mimes:jpeg,jpg,png,webp',
+            'max:10240',
+        ],
 
-            'remove_media' => [
-                'nullable',
-                'array',
-            ],
+        'remove_media' => [
+            'nullable',
+            'array',
+        ],
 
-            'remove_media.*' => [
-                'required',
-                'integer',
-            ],
-        ];
-    }
+        'remove_media.*' => [
+            'required',
+            'integer',
+        ],
+    ];
+}
 
     /*
     |--------------------------------------------------------------------------

@@ -163,6 +163,9 @@ Route::prefix('community')->name('community.')->group(function () {
     // PUBLIC
     Route::get('/', [PostController::class, 'index'])->name('index');
     Route::get('/search', [PostController::class, 'search'])->name('search');
+    Route::get('/posts/{slug}', [PostController::class, 'show'])
+    ->where('slug', '^(?!create$|search$)[a-z0-9-]+$')
+    ->name('posts.show');
 
     // AUTHENTICATED
     Route::middleware('auth')->group(function () {

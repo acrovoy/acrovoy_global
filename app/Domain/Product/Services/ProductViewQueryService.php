@@ -227,46 +227,49 @@ class ProductViewQueryService
 
 
         /*
-    |--------------------------------------------------------------------------
-    | RELATED COMMUNITY POSTS
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| RELATED COMMUNITY POSTS
+|--------------------------------------------------------------------------
+*/
 
-    $locale = app()->getLocale();
+$locale = app()->getLocale();
 
-    $relatedPosts = $product1->posts()
-        ->where('posts.status', Post::STATUS_PUBLISHED)
-        ->whereNotNull('posts.published_at')
-        ->with([
-            'translations',
-            'category.translations',
-            'cover',
-        ])
-        ->orderByDesc('posts.published_at')
-        ->get()
-        ->map(function ($post) use ($locale) {
+$relatedPosts = $product1->posts()
+    ->where('posts.status', Post::STATUS_PUBLISHED)
+    ->whereNotNull('posts.published_at')
+    ->whereNotNull('posts.slug')
+    ->with([
+        'translations',
+        'category.translations',
+        'cover',
+        'media',
+    ])
+    ->orderByDesc('posts.published_at')
+    ->get()
+    ->map(function ($post) use ($locale) {
 
-            $translation = $post->translations
-                ->firstWhere('locale', $locale)
-                ?? $post->translations->firstWhere('locale', 'en');
+        $translation = $post->translations
+            ->firstWhere('locale', $locale)
+            ?? $post->translations->firstWhere('locale', 'en')
+            ?? $post->translations->first();
 
-            if (!$translation || !$translation->slug) {
-                return null;
-            }
+        if (!$translation) {
+            return null;
+        }
 
-            $categoryTranslation = $post->category?->translations
-                ->firstWhere('locale', $locale)
-                ?? $post->category?->translations->firstWhere('locale', 'en');
+        $categoryTranslation = $post->category?->translations
+            ->firstWhere('locale', $locale)
+            ?? $post->category?->translations->firstWhere('locale', 'en');
 
-            $post->display_translation = $translation;
-            $post->display_category = $categoryTranslation?->name
-                ?? $post->category?->name;
+        $post->display_translation = $translation;
 
-            return $post;
+        $post->display_category = $categoryTranslation?->name
+            ?? $post->category?->name;
 
-        })
-        ->filter()
-        ->values();
+        return $post;
+    })
+    ->filter()
+    ->values();
 
 
         /*

@@ -1658,12 +1658,18 @@
             @foreach($relatedPosts as $post)
 
                 @php
-                    $translation = $post->display_translation;
-                    $cover = $post->cover;
+                    $translation = $post->display_translation
+                        ?? $post->translations->firstWhere('locale', app()->getLocale())
+                        ?? $post->translations->firstWhere('locale', 'en')
+                        ?? $post->translations->first();
+
+                    $cover = $post->cover ?? $post->media->first();
                 @endphp
 
+                @continue(!$translation || !$post->slug)
+
                 <a
-                    href="{{ route('community.posts.show', $translation->slug) }}"
+                    href="{{ route('community.posts.show', ['slug' => $post->slug]) }}"
                     class="group flex w-[320px] min-w-[320px] snap-start overflow-hidden rounded-xl border border-gray-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg"
                 >
 

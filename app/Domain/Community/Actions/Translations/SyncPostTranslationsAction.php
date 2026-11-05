@@ -22,7 +22,6 @@ class SyncPostTranslationsAction
                     ['locale' => $locale],
                     [
                         'title' => $data['title'],
-                        'slug' => $data['slug'],
                         'excerpt' => $data['excerpt'] ?? null,
                         'content' => $data['content'],
                         'seo_title' => $data['seo_title'] ?? null,

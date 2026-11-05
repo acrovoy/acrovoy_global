@@ -44,34 +44,27 @@ class PostService
     /**
      * Get a published post by translated slug.
      */
-    public function getPublishedBySlug(
-        string $slug,
-        string $locale
-    ): Post {
-        $translation = PostTranslation::query()
-            ->where('slug', $slug)
-            ->where('locale', $locale)
-            ->whereHas('post', function (Builder $query) {
-                $query->where('status', Post::STATUS_PUBLISHED)
-                    ->whereNotNull('published_at');
-            })
-            ->first();
-
-        if (!$translation) {
-            throw (new ModelNotFoundException())->setModel(Post::class);
-        }
-
-        return $translation->post->load([
+    public function getPublishedBySlug(string $slug, string $locale): Post
+{
+    return Post::query()
+        ->where('slug', $slug)
+        ->where('status', Post::STATUS_PUBLISHED)
+        ->whereNotNull('published_at')
+        ->with([
             'author',
-            'category',
+            'category.translations',
             'translations',
+            'media',
             'products' => function ($query) {
-                $query->where('status', 'approved');
+                $query->where('products.status', 'approved')
+                    ->with(['translations', 'images']);
             },
             'publishedComments.author',
             'publishedComments.replies.author',
-        ]);
-    }
+            
+        ])
+        ->firstOrFail();
+}
 
     /**
      * Get a post for editing.
@@ -116,6 +109,10 @@ class PostService
     'media',    
     'products.translations',
     'products.images',
+    'company',
+    'company.country',
+    'company.primaryAddress.country',
+    'company.primaryAddress.city',
 ])
             ->firstOrFail();
     }

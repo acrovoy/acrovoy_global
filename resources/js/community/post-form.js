@@ -191,38 +191,45 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 
+        // =========================================================
+    // SLUG GENERATION — GLOBAL POST SLUG
     // =========================================================
-    // SLUG GENERATION
-    // =========================================================
 
-    form.querySelectorAll('[data-locale-panel]').forEach(panel => {
+    const slugInput = form.querySelector('[data-slug-target]');
+    const slugSource = form.querySelector('[data-slug-source]');
 
-        const title = panel.querySelector('[data-slug-source]');
-        const slug = panel.querySelector('[data-slug-target]');
+    function generateSlug(value) {
+        return value
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
 
-        if (!title || !slug) return;
+    if (slugInput && slugSource) {
 
-        let manuallyEdited = slug.value.trim() !== '';
+        let manuallyEdited = slugInput.value.trim() !== '';
 
-        slug.addEventListener('input', function () {
+        slugInput.addEventListener('input', function () {
             manuallyEdited = true;
         });
 
-        title.addEventListener('input', function () {
+        slugSource.addEventListener('input', function () {
 
             if (manuallyEdited) return;
 
-            slug.value = this.value
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-+|-+$/g, '');
+            slugInput.value = generateSlug(this.value);
         });
-    });
+
+        // Generate initial slug if the English title already exists.
+        if (!manuallyEdited && slugSource.value.trim() !== '') {
+            slugInput.value = generateSlug(slugSource.value);
+        }
+    }
 
 
-    // =========================================================
+            // =========================================================
     // FORM VALIDATION
     // =========================================================
 
@@ -233,6 +240,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const localePanels = form.querySelectorAll('[data-locale-panel]');
 
+        const slug = form.querySelector('[name="slug"]');
+
         localePanels.forEach(panel => {
 
             const locale = panel.dataset.localePanel;
@@ -242,7 +251,8 @@ document.addEventListener('DOMContentLoaded', function () {
             );
 
             const title = panel.querySelector('[name$="[title]"]');
-            const slug = panel.querySelector('[name$="[slug]"]');
+            const excerpt = panel.querySelector('[name$="[excerpt]"]');
+
             const contentInput = getEditorInput(locale);
             const editor = getEditor(locale);
 
@@ -250,11 +260,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 syncEditor(locale);
             }
 
-            const hasContent = fields.some(field => {
-                return field.value.trim() !== '';
-            });
+            // Only actual publication content determines
+            // whether this language version has been started.
+            const hasStarted =
+                (title?.value.trim() !== '') ||
+                (excerpt?.value.trim() !== '') ||
+                (contentInput?.value.trim() !== '');
 
-            if (!hasContent) {
+            // Completely empty language version is optional.
+            if (!hasStarted) {
 
                 fields.forEach(field => {
                     field.disabled = true;
@@ -264,15 +278,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            // Keep all fields enabled for started translations.
             fields.forEach(field => {
                 field.disabled = false;
                 field.required = false;
             });
 
             const isComplete =
-                title && title.value.trim() !== '' &&
-                slug && slug.value.trim() !== '' &&
-                contentInput && getEditorText(editor).length > 0;
+                title?.value.trim() !== '' &&
+                contentInput?.value.trim() !== '' &&
+                getEditorText(editor).length > 0;
 
             if (isComplete) {
                 hasCompleteTranslation = true;
@@ -282,9 +297,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
 
-
         // Do not silently discard partially completed translations.
-
         if (firstIncompleteLocale) {
 
             event.preventDefault();
@@ -295,36 +308,60 @@ document.addEventListener('DOMContentLoaded', function () {
                 '[data-locale-panel="' + firstIncompleteLocale + '"]'
             );
 
-            const missingField = panel?.querySelector(
-                '[name$="[title]"]:invalid, [name$="[slug]"]:invalid'
+            const missingTitle = panel?.querySelector(
+                '[name$="[title]"]'
             );
 
-            if (missingField) {
-                missingField.focus();
+            if (!missingTitle?.value.trim()) {
+                missingTitle?.focus();
             } else {
                 getEditor(firstIncompleteLocale)?.focus();
             }
 
-            alert('Please complete the title, URL slug and main content for every language version you started.');
+            alert(
+                'Please complete the title and main content for every language version you started.'
+            );
 
             return;
         }
 
-
+        // At least one complete translation is required.
         if (!hasCompleteTranslation) {
 
             event.preventDefault();
 
             activateLanguage('en');
 
-            alert('Please complete at least one language version with a title, URL slug and main content.');
+            const englishTitle = form.querySelector(
+                '[data-locale-panel="en"] [name$="[title]"]'
+            );
+
+            if (!englishTitle?.value.trim()) {
+                englishTitle?.focus();
+            } else {
+                getEditor('en')?.focus();
+            }
+
+            alert(
+                'Please complete at least one language version with a title and main content.'
+            );
 
             return;
         }
 
+        // One global slug is required.
+        if (!slug || !slug.value.trim()) {
 
-        // Final synchronization.
+            event.preventDefault();
 
+            slug?.focus();
+
+            alert('Please enter the URL slug for this publication.');
+
+            return;
+        }
+
+        // Final synchronization of all enabled editors.
         localePanels.forEach(panel => {
 
             const locale = panel.dataset.localePanel;

@@ -75,6 +75,33 @@
                 @enderror
             </div>
 
+            {{-- PUBLICATION URL SLUG --}}
+<div>
+    <label for="slug" class="mb-2 block text-sm font-medium text-gray-700">
+        Publication URL Slug <span class="text-red-500">*</span>
+    </label>
+
+    <input
+        type="text"
+        id="slug"
+        name="slug"
+        value="{{ old('slug', $post?->slug) }}"
+        maxlength="255"
+        required
+        data-slug-target
+        class="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:border-gray-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
+        placeholder="publication-url-slug">
+
+    <p class="mt-2 text-xs text-gray-400">
+        This URL is shared across all language versions. Use lowercase Latin letters, numbers and hyphens.
+    </p>
+
+    @error('slug')
+        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
+
+
         </div>
     </section>
 
@@ -131,7 +158,6 @@
                     $translation = $post?->translations?->firstWhere('locale', $locale);
 
                     $title = old("translations.$locale.title", $translation?->title);
-                    $slug = old("translations.$locale.slug", $translation?->slug);
                     $excerpt = old("translations.$locale.excerpt", $translation?->excerpt);
                     $content = old("translations.$locale.content", $translation?->content);
                     $seoTitle = old("translations.$locale.seo_title", $translation?->seo_title);
@@ -150,15 +176,15 @@
                         </label>
 
                         <input
-                            type="text"
-                            name="translations[{{ $locale }}][title]"
-                            value="{{ $title }}"
-                            maxlength="255"
-                            data-translation-field
-                            data-required-field
-                            data-slug-source
-                            class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                            placeholder="Enter publication title">
+    type="text"
+    name="translations[{{ $locale }}][title]"
+    value="{{ $title }}"
+    maxlength="255"
+    data-translation-field
+    data-required-field
+    @if($locale === 'en') data-slug-source @endif
+    class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+    placeholder="Enter publication title">
 
                         @error("translations.$locale.title")
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -166,32 +192,7 @@
                     </div>
 
 
-                    {{-- SLUG --}}
-
-                    <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700">
-                            URL Slug
-                        </label>
-
-                        <input
-                            type="text"
-                            name="translations[{{ $locale }}][slug]"
-                            value="{{ $slug }}"
-                            maxlength="255"
-                            data-translation-field
-                            data-required-field
-                            data-slug-target
-                            class="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:border-gray-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
-                            placeholder="publication-url-slug">
-
-                        <p class="mt-2 text-xs text-gray-400">
-                            Use lowercase Latin letters, numbers and hyphens.
-                        </p>
-
-                        @error("translations.$locale.slug")
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    
 
 
                     {{-- EXCERPT --}}

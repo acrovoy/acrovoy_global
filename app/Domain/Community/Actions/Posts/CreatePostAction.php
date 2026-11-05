@@ -17,6 +17,7 @@ class CreatePostAction
     public function execute(
         int $userId,
         int $categoryId,
+        string $slug,
         array $translations,
         ?string $companyType = null,
         ?int $companyId = null,
@@ -25,6 +26,7 @@ class CreatePostAction
         return DB::transaction(function () use (
             $userId,
             $categoryId,
+            $slug,
             $translations,
             $companyType,
             $companyId,
@@ -35,6 +37,7 @@ class CreatePostAction
                 'company_type' => $companyType,
                 'company_id' => $companyId,
                 'post_category_id' => $categoryId,
+                'slug' => $slug,
                 'status' => Post::STATUS_DRAFT,
             ]);
 

@@ -3,6 +3,8 @@
 
 @section('content')
 
+
+
 <div class="min-h-screen bg-[#F8F7F4]"
      dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
 
@@ -116,103 +118,123 @@
                 </div>
 
                 {{-- Feed --}}
-                <div class="space-y-7">
+<div class="space-y-7">
 
-                    @forelse($posts as $post)
+    @forelse($posts as $post)
 
-                        <article class="overflow-hidden rounded-[24px] border border-stone-200 bg-white shadow-sm hover:shadow-md transition duration-300">
+        @php
+            $locale = app()->getLocale();
 
-                            {{-- Author header --}}
-                            <div class="flex flex-wrap items-center justify-between gap-4 px-5 sm:px-7 pt-6">
+            $translation = $post->translations->firstWhere('locale', $locale)
+                ?? $post->translations->firstWhere('locale', 'en')
+                ?? $post->translations->first();
 
-                                <div class="flex items-center gap-3 min-w-0">
+            $categoryTranslation = $post->category?->getTranslation($locale);
 
-                                    <img
-                                        src="{{ asset('images/777.png') }}"
-                                        onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=Acrovoy+Member&background=e7e5e4&color=44403c'"
-                                        alt="{{ $post->author?->name ?? __('community.member') }}"
-                                        class="w-11 h-11 rounded-full object-cover border border-stone-200">
+            $author = $post->author;
 
-                                    <div class="min-w-0">
+            $authorAvatar = $author?->avatar()?->cdn_url
+                ?? asset('images/default-avatar.png');
 
-                                        <div class="text-sm font-semibold text-slate-900 truncate">
-                                            {{ $post->author?->name ?? __('community.member') }}
-                                        </div>
+            $cover = $post->cover?->cdn_url
+                ?? $post->media->first()?->cdn_url;
 
-                                        <div class="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-stone-500">
+            $postUrl = route('community.posts.show', [
+                'slug' => $post->slug,
+            ]);
 
-                                            <span>
-                                                {{ $post->category?->getTranslation(app()->getLocale())?->name ?? __('community.general') }}
-                                            </span>
+            
 
-                                            <span>·</span>
+        $company = $post->company_info;
+        @endphp
 
-                                            <span>
-                                                {{ $post->published_at?->locale(app()->getLocale())->diffForHumans() ?? __('community.recently_published') }}
-                                            </span>
+        <article class="overflow-hidden rounded-[24px] border border-stone-200 bg-white shadow-sm hover:shadow-md transition duration-300">
 
-                                        </div>
+            {{-- Author header --}}
+            <div class="flex flex-wrap items-center justify-between gap-4 px-5 sm:px-7 pt-6">
 
-                                    </div>
+                <div class="flex items-center gap-3 min-w-0">
 
-                                </div>
+                    <img
+                        src="{{ $authorAvatar }}"
+                        onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}'"
+                        alt="{{ $author?->name ?? __('community.member') }}"
+                        class="w-11 h-11 rounded-full object-cover border border-stone-200">
 
-                                <span class="shrink-0 rounded-full bg-stone-100 px-3 py-1.5 text-xs font-semibold text-stone-600">
-                                    {{ $post->category?->getTranslation(app()->getLocale())?->name ?? __('community.general') }}
+                    <div class="min-w-0">
+
+                        <div class="text-sm font-semibold text-slate-900 truncate">
+                            {{ $author?->name ?? __('community.member') }}
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-stone-500">
+
+                            <span>
+                               
+    {{ $company['name'] }}
+                            </span>
+
+                            @if($post->published_at)
+                                <span>·</span>
+                                <span>
+                                    {{ $post->published_at->locale($locale)->diffForHumans() }}
                                 </span>
+                            @endif
 
-                            </div>
+                        </div>
 
-                            {{-- Content --}}
-                            <div class="px-5 sm:px-7 pt-5">
+                    </div>
 
-                                <a href="{{ route('community.posts.show', ['slug' => $post->translations->firstWhere('locale', app()->getLocale())?->slug ?? $post->translations->firstWhere('locale', 'en')?->slug ?? $post->translations->first()?->slug ?? '']) }}"
-                                   class="group">
+                </div>
 
-                                    <h3 class="text-xl sm:text-2xl font-bold leading-snug tracking-tight text-slate-900 group-hover:text-stone-600 transition">
+                <span class="shrink-0 rounded-full bg-stone-100 px-3 py-1.5 text-xs font-semibold text-stone-600">
+                    {{ $categoryTranslation?->name ?? __('community.general') }}
+                </span>
 
-                                        {{ $post->translations->firstWhere('locale', app()->getLocale())?->title
-                                            ?? $post->translations->firstWhere('locale', 'en')?->title
-                                            ?? $post->translations->first()?->title
-                                            ?? __('community.untitled') }}
+            </div>
 
-                                    </h3>
+            {{-- Content --}}
+            <div class="px-5 sm:px-7 pt-5">
 
-                                </a>
+                <a href="{{ $postUrl }}" class="group">
 
-                                @if($post->translations->firstWhere('locale', app()->getLocale())?->excerpt
-                                    ?? $post->translations->firstWhere('locale', 'en')?->excerpt
-                                    ?? $post->translations->first()?->excerpt)
+                    <h3 class="text-xl sm:text-2xl font-bold leading-snug tracking-tight text-slate-900 group-hover:text-stone-600 transition">
+                        {{ $translation?->title ?? __('community.untitled') }}
+                    </h3>
 
-                                    <p class="mt-3 text-sm sm:text-base leading-7 text-stone-600">
+                </a>
 
-                                        {{ $post->translations->firstWhere('locale', app()->getLocale())?->excerpt
-                                            ?? $post->translations->firstWhere('locale', 'en')?->excerpt
-                                            ?? $post->translations->first()?->excerpt }}
+                @if($translation?->excerpt)
 
-                                    </p>
+                    <p class="mt-3 text-sm sm:text-base leading-7 text-stone-600">
+                        {{ $translation->excerpt }}
+                    </p>
 
-                                @endif
+                @endif
 
-                            </div>
+            </div>
 
-                            {{-- Cover placeholder --}}
-                            <div class="px-5 sm:px-7 pt-5">
+            {{-- Cover --}}
+            @if($cover)
 
-                                <a href="{{ route('community.posts.show', ['slug' => $post->translations->firstWhere('locale', app()->getLocale())?->slug ?? $post->translations->firstWhere('locale', 'en')?->slug ?? $post->translations->first()?->slug ?? '']) }}"
-                                   class="block overflow-hidden rounded-2xl bg-stone-100">
+                <div class="px-5 sm:px-7 pt-5">
 
-                                    <img
-                                        src="{{ asset('images/home/banners/hotel.jpg') }}"
-                                        alt="{{ $post->translations->firstWhere('locale', app()->getLocale())?->title ?? __('community.untitled') }}"
-                                        loading="lazy"
-                                        class="w-full h-[230px] sm:h-[320px] object-cover hover:scale-[1.02] transition duration-700">
+                    <a href="{{ $postUrl }}"
+                       class="block overflow-hidden rounded-2xl bg-stone-100">
 
-                                </a>
+                        <img
+                            src="{{ $cover }}"
+                            alt="{{ $translation?->title ?? __('community.untitled') }}"
+                            loading="lazy"
+                            class="w-full h-[230px] sm:h-[320px] object-cover hover:scale-[1.02] transition duration-700">
 
-                            </div>
+                    </a>
 
-                            {{-- Footer --}}
+                </div>
+
+            @endif
+
+             {{-- Footer --}}
                             <div class="flex flex-wrap items-center justify-between gap-4 mt-5 border-t border-stone-100 px-5 sm:px-7 py-5">
 
                                 <div class="flex items-center gap-5 text-xs sm:text-sm text-stone-500">
@@ -253,55 +275,55 @@
 
                                 </div>
 
-                                <a href="{{ route('community.posts.show', ['slug' => $post->translations->firstWhere('locale', app()->getLocale())?->slug ?? $post->translations->firstWhere('locale', 'en')?->slug ?? $post->translations->first()?->slug ?? '']) }}"
-                                   class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 hover:text-stone-500 transition">
+                                <a href="{{ route('community.posts.show', ['slug' => $post->slug]) }}"
+   class="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 hover:text-stone-500 transition">
 
-                                    {{ __('community.read_publication') }}
+    {{ __('community.read_publication') }}
 
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 12h14m-6-6 6 6-6 6"/>
-                                    </svg>
-
-                                </a>
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"
+              d="M5 12h14m-6-6 6 6-6 6"/>
+    </svg>
+</a>
 
                             </div>
 
-                        </article>
+        </article>
 
-                    @empty
+    @empty
 
-                        {{-- Empty state --}}
-                        <div class="rounded-[24px] border border-stone-200 bg-white px-6 py-16 text-center">
+        {{-- Empty state --}}
+        <div class="rounded-[24px] border border-stone-200 bg-white px-6 py-16 text-center">
 
-                            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-stone-100 text-stone-400">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                          d="M7 8h10M7 12h6m-9 9 3-3h10a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v12l1-1Z"/>
-                                </svg>
-                            </div>
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-stone-100 text-stone-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M7 8h10M7 12h6m-9 9 3-3h10a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3v12l1-1Z"/>
+                </svg>
+            </div>
 
-                            <h3 class="mt-5 text-xl font-bold text-slate-900">
-                                {{ __('community.no_publications') }}
-                            </h3>
+            <h3 class="mt-5 text-xl font-bold text-slate-900">
+                {{ __('community.no_publications') }}
+            </h3>
 
-                            <p class="mt-2 max-w-md mx-auto text-sm leading-6 text-stone-500">
-                                {{ __('community.no_publications_description') }}
-                            </p>
+            <p class="mt-2 max-w-md mx-auto text-sm leading-6 text-stone-500">
+                {{ __('community.no_publications_description') }}
+            </p>
 
-                            @auth
-                                <a href="{{ route('community.posts.create') }}"
-                                   class="inline-flex items-center gap-2 mt-6 rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700 transition">
+            @auth
+                <a href="{{ route('community.posts.create') }}"
+                   class="inline-flex items-center gap-2 mt-6 rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700 transition">
 
-                                    {{ __('community.create_first_post') }}
+                    {{ __('community.create_first_post') }}
 
-                                </a>
-                            @endauth
+                </a>
+            @endauth
 
-                        </div>
+        </div>
 
-                    @endforelse
+    @endforelse
 
-                </div>
+</div>
 
                 {{-- Pagination --}}
                 @if($posts->hasPages())
